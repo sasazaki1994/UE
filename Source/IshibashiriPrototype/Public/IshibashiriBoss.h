@@ -8,6 +8,8 @@ class UCapsuleComponent;
 class UStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class APrototypePlayer;
+class USkeletalMeshComponent;
+class UAnimSequence;
 
 UENUM()
 enum class EIshibashiriState : uint8 { Chase, Telegraph, Charge, Recover, Calmed };
@@ -28,6 +30,7 @@ public:
     bool CanBeCountered() const { return State == EIshibashiriState::Recover && !bCounterUsed && Health > 0; }
     FString GetStateLabel() const;
     FVector GetChargeDirection() const { return ChargeDirection; }
+    bool HasImportedVisuals() const;
 
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) int32 MaxHealth = 3;
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) float ChaseSpeed = 260.f;
@@ -50,6 +53,11 @@ private:
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Body;
     UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> ColoredParts;
     UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> BodyMaterial;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<USkeletalMeshComponent> Model;
+    UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> ModelMaterial;
+    UPROPERTY() TObjectPtr<UAnimSequence> IdleAnimation;
+    UPROPERTY() TObjectPtr<UAnimSequence> WalkAnimation;
+    UPROPERTY() TObjectPtr<UAnimSequence> AttackAnimation;
     UPROPERTY() TObjectPtr<APrototypePlayer> Target;
     EIshibashiriState State = EIshibashiriState::Chase;
     int32 Health = 3;

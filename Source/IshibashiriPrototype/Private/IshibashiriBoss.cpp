@@ -2,6 +2,8 @@
 #include "PrototypeGameMode.h"
 #include "PrototypePlayer.h"
 #include "PrimitiveAppearance.h"
+#include "ModelAppearance.h"
+#include "Engine/SkeletalMesh.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "DrawDebugHelpers.h"
@@ -54,6 +56,28 @@ AIshibashiriBoss::AIshibashiriBoss()
     ColoredParts.Add(Part(TEXT("BackRightLeg"), Cube.Object, FVector(-115.f, 95.f, -140.f), FVector(0.65f, 0.65f, 1.3f)));
     Part(TEXT("LeftTusk"), Cone.Object, FVector(215.f, -115.f, -30.f), FVector(0.38f, 0.38f, 1.4f));
     Part(TEXT("RightTusk"), Cone.Object, FVector(215.f, 115.f, -30.f), FVector(0.38f, 0.38f, 1.4f));
+    static ConstructorHelpers::FObjectFinder<USkeletalMesh> Boar(TEXT("/Game/Characters/FreeModels/Boar/SK_Boar.SK_Boar"));
+    Model = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BoarModel"));
+    Model->SetupAttachment(RootComponent);
+    Model->SetSkeletalMesh(Boar.Object);
+    Model->SetRelativeScale3D(FVector(1.6f));
+    // The Boar faces +Y in Blender; the Warrior faces -Y.
+    Model->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
+    if (Boar.Succeeded())
+    {
+        // This asset's origin is in its torso, unlike the feet-origin Warrior.
+        const FBoxSphereBounds Bounds = Boar.Object->GetBounds();
+        Model->SetRelativeLocation(FVector(Bounds.Origin.X * 1.6f, 0.f,
+            -210.f - (Bounds.Origin.Z - Bounds.BoxExtent.Z) * 1.6f));
+    }
+    Model->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    Model->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+    static ConstructorHelpers::FObjectFinder<UAnimSequence> Idle(TEXT("/Game/Characters/FreeModels/Boar/AN_Boar_Idle.AN_Boar_Idle"));
+    static ConstructorHelpers::FObjectFinder<UAnimSequence> Walk(TEXT("/Game/Characters/FreeModels/Boar/AN_Boar_Walk.AN_Boar_Walk"));
+    static ConstructorHelpers::FObjectFinder<UAnimSequence> AttackClip(TEXT("/Game/Characters/FreeModels/Boar/AN_Boar_Attack.AN_Boar_Attack"));
+    IdleAnimation = Idle.Object;
+    WalkAnimation = Walk.Object;
+    AttackAnimation = AttackClip.Object;
 }
 
 void AIshibashiriBoss::BeginPlay()
@@ -64,6 +88,13 @@ void AIshibashiriBoss::BeginPlay()
     if (BodyMaterial)
         for (UStaticMeshComponent* Part : ColoredParts) Part->SetMaterial(0, BodyMaterial);
     EnterState(EIshibashiriState::Chase);
+    if (Model->GetSkeletalMeshAsset()) ModelMaterial = Model->CreateDynamicMaterialInstance(0);
+    if (Model->GetSkeletalMeshAsset())
+    {
+        TArray<UStaticMeshComponent*> Primitives;
+        GetComponents<UStaticMeshComponent>(Primitives);
+        for (UStaticMeshComponent* Primitive : Primitives) Primitive->SetVisibility(false);
+    }
 }
 
 void AIshibashiriBoss::ResetForEncounter(const FTransform& Spawn, APrototypePlayer* Player)
@@ -75,6 +106,7 @@ void AIshibashiriBoss::ResetForEncounter(const FTransform& Spawn, APrototypePlay
     ChargeDirection = Spawn.GetRotation().GetForwardVector();
     SetActorTransform(Spawn, false, nullptr, ETeleportType::TeleportPhysics);
     EnterState(EIshibashiriState::Chase);
+    Model->PlayAnimation(WalkAnimation, true);
     if (Target) AddTickPrerequisiteComponent(Target->GetCharacterMovement());
     UpdateVisuals();
 }
@@ -205,6 +237,23 @@ void AIshibashiriBoss::UpdateVisuals()
     else if (State == EIshibashiriState::Recover) Color = FLinearColor(0.8f, 0.5f, 0.08f);
     else if (State == EIshibashiriState::Calmed) Color = FLinearColor(0.3f, 0.6f, 0.9f);
     SetPrimitiveColor(BodyMaterial, Color);
+    if (State == EIshibashiriState::Chase) PlayModelClip(Model, WalkAnimation, true, 1.5f);
+    else if (State == EIshibashiriState::Charge) PlayModelClip(Model, WalkAnimation, true, 4.f);
+    else if (State == EIshibashiriState::Telegraph)
+        PlayModelClip(Model, AttackAnimation, false, AttackAnimation ? AttackAnimation->GetPlayLength() / TelegraphDuration : 1.f);
+    else PlayModelClip(Model, IdleAnimation, true);
+    const FLinearColor Tint = State == EIshibashiriState::Chase ? FLinearColor::White
+        : State == EIshibashiriState::Telegraph ? FLinearColor(2.5f, 0.2f, 0.12f)
+        : State == EIshibashiriState::Charge ? FLinearColor(1.8f, 0.5f, 0.3f)
+        : CanBeCountered() ? FLinearColor(0.65f, 2.f, 0.8f)
+        : State == EIshibashiriState::Calmed ? FLinearColor(0.65f, 1.2f, 1.8f) : FLinearColor(1.6f, 1.3f, 0.5f);
+    if (ModelMaterial) ModelMaterial->SetVectorParameterValue(TEXT("Tint"), Tint);
+}
+
+bool AIshibashiriBoss::HasImportedVisuals() const
+{
+    return Model->GetSkeletalMeshAsset() && IdleAnimation && WalkAnimation && AttackAnimation
+        && ModelMaterial && !Body->IsVisible();
 }
 
 FString AIshibashiriBoss::GetStateLabel() const

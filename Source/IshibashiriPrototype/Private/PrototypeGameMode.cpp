@@ -130,6 +130,14 @@ void APrototypeGameMode::CreateArena()
         Sun->GetLightComponent()->SetMobility(EComponentMobility::Movable);
         Sun->GetLightComponent()->SetIntensity(3.f);
     }
+    // Soft opposite fill keeps the textured character readable from behind.
+    ADirectionalLight* Bounce = GetWorld()->SpawnActor<ADirectionalLight>(FVector(0.f, 0.f, 1200.f), FRotator(-25.f, 150.f, 0.f));
+    if (Bounce)
+    {
+        Bounce->GetLightComponent()->SetMobility(EComponentMobility::Movable);
+        Bounce->GetLightComponent()->SetIntensity(1.2f);
+        Bounce->GetLightComponent()->SetCastShadows(false);
+    }
     APointLight* Fill = GetWorld()->SpawnActor<APointLight>(FVector(0.f, 0.f, 1400.f), FRotator::ZeroRotator);
     if (Fill)
     {

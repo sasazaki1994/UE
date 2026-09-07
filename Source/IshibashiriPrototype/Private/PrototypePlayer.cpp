@@ -2,6 +2,8 @@
 #include "IshibashiriBoss.h"
 #include "PrototypeGameMode.h"
 #include "PrimitiveAppearance.h"
+#include "ModelAppearance.h"
+#include "Engine/SkeletalMesh.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -52,6 +54,27 @@ APrototypePlayer::APrototypePlayer()
     Sword->SetRelativeLocation(FVector(65.f, 48.f, 0.f));
     Sword->SetRelativeScale3D(FVector(1.3f, 0.07f, 0.12f));
     Sword->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    static ConstructorHelpers::FObjectFinder<USkeletalMesh> Warrior(TEXT("/Game/Characters/FreeModels/Warrior/SK_Warrior.SK_Warrior"));
+    GetMesh()->SetSkeletalMesh(Warrior.Object);
+    GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
+    GetMesh()->SetRelativeScale3D(FVector(0.62f));
+    GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+    Body->SetVisibility(!Warrior.Succeeded());
+    Sword->SetVisibility(!Warrior.Succeeded());
+    static ConstructorHelpers::FObjectFinder<UAnimSequence> Idle(TEXT("/Game/Characters/FreeModels/Warrior/AN_Warrior_Idle.AN_Warrior_Idle"));
+    static ConstructorHelpers::FObjectFinder<UAnimSequence> Run(TEXT("/Game/Characters/FreeModels/Warrior/AN_Warrior_Run.AN_Warrior_Run"));
+    static ConstructorHelpers::FObjectFinder<UAnimSequence> AttackClip(TEXT("/Game/Characters/FreeModels/Warrior/AN_Warrior_Attack.AN_Warrior_Attack"));
+    static ConstructorHelpers::FObjectFinder<UAnimSequence> DodgeClip(TEXT("/Game/Characters/FreeModels/Warrior/AN_Warrior_Dodge.AN_Warrior_Dodge"));
+    static ConstructorHelpers::FObjectFinder<UAnimSequence> Hit(TEXT("/Game/Characters/FreeModels/Warrior/AN_Warrior_Hit.AN_Warrior_Hit"));
+    static ConstructorHelpers::FObjectFinder<UAnimSequence> Death(TEXT("/Game/Characters/FreeModels/Warrior/AN_Warrior_Death.AN_Warrior_Death"));
+    IdleAnimation = Idle.Object;
+    RunAnimation = Run.Object;
+    AttackAnimation = AttackClip.Object;
+    DodgeAnimation = DodgeClip.Object;
+    HitAnimation = Hit.Object;
+    DeathAnimation = Death.Object;
 }
 
 void APrototypePlayer::BeginPlay()
@@ -61,6 +84,9 @@ void APrototypePlayer::BeginPlay()
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
     BodyMaterial = Body->CreateDynamicMaterialInstance(0);
     SetPrimitiveColor(BodyMaterial, FLinearColor(0.08f, 0.5f, 0.8f));
+    for (int32 Index = 0; Index < GetMesh()->GetNumMaterials(); ++Index)
+        if (UMaterialInstanceDynamic* Material = GetMesh()->CreateDynamicMaterialInstance(Index)) ModelMaterials.Add(Material);
+    UpdateModelVisuals();
 }
 
 void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
@@ -205,7 +231,7 @@ bool APrototypePlayer::ReceiveChargeHit(const FVector& From)
 void APrototypePlayer::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-    if (!CanAct()) return;
+    if (!CanAct()) { UpdateModelVisuals(); return; }
     DodgeCooldownRemaining = FMath::Max(0.f, DodgeCooldownRemaining - DeltaSeconds);
     AttackCooldownRemaining = FMath::Max(0.f, AttackCooldownRemaining - DeltaSeconds);
     HurtInvulnerabilityRemaining = FMath::Max(0.f, HurtInvulnerabilityRemaining - DeltaSeconds);
@@ -235,6 +261,30 @@ void APrototypePlayer::Tick(float DeltaSeconds)
         SetPrimitiveColor(BodyMaterial, IsDodging() ? FLinearColor::White
             : (bFlash ? FLinearColor(1.f, 0.15f, 0.1f) : FLinearColor(0.08f, 0.5f, 0.8f)));
     }
+    UpdateModelVisuals();
+}
+
+bool APrototypePlayer::HasImportedVisuals() const
+{
+    return GetMesh()->GetSkeletalMeshAsset() && IdleAnimation && RunAnimation && AttackAnimation
+        && DodgeAnimation && HitAnimation && DeathAnimation && ModelMaterials.Num() == 2
+        && !Body->IsVisible() && !Sword->IsVisible();
+}
+
+void APrototypePlayer::UpdateModelVisuals()
+{
+    if (Health <= 0) PlayModelClip(GetMesh(), DeathAnimation, false);
+    else if (IsDodging()) PlayModelClip(GetMesh(), DodgeAnimation, false, DodgeAnimation ? DodgeAnimation->GetPlayLength() / DodgeDuration : 1.f);
+    else if (IsAttacking()) PlayModelClip(GetMesh(), AttackAnimation, false, AttackAnimation ? AttackAnimation->GetPlayLength() / AttackDuration : 1.f);
+    else if (HurtInvulnerabilityRemaining > HurtInvulnerabilityDuration - 0.25f)
+        PlayModelClip(GetMesh(), HitAnimation, false, 2.f);
+    else if (GetVelocity().SizeSquared2D() > 100.f)
+        PlayModelClip(GetMesh(), RunAnimation, true, FMath::Clamp(GetVelocity().Size2D() / WalkSpeed, 0.5f, 1.4f));
+    else PlayModelClip(GetMesh(), IdleAnimation, true);
+    const bool bFlash = Health > 0 && HurtInvulnerabilityRemaining > 0.f && FMath::Sin(GetWorld()->GetTimeSeconds() * 35.f) > 0.f;
+    const FLinearColor Tint = bFlash ? FLinearColor(2.f, 0.25f, 0.2f)
+        : IsDodging() ? FLinearColor(1.6f, 1.8f, 2.f) : FLinearColor::White;
+    for (UMaterialInstanceDynamic* Material : ModelMaterials) Material->SetVectorParameterValue(TEXT("Tint"), Tint);
 }
 
 void APrototypePlayer::ShowFeedback(const FString& Text)
@@ -271,6 +321,8 @@ void APrototypePlayer::ResetForEncounter(const FTransform& Spawn)
     Sword->SetRelativeRotation(FRotator::ZeroRotator);
     if (Controller) Controller->SetControlRotation(FRotator(-18.f, Spawn.Rotator().Yaw, 0.f));
     SetPrimitiveColor(BodyMaterial, FLinearColor(0.08f, 0.5f, 0.8f));
+    GetMesh()->PlayAnimation(IdleAnimation, true);
+    UpdateModelVisuals();
 }
 
 void APrototypePlayer::Retry()

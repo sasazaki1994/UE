@@ -50,6 +50,7 @@ void APrototypeSmokeTest::BeginPlay()
     Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Require(Mode && Mode->GetPlayer() && Mode->GetBoss(), TEXT("GameMode spawns player and boss"))) return;
     APrototypePlayer* Player = Mode->GetPlayer();
+    if (!Require(Player->HasImportedVisuals() && Mode->GetBoss()->HasImportedVisuals(), TEXT("Imported warrior/boar meshes and all combat clips are loaded"))) return;
     APlayerController* Controller = Cast<APlayerController>(Player->GetController());
     if (!Require(Controller && Controller->GetPawn() == Player && Controller->GetHUD(), TEXT("Local player possesses character and has a HUD"))) return;
     if (!Require(Player->GetHealth() == 3 && Mode->GetBoss()->GetHealth() == 3, TEXT("Initial HP is 3/3"))) return;
