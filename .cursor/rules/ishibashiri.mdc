@@ -1,0 +1,17 @@
+---
+description: Scope and validation requirements for the Ishibashiri Unreal C++ prototype
+alwaysApply: true
+---
+
+This repository is the Windows UE 5.4-5.6 C++ prototype of Magaharai / Ishibashiri.
+
+- Read README.md and Docs/Validation.md before continuing implementation. They distinguish implemented source from verified results.
+- The goal is a playable charge -> sideways dodge -> recovery -> sword counter -> retry loop with one boar boss.
+- Keep gameplay in PrototypePlayer, IshibashiriBoss, PrototypeGameMode and PrototypeHUD. The arena is generated from an empty map; no manual Blueprint setup is required.
+- Player and boss start at 3 HP. Boss damage is allowed only during recovery, once per recovery. Dodge and post-hit immunity must prevent multi-hit deaths. Three counters win; three charges lose. R resets the entire encounter.
+- Avoid adding climbing, grab, stamina, story, NPCs, gear, inventory, saves, other bosses, multiplayer, GAS, paid assets, or speculative abstractions.
+- Use Tools/Prototype.ps1 for Check, Build, Setup, Play, Test, Package and CodeDatabase. Cursor tasks invoke these same commands.
+- Unreal Engine plus MSVC and Windows SDK are required even when editing in Cursor. Do not replace the requested UE C++ game with a browser or Unity implementation.
+- Build and run the smoke test after meaningful combat changes when the engine is available. Stop and fix compiler failures before proceeding.
+- A headless test does not establish that rendering, camera, hardware input or the gameplay feel works. Verify the actual game window and the acceptance checklist in Docs/Validation.md.
+- Do not mark the prototype complete or report a successful build/playtest unless it was actually performed. Record environmental blockers precisely.

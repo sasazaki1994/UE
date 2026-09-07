@@ -1,0 +1,27 @@
+{
+  "files.associations": {
+    "*.h": "cpp",
+    "*.uproject": "json",
+    "*.Build.cs": "csharp",
+    "*.Target.cs": "csharp"
+  },
+  "files.watcherExclude": {
+    "**/Binaries/**": true,
+    "**/DerivedDataCache/**": true,
+    "**/Intermediate/**": true,
+    "**/Saved/**": true,
+    "**/Artifacts/**": true
+  },
+  "search.exclude": {
+    "**/Binaries": true,
+    "**/DerivedDataCache": true,
+    "**/Intermediate": true,
+    "**/Saved": true,
+    "**/Artifacts": true,
+    "compile_commands.json": true
+  },
+  "clangd.arguments": ["--background-index", "--completion-style=detailed", "--header-insertion=never"],
+  "cmake.configureOnOpen": false,
+  "[cpp]": { "editor.tabSize": 4, "editor.insertSpaces": true },
+  "[csharp]": { "editor.tabSize": 4, "editor.insertSpaces": true }
+}
