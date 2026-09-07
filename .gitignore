@@ -1,0 +1,17 @@
+/Binaries/
+/Build/*/FileOpenOrder/
+/DerivedDataCache/
+/Intermediate/
+/Saved/
+/.vs/
+/.idea/
+/*.sln
+/*.sln.DotSettings.user
+/*.VC.db
+/Content/Maps/*_BuiltData.uasset
+/Content/Maps/L_Prototype_01.umap
+/Tools/__pycache__/
+/Artifacts/
+/compile_commands.json
+/.cache/
+/IshibashiriPrototype.code-workspace

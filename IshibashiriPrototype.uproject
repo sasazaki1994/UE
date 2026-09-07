@@ -1,0 +1,13 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.6",
+  "Category": "Games",
+  "Description": "Magaharai: a minimal Ishibashiri charge, dodge and counter prototype.",
+  "Modules": [
+    { "Name": "IshibashiriPrototype", "Type": "Runtime", "LoadingPhase": "Default" }
+  ],
+  "Plugins": [
+    { "Name": "PythonScriptPlugin", "Enabled": true, "TargetAllowList": ["Editor"] },
+    { "Name": "AndroidFileServer", "Enabled": false }
+  ]
+}
