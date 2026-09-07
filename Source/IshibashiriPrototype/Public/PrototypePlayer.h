@@ -8,6 +8,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class UStaticMeshComponent;
 class UMaterialInstanceDynamic;
+class UAnimSequence;
 
 UCLASS()
 class ISHIBASHIRIPROTOTYPE_API APrototypePlayer : public ACharacter
@@ -31,6 +32,7 @@ public:
     bool IsAttacking() const { return AttackRemaining > 0.f; }
     float GetDodgeCooldown() const { return DodgeCooldownRemaining; }
     bool IsUsingRaisedCamera() const { return bUsingRaisedCamera; }
+    bool HasImportedVisuals() const;
     const FString& GetFeedback() const { return Feedback; }
 
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) int32 MaxHealth = 3;
@@ -59,12 +61,20 @@ private:
     void TraceAttack();
     bool CanAct() const;
     void ShowFeedback(const FString& Text);
+    void UpdateModelVisuals();
 
     UPROPERTY(VisibleAnywhere) TObjectPtr<USpringArmComponent> SpringArm;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UCameraComponent> Camera;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Body;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Sword;
     UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> BodyMaterial;
+    UPROPERTY() TArray<TObjectPtr<UMaterialInstanceDynamic>> ModelMaterials;
+    UPROPERTY() TObjectPtr<UAnimSequence> IdleAnimation;
+    UPROPERTY() TObjectPtr<UAnimSequence> RunAnimation;
+    UPROPERTY() TObjectPtr<UAnimSequence> AttackAnimation;
+    UPROPERTY() TObjectPtr<UAnimSequence> DodgeAnimation;
+    UPROPERTY() TObjectPtr<UAnimSequence> HitAnimation;
+    UPROPERTY() TObjectPtr<UAnimSequence> DeathAnimation;
     int32 Health = 3;
     float ForwardInput = 0.f;
     float RightInput = 0.f;

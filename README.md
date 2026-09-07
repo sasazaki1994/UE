@@ -63,7 +63,7 @@ Visual StudioのIDEを開く必要はありませんが、**MSVC / Windows SDK�
 - 硬直中だけ、1硬直につき1ダメージ。突進による被弾も1突進につき最大1回。
 - 双方HP3、Victory / Defeat、RでHP・位置・AI状態・タイマーをリセット。
 - 空レベルから床、4面の壁、照明、主人公、猪、カメラ、HUDを生成。BlueprintやActorの手配置は不要。
-- 標準Primitiveと標準マテリアルのみ。回避はスイープ移動、突進もスイープし、接触を別途検査して高速移動時のすり抜けによる見落としを抑えます。
+- CC0のQuaternius Warrior（肩防具・剣・アニメーション）とTeh_Bucket Boar（毛皮テクスチャ・リグ・歩行/攻撃）を取り込み、戦闘状態に待機・走行・攻撃・回避・被弾・死亡を接続しています。回避はスイープ移動、突進もスイープし、接触を別途検査して高速移動時のすり抜けによる見落としを抑えます。
 
 数値はPlayer / Bossのヘッダーにある `UPROPERTY(EditAnywhere)` で調整できます。C++で既定値を変更した場合は再ビルドします。移動600、回避1500 / 0.28秒 / CD 0.55秒、攻撃0.32秒 / CD 0.48秒、突進1500 / 最大1.35秒が初期値です。単位はcm・秒です。
 
@@ -72,7 +72,7 @@ Visual StudioのIDEを開く必要はありませんが、**MSVC / Windows SDK�
 | ファイル | 役割 |
 | --- | --- |
 | `Source/IshibashiriPrototype/Public/PrototypePlayer.h`、`Private/PrototypePlayer.cpp` | 主人公、入力、カメラ、攻撃、回避、HP |
-| `Source/IshibashiriPrototype/Public/IshibashiriBoss.h`、`Private/IshibashiriBoss.cpp` | 猪のPrimitive外観、状態遷移、突進、反撃の制限 |
+| `Source/IshibashiriPrototype/Public/IshibashiriBoss.h`、`Private/IshibashiriBoss.cpp` | 猪モデル、状態遷移、突進、反撃の制限 |
 | `Source/IshibashiriPrototype/Public/PrototypeGameMode.h`、`Private/PrototypeGameMode.cpp` | Arena生成、Spawn、勝敗、Retry |
 | `Source/IshibashiriPrototype/Public/PrototypeHUD.h`、`Private/PrototypeHUD.cpp` | Canvas HUD |
 | `Source/IshibashiriPrototype/Public/PrototypeSmokeTest.h`、`Private/PrototypeSmokeTest.cpp` | 開発用の実ワールド自動戦闘検査 |
@@ -133,5 +133,5 @@ PythonはEditorで空のマップを保存するためだけに使います。�
 - 猪と主人公の物理的な押し合いは実装していません。猪の内部を歩いて通過できます。回避を体で阻まないため、突進ダメージを独立したスイープで判定しています。
 - 形状に合わせた精密な当たり判定ではありません。猪は縦カプセル、攻撃は前方への球スイープです。予告矢印と攻撃判定表示はDevelopment用のDebug描画を使います。
 - 近距離・壁際では上方視点に切り替わります。上方視点はこの天井のないArenaを対象とした処理です。視点切り替えの操作感は手動で評価する必要があります。
-- 未実装：本番モデル、アニメーション、音、豪華なVFX、Climbing、Grab、Stamina、禍根の本番システム、物語、NPC、装備、成長、セーブ、複数ボス、マルチプレイなど。今回の範囲を超える機能は追加していません。
+- 未実装：音、豪華なVFX、Climbing、Grab、Stamina、禍根の本番システム、物語、NPC、装備、成長、セーブ、複数ボス、マルチプレイなど。Warriorのロールを回避に、Boarの歩行を突進に合わせて再生速度だけ調整しています。
 - 実プレイ確認後、10分程度繰り返し遊び、予告・回避距離・反撃へ接近できる時間だけを調整します。本編機能の追加はその後の判断です。

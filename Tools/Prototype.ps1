@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Check', 'Build', 'Setup', 'Play', 'Editor', 'Test', 'Package', 'CodeDatabase')]
+    [ValidateSet('Check', 'Build', 'Setup', 'Play', 'Editor', 'Test', 'Package', 'CodeDatabase', 'ImportModels')]
     [string]$Action = 'Play',
     [string]$EngineRoot = $env:UE_ROOT,
     [switch]$SkipBuild,
@@ -108,6 +108,14 @@ try {
     }
     Ensure-Map
     switch ($Action) {
+        'ImportModels' {
+            $ScriptFile = Join-Path $PSScriptRoot 'ImportFreeModels.py'
+            $ImportLog = Join-Path $ProjectRoot ('Saved\Logs\ImportModels-' + [guid]::NewGuid().ToString('N') + '.log')
+            Invoke-Checked $EditorCmd @($ProjectFile, '-run=pythonscript', "-script=$ScriptFile", '-unattended', '-nop4', '-nullrhi', '-nosound', '-UTF8Output', "-abslog=$ImportLog")
+            if (!(Select-String -LiteralPath $ImportLog -SimpleMatch 'FREE_MODELS_IMPORT_PASS' -Quiet)) {
+                throw "Model import did not report success. Read $ImportLog"
+            }
+        }
         'Setup' { Write-Host 'Editor build and prototype map are ready.' }
         'Play' {
             # This is the visible game explicitly requested by the Play action.
