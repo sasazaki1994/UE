@@ -96,6 +96,24 @@ void APrototypeGrabTest::Tick(float DeltaSeconds)
         if (Elapsed < 0.05f) break;
         if (!Require(Player->GetActorTransform().Equals(ExpectedRelative * Boss->GetActorTransform(), 1.f),
             TEXT("Player preserves boss-relative transform after rotation"))) return;
+        // A normal grab is inside the boss's chase stopping distance. Move the
+        // held offset outside it so the real AI Tick, rather than this test,
+        // translates the boss and exercises the production tick ordering.
+        ExpectedRelative.SetLocation(FVector(-600.f, 0.f, 0.f));
+        Grab->SetRelativeGrabTransform(ExpectedRelative);
+        BossAIStartLocation = Boss->GetActorLocation();
+        Boss->SetActorTickEnabled(true);
+        Next(EPhase::FollowBossAI);
+        break;
+    case EPhase::FollowBossAI:
+        if (Elapsed < 0.3f) break;
+        if (!Require(Boss->GetState() == EIshibashiriState::Chase
+            && FVector::Dist2D(Boss->GetActorLocation(), BossAIStartLocation) > 20.f,
+            TEXT("Real boss Chase AI translates the grabbed player target"))) return;
+        if (!Require(Grab->IsGrabbing()
+            && Player->GetActorTransform().Equals(ExpectedRelative * Boss->GetActorTransform(), 1.f)
+            && !Player->GetActorLocation().ContainsNaN(),
+            TEXT("Player follows movement from the real boss Tick without transform corruption"))) return;
         SendKey(EKeys::E, IE_Released);
         Next(EPhase::Release);
         break;

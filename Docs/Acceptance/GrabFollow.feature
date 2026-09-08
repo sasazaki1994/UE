@@ -9,6 +9,14 @@ Feature: Moving actor grab prototype
     When Ishibashiri translates and rotates
     Then the player's transform relative to Ishibashiri remains stable
 
+  Scenario: Follow movement produced by the real boss AI
+    Given the player is grabbing Ishibashiri
+    And the held offset is outside Ishibashiri's chase stopping distance
+    When Ishibashiri's Chase Tick moves the boss
+    Then the boss changes world location
+    And the player's transform relative to Ishibashiri remains stable
+    And the player's world location contains no NaN values
+
   Scenario: Release a grab
     Given the player is grabbing Ishibashiri
     When the Grab input binding receives an E release

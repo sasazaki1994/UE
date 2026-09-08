@@ -1,6 +1,6 @@
 # 検証記録 — 2026-09-08
 
-判定：**UE 5.6.1でビルド・自動Play・描画・Windowsパッケージの起動に成功。最小プロトタイプを実行可能な状態で用意しました。**
+判定：**Grab追加前のUE 5.6.1検証実績はありますが、Grab追加後の実行検証は未完了です。2026-09-08の再検証環境にはPowerShellとWindows版UEがなく、ビルドおよびUEテストを開始できませんでした。**
 
 キーボード・マウスを使った手動の操作感評価と、10分間の連続手動プレイは未実施です。以下の自動検証結果と区別します。
 
@@ -8,9 +8,25 @@
 
 - 操作はEを押している間Grab、離すとReleaseです。石走りのActor中心から360cm以内でのみ開始できます。
 - `UGrabComponent` が対象、開始ワールド位置、対象基準の相対Transform、Grab状態を保持します。Grab中はCharacterMovementを無効化し、対象の移動後に相対Transformから主人公のワールドTransformを再計算します。Release、被弾、Victory / Defeat、Retryでは必ず解除し、MovementをFallingへ戻します。
-- Acceptance specは `Docs/Acceptance/GrabFollow.feature`、自動検証は `Tools/Prototype.ps1 -Action Test -Grab -TestFPS 60` です。30 / 60 / 120 FPSで、実入力バインド経由のE、平行移動追従、90度回転追従、Release、再Grab後のRリセットを分離して検査します。
-- **自動検証結果：実装コンテナにはWindows版UEとPowerShellがないため、今回追加したGrabテストと既存UEテストの再実行は未実施です。** 下記はGrab追加前の既存プロトタイプの実績であり、今回のPASS結果ではありません。人間による手動プレイ評価も未実施で、Grabの操作感、見た目、面白さを確認済みとはしません。
+- Acceptance specは `Docs/Acceptance/GrabFollow.feature`、自動検証は `Tools/Prototype.ps1 -Action Test -Grab -TestFPS 60` です。テストは実入力バインド経由のE、テストが与える平行移動と90度回転、実際のBoss Chase Tickによる移動、Release、再Grab後のRリセットを分離して検査します。
+- **自動検証結果：未実施（PASSではありません）。** 2026-09-08に下表のコマンドを実行しましたが、すべて `pwsh: command not found`（終了コード127）で、UEプロセスは起動していません。RunIdとUEログは生成されていません。下記「実行結果」の既存PASSはGrab追加前の実績であり、今回の結果ではありません。
+- 実Boss確認を静的なTransform操作だけで済ませないため、GrabテストにBoss Tickを再有効化するChase追従シナリオを追加しました。このシナリオ自体もUE上では未実行です。
+- GUI、物理キーボード、マウスを利用できないため、手動確認も未実施です。
 - 現在の制限：中心距離だけの判定で、表面・部位・遮蔽を考慮しません。Climbing、Stamina、Grab専用アニメーションはありません。追従は相対Transformを外部更新できるため、次工程でClimbing位置更新を追加できる構造です。
+
+### Grab追加後の再検証試行
+
+| コマンド | 結果 |
+| --- | --- |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Build` | 未開始。`pwsh`なし、終了コード127 |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Grab -TestFPS 60` | 未開始。`pwsh`なし、終了コード127 |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Grab -TestFPS 30 -SkipBuild` | 未開始。`pwsh`なし、終了コード127 |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Grab -TestFPS 120 -SkipBuild` | 未開始。`pwsh`なし、終了コード127 |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -TestFPS 60` | 未開始。`pwsh`なし、終了コード127 |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Playthrough -TestFPS 60` | 未開始。`pwsh`なし、終了コード127 |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Package` | 未開始。`pwsh`なし、終了コード127 |
+
+したがって、Grabのビルド、30 / 60 / 120 FPSテスト、実Boss追従、Release後のWalking復帰、Collision、Camera、Retry、Smoke、Playthrough、PackageはいずれもGrab追加後のPASS判定をしていません。UE 5.6.1とPowerShellを備えたWindows環境で上記を再実行することが完了条件です。完了するまでは最小Climbing実装へ進みません。
 
 ## 9月7日の変更
 
