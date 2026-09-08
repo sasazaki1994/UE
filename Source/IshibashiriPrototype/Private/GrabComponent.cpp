@@ -44,6 +44,21 @@ void UGrabComponent::Release()
     }
 }
 
+void UGrabComponent::Climb(float UpInput, float RightInput, float DeltaSeconds)
+{
+    if (!bGrabbing || !IsValid(GrabTarget) || DeltaSeconds <= 0.f) return;
+
+    // RelativeGrabTransform is already expressed in GrabTarget actor space, so
+    // changing local Y/Z continues to mean target-right/up after target rotation.
+    const FVector2D Input = FVector2D(UpInput, RightInput).GetClampedToMaxSize(1.f);
+    FVector Location = RelativeGrabTransform.GetLocation();
+    Location += FVector(0.f, Input.Y, Input.X) * ClimbSpeed * DeltaSeconds;
+    Location.X = FMath::Clamp(Location.X, MinimumClimbLocation.X, MaximumClimbLocation.X);
+    Location.Y = FMath::Clamp(Location.Y, MinimumClimbLocation.Y, MaximumClimbLocation.Y);
+    Location.Z = FMath::Clamp(Location.Z, MinimumClimbLocation.Z, MaximumClimbLocation.Z);
+    RelativeGrabTransform.SetLocation(Location);
+}
+
 void UGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);

@@ -1,6 +1,7 @@
 #include "PrototypeHUD.h"
 #include "PrototypeGameMode.h"
 #include "PrototypePlayer.h"
+#include "GrabComponent.h"
 #include "IshibashiriBoss.h"
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
@@ -33,10 +34,16 @@ void APrototypeHUD::DrawHUD()
     Line(FString::Printf(TEXT("PLAYER HP  %d / %d       BOSS HP  %d / %d"), Player->GetHealth(), Player->MaxHealth, Boss->GetHealth(), Boss->MaxHealth));
     Line(FString::Printf(TEXT("%s  (%.2fs)"), *Boss->GetStateLabel(), Boss->GetStateTimeRemaining()), Boss->CanBeCountered() ? FLinearColor::Green : FLinearColor::White);
     Line(FString::Printf(TEXT("DODGE: %s   cooldown %.2fs"), Player->IsInvulnerable() ? TEXT("INVULNERABLE") : TEXT("ready when cooldown is zero"), Player->GetDodgeCooldown()), FLinearColor(0.4f, 0.85f, 1.f));
-    Line(TEXT("WASD move | Mouse camera | LMB slash (camera direction)"));
+    Line(Player->IsGrabbing() ? TEXT("CLIMB W/A/S/D (target local space) | Release E")
+        : TEXT("WASD move | Mouse camera | LMB slash (camera direction)"));
     Line(FString::Printf(TEXT("E grab (hold): %s | Shift / RMB dodge | Space jump | R retry"), Player->IsGrabbing() ? TEXT("ON") : TEXT("OFF")),
         Player->IsGrabbing() ? FLinearColor::Yellow : FLinearColor::White);
     Line(Player->GetFeedback(), FLinearColor::Yellow);
+    if (Player->IsGrabbing())
+    {
+        const FVector Local = Player->GetGrabComponent()->GetRelativeGrabTransform().GetLocation();
+        Line(FString::Printf(TEXT("CLIMB LOCAL: X=%.1f Y=%.1f Z=%.1f"), Local.X, Local.Y, Local.Z), FLinearColor::Yellow);
+    }
 
     const FString Hint = Boss->CanBeCountered() ? TEXT("COUNTER NOW - get close and slash!")
         : TEXT("Read the red wind-up. Dodge sideways. Counter while green. Three counters to calm the boar.");

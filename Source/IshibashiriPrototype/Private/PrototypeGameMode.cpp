@@ -5,6 +5,7 @@
 #include "PrototypeSmokeTest.h"
 #include "PrototypePlaythroughTest.h"
 #include "PrototypeGrabTest.h"
+#include "PrototypeClimbingTest.h"
 #include "PrimitiveAppearance.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/DirectionalLightComponent.h"
@@ -69,7 +70,9 @@ void APrototypeGameMode::StartPlay()
     RetryEncounter();
     UE_LOG(LogTemp, Display, TEXT("Ishibashiri: arena ready. WASD / Mouse / E grab / Shift dodge / LMB attack / R retry."));
 #if !UE_BUILD_SHIPPING
-    if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeGrabTest")))
+    if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeClimbingTest")))
+        GetWorld()->SpawnActor<APrototypeClimbingTest>();
+    else if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeGrabTest")))
         GetWorld()->SpawnActor<APrototypeGrabTest>();
     else if (FParse::Param(FCommandLine::Get(), TEXT("PrototypePlaythrough")))
         GetWorld()->SpawnActor<APrototypePlaythroughTest>();

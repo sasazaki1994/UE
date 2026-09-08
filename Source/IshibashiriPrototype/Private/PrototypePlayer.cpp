@@ -259,6 +259,11 @@ void APrototypePlayer::Tick(float DeltaSeconds)
     FeedbackRemaining = FMath::Max(0.f, FeedbackRemaining - DeltaSeconds);
     if (FeedbackRemaining == 0.f) Feedback.Empty();
 
+    // Axis callbacks only record input. Applying both axes together here avoids
+    // CharacterMovement and climbing receiving the same WASD input and keeps
+    // diagonal climbing at the configured maximum speed.
+    if (IsGrabbing()) GrabComponent->Climb(ForwardInput, RightInput, DeltaSeconds);
+
     if (IsDodging())
     {
         // Sweep, and clamp the last step: distance stays 420 cm regardless of frame rate.

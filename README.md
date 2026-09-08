@@ -43,7 +43,7 @@ Visual StudioのIDEを開く必要はありませんが、**MSVC / Windows SDK�
 
 | 操作 | キー |
 | --- | --- |
-| 移動 | WASD（カメラ基準） |
+| 移動 / Climbing | 通常時WASD（カメラ基準）。E保持中はW/Sで主ローカル上下、A/Dで主ローカル左右 |
 | カメラ | マウス |
 | 回避 | Shift / マウス右。WASDで方向を指定、無入力ならキャラクター正面 |
 | 刀攻撃 | マウス左。カメラの水平方向へ攻撃 |
@@ -60,6 +60,7 @@ Visual StudioのIDEを開く必要はありませんが、**MSVC / Windows SDK�
 
 - 三人称移動・カメラ、短距離回避、回避中の無敵、被弾後の無敵、近接攻撃。
 - 主の中心から360cm以内でEを押すとGrabし、Eを離すとRelease。Grab中は対象基準の相対Transformを保持するため、主の移動と回転に追従します。
+- Grab中のWASDは通常移動ではなくClimbingへ切り替わり、速度180cm/sで対象ローカルのZ（上下）とY（左右）を更新します。相対位置はX=-650..650、Y=-350..350、Z=-350..650cmにClampします。
 - 壁際でカメラが近づきすぎる場合や猪の内部に入る場合は上方視点へ切り替え、障害がなくなると通常視点へ戻ります。勝敗確定後も動作します。
 - 猪の追尾→1秒の予告→方向固定の直線突進→壁または時間で停止→1.65秒の硬直。
 - 硬直中だけ、1硬直につき1ダメージ。突進による被弾も1突進につき最大1回。
@@ -74,13 +75,14 @@ Visual StudioのIDEを開く必要はありませんが、**MSVC / Windows SDK�
 | ファイル | 役割 |
 | --- | --- |
 | `Source/IshibashiriPrototype/Public/PrototypePlayer.h`、`Private/PrototypePlayer.cpp` | 主人公、入力、カメラ、攻撃、回避、HP |
-| `Source/IshibashiriPrototype/Public/GrabComponent.h`、`Private/GrabComponent.cpp` | 汎用のGrab状態、相対Transform保持、Movement停止・復帰 |
+| `Source/IshibashiriPrototype/Public/GrabComponent.h`、`Private/GrabComponent.cpp` | Grab状態、対象ローカル相対Transform保持、Climbing更新・Clamp、Movement停止・復帰 |
 | `Source/IshibashiriPrototype/Public/IshibashiriBoss.h`、`Private/IshibashiriBoss.cpp` | 猪モデル、状態遷移、突進、反撃の制限 |
 | `Source/IshibashiriPrototype/Public/PrototypeGameMode.h`、`Private/PrototypeGameMode.cpp` | Arena生成、Spawn、勝敗、Retry |
 | `Source/IshibashiriPrototype/Public/PrototypeHUD.h`、`Private/PrototypeHUD.cpp` | Canvas HUD |
 | `Source/IshibashiriPrototype/Public/PrototypeSmokeTest.h`、`Private/PrototypeSmokeTest.cpp` | 開発用の実ワールド自動戦闘検査 |
 | `Source/IshibashiriPrototype/Public/PrototypePlaythroughTest.h`、`Private/PrototypePlaythroughTest.cpp` | 瞬間移動や戦闘関数の直接呼び出しを使わない、入力だけの連続攻略検査 |
 | `Source/IshibashiriPrototype/Public/PrototypeGrabTest.h`、`Private/PrototypeGrabTest.cpp` | E/R入力経由のGrab・移動/回転追従・Release・Retry検査 |
+| `Source/IshibashiriPrototype/Public/PrototypeClimbingTest.h`、`Private/PrototypeClimbingTest.cpp` | WASD入力経由のローカル上下左右Climbing・回転・実Boss Tick・Release・Retry検査 |
 | `Source/IshibashiriPrototype/Private/PrimitiveAppearance.h` | 標準マテリアルの色設定 |
 | `Source/IshibashiriPrototype/Private/IshibashiriPrototype.cpp` | ゲームモジュール登録 |
 | `Source/IshibashiriPrototype/IshibashiriPrototype.Build.cs` | モジュールの依存関係 |
@@ -112,6 +114,9 @@ PythonはEditorで空のマップを保存するためだけに使います。�
 # Grab→移動/回転追従→Release→再Grab→Rリセットの専用検査
 .\Tools\Prototype.ps1 -Action Test -Grab -TestFPS 60 -SkipBuild
 
+# Grab→Climbing→回転/実AI追従→Release/Retryの専用検査
+.\Tools\Prototype.ps1 -Action Test -Climbing -TestFPS 60 -SkipBuild
+
 # 実際に描画し、戦闘5場面とカメラ2場面をSaved/Screenshots/Prototype/<RunId>へ保存
 .\Tools\Prototype.ps1 -Action Test -TestFPS 60 -Capture -SkipBuild
 
@@ -136,10 +141,10 @@ PythonはEditorで空のマップを保存するためだけに使います。�
 ## 制限と次の作業
 
 - 入力だけの連続攻略検査は、通常のCharacterMovementで接近し、マウス入力で狙い、横回避・刀攻撃・Rでの再挑戦を行います。検査コードから位置、HP、AIの時間、戦闘結果を変更していません。ボスの状態を読んで操作する自動検査なので、人間の見切りや楽しさの評価とは別です。
-- **UE 5.6.1でEditor/Gameのビルド、30/60/120 FPSの自動戦闘検査、D3D11描画、Windowsパッケージの起動・自動戦闘検査が成功しています。** 物理キーボード・マウスを使った手動の操作感評価は残っています。
+- **Grab / Climbing追加前にはUE 5.6.1でEditor/Gameのビルド、30/60/120 FPSの自動戦闘検査、D3D11描画、Windowsパッケージ検査が成功しています。Grab / Climbing追加後のRuntime Verifiedではありません。** 現在の環境にはWindows版UEとPowerShellがなく、追加後の実行検証と手動操作感評価は未実施です。
 - 猪と主人公の物理的な押し合いは実装していません。猪の内部を歩いて通過できます。回避を体で阻まないため、突進ダメージを独立したスイープで判定しています。
 - 形状に合わせた精密な当たり判定ではありません。猪は縦カプセル、攻撃は前方への球スイープです。予告矢印と攻撃判定表示はDevelopment用のDebug描画を使います。
 - 近距離・壁際では上方視点に切り替わります。上方視点はこの天井のないArenaを対象とした処理です。視点切り替えの操作感は手動で評価する必要があります。
-- Grabは対象の中心距離だけで判定し、表面位置・部位・遮蔽は判定しません。Climbing入力、Grab位置の更新UI、専用アニメーションも未実装です。相対Transformのsetterは将来のClimbingから更新できます。
-- 未実装：音、豪華なVFX、Climbing、Stamina、禍根の本番システム、物語、NPC、装備、成長、セーブ、複数ボス、マルチプレイなど。Warriorのロールを回避に、Boarの歩行を突進に合わせて再生速度だけ調整しています。
+- Grabは対象の中心距離だけで判定し、Climbingも直方体Clampだけです。表面・部位・遮蔽、Mesh Surface Projection、専用アニメーションは実装していません。
+- 未実装：音、豪華なVFX、Stamina、禍根の本番システム、物語、NPC、装備、成長、セーブ、複数ボス、マルチプレイなど。Warriorのロールを回避に、Boarの歩行を突進に合わせて再生速度だけ調整しています。
 - 実プレイ確認後、10分程度繰り返し遊び、予告・回避距離・反撃へ接近できる時間だけを調整します。本編機能の追加はその後の判断です。
