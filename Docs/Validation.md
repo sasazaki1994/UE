@@ -4,6 +4,30 @@
 
 キーボード・マウスを使った手動の操作感評価と、10分間の連続手動プレイは未実施です。以下の自動検証結果と区別します。
 
+## Minimal Climbing（9月8日）
+
+### Implemented
+
+- Grab中だけWASDを `UGrabComponent::Climb` へ渡し、W/Sを対象ActorローカルZ、A/Dを対象ActorローカルYとして `RelativeGrabTransform` の位置へ加算します。通常のCharacterMovementとの二重適用はありません。
+- `ClimbSpeed` の既定値は180cm/sです。対象ローカル位置をX=-650..650、Y=-350..350、Z=-350..650cmにClampします。複雑な表面投影は行いません。
+- HUDにClimbing操作と現在のローカルXYZを表示します。Acceptance specは `Docs/Acceptance/Climbing.feature`、専用テストは `Tools/Prototype.ps1 -Action Test -Climbing -TestFPS <30|60|120>` です。
+- 専用テストコードは上下左右、Boss回転後のローカル移動、実Boss Chase TickとClimbingの同時進行、Release、再Grab後のRetryを検査します。
+
+### Runtime Verified
+
+- **未検証（PASSではありません）。** この環境には `pwsh`、Windows版Unreal Engine 5.6.1のEditor/ビルドツールがないため、C++ビルドもClimbing / Grab / Smoke / Playthroughの実ワールドテストも起動できません。
+- コードとspecの静的確認のみ実施しました。Climbingの操作感、カメラ、Collision、30 / 60 / 120 FPSでの挙動はRuntime Verifiedではありません。
+
+| 再検証が必要なコマンド | 現在の結果 |
+| --- | --- |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Build` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Climbing -TestFPS 30 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Climbing -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Climbing -TestFPS 120 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Grab -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Playthrough -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+
 ## Grab / Moving Actor追従（9月8日）
 
 - 操作はEを押している間Grab、離すとReleaseです。石走りのActor中心から360cm以内でのみ開始できます。
@@ -12,7 +36,7 @@
 - **自動検証結果：未実施（PASSではありません）。** 2026-09-08に下表のコマンドを実行しましたが、すべて `pwsh: command not found`（終了コード127）で、UEプロセスは起動していません。RunIdとUEログは生成されていません。下記「実行結果」の既存PASSはGrab追加前の実績であり、今回の結果ではありません。
 - 実Boss確認を静的なTransform操作だけで済ませないため、GrabテストにBoss Tickを再有効化するChase追従シナリオを追加しました。このシナリオ自体もUE上では未実行です。
 - GUI、物理キーボード、マウスを利用できないため、手動確認も未実施です。
-- 現在の制限：中心距離だけの判定で、表面・部位・遮蔽を考慮しません。Climbing、Stamina、Grab専用アニメーションはありません。追従は相対Transformを外部更新できるため、次工程でClimbing位置更新を追加できる構造です。
+- 現在の制限：中心距離だけの判定で、表面・部位・遮蔽を考慮しません。StaminaとGrab / Climbing専用アニメーションはありません。Climbingは上記の直方体Clampによる最小実装です。
 
 ### Grab追加後の再検証試行
 
