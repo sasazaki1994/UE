@@ -4,6 +4,14 @@
 
 キーボード・マウスを使った手動の操作感評価と、10分間の連続手動プレイは未実施です。以下の自動検証結果と区別します。
 
+## Grab / Moving Actor追従（9月8日）
+
+- 操作はEを押している間Grab、離すとReleaseです。石走りのActor中心から360cm以内でのみ開始できます。
+- `UGrabComponent` が対象、開始ワールド位置、対象基準の相対Transform、Grab状態を保持します。Grab中はCharacterMovementを無効化し、対象の移動後に相対Transformから主人公のワールドTransformを再計算します。Release、被弾、Victory / Defeat、Retryでは必ず解除し、MovementをFallingへ戻します。
+- Acceptance specは `Docs/Acceptance/GrabFollow.feature`、自動検証は `Tools/Prototype.ps1 -Action Test -Grab -TestFPS 60` です。30 / 60 / 120 FPSで、実入力バインド経由のE、平行移動追従、90度回転追従、Release、再Grab後のRリセットを分離して検査します。
+- **自動検証結果：実装コンテナにはWindows版UEとPowerShellがないため、今回追加したGrabテストと既存UEテストの再実行は未実施です。** 下記はGrab追加前の既存プロトタイプの実績であり、今回のPASS結果ではありません。人間による手動プレイ評価も未実施で、Grabの操作感、見た目、面白さを確認済みとはしません。
+- 現在の制限：中心距離だけの判定で、表面・部位・遮蔽を考慮しません。Climbing、Stamina、Grab専用アニメーションはありません。追従は相対Transformを外部更新できるため、次工程でClimbing位置更新を追加できる構造です。
+
 ## 9月7日の変更
 
 - 壁で通常カメラが近づきすぎる場合と、通常カメラが猪の外観に埋まる場合に、主人公の上方720cmの視点へ切り替えます。切り替えの境界に余裕を設け、障害がなくなると通常視点へ戻します。

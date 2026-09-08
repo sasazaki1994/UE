@@ -34,7 +34,8 @@ void APrototypeHUD::DrawHUD()
     Line(FString::Printf(TEXT("%s  (%.2fs)"), *Boss->GetStateLabel(), Boss->GetStateTimeRemaining()), Boss->CanBeCountered() ? FLinearColor::Green : FLinearColor::White);
     Line(FString::Printf(TEXT("DODGE: %s   cooldown %.2fs"), Player->IsInvulnerable() ? TEXT("INVULNERABLE") : TEXT("ready when cooldown is zero"), Player->GetDodgeCooldown()), FLinearColor(0.4f, 0.85f, 1.f));
     Line(TEXT("WASD move | Mouse camera | LMB slash (camera direction)"));
-    Line(TEXT("Shift / RMB dodge + direction | Space jump | R retry"));
+    Line(FString::Printf(TEXT("E grab (hold): %s | Shift / RMB dodge | Space jump | R retry"), Player->IsGrabbing() ? TEXT("ON") : TEXT("OFF")),
+        Player->IsGrabbing() ? FLinearColor::Yellow : FLinearColor::White);
     Line(Player->GetFeedback(), FLinearColor::Yellow);
 
     const FString Hint = Boss->CanBeCountered() ? TEXT("COUNTER NOW - get close and slash!")

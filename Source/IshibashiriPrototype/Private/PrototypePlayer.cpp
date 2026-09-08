@@ -3,6 +3,7 @@
 #include "PrototypeGameMode.h"
 #include "PrimitiveAppearance.h"
 #include "ModelAppearance.h"
+#include "GrabComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -27,6 +28,7 @@ APrototypePlayer::APrototypePlayer()
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
     GetCharacterMovement()->JumpZVelocity = 500.f;
     GetCharacterMovement()->AirControl = 0.3f;
+    GrabComponent = CreateDefaultSubobject<UGrabComponent>(TEXT("GrabComponent"));
 
     SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraArm"));
     SpringArm->SetupAttachment(RootComponent);
@@ -131,6 +133,8 @@ void APrototypePlayer::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Jump"), IE_Pressed, this, &APrototypePlayer::TryJump);
     Input->BindAction(TEXT("Jump"), IE_Released, this, &ACharacter::StopJumping);
     Input->BindAction(TEXT("Retry"), IE_Pressed, this, &APrototypePlayer::Retry);
+    Input->BindAction(TEXT("Grab"), IE_Pressed, this, &APrototypePlayer::BeginGrab);
+    Input->BindAction(TEXT("Grab"), IE_Released, this, &APrototypePlayer::ReleaseGrab);
 }
 
 bool APrototypePlayer::CanAct() const
@@ -142,24 +146,40 @@ bool APrototypePlayer::CanAct() const
 void APrototypePlayer::MoveForward(float Value)
 {
     ForwardInput = Value;
-    if (CanAct() && Controller && !IsDodging())
+    if (CanAct() && Controller && !IsDodging() && !IsGrabbing())
         AddMovementInput(FRotationMatrix(FRotator(0.f, Controller->GetControlRotation().Yaw, 0.f)).GetUnitAxis(EAxis::X), Value);
 }
 
 void APrototypePlayer::MoveRight(float Value)
 {
     RightInput = Value;
-    if (CanAct() && Controller && !IsDodging())
+    if (CanAct() && Controller && !IsDodging() && !IsGrabbing())
         AddMovementInput(FRotationMatrix(FRotator(0.f, Controller->GetControlRotation().Yaw, 0.f)).GetUnitAxis(EAxis::Y), Value);
 }
 
 void APrototypePlayer::Turn(float Value) { AddControllerYawInput(Value); }
 void APrototypePlayer::LookUp(float Value) { AddControllerPitchInput(Value); }
-void APrototypePlayer::TryJump() { if (CanAct() && !IsDodging() && !IsAttacking()) Jump(); }
+void APrototypePlayer::TryJump() { if (CanAct() && !IsDodging() && !IsAttacking() && !IsGrabbing()) Jump(); }
+
+bool APrototypePlayer::IsGrabbing() const { return GrabComponent && GrabComponent->IsGrabbing(); }
+
+void APrototypePlayer::BeginGrab()
+{
+    if (!CanAct() || IsDodging() || IsGrabbing()) return;
+    const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
+    if (Mode && GrabComponent->TryGrab(Mode->GetBoss(), GrabDistance)) ShowFeedback(TEXT("GRABBING"));
+}
+
+void APrototypePlayer::ReleaseGrab()
+{
+    if (!IsGrabbing()) return;
+    GrabComponent->Release();
+    ShowFeedback(TEXT("RELEASED"));
+}
 
 void APrototypePlayer::Dodge()
 {
-    if (!CanAct() || IsDodging() || DodgeCooldownRemaining > 0.f || GetCharacterMovement()->IsFalling()) return;
+    if (!CanAct() || IsDodging() || IsGrabbing() || DodgeCooldownRemaining > 0.f || GetCharacterMovement()->IsFalling()) return;
     const FRotator Yaw(0.f, Controller ? Controller->GetControlRotation().Yaw : GetActorRotation().Yaw, 0.f);
     DodgeDirection = (FRotationMatrix(Yaw).GetUnitAxis(EAxis::X) * ForwardInput
         + FRotationMatrix(Yaw).GetUnitAxis(EAxis::Y) * RightInput).GetSafeNormal();
@@ -177,7 +197,7 @@ void APrototypePlayer::Dodge()
 
 void APrototypePlayer::Attack()
 {
-    if (!CanAct() || IsDodging() || AttackCooldownRemaining > 0.f) return;
+    if (!CanAct() || IsDodging() || IsGrabbing() || AttackCooldownRemaining > 0.f) return;
     AttackDirection = FRotator(0.f, Controller ? Controller->GetControlRotation().Yaw : GetActorRotation().Yaw, 0.f).Vector();
     SetActorRotation(AttackDirection.Rotation());
     AttackRemaining = AttackDuration;
@@ -212,6 +232,7 @@ void APrototypePlayer::TraceAttack()
 bool APrototypePlayer::ReceiveChargeHit(const FVector& From)
 {
     if (!CanAct() || IsInvulnerable()) return false;
+    ReleaseGrab();
     Health = FMath::Max(0, Health - 1);
     HurtInvulnerabilityRemaining = HurtInvulnerabilityDuration;
     AttackRemaining = 0.f;
@@ -295,6 +316,7 @@ void APrototypePlayer::ShowFeedback(const FString& Text)
 
 void APrototypePlayer::StopCombat()
 {
+    ReleaseGrab();
     StopJumping();
     DodgeRemaining = AttackRemaining = 0.f;
     // LaunchCharacter queues knockback for the next movement tick. Zeroing current
