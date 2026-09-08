@@ -9,6 +9,7 @@ class USpringArmComponent;
 class UStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class UAnimSequence;
+class UGrabComponent;
 
 UCLASS()
 class ISHIBASHIRIPROTOTYPE_API APrototypePlayer : public ACharacter
@@ -25,6 +26,8 @@ public:
     bool ReceiveChargeHit(const FVector& From);
     void Attack();
     void Dodge();
+    void BeginGrab();
+    void ReleaseGrab();
 
     int32 GetHealth() const { return Health; }
     bool IsDodging() const { return DodgeRemaining > 0.f; }
@@ -33,6 +36,8 @@ public:
     float GetDodgeCooldown() const { return DodgeCooldownRemaining; }
     bool IsUsingRaisedCamera() const { return bUsingRaisedCamera; }
     bool HasImportedVisuals() const;
+    bool IsGrabbing() const;
+    UGrabComponent* GetGrabComponent() const { return GrabComponent; }
     const FString& GetFeedback() const { return Feedback; }
 
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) int32 MaxHealth = 3;
@@ -47,6 +52,7 @@ public:
     UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="1")) float AttackRadius = 85.f;
     UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="100")) float MinimumCameraDistance = 300.f;
     UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="500")) float RaisedCameraHeight = 720.f;
+    UPROPERTY(EditAnywhere, Category="Grab", meta=(ClampMin="1")) float GrabDistance = 360.f;
 
 protected:
     virtual void BeginPlay() override;
@@ -67,6 +73,7 @@ private:
     UPROPERTY(VisibleAnywhere) TObjectPtr<UCameraComponent> Camera;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Body;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Sword;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> GrabComponent;
     UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> BodyMaterial;
     UPROPERTY() TArray<TObjectPtr<UMaterialInstanceDynamic>> ModelMaterials;
     UPROPERTY() TObjectPtr<UAnimSequence> IdleAnimation;

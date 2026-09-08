@@ -4,6 +4,7 @@
 #include "IshibashiriBoss.h"
 #include "PrototypeSmokeTest.h"
 #include "PrototypePlaythroughTest.h"
+#include "PrototypeGrabTest.h"
 #include "PrimitiveAppearance.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/DirectionalLightComponent.h"
@@ -66,9 +67,11 @@ void APrototypeGameMode::StartPlay()
         Controller->PlayerCameraManager->ViewPitchMax = 20.f;
     }
     RetryEncounter();
-    UE_LOG(LogTemp, Display, TEXT("Ishibashiri: arena ready. WASD / Mouse / Shift dodge / LMB attack / R retry."));
+    UE_LOG(LogTemp, Display, TEXT("Ishibashiri: arena ready. WASD / Mouse / E grab / Shift dodge / LMB attack / R retry."));
 #if !UE_BUILD_SHIPPING
-    if (FParse::Param(FCommandLine::Get(), TEXT("PrototypePlaythrough")))
+    if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeGrabTest")))
+        GetWorld()->SpawnActor<APrototypeGrabTest>();
+    else if (FParse::Param(FCommandLine::Get(), TEXT("PrototypePlaythrough")))
         GetWorld()->SpawnActor<APrototypePlaythroughTest>();
     else if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeSmokeTest")))
         GetWorld()->SpawnActor<APrototypeSmokeTest>();
