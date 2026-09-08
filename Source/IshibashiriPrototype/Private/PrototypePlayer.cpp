@@ -128,6 +128,8 @@ void APrototypePlayer::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAxis(TEXT("MoveRight"), this, &APrototypePlayer::MoveRight);
     Input->BindAxis(TEXT("Turn"), this, &APrototypePlayer::Turn);
     Input->BindAxis(TEXT("LookUp"), this, &APrototypePlayer::LookUp);
+    Input->BindAxis(TEXT("TurnRate"), this, &APrototypePlayer::TurnRate);
+    Input->BindAxis(TEXT("LookUpRate"), this, &APrototypePlayer::LookUpRate);
     Input->BindAction(TEXT("Dodge"), IE_Pressed, this, &APrototypePlayer::Dodge);
     Input->BindAction(TEXT("Attack"), IE_Pressed, this, &APrototypePlayer::Attack);
     Input->BindAction(TEXT("Jump"), IE_Pressed, this, &APrototypePlayer::TryJump);
@@ -159,6 +161,8 @@ void APrototypePlayer::MoveRight(float Value)
 
 void APrototypePlayer::Turn(float Value) { AddControllerYawInput(Value); }
 void APrototypePlayer::LookUp(float Value) { AddControllerPitchInput(Value); }
+void APrototypePlayer::TurnRate(float Value) { AddControllerYawInput(Value * GamepadCameraYawSpeed * GetWorld()->GetDeltaSeconds()); }
+void APrototypePlayer::LookUpRate(float Value) { AddControllerPitchInput(Value * GamepadCameraPitchSpeed * GetWorld()->GetDeltaSeconds()); }
 void APrototypePlayer::TryJump() { if (CanAct() && !IsDodging() && !IsAttacking() && !IsGrabbing()) Jump(); }
 
 bool APrototypePlayer::IsGrabbing() const { return GrabComponent && GrabComponent->IsGrabbing(); }

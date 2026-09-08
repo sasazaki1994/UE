@@ -4,6 +4,36 @@
 
 キーボード・マウスを使った手動の操作感評価と、10分間の連続手動プレイは未実施です。以下の自動検証結果と区別します。
 
+## Generic Gamepad対応（9月8日）
+
+### Gamepad mappings implemented
+
+- 左スティックを既存 `MoveForward` / `MoveRight` に追加しました。通常時はCharacterMovement、Grab中は同じ `ForwardInput` / `RightInput` から既存 `UGrabComponent::Climb` へ流れ、専用Climbing経路はありません。
+- 右スティックは `TurnRate` / `LookUpRate` とし、120 deg/s yaw、90 deg/s pitchをDeltaSecondsで積分します。右入力はyaw増加、上入力はpitch減少です。
+- A=Jump、B=Dodge、X=Attack、RB=Grab（Press/Release）、Y=Retryです。Space、Shift/RMB、LMB、E、RおよびWASD/Mouseは残しています。
+- 左右両スティックのX/Yに `AxisConfig` dead zone 0.20、Sensitivity 1.0、Exponent 1.0を設定しています。
+
+### Simulated gamepad test
+
+- `Docs/Acceptance/Gamepad.feature` と `PrototypeGamepadTest` を追加しました。0.15の無入力、0.25/0.5/1.0のアナログ強度、移動、カメラ符号、A/B/X、RB Grab/Climb/Release、Boss追従、Grab中Y Retryを実入力mapping経由で検査する設計です。
+- 起動コマンドは `Tools/Prototype.ps1 -Action Test -Gamepad -TestFPS 60` です。`-Gamepad` は `-Grab` / `-Climbing` / `-Playthrough` と排他です。
+- **未実行（PASSではありません）。** 現在のLinux環境には `pwsh` とWindows版Unreal Engineがないため、Simulated Gamepad InputをUE Runtime上で実行できませんでした。
+
+### UE runtime verified / Physical controller verified
+
+- **UE runtime verified: 未検証。** 今回のC++はビルド未実行で、Gamepad / Grab / Climbing / Smoke / Playthroughも再実行できていません。
+- **Physical controller verified: 未実施。** 物理XInputコントローラーおよびKB/Mとの途中切替は確認していません。実機確認後まで「Xbox Controller動作確認済み」とは扱いません。
+
+| 再検証コマンド | 現在の結果 |
+| --- | --- |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Build` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Gamepad -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Grab -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Climbing -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Playthrough -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+
+
 ## Minimal Climbing（9月8日）
 
 ### Implemented
