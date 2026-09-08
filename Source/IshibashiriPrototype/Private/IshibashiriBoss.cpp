@@ -2,6 +2,11 @@
 #include "PrototypeGameMode.h"
 #include "PrototypePlayer.h"
 #include "PrimitiveAppearance.h"
+#include "ColossusClimbingComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/BoxComponent.h"
+#include "Animation/AnimSequence.h"
+#include "Engine/SkeletalMesh.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "DrawDebugHelpers.h"
@@ -11,6 +16,24 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UObject/ConstructorHelpers.h"
 
+namespace
+{
+    // Coordinates in the authored mesh (centimeters, -Y forward); locations are
+    // transformed through the animated creature component each frame.
+    const FVector Route[] = {
+        {-270,-215,65}, {-292,-210,200}, {-288,-202,340},
+        {-213,-198,485}, {-178,-100,591}, {-95,-48,685},
+        {0,55,770}, {36,218,714}, {-122,305,668},
+        {218,-155,593}, {140,-60,666}
+    };
+    const int32 Neighbors[][4] = {
+        {1,-1,-1,-1}, {2,0,-1,-1}, {3,1,-1,-1}, {4,2,-1,-1},
+        {5,3,-1,-1}, {6,4,10,-1}, {7,5,-1,-1}, {8,6,-1,-1},
+        {-1,7,-1,-1}, {-1,10,-1,-1}, {9,5,9,5}
+    };
+    const FVector Cores[] = {{218,-155,611}, {0,60,784}, {-122,305,688}};
+}
+
 AIshibashiriBoss::AIshibashiriBoss()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -18,7 +41,7 @@ AIshibashiriBoss::AIshibashiriBoss()
     PrimaryActorTick.TickGroup = TG_PostPhysics;
     Collision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Collision"));
     SetRootComponent(Collision);
-    Collision->InitCapsuleSize(180.f, 210.f);
+    Collision->InitCapsuleSize(310.f, 350.f);
     Collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     Collision->SetCollisionObjectType(ECC_WorldDynamic);
     Collision->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -54,6 +77,47 @@ AIshibashiriBoss::AIshibashiriBoss()
     ColoredParts.Add(Part(TEXT("BackRightLeg"), Cube.Object, FVector(-115.f, 95.f, -140.f), FVector(0.65f, 0.65f, 1.3f)));
     Part(TEXT("LeftTusk"), Cone.Object, FVector(215.f, -115.f, -30.f), FVector(0.38f, 0.38f, 1.4f));
     Part(TEXT("RightTusk"), Cone.Object, FVector(215.f, 115.f, -30.f), FVector(0.38f, 0.38f, 1.4f));
+    // The original primitive parts remain as an asset-load fallback only.
+    Creature = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("RiggedIshibashiri"));
+    Creature->SetupAttachment(RootComponent);
+    Creature->SetRelativeLocation(FVector(0,0,-350));
+    Creature->SetRelativeRotation(FRotator(0,90,0));
+    Creature->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    Creature->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+    Creature->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+    static ConstructorHelpers::FObjectFinder<USkeletalMesh> Rigged(TEXT("/Game/Characters/Rigged/Ishibashiri/SK_Ishibashiri"));
+    Creature->SetSkeletalMesh(Rigged.Object);
+    const TCHAR* Clips[] = {TEXT("Idle"),TEXT("Walk"),TEXT("Charge"),TEXT("Buck"),TEXT("Calmed")};
+    for (const TCHAR* Clip : Clips)
+        CreatureAnimations.Add(LoadObject<UAnimSequence>(nullptr,*FString::Printf(TEXT("/Game/Characters/Rigged/Ishibashiri/AN_Ishibashiri_%s"),Clip)));
+    if (Rigged.Succeeded())
+    {
+        TArray<UStaticMeshComponent*> Parts; GetComponents(Parts);
+        for (UStaticMeshComponent* OldPart : Parts) OldPart->SetVisibility(false);
+    }
+    for (int32 I=0; I<3; ++I)
+    {
+        UStaticMeshComponent* Core = CreateDefaultSubobject<UStaticMeshComponent>(*FString::Printf(TEXT("CoreMarker%d"),I));
+        Core->SetupAttachment(Creature); Core->SetRelativeLocation(Cores[I]+FVector(0,0,40));
+        Core->SetRelativeScale3D(FVector(.35)); Core->SetStaticMesh(Sphere.Object);
+        Core->SetMaterial(0,Material.Object); Core->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        CoreMarkers.Add(Core);
+    }
+    GrabMarker = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ForelegGrabMarker"));
+    GrabMarker->SetupAttachment(Creature); GrabMarker->SetRelativeLocation(Route[0]+FVector(0,0,90));
+    GrabMarker->SetRelativeScale3D(FVector(.30)); GrabMarker->SetStaticMesh(Sphere.Object);
+    GrabMarker->SetMaterial(0,Material.Object); GrabMarker->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    for (int32 I=3; I<UE_ARRAY_COUNT(Route); ++I)
+    {
+        UBoxComponent* Ledge = CreateDefaultSubobject<UBoxComponent>(*FString::Printf(TEXT("ClimbLedge%d"),I));
+        Ledge->SetupAttachment(Creature); Ledge->SetRelativeLocation(Route[I]-FVector(0,0,18));
+        Ledge->SetBoxExtent(FVector(65,65,18));
+        Ledge->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        Ledge->SetCollisionObjectType(ECC_WorldDynamic);
+        Ledge->SetCollisionResponseToAllChannels(ECR_Ignore);
+        Ledge->SetCollisionResponseToChannel(ECC_Pawn,ECR_Block);
+        Ledge->SetCanEverAffectNavigation(false); LedgeCollision.Add(Ledge);
+    }
 }
 
 void AIshibashiriBoss::BeginPlay()
@@ -64,6 +128,10 @@ void AIshibashiriBoss::BeginPlay()
     if (BodyMaterial)
         for (UStaticMeshComponent* Part : ColoredParts) Part->SetMaterial(0, BodyMaterial);
     EnterState(EIshibashiriState::Chase);
+    for (UStaticMeshComponent* Core : CoreMarkers)
+        SetPrimitiveColor(Core->CreateDynamicMaterialInstance(0), FLinearColor(1,.015,.005));
+    SetPrimitiveColor(GrabMarker->CreateDynamicMaterialInstance(0), FLinearColor(1,.68,.05));
+    UpdateCreatureAnimation();
 }
 
 void AIshibashiriBoss::ResetForEncounter(const FTransform& Spawn, APrototypePlayer* Player)
@@ -72,11 +140,19 @@ void AIshibashiriBoss::ResetForEncounter(const FTransform& Spawn, APrototypePlay
     Health = MaxHealth;
     bCounterUsed = bChargeHitPlayer = false;
     VisualTime = 0.f;
+    RiderTime = 0.f; AnimationIndex = INDEX_NONE;
+    for (int32 I=0; I<3; ++I)
+    {
+        PurifiedCores[I] = false; CoreMarkers[I]->SetVisibility(true);
+        Creature->UnHideBoneByName(*FString::Printf(TEXT("core_%d"),I));
+    }
+    Creature->SetRelativeRotation(FRotator(0,90,0));
     ChargeDirection = Spawn.GetRotation().GetForwardVector();
     SetActorTransform(Spawn, false, nullptr, ETeleportType::TeleportPhysics);
     EnterState(EIshibashiriState::Chase);
     if (Target) AddTickPrerequisiteComponent(Target->GetCharacterMovement());
     UpdateVisuals();
+    UpdateCreatureAnimation();
 }
 
 void AIshibashiriBoss::EnterState(EIshibashiriState NewState)
@@ -108,6 +184,22 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
     const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Mode || !Mode->IsEncounterActive() || !IsValid(Target)) return;
     VisualTime += DeltaSeconds;
+    if (Target->GetClimbing()->IsClimbing())
+    {
+        RiderTime += DeltaSeconds;
+        // Continue moving under the rider. Turn inward before the full model
+        // reaches the arena edge, instead of aiming at the rider on our back.
+        if (GetActorLocation().Size2D() > Mode->ArenaHalfExtent-900.f)
+            SetActorRotation((-GetActorLocation()).GetSafeNormal2D().Rotation());
+        FHitResult Hit;
+        SetActorLocation(GetActorLocation()+GetActorForwardVector()*85.f*DeltaSeconds,true,&Hit);
+        if (Hit.bBlockingHit) AddActorWorldRotation(FRotator(0,90,0));
+        Creature->SetRelativeRotation(FRotator(IsBucking() ? FMath::Sin(RiderTime*19.f)*4.f : 0.f,90,0));
+        UpdateCreatureAnimation();
+        return;
+    }
+    RiderTime = 0.f;
+    Creature->SetRelativeRotation(FRotator(0,90,0));
     // Bound movement steps and carry excess time into the next state at low frame rates.
     float Remaining = DeltaSeconds;
     while (Remaining > KINDA_SMALL_NUMBER && State != EIshibashiriState::Calmed)
@@ -154,11 +246,12 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
         }
     }
     UpdateVisuals();
+    UpdateCreatureAnimation();
 }
 
 void AIshibashiriBoss::CheckChargeHit(const FVector& Start, const FVector& End)
 {
-    if (bChargeHitPlayer || !Target) return;
+    if (bChargeHitPlayer || !Target || Target->GetClimbing()->IsClimbing()) return;
     TArray<FHitResult> Hits;
     FCollisionQueryParams Params(SCENE_QUERY_STAT(BossCharge), false, this);
     FCollisionObjectQueryParams Objects;
@@ -187,6 +280,7 @@ bool AIshibashiriBoss::TryReceiveCounter()
         Mode->FinishEncounter(true);
     }
     UpdateVisuals();
+    UpdateCreatureAnimation();
     return true;
 }
 
@@ -196,7 +290,7 @@ void AIshibashiriBoss::UpdateVisuals()
     if (State == EIshibashiriState::Telegraph)
     {
         Color = FMath::Sin(VisualTime * 32.f) > 0.f ? FLinearColor(1.f, 0.025f, 0.01f) : FLinearColor(0.35f, 0.01f, 0.01f);
-        const FVector Start = GetActorLocation() - FVector(0.f, 0.f, 203.f);
+        const FVector Start = GetActorLocation() - FVector(0.f, 0.f, 343.f);
         DrawDebugDirectionalArrow(GetWorld(), Start, Start + GetActorForwardVector() * ChargeSpeed * MaxChargeDuration,
             140.f, FColor::Red, false, -1.f, 0, 8.f);
     }
@@ -209,6 +303,9 @@ void AIshibashiriBoss::UpdateVisuals()
 
 FString AIshibashiriBoss::GetStateLabel() const
 {
+    if (IsBucking()) return TEXT("SHAKING - HOLD E!");
+    if (IsBuckWarning()) return TEXT("SHAKE INCOMING - HOLD E!");
+    if (Target && Target->GetClimbing()->IsClimbing()) return TEXT("CARRYING RIDER - purify the three red cores");
     switch (State)
     {
     case EIshibashiriState::Chase: return TEXT("CHASE");
@@ -217,5 +314,55 @@ FString AIshibashiriBoss::GetStateLabel() const
     case EIshibashiriState::Recover: return bCounterUsed ? TEXT("RECOVERY - counter already used") : TEXT("RECOVERY - COUNTER NOW!");
     case EIshibashiriState::Calmed: return TEXT("CALMED");
     default: return TEXT("UNKNOWN");
+    }
+}
+
+FVector AIshibashiriBoss::GetClimbPosition(int32 Node) const
+{
+    if (Node < 0 || Node >= UE_ARRAY_COUNT(Route)) return GetActorLocation();
+    // Add the character capsule half-height in world space, not the tilted
+    // mesh frame, so the rider stays upright when the creature shakes.
+    return Creature->GetComponentTransform().TransformPosition(Route[Node])+FVector(0,0,88);
+}
+int32 AIshibashiriBoss::GetClimbNeighbor(int32 Node, int32 Direction) const
+{
+    return Node >= 0 && Node < UE_ARRAY_COUNT(Route) && Direction >= 0 && Direction < 4 ? Neighbors[Node][Direction] : INDEX_NONE;
+}
+bool AIshibashiriBoss::IsBucking() const { return RiderTime > 0.f && FMath::Fmod(RiderTime,12.f) >= 10.f; }
+bool AIshibashiriBoss::IsBuckWarning() const
+{
+    const float Phase = FMath::Fmod(RiderTime,12.f); return RiderTime > 0.f && Phase >= 8.f && Phase < 10.f;
+}
+int32 AIshibashiriBoss::GetPurifiedCount() const
+{
+    return int32(PurifiedCores[0])+int32(PurifiedCores[1])+int32(PurifiedCores[2]);
+}
+bool AIshibashiriBoss::TryPurifyCore(const FVector& Position)
+{
+    APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
+    if (!Mode || !Mode->IsEncounterActive() || !Target || !Target->GetClimbing()->IsResting() || IsBucking()) return false;
+    for (int32 I=0; I<3; ++I)
+    {
+        const FVector WorldCore = Creature->GetComponentTransform().TransformPosition(Cores[I]);
+        if (!PurifiedCores[I] && FVector::Dist(Position,WorldCore) < 170.f)
+        {
+            PurifiedCores[I] = true; CoreMarkers[I]->SetVisibility(false);
+            Creature->HideBoneByName(*FString::Printf(TEXT("core_%d"),I),EPhysBodyOp::PBO_None);
+            Health = FMath::Max(0,Health-1);
+            if (Health == 0) { EnterState(EIshibashiriState::Calmed); Mode->FinishEncounter(true); }
+            UpdateCreatureAnimation();
+            return true;
+        }
+    }
+    return false;
+}
+void AIshibashiriBoss::UpdateCreatureAnimation()
+{
+    const bool Rider = Target && Target->GetClimbing()->IsClimbing();
+    int32 Next = State == EIshibashiriState::Calmed ? 4 : IsBucking() ? 3
+        : Rider ? 1 : State == EIshibashiriState::Charge ? 2 : State == EIshibashiriState::Chase ? 1 : 0;
+    if (Next != AnimationIndex && CreatureAnimations.IsValidIndex(Next) && CreatureAnimations[Next])
+    {
+        AnimationIndex = Next; Creature->PlayAnimation(CreatureAnimations[Next],Next != 4);
     }
 }

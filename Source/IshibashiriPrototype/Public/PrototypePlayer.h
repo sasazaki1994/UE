@@ -8,6 +8,8 @@ class UCameraComponent;
 class USpringArmComponent;
 class UStaticMeshComponent;
 class UMaterialInstanceDynamic;
+class UColossusClimbingComponent;
+class UAnimSequence;
 
 UCLASS()
 class ISHIBASHIRIPROTOTYPE_API APrototypePlayer : public ACharacter
@@ -24,6 +26,7 @@ public:
     bool ReceiveChargeHit(const FVector& From);
     void Attack();
     void Dodge();
+    UColossusClimbingComponent* GetClimbing() const { return Climbing; }
 
     int32 GetHealth() const { return Health; }
     bool IsDodging() const { return DodgeRemaining > 0.f; }
@@ -39,7 +42,7 @@ public:
     UPROPERTY(EditAnywhere, Category="Combat|Dodge", meta=(ClampMin="0.01")) float DodgeDuration = 0.28f;
     UPROPERTY(EditAnywhere, Category="Combat|Dodge", meta=(ClampMin="0")) float DodgeCooldown = 0.55f;
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="0")) float HurtInvulnerabilityDuration = 0.85f;
-    UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="0.01")) float AttackDuration = 0.32f;
+    UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="0.01")) float AttackDuration = 0.53f;
     UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="0")) float AttackCooldown = 0.48f;
     UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="1")) float AttackReach = 210.f;
     UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="1")) float AttackRadius = 85.f;
@@ -59,12 +62,19 @@ private:
     void TraceAttack();
     bool CanAct() const;
     void ShowFeedback(const FString& Text);
+    void UpdateAnimation();
+    void GrabPressed();
+    void GrabReleased();
 
     UPROPERTY(VisibleAnywhere) TObjectPtr<USpringArmComponent> SpringArm;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UCameraComponent> Camera;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Body;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Sword;
     UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> BodyMaterial;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UColossusClimbingComponent> Climbing;
+    UPROPERTY() TArray<TObjectPtr<UAnimSequence>> Animations;
+    int32 CurrentAnimation = INDEX_NONE;
+    bool bWeaponHidden = false;
     int32 Health = 3;
     float ForwardInput = 0.f;
     float RightInput = 0.f;

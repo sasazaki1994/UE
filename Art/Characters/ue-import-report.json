@@ -1,0 +1,24 @@
+{
+  "level": "/Game/Maps/L_CharacterStudies",
+  "static_meshes": [
+    {
+      "name": "Shirotsura",
+      "asset": "/Game/Characters/DesignStudies/Shirotsura/SM_Shirotsura.SM_Shirotsura",
+      "dimensions_cm": [
+        130.6173553466797,
+        34.32345199584961,
+        172.2999910712242
+      ]
+    },
+    {
+      "name": "Ishibashiri",
+      "asset": "/Game/Characters/DesignStudies/Ishibashiri/SM_Ishibashiri.SM_Ishibashiri",
+      "dimensions_cm": [
+        704.3053588867188,
+        1218.4825439453125,
+        939.7868502140045
+      ]
+    }
+  ],
+  "render_checked": false
+}

@@ -1,0 +1,207 @@
+#include "ClimbingIntegrationTest.h"
+#include "PrototypeGameMode.h"
+#include "PrototypePlayer.h"
+#include "IshibashiriBoss.h"
+#include "ColossusClimbingComponent.h"
+#include "Animation/AnimSingleNodeInstance.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PlayerController.h"
+#include "InputKeyEventArgs.h"
+#include "Engine/World.h"
+#include "HAL/FileManager.h"
+#include "HAL/PlatformMisc.h"
+#include "Misc/App.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
+#include "Misc/Paths.h"
+#include "UnrealClient.h"
+
+AClimbingIntegrationTest::AClimbingIntegrationTest()
+{
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.TickGroup = TG_PostUpdateWork;
+}
+void AClimbingIntegrationTest::BeginPlay()
+{
+    Super::BeginPlay();
+    FParse::Value(FCommandLine::Get(),TEXT("PrototypeTestRun="),RunId);
+    int32 FPS=60; FParse::Value(FCommandLine::Get(),TEXT("PrototypeTestFPS="),FPS);
+    FApp::SetUseFixedTimeStep(true); FApp::SetFixedDeltaTime(1.0/FMath::Clamp(FPS,15,240));
+    bCapture=FParse::Param(FCommandLine::Get(),TEXT("PrototypeCapture"));
+    Mode=GetWorld()->GetAuthGameMode<APrototypeGameMode>();
+    if (!Check(Mode && Mode->GetPlayer() && Mode->GetBoss(),TEXT("Encounter spawned"))) return;
+    AddTickPrerequisiteComponent(Mode->GetPlayer()->GetClimbing());
+    SetupGrab();
+    UE_LOG(LogTemp,Display,TEXT("CLIMB_TEST_BEGIN %s"),*RunId);
+}
+void AClimbingIntegrationTest::Hold(const FKey& Key,bool Down)
+{
+    if (Held.Contains(Key)==Down) return;
+    APlayerController* PC=Cast<APlayerController>(Mode->GetPlayer()->GetController());
+    PC->InputKey(FInputKeyEventArgs::CreateSimulated(Key,Down?IE_Pressed:IE_Released,Down?1.f:0.f));
+    if (Down) Held.Add(Key); else Held.Remove(Key);
+}
+void AClimbingIntegrationTest::Tap(const FKey& Key) { Hold(Key,true); Release.Add(Key); }
+void AClimbingIntegrationTest::Next(int32 Value) { Phase=Value;Time=0.f; }
+bool AClimbingIntegrationTest::Check(bool Condition,const TCHAR* Description)
+{
+    if (!Condition)
+    {
+        UE_LOG(LogTemp,Error,TEXT("CLIMB_TEST_FAIL %s phase=%d: %s"),*RunId,Phase,Description);
+        bFinished=true; FPlatformMisc::RequestExitWithStatus(false,1);
+    }
+    else UE_LOG(LogTemp,Display,TEXT("CLIMB_CHECK %s: %s"),*RunId,Description);
+    return Condition;
+}
+void AClimbingIntegrationTest::SetupGrab()
+{
+    for (const FKey& Key: Held.Array()) Hold(Key,false);
+    Mode->RetryEncounter(); Mode->GetBoss()->SetActorTickEnabled(false);
+    APrototypePlayer* P=Mode->GetPlayer();
+    FVector Entry=Mode->GetBoss()->GetClimbPosition(0); Entry.Z=92;
+    P->SetActorLocation(Entry+FVector(210,0,0));
+    P->GetController()->SetControlRotation(FRotator(-12,180,0));
+    BeforeFoot=P->GetMesh()->GetBoneLocation(TEXT("foot_L"),EBoneSpaces::ComponentSpace);
+}
+void AClimbingIntegrationTest::Shot(const TCHAR* Name)
+{
+    if (!bCapture) return;
+    FString Dir=FPaths::ProjectSavedDir()/TEXT("Screenshots/Climbing")/RunId;
+    IFileManager::Get().MakeDirectory(*Dir,true);
+    FScreenshotRequest::RequestScreenshot(Dir/(FString(Name)+TEXT(".png")),false,false);
+}
+void AClimbingIntegrationTest::Tick(float Dt)
+{
+    Super::Tick(Dt); if (bFinished || !Mode) return;
+    for (const FKey& Key:Release) Hold(Key,false); Release.Empty();
+    Time+=Dt;Total+=Dt;
+    auto P=Mode->GetPlayer();auto B=Mode->GetBoss();auto C=P->GetClimbing();
+    if (Total>180.f) { Check(false,TEXT("Integration test timeout")); return; }
+    switch (Phase)
+    {
+    case 0:
+        if (Time>.3f)
+        {
+            if (!Check(P->GetMesh()->GetNumBones()>=19 && B->GetVisualMesh()->GetNumBones()>=20,TEXT("Both deformation skeletons loaded"))) return;
+            if (!Check(P->GetMesh()->GetSingleNodeInstance() && P->GetMesh()->GetSingleNodeInstance()->GetCurrentAsset(),TEXT("Player animation is playing"))) return;
+            Shot(TEXT("01-Ground"));Hold(EKeys::W,true);Next(1);
+        } break;
+    case 1:
+        if (Time>.35f)
+        {
+            Hold(EKeys::W,false);
+            if (!Check(!P->GetMesh()->GetBoneLocation(TEXT("foot_L"),EBoneSpaces::ComponentSpace).Equals(BeforeFoot,.05f),TEXT("Locomotion changes foot bone pose"))) return;
+            Tap(EKeys::E);Next(2);
+        } break;
+    case 2:
+        if (Time>.12f)
+        {
+            if (!Check(C->IsClimbing() && C->GetNode()==0,TEXT("E mounts from ground after movement input"))) return;
+            BeforeBoss=B->GetActorLocation(); B->SetActorTickEnabled(true);
+            Hold(EKeys::E,true);Hold(EKeys::W,true);Next(3);
+        } break;
+    case 3:
+        if (C->GetNode()==3 && !C->IsMoving())
+        {
+            Hold(EKeys::W,false);BeforeStamina=C->GetStamina();Shot(TEXT("02-FirstLedge"));Next(4);
+        } break;
+    case 4:
+        if (Time>1.f)
+        {
+            if (!Check(C->GetStamina()>BeforeStamina,TEXT("Safe ledge restores stamina"))) return;
+            if (!Check(FVector::Dist(BeforeBoss,B->GetActorLocation())>50 && FVector::Dist(P->GetActorLocation(),B->GetClimbPosition(3))<3,TEXT("Rider follows moving creature"))) return;
+            B->AddActorWorldRotation(FRotator(0,35,0));Next(5);
+        } break;
+    case 5:
+        if (Time>.1f)
+        {
+            if (!Check(FVector::Dist(P->GetActorLocation(),B->GetClimbPosition(3))<3,TEXT("Rider follows creature rotation"))) return;
+            Hold(EKeys::W,true);Next(6);
+        } break;
+    case 6:
+        if (C->GetNode()==5 && !C->IsMoving()) { Hold(EKeys::W,false);Hold(EKeys::D,true);Next(7); } break;
+    case 7:
+        if (C->GetNode()==10 && !C->IsMoving()) { Hold(EKeys::D,false);Hold(EKeys::W,true);Next(8); } break;
+    case 8:
+        if (C->GetNode()==9 && !C->IsMoving()) { Hold(EKeys::W,false);Next(9); } break;
+    case 9:
+        if (!B->IsBucking() && Time>.6f) { Tap(EKeys::LeftMouseButton);Shot(TEXT("03-ShoulderCore"));Next(10); } break;
+    case 10:
+        if (Time>.6f)
+        {
+            if (!Check(B->GetPurifiedCount()==1,TEXT("Branch leads to first purifiable core"))) return;
+            Tap(EKeys::LeftMouseButton);Next(11);
+        } break;
+    case 11:
+        if (Time>.6f)
+        {
+            if (!Check(B->GetPurifiedCount()==1,TEXT("Purified core cannot be damaged twice"))) return;
+            Hold(EKeys::S,true);Next(12);
+        } break;
+    case 12:
+        if (C->GetNode()==5 && !C->IsMoving()) { Hold(EKeys::S,false);Hold(EKeys::W,true);Next(13); } break;
+    case 13:
+        if (C->GetNode()==6 && !C->IsMoving()) { Hold(EKeys::W,false);Next(14); } break;
+    case 14:
+        if (!B->IsBucking() && Time>.6f) { Tap(EKeys::LeftMouseButton);Shot(TEXT("04-Summit"));Next(15); } break;
+    case 15:
+        if (Time>.6f)
+        {
+            if (!Check(B->GetPurifiedCount()==2,TEXT("Summit core purified after braced climbing"))) return;
+            Hold(EKeys::W,true);Next(16);
+        } break;
+    case 16:
+        if (C->GetNode()==8 && !C->IsMoving()) { Hold(EKeys::W,false);Next(17); } break;
+    case 17:
+        if (!B->IsBucking() && Time>.6f) { Tap(EKeys::LeftMouseButton);Next(18); } break;
+    case 18:
+        if (Time>.6f)
+        {
+            if (!Check(Mode->GetResult()==EEncounterResult::Victory && B->GetPurifiedCount()==3,TEXT("Three distinct cores finish encounter"))) return;
+            Shot(TEXT("05-Victory"));Tap(EKeys::R);Next(19);
+        } break;
+    case 19:
+        if (Time>.3f)
+        {
+            if (!Check(Mode->IsEncounterActive() && !C->IsClimbing() && C->GetStamina()==100 && B->GetPurifiedCount()==0,TEXT("R resets victory, attachment, stamina and cores"))) return;
+            SetupGrab();Tap(EKeys::E);Next(20);
+        } break;
+    case 20:
+        if (Time>.15f)
+        {
+            if (!Check(C->IsClimbing(),TEXT("Can grab again after retry"))) return;
+            Tap(EKeys::SpaceBar);Next(21);
+        } break;
+    case 21:
+        if (Time>.15f)
+        {
+            if (!Check(!C->IsClimbing() && P->GetCharacterMovement()->IsFalling(),TEXT("Space detaches and restores falling movement"))) return;
+            SetupGrab();Tap(EKeys::E);Next(22);
+        } break;
+    case 22:
+        if (Time>.15f) { Hold(EKeys::E,true);Next(23); } break;
+    case 23:
+        if (!C->IsClimbing())
+        {
+            if (!Check(C->GetStamina()<1.f,TEXT("Exhausted stamina forces detachment"))) return;
+            SetupGrab();Tap(EKeys::E);Next(24);
+        } break;
+    case 24:
+        if (Time>.15f) { B->SetActorTickEnabled(true);Hold(EKeys::W,true);Next(25); } break;
+    case 25:
+        if (C->GetNode()==3 && !C->IsMoving()) { Hold(EKeys::W,false);Hold(EKeys::E,false);Next(26); } break;
+    case 26:
+        if (!C->IsClimbing())
+        {
+            if (!Check(B->IsBucking() && C->GetStamina()>0,TEXT("Unbraced shaking throws rider off before exhaustion"))) return;
+            Shot(TEXT("06-ThrownOff"));Next(27);
+        } break;
+    case 27:
+        if (Time>.3f)
+        {
+            UE_LOG(LogTemp,Display,TEXT("CLIMB_TEST_PASS %s %.2fs"),*RunId,Total);
+            bFinished=true;FPlatformMisc::RequestExitWithStatus(false,0);
+        } break;
+    }
+}

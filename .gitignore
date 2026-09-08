@@ -12,6 +12,7 @@
 /Content/Maps/L_Prototype_01.umap
 /Tools/__pycache__/
 /Artifacts/
+/Art/*.zip
 /compile_commands.json
 /.cache/
 /IshibashiriPrototype.code-workspace

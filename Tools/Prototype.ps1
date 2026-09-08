@@ -6,6 +6,7 @@ param(
     [switch]$SkipBuild,
     [switch]$Capture,
     [switch]$Playthrough,
+    [switch]$Climbing,
     [ValidateRange(0, 3600)][int]$TestSeconds = 0,
     [ValidateRange(15, 240)][int]$TestFPS = 60
 )
@@ -67,7 +68,8 @@ function Ensure-Map {
 }
 
 try {
-    if (($Playthrough -or $TestSeconds -gt 0) -and $Action -ne 'Test') { throw '-Playthrough and -TestSeconds require -Action Test.' }
+    if (($Playthrough -or $Climbing -or $TestSeconds -gt 0) -and $Action -ne 'Test') { throw '-Climbing, -Playthrough and -TestSeconds require -Action Test.' }
+    if ($Climbing -and $Playthrough) { throw 'Choose Climbing or Playthrough, not both.' }
     if ($TestSeconds -gt 0 -and !$Playthrough) { throw '-TestSeconds requires -Playthrough.' }
     $ResolvedEngine = Find-Engine
     $BuildTool = Join-Path $ResolvedEngine 'Engine\Build\BatchFiles\Build.bat'
@@ -117,10 +119,10 @@ try {
         'Test' {
             $LogDir = Join-Path $ProjectRoot 'Saved\Logs'
             New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
-            $LogName = if ($Playthrough) { "PrototypePlaythrough-$TestFPS.log" } elseif ($Capture) { "PrototypeVisual-$TestFPS.log" } else { "PrototypeSmoke-$TestFPS.log" }
+            $LogName = if ($Climbing) { "ClimbingTest-$TestFPS.log" } elseif ($Playthrough) { "PrototypePlaythrough-$TestFPS.log" } elseif ($Capture) { "PrototypeVisual-$TestFPS.log" } else { "PrototypeSmoke-$TestFPS.log" }
             $LogFile = Join-Path $LogDir $LogName
             $RunId = [guid]::NewGuid().ToString('N')
-            $TestFlag = if ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
+            $TestFlag = if ($Climbing) { '-ClimbingTest' } elseif ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
             $TestArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01', '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
             if ($Capture) {
                 $TestArguments += @('-PrototypeCapture', '-RenderOffscreen', '-windowed', '-ResX=1280', '-ResY=800', '-ExecCmds=t.MaxFPS 60')
@@ -128,13 +130,14 @@ try {
                 $TestArguments += '-nullrhi'
             }
             Invoke-Checked $EditorCmd $TestArguments
-            if (!(Select-String -LiteralPath $LogFile -SimpleMatch "PROTOTYPE_TEST_PASS $RunId" -Quiet)) {
+            $PassMarker = if ($Climbing) { "CLIMB_TEST_PASS $RunId" } else { "PROTOTYPE_TEST_PASS $RunId" }
+            if (!(Select-String -LiteralPath $LogFile -SimpleMatch $PassMarker -Quiet)) {
                 throw "Smoke test did not report success for this run. Read $LogFile"
             }
             Write-Host "Test passed: $LogFile"
             if ($Capture) {
-                $CaptureDir = Join-Path $ProjectRoot "Saved\Screenshots\Prototype\$RunId"
-                $ShotNames = if ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera') }
+                $CaptureDir = if ($Climbing) { Join-Path $ProjectRoot "Saved\Screenshots\Climbing\$RunId" } else { Join-Path $ProjectRoot "Saved\Screenshots\Prototype\$RunId" }
+                $ShotNames = if ($Climbing) { @('01-Ground','02-FirstLedge','03-ShoulderCore','04-Summit','05-Victory','06-ThrownOff') } elseif ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera') }
                 foreach ($Name in $ShotNames) {
                     $Shot = Get-Item -LiteralPath (Join-Path $CaptureDir "$Name.png") -ErrorAction Stop
                     if ($Shot.Length -lt 100) { throw "Screenshot is empty: $($Shot.FullName)" }
