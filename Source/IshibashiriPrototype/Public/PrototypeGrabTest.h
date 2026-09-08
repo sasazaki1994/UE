@@ -20,7 +20,7 @@ protected:
     virtual void BeginPlay() override;
 
 private:
-    enum class EPhase : uint8 { Press, FollowTranslation, FollowRotation, Release, Regrab, Retry, Done };
+    enum class EPhase : uint8 { Press, FollowTranslation, FollowRotation, FollowBossAI, Release, Regrab, Retry, Done };
     bool Require(bool Condition, const TCHAR* Message);
     void SendKey(const FKey& Key, EInputEvent Event);
     void Next(EPhase NewPhase);
@@ -31,6 +31,7 @@ private:
     float Elapsed = 0.f;
     float TotalElapsed = 0.f;
     FTransform ExpectedRelative = FTransform::Identity;
+    FVector BossAIStartLocation = FVector::ZeroVector;
     FVector RetryLocation = FVector::ZeroVector;
     FString RunId;
 };
