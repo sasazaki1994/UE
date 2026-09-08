@@ -34,10 +34,10 @@ void APrototypeHUD::DrawHUD()
     Line(FString::Printf(TEXT("PLAYER HP  %d / %d       BOSS HP  %d / %d"), Player->GetHealth(), Player->MaxHealth, Boss->GetHealth(), Boss->MaxHealth));
     Line(FString::Printf(TEXT("%s  (%.2fs)"), *Boss->GetStateLabel(), Boss->GetStateTimeRemaining()), Boss->CanBeCountered() ? FLinearColor::Green : FLinearColor::White);
     Line(FString::Printf(TEXT("DODGE: %s   cooldown %.2fs"), Player->IsInvulnerable() ? TEXT("INVULNERABLE") : TEXT("ready when cooldown is zero"), Player->GetDodgeCooldown()), FLinearColor(0.4f, 0.85f, 1.f));
-    Line(Player->IsGrabbing() ? TEXT("CLIMB W/A/S/D (target local space) | Release E")
-        : TEXT("WASD move | Mouse camera | LMB slash (camera direction)"));
-    Line(FString::Printf(TEXT("E grab (hold): %s | Shift / RMB dodge | Space jump | R retry"), Player->IsGrabbing() ? TEXT("ON") : TEXT("OFF")),
+    Line(TEXT("Move/Climb: WASD / Left Stick | Camera: Mouse / Right Stick"));
+    Line(FString::Printf(TEXT("Attack: LMB / X | Dodge: Shift/RMB / B | Grab: E / RB (%s)"), Player->IsGrabbing() ? TEXT("ON") : TEXT("OFF")),
         Player->IsGrabbing() ? FLinearColor::Yellow : FLinearColor::White);
+    Line(TEXT("Jump: Space / A | Retry: R / Y"));
     Line(Player->GetFeedback(), FLinearColor::Yellow);
     if (Player->IsGrabbing())
     {
@@ -60,7 +60,7 @@ void APrototypeHUD::DrawHUD()
         DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.9f), Left, Top, BoxWidth, 145.f * Scale);
         DrawText(bVictory ? TEXT("VICTORY - Ishibashiri is calmed") : TEXT("DEFEAT"), bVictory ? FLinearColor::Green : FLinearColor::Red,
             Left + 24.f * Scale, Top + 24.f * Scale, GEngine->GetMediumFont(), 1.4f * Scale, false);
-        DrawText(TEXT("R - Retry encounter"), FLinearColor::White,
+        DrawText(TEXT("R / Y - Retry encounter"), FLinearColor::White,
             Left + 24.f * Scale, Top + 83.f * Scale, GEngine->GetMediumFont(), 1.2f * Scale, false);
     }
 }

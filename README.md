@@ -43,13 +43,13 @@ Visual StudioのIDEを開く必要はありませんが、**MSVC / Windows SDK�
 
 | 操作 | キー |
 | --- | --- |
-| 移動 / Climbing | 通常時WASD（カメラ基準）。E保持中はW/Sで主ローカル上下、A/Dで主ローカル左右 |
-| カメラ | マウス |
-| 回避 | Shift / マウス右。WASDで方向を指定、無入力ならキャラクター正面 |
-| 刀攻撃 | マウス左。カメラの水平方向へ攻撃 |
-| ジャンプ | Space |
-| Grab | Eを押している間（離すとRelease） |
-| 戦闘を最初から | R（戦闘中・勝利後・敗北後すべて可） |
+| 移動 / Climbing | WASD / 左スティック。通常時はカメラ基準移動、Grab中は主ローカル上下左右 |
+| カメラ | マウス / 右スティック |
+| 回避 | Shift / マウス右 / B。移動入力で方向を指定、無入力ならキャラクター正面 |
+| 刀攻撃 | マウス左 / X。カメラの水平方向へ攻撃 |
+| ジャンプ | Space / A |
+| Grab | E / RBを押している間（離すとRelease） |
+| 戦闘を最初から | R / Y（戦闘中・勝利後・敗北後すべて可） |
 | Standalone終了 | Alt+F4 |
 
 猪が赤く点滅し、床に予告の矢印が出ます。予告の**終了時**に進行方向を固定するので、その前に回避し終えると狙い直されます。突進が始まる瞬間に横回避し、通り過ぎた猪を追い、緑色の硬直中に接近して攻撃します。刀の水色のカプセル表示が判定範囲です。
@@ -60,7 +60,7 @@ Visual StudioのIDEを開く必要はありませんが、**MSVC / Windows SDK�
 
 - 三人称移動・カメラ、短距離回避、回避中の無敵、被弾後の無敵、近接攻撃。
 - 主の中心から360cm以内でEを押すとGrabし、Eを離すとRelease。Grab中は対象基準の相対Transformを保持するため、主の移動と回転に追従します。
-- Grab中のWASDは通常移動ではなくClimbingへ切り替わり、速度180cm/sで対象ローカルのZ（上下）とY（左右）を更新します。相対位置はX=-650..650、Y=-350..350、Z=-350..650cmにClampします。
+- Grab中のWASD / 左スティックは共通のMoveForward / MoveRight軸を通り、通常移動ではなくClimbingへ切り替わります。左スティックは0.20のデッドゾーンを持ち、倒し量を保ったまま速度180cm/sで対象ローカルのZ（上下）とY（左右）を更新します。相対位置はX=-650..650、Y=-350..350、Z=-350..650cmにClampします。
 - 壁際でカメラが近づきすぎる場合や猪の内部に入る場合は上方視点へ切り替え、障害がなくなると通常視点へ戻ります。勝敗確定後も動作します。
 - 猪の追尾→1秒の予告→方向固定の直線突進→壁または時間で停止→1.65秒の硬直。
 - 硬直中だけ、1硬直につき1ダメージ。突進による被弾も1突進につき最大1回。
@@ -83,6 +83,7 @@ Visual StudioのIDEを開く必要はありませんが、**MSVC / Windows SDK�
 | `Source/IshibashiriPrototype/Public/PrototypePlaythroughTest.h`、`Private/PrototypePlaythroughTest.cpp` | 瞬間移動や戦闘関数の直接呼び出しを使わない、入力だけの連続攻略検査 |
 | `Source/IshibashiriPrototype/Public/PrototypeGrabTest.h`、`Private/PrototypeGrabTest.cpp` | E/R入力経由のGrab・移動/回転追従・Release・Retry検査 |
 | `Source/IshibashiriPrototype/Public/PrototypeClimbingTest.h`、`Private/PrototypeClimbingTest.cpp` | WASD入力経由のローカル上下左右Climbing・回転・実Boss Tick・Release・Retry検査 |
+| `Source/IshibashiriPrototype/Public/PrototypeGamepadTest.h`、`Private/PrototypeGamepadTest.cpp` | Generic Gamepad模擬入力による移動・カメラ・各Action・Grab / Climbing / Retry検査 |
 | `Source/IshibashiriPrototype/Private/PrimitiveAppearance.h` | 標準マテリアルの色設定 |
 | `Source/IshibashiriPrototype/Private/IshibashiriPrototype.cpp` | ゲームモジュール登録 |
 | `Source/IshibashiriPrototype/IshibashiriPrototype.Build.cs` | モジュールの依存関係 |
@@ -117,6 +118,9 @@ PythonはEditorで空のマップを保存するためだけに使います。�
 # Grab→Climbing→回転/実AI追従→Release/Retryの専用検査
 .\Tools\Prototype.ps1 -Action Test -Climbing -TestFPS 60 -SkipBuild
 
+# Generic Gamepad模擬入力の専用検査（物理コントローラー検査ではない）
+.\Tools\Prototype.ps1 -Action Test -Gamepad -TestFPS 60 -SkipBuild
+
 # 実際に描画し、戦闘5場面とカメラ2場面をSaved/Screenshots/Prototype/<RunId>へ保存
 .\Tools\Prototype.ps1 -Action Test -TestFPS 60 -Capture -SkipBuild
 
@@ -137,6 +141,13 @@ PythonはEditorで空のマップを保存するためだけに使います。�
 ```
 
 自動検査は実際のCharacterMovement・床・攻撃スイープ・ボスAI・HP・Retryを使います。WASD、マウスXY、Shift/右クリック、左クリック、Space、勝敗後のRはPlayerControllerに模擬入力を送り、設定済みの入力バインドを通して検査します。攻撃位置への移動や一部の戦闘操作にはテスト用の位置変更・関数呼び出しを使います。4方向の壁際、猪によるカメラ遮蔽、通常視点への復帰も検査します。物理デバイスによる操作感や戦闘の面白さは実プレイで別途確認が必要です。成功判定には終了コードと、その実行固有の `PROTOTYPE_TEST_PASS` ログの両方を必要とします。ログは `Saved/Logs/PrototypeSmoke-60.log` などに保存します。
+
+## ゲームパッド対応の検証区分
+
+- **Gamepad mappings implemented:** Generic `Gamepad_*` による左スティック移動/Climbing、右スティックカメラ、A Jump、B Dodge、X Attack、RB Hold Grab/Release、Y Retryを実装済みです。既存KB/M mappingも維持しています。
+- **Simulated gamepad test:** 専用コードと起動オプションを追加済みですが、このLinux環境ではWindows版UEを起動できないため未実行です。
+- **UE runtime verified:** 今回のゲームパッド変更については未検証（PASSではありません）。
+- **Physical controller verified:** 未実施です。模擬入力テストと物理XInputコントローラー確認は別の検証です。
 
 ## 制限と次の作業
 

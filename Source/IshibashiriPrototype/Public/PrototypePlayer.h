@@ -52,6 +52,8 @@ public:
     UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="1")) float AttackRadius = 85.f;
     UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="100")) float MinimumCameraDistance = 300.f;
     UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="500")) float RaisedCameraHeight = 720.f;
+    UPROPERTY(EditAnywhere, Category="Camera|Gamepad", meta=(ClampMin="0")) float GamepadCameraYawSpeed = 120.f;
+    UPROPERTY(EditAnywhere, Category="Camera|Gamepad", meta=(ClampMin="0")) float GamepadCameraPitchSpeed = 90.f;
     UPROPERTY(EditAnywhere, Category="Grab", meta=(ClampMin="1")) float GrabDistance = 360.f;
 
 protected:
@@ -62,6 +64,8 @@ private:
     void MoveRight(float Value);
     void Turn(float Value);
     void LookUp(float Value);
+    void TurnRate(float Value);
+    void LookUpRate(float Value);
     void TryJump();
     void Retry();
     void TraceAttack();

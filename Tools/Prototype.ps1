@@ -8,6 +8,7 @@ param(
     [switch]$Playthrough,
     [switch]$Grab,
     [switch]$Climbing,
+    [switch]$Gamepad,
     [ValidateRange(0, 3600)][int]$TestSeconds = 0,
     [ValidateRange(15, 240)][int]$TestFPS = 60
 )
@@ -69,8 +70,8 @@ function Ensure-Map {
 }
 
 try {
-    if (($Playthrough -or $Grab -or $Climbing -or $TestSeconds -gt 0) -and $Action -ne 'Test') { throw '-Playthrough, -Grab, -Climbing and -TestSeconds require -Action Test.' }
-    if ((@($Playthrough, $Grab, $Climbing) | Where-Object { $_ }).Count -gt 1) { throw '-Playthrough, -Grab and -Climbing are mutually exclusive.' }
+    if (($Playthrough -or $Grab -or $Climbing -or $Gamepad -or $TestSeconds -gt 0) -and $Action -ne 'Test') { throw '-Playthrough, -Grab, -Climbing, -Gamepad and -TestSeconds require -Action Test.' }
+    if ((@($Playthrough, $Grab, $Climbing, $Gamepad) | Where-Object { $_ }).Count -gt 1) { throw '-Playthrough, -Grab, -Climbing and -Gamepad are mutually exclusive.' }
     if ($TestSeconds -gt 0 -and !$Playthrough) { throw '-TestSeconds requires -Playthrough.' }
     $ResolvedEngine = Find-Engine
     $BuildTool = Join-Path $ResolvedEngine 'Engine\Build\BatchFiles\Build.bat'
@@ -128,10 +129,10 @@ try {
         'Test' {
             $LogDir = Join-Path $ProjectRoot 'Saved\Logs'
             New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
-            $LogName = if ($Climbing) { "PrototypeClimbing-$TestFPS.log" } elseif ($Grab) { "PrototypeGrab-$TestFPS.log" } elseif ($Playthrough) { "PrototypePlaythrough-$TestFPS.log" } elseif ($Capture) { "PrototypeVisual-$TestFPS.log" } else { "PrototypeSmoke-$TestFPS.log" }
+            $LogName = if ($Gamepad) { "PrototypeGamepad-$TestFPS.log" } elseif ($Climbing) { "PrototypeClimbing-$TestFPS.log" } elseif ($Grab) { "PrototypeGrab-$TestFPS.log" } elseif ($Playthrough) { "PrototypePlaythrough-$TestFPS.log" } elseif ($Capture) { "PrototypeVisual-$TestFPS.log" } else { "PrototypeSmoke-$TestFPS.log" }
             $LogFile = Join-Path $LogDir $LogName
             $RunId = [guid]::NewGuid().ToString('N')
-            $TestFlag = if ($Climbing) { '-PrototypeClimbingTest' } elseif ($Grab) { '-PrototypeGrabTest' } elseif ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
+            $TestFlag = if ($Gamepad) { '-PrototypeGamepadTest' } elseif ($Climbing) { '-PrototypeClimbingTest' } elseif ($Grab) { '-PrototypeGrabTest' } elseif ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
             $TestArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01', '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
             if ($Capture) {
                 $TestArguments += @('-PrototypeCapture', '-RenderOffscreen', '-windowed', '-ResX=1280', '-ResY=800', '-ExecCmds=t.MaxFPS 60')

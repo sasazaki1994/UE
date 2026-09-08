@@ -6,6 +6,7 @@
 #include "PrototypePlaythroughTest.h"
 #include "PrototypeGrabTest.h"
 #include "PrototypeClimbingTest.h"
+#include "PrototypeGamepadTest.h"
 #include "PrimitiveAppearance.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/DirectionalLightComponent.h"
@@ -68,9 +69,11 @@ void APrototypeGameMode::StartPlay()
         Controller->PlayerCameraManager->ViewPitchMax = 20.f;
     }
     RetryEncounter();
-    UE_LOG(LogTemp, Display, TEXT("Ishibashiri: arena ready. WASD / Mouse / E grab / Shift dodge / LMB attack / R retry."));
+    UE_LOG(LogTemp, Display, TEXT("Ishibashiri: arena ready. WASD/Left Stick move, Mouse/Right Stick camera, E/RB grab."));
 #if !UE_BUILD_SHIPPING
-    if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeClimbingTest")))
+    if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeGamepadTest")))
+        GetWorld()->SpawnActor<APrototypeGamepadTest>();
+    else if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeClimbingTest")))
         GetWorld()->SpawnActor<APrototypeClimbingTest>();
     else if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeGrabTest")))
         GetWorld()->SpawnActor<APrototypeGrabTest>();
