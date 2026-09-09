@@ -43,6 +43,24 @@ public:
     UFUNCTION(BlueprintCallable, Category="Nushi|Fuchimatoi")
     void ResetFuchimatoi();
 
+    UFUNCTION(BlueprintCallable, Category="Nushi|Fuchimatoi|Bite")
+    void SetBiteTargetLocalLocation(const FVector& NewTargetLocalLocation);
+
+    UFUNCTION(BlueprintCallable, Category="Nushi|Fuchimatoi|Bite")
+    void AdvanceBiteLunge(float DeltaSeconds);
+
+    UFUNCTION(BlueprintPure, Category="Nushi|Fuchimatoi|Bite")
+    FVector GetHeadProxyLocalLocation() const { return HeadProxyLocalLocation; }
+
+    UFUNCTION(BlueprintPure, Category="Nushi|Fuchimatoi|Bite")
+    FVector GetBiteTargetLocalLocation() const { return BiteTargetLocalLocation; }
+
+    UFUNCTION(BlueprintPure, Category="Nushi|Fuchimatoi|Bite")
+    bool HasBiteTarget() const { return bHasBiteTarget; }
+
+    UFUNCTION(BlueprintPure, Category="Nushi|Fuchimatoi|Bite")
+    bool IsBiteTargetReached() const;
+
     UFUNCTION(BlueprintPure, Category="Nushi|Fuchimatoi")
     EFuchimatoiActionState GetActionState() const { return ActionState; }
 
@@ -55,10 +73,22 @@ public:
     UPROPERTY(BlueprintAssignable, Category="Nushi|Fuchimatoi")
     FFuchimatoiActionStateChangedSignature OnFuchimatoiActionStateChanged;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Nushi|Fuchimatoi|Bite", meta=(ClampMin="0.0"))
+    float BiteLungeSpeed = 1200.f;
+
 private:
     void TryTransition(EFuchimatoiActionState ExpectedState, EFuchimatoiActionState NewState);
     void SetActionState(EFuchimatoiActionState NewState);
 
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Nushi|Fuchimatoi", meta=(AllowPrivateAccess="true"))
     EFuchimatoiActionState ActionState = EFuchimatoiActionState::Submerged;
+
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Nushi|Fuchimatoi|Bite", meta=(AllowPrivateAccess="true"))
+    FVector HeadProxyLocalLocation = FVector::ZeroVector;
+
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Nushi|Fuchimatoi|Bite", meta=(AllowPrivateAccess="true"))
+    FVector BiteTargetLocalLocation = FVector::ZeroVector;
+
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Nushi|Fuchimatoi|Bite", meta=(AllowPrivateAccess="true"))
+    bool bHasBiteTarget = false;
 };
