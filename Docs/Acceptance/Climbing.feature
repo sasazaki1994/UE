@@ -2,7 +2,8 @@ Feature: Minimal target-local climbing while grabbed
   The player can change the held offset without moving the grabbed boss or enabling normal movement.
 
   Background:
-    Given the player is within grab distance of Ishibashiri
+    Given bUseRouteClimbing is false for the generic Grab fixture
+    And the player is within grab distance of Ishibashiri
     And the Grab input binding receives an E press
     And CharacterMovement is disabled
 

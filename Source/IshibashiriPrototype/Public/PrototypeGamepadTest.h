@@ -23,7 +23,7 @@ private:
     enum class EPhase : uint8
     {
         DeadZone, MoveForward, MoveRight, CameraYaw, CameraPitchUp, CameraPitchDown, Jump, WaitForLanding, Dodge, Attack,
-        Grab, ClimbQuarter, ClimbHalf, ClimbFull, BossFollow, Release, RetryGrab, Retry, Done
+        Grab, ClimbQuarter, ClimbHalf, ClimbFull, BossFollow, Release, RetryGrab, RetryInput, Retry, Done
     };
     bool Require(bool Condition, const TCHAR* Message);
     void SendKey(const FKey& Key, EInputEvent Event, float Value = 1.f);
@@ -42,4 +42,5 @@ private:
     float QuarterDistance = 0.f;
     float HalfDistance = 0.f;
     FString RunId;
+    TMap<FKey, float> AxisValues;
 };

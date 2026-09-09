@@ -28,7 +28,7 @@ public:
     APrototypePlayer* GetPlayer() const { return Player; }
     AIshibashiriBoss* GetBoss() const { return Boss; }
 
-    UPROPERTY(EditAnywhere, Category="Arena", meta=(ClampMin="1200")) float ArenaHalfExtent = 1500.f;
+    UPROPERTY(EditAnywhere, Category="Arena", meta=(ClampMin="1200")) float ArenaHalfExtent = 4000.f;
 
 private:
     void CreateArena();

@@ -4,6 +4,7 @@ Feature: Generic PC gamepad controls
 
   Background:
     Given the player is controlled by the local PlayerController
+    And bUseRouteClimbing is false for the generic Grab fixture
     And generic UE Gamepad_* mappings are active
 
   Scenario: Analog left stick controls movement and stops at zero

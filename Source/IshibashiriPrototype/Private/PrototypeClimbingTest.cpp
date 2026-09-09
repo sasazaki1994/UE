@@ -28,6 +28,7 @@ void APrototypeClimbingTest::BeginPlay()
     FApp::SetFixedDeltaTime(1.0 / FMath::Clamp(TestFPS, 15, 240));
     Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Require(Mode && Mode->GetPlayer() && Mode->GetBoss(), TEXT("GameMode spawns climbing participants"))) return;
+    Mode->GetPlayer()->bUseRouteClimbing = false;
     Mode->GetBoss()->SetActorTickEnabled(false);
     Mode->GetPlayer()->SetActorLocation(Mode->GetBoss()->GetActorLocation() + FVector(-260.f, 0.f, 0.f), false, nullptr, ETeleportType::TeleportPhysics);
     AddTickPrerequisiteComponent(Mode->GetPlayer()->GetGrabComponent());
@@ -179,8 +180,8 @@ void APrototypeClimbingTest::Tick(float DeltaSeconds)
         if (Elapsed < 0.15f) break;
         if (!Require(!Grab->IsGrabbing() && !Grab->GetGrabTarget()
             && Player->GetCharacterMovement()->MovementMode != MOVE_None
-            && FVector::Dist(Player->GetActorLocation(), FVector(-650.f, 0.f, 92.f)) < 2.f
-            && FVector::Dist(Boss->GetActorLocation(), FVector(650.f, 0.f, 212.f)) < 2.f,
+            && FVector::Dist(Player->GetActorLocation(), FVector(-1150.f, -750.f, 92.f)) < 2.f
+            && FVector::Dist(Boss->GetActorLocation(), FVector(650.f, 0.f, 352.f)) < 2.f,
             TEXT("R clears climbing and restores both encounter transforms and movement"))) return;
         Finish(true);
         break;
@@ -191,7 +192,8 @@ void APrototypeClimbingTest::Tick(float DeltaSeconds)
 void APrototypeClimbingTest::Finish(bool Success)
 {
     Phase = EPhase::Done;
-    UE_LOG(LogTemp, Success ? Display : Error, TEXT("%s %s"), Success ? TEXT("PROTOTYPE_TEST_PASS") : TEXT("PROTOTYPE_TEST_ABORT"), *RunId);
+    if (Success) { UE_LOG(LogTemp, Display, TEXT("PROTOTYPE_TEST_PASS %s"), *RunId); }
+    else { UE_LOG(LogTemp, Error, TEXT("PROTOTYPE_TEST_ABORT %s"), *RunId); }
     FApp::SetUseFixedTimeStep(false);
     FPlatformMisc::RequestExitWithStatus(true, Success ? 0 : 1);
 }

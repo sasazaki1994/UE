@@ -15,6 +15,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNushiEncounterManagerTest,
 bool FNushiEncounterManagerTest::RunTest(const FString& Parameters)
 {
     UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    // Actor UFUNCTION delegate callbacks require initialized actors, as in a running world.
+    World->InitializeActorsForPlay(FURL());
     ANushiEncounterManager* Manager = World->SpawnActor<ANushiEncounterManager>();
     ANushiBase* Nushi = World->SpawnActor<ANushiBase>();
     UNushiProgressComponent* Progress = Nushi->GetNushiProgressComponent();

@@ -8,6 +8,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class UStaticMeshComponent;
 class UMaterialInstanceDynamic;
+class UColossusClimbingComponent;
 class UAnimSequence;
 class UGrabComponent;
 
@@ -25,9 +26,13 @@ public:
     void StopCombat();
     bool ReceiveChargeHit(const FVector& From);
     void Attack();
-    void Dodge();
     void BeginGrab();
     void ReleaseGrab();
+    bool IsGrabbing() const;
+    bool HasImportedVisuals() const;
+    UGrabComponent* GetGrabComponent() const { return GrabComponent; }
+    void Dodge();
+    UColossusClimbingComponent* GetClimbing() const { return Climbing; }
 
     int32 GetHealth() const { return Health; }
     bool IsDodging() const { return DodgeRemaining > 0.f; }
@@ -35,26 +40,25 @@ public:
     bool IsAttacking() const { return AttackRemaining > 0.f; }
     float GetDodgeCooldown() const { return DodgeCooldownRemaining; }
     bool IsUsingRaisedCamera() const { return bUsingRaisedCamera; }
-    bool HasImportedVisuals() const;
-    bool IsGrabbing() const;
-    UGrabComponent* GetGrabComponent() const { return GrabComponent; }
     const FString& GetFeedback() const { return Feedback; }
 
+    // Default encounter uses authored holds; disable for the original local-space Grab prototype.
+    UPROPERTY(EditAnywhere, Category="Grab") bool bUseRouteClimbing = true;
+    UPROPERTY(EditAnywhere, Category="Grab", meta=(ClampMin="1")) float GrabDistance = 360.f;
+    UPROPERTY(EditAnywhere, Category="Camera|Gamepad", meta=(ClampMin="0")) float GamepadCameraYawSpeed = 120.f;
+    UPROPERTY(EditAnywhere, Category="Camera|Gamepad", meta=(ClampMin="0")) float GamepadCameraPitchSpeed = 90.f;
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) int32 MaxHealth = 3;
     UPROPERTY(EditAnywhere, Category="Movement", meta=(ClampMin="1")) float WalkSpeed = 600.f;
     UPROPERTY(EditAnywhere, Category="Combat|Dodge", meta=(ClampMin="1")) float DodgeSpeed = 1500.f;
     UPROPERTY(EditAnywhere, Category="Combat|Dodge", meta=(ClampMin="0.01")) float DodgeDuration = 0.28f;
     UPROPERTY(EditAnywhere, Category="Combat|Dodge", meta=(ClampMin="0")) float DodgeCooldown = 0.55f;
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="0")) float HurtInvulnerabilityDuration = 0.85f;
-    UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="0.01")) float AttackDuration = 0.32f;
+    UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="0.01")) float AttackDuration = 0.53f;
     UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="0")) float AttackCooldown = 0.48f;
     UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="1")) float AttackReach = 210.f;
     UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="1")) float AttackRadius = 85.f;
     UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="100")) float MinimumCameraDistance = 300.f;
     UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="500")) float RaisedCameraHeight = 720.f;
-    UPROPERTY(EditAnywhere, Category="Camera|Gamepad", meta=(ClampMin="0")) float GamepadCameraYawSpeed = 120.f;
-    UPROPERTY(EditAnywhere, Category="Camera|Gamepad", meta=(ClampMin="0")) float GamepadCameraPitchSpeed = 90.f;
-    UPROPERTY(EditAnywhere, Category="Grab", meta=(ClampMin="1")) float GrabDistance = 360.f;
 
 protected:
     virtual void BeginPlay() override;
@@ -64,28 +68,25 @@ private:
     void MoveRight(float Value);
     void Turn(float Value);
     void LookUp(float Value);
-    void TurnRate(float Value);
-    void LookUpRate(float Value);
     void TryJump();
     void Retry();
     void TraceAttack();
     bool CanAct() const;
     void ShowFeedback(const FString& Text);
-    void UpdateModelVisuals();
+    void UpdateAnimation();
+    void TurnRate(float Value);
+    void LookUpRate(float Value);
 
     UPROPERTY(VisibleAnywhere) TObjectPtr<USpringArmComponent> SpringArm;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UCameraComponent> Camera;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Body;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Sword;
-    UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> GrabComponent;
     UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> BodyMaterial;
-    UPROPERTY() TArray<TObjectPtr<UMaterialInstanceDynamic>> ModelMaterials;
-    UPROPERTY() TObjectPtr<UAnimSequence> IdleAnimation;
-    UPROPERTY() TObjectPtr<UAnimSequence> RunAnimation;
-    UPROPERTY() TObjectPtr<UAnimSequence> AttackAnimation;
-    UPROPERTY() TObjectPtr<UAnimSequence> DodgeAnimation;
-    UPROPERTY() TObjectPtr<UAnimSequence> HitAnimation;
-    UPROPERTY() TObjectPtr<UAnimSequence> DeathAnimation;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UColossusClimbingComponent> Climbing;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> GrabComponent;
+    UPROPERTY() TArray<TObjectPtr<UAnimSequence>> Animations;
+    int32 CurrentAnimation = INDEX_NONE;
+    bool bWeaponHidden = false;
     int32 Health = 3;
     float ForwardInput = 0.f;
     float RightInput = 0.f;

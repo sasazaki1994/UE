@@ -35,7 +35,7 @@ public:
     ENushiState GetNushiState() const { return State; }
 
     UFUNCTION(BlueprintPure, Category="Nushi")
-    bool IsActive() const { return State == ENushiState::Active; }
+    bool IsNushiActive() const { return State == ENushiState::Active; }
 
     UFUNCTION(BlueprintPure, Category="Nushi")
     bool IsCalm() const { return State == ENushiState::Calm; }

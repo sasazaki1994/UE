@@ -1,0 +1,59 @@
+{
+  "bone_count": 18,
+  "vertices": 38040,
+  "weight_validation": "pass",
+  "animations": {
+    "Idle": {
+      "frames": 60,
+      "seconds": 2.0,
+      "loop": true
+    },
+    "Walk": {
+      "frames": 30,
+      "seconds": 1.0,
+      "loop": true
+    },
+    "Run": {
+      "frames": 22,
+      "seconds": 0.7333333333333333,
+      "loop": true
+    },
+    "Slash": {
+      "frames": 16,
+      "seconds": 0.5333333333333333,
+      "loop": false
+    },
+    "Dodge": {
+      "frames": 18,
+      "seconds": 0.6,
+      "loop": false
+    },
+    "Climb": {
+      "frames": 36,
+      "seconds": 1.2,
+      "loop": true
+    },
+    "Hang": {
+      "frames": 60,
+      "seconds": 2.0,
+      "loop": true
+    },
+    "Grip": {
+      "frames": 30,
+      "seconds": 1.0,
+      "loop": true
+    },
+    "Jump": {
+      "frames": 24,
+      "seconds": 0.8,
+      "loop": true
+    },
+    "Death": {
+      "frames": 48,
+      "seconds": 1.6,
+      "loop": false
+    }
+  },
+  "root_motion": false,
+  "rig_style": "deformation skeleton; procedural in-place clips; no facial rig or IK"
+}

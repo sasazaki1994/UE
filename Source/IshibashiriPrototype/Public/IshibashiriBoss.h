@@ -10,6 +10,7 @@ class UMaterialInstanceDynamic;
 class APrototypePlayer;
 class USkeletalMeshComponent;
 class UAnimSequence;
+class UBoxComponent;
 
 UENUM()
 enum class EIshibashiriState : uint8 { Chase, Telegraph, Charge, Recover, Calmed };
@@ -31,6 +32,14 @@ public:
     FString GetStateLabel() const;
     FVector GetChargeDirection() const { return ChargeDirection; }
     bool HasImportedVisuals() const;
+    FVector GetClimbPosition(int32 Node) const;
+    int32 GetClimbNeighbor(int32 Node, int32 Direction) const;
+    bool IsRestNode(int32 Node) const { return Node >= 3; }
+    bool TryPurifyCore(const FVector& Position);
+    bool IsBucking() const;
+    bool IsBuckWarning() const;
+    int32 GetPurifiedCount() const;
+    USkeletalMeshComponent* GetVisualMesh() const { return Creature; }
 
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) int32 MaxHealth = 3;
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) float ChaseSpeed = 260.f;
@@ -48,17 +57,21 @@ private:
     void EnterState(EIshibashiriState NewState);
     void UpdateVisuals();
     void CheckChargeHit(const FVector& Start, const FVector& End);
+    void UpdateCreatureAnimation();
 
     UPROPERTY(VisibleAnywhere) TObjectPtr<UCapsuleComponent> Collision;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Body;
     UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> ColoredParts;
     UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> BodyMaterial;
-    UPROPERTY(VisibleAnywhere) TObjectPtr<USkeletalMeshComponent> Model;
-    UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> ModelMaterial;
-    UPROPERTY() TObjectPtr<UAnimSequence> IdleAnimation;
-    UPROPERTY() TObjectPtr<UAnimSequence> WalkAnimation;
-    UPROPERTY() TObjectPtr<UAnimSequence> AttackAnimation;
     UPROPERTY() TObjectPtr<APrototypePlayer> Target;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<USkeletalMeshComponent> Creature;
+    UPROPERTY() TArray<TObjectPtr<UAnimSequence>> CreatureAnimations;
+    UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> CoreMarkers;
+    UPROPERTY() TArray<TObjectPtr<UBoxComponent>> LedgeCollision;
+    UPROPERTY() TObjectPtr<UStaticMeshComponent> GrabMarker;
+    bool PurifiedCores[3] = {false,false,false};
+    float RiderTime = 0.f;
+    int32 AnimationIndex = INDEX_NONE;
     EIshibashiriState State = EIshibashiriState::Chase;
     int32 Health = 3;
     float StateTimeRemaining = 0.f;

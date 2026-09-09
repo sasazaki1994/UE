@@ -1,8 +1,8 @@
 #include "PrototypeHUD.h"
 #include "PrototypeGameMode.h"
 #include "PrototypePlayer.h"
-#include "GrabComponent.h"
 #include "IshibashiriBoss.h"
+#include "ColossusClimbingComponent.h"
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -18,12 +18,12 @@ void APrototypeHUD::DrawHUD()
     const float Scale = FMath::Clamp(Canvas->ClipY / 900.f, 0.65f, 1.4f);
     const float X = 22.f * Scale;
     float Y = 18.f * Scale;
-    const float Width = FMath::Min(760.f * Scale, Canvas->ClipX - X * 2.f);
-    DrawRect(FLinearColor(0.015f, 0.02f, 0.025f, 0.86f), X - 8.f, Y - 8.f, Width, 250.f * Scale);
+    const float Width = FMath::Min(630.f * Scale, Canvas->ClipX - X * 2.f);
+    DrawRect(FLinearColor(0.015f, 0.02f, 0.025f, 0.78f), X - 8.f, Y - 8.f, Width, 195.f * Scale);
     auto Line = [this, X, &Y, Scale](const FString& Text, FLinearColor Color = FLinearColor::White, float Size = 1.f)
     {
         DrawText(Text, Color, X, Y, GEngine->GetMediumFont(), Scale * Size, false);
-        Y += 29.f * Scale * Size;
+        Y += 26.f * Scale * Size;
     };
     Line(TEXT("MAGAHARAI / ISHIBASHIRI"), FLinearColor(0.85f, 0.88f, 0.78f), 1.2f);
     if (!Player || !Boss)
@@ -33,20 +33,13 @@ void APrototypeHUD::DrawHUD()
     }
     Line(FString::Printf(TEXT("PLAYER HP  %d / %d       BOSS HP  %d / %d"), Player->GetHealth(), Player->MaxHealth, Boss->GetHealth(), Boss->MaxHealth));
     Line(FString::Printf(TEXT("%s  (%.2fs)"), *Boss->GetStateLabel(), Boss->GetStateTimeRemaining()), Boss->CanBeCountered() ? FLinearColor::Green : FLinearColor::White);
-    Line(FString::Printf(TEXT("DODGE: %s   cooldown %.2fs"), Player->IsInvulnerable() ? TEXT("INVULNERABLE") : TEXT("ready when cooldown is zero"), Player->GetDodgeCooldown()), FLinearColor(0.4f, 0.85f, 1.f));
-    Line(TEXT("Move/Climb: WASD / Left Stick | Camera: Mouse / Right Stick"));
-    Line(FString::Printf(TEXT("Attack: LMB / X | Dodge: Shift/RMB / B | Grab: E / RB (%s)"), Player->IsGrabbing() ? TEXT("ON") : TEXT("OFF")),
-        Player->IsGrabbing() ? FLinearColor::Yellow : FLinearColor::White);
-    Line(TEXT("Jump: Space / A | Retry: R / Y"));
+    Line(FString::Printf(TEXT("E / RB grab / brace | STAMINA %.0f / 100 | CORES %d / 3"),
+        Player->GetClimbing()->GetStamina(),Boss->GetPurifiedCount()),FLinearColor(1,.75,.25));
+    Line(TEXT("Move: WASD / LS | Camera: Mouse / RS | Attack: LMB / X | Dodge: Shift / B"), FLinearColor(.7f,.8f,.85f), .75f);
     Line(Player->GetFeedback(), FLinearColor::Yellow);
-    if (Player->IsGrabbing())
-    {
-        const FVector Local = Player->GetGrabComponent()->GetRelativeGrabTransform().GetLocation();
-        Line(FString::Printf(TEXT("CLIMB LOCAL: X=%.1f Y=%.1f Z=%.1f"), Local.X, Local.Y, Local.Z), FLinearColor::Yellow);
-    }
 
-    const FString Hint = Boss->CanBeCountered() ? TEXT("COUNTER NOW - get close and slash!")
-        : TEXT("Read the red wind-up. Dodge sideways. Counter while green. Three counters to calm the boar.");
+    const FString Hint = Player->bUseRouteClimbing ? Player->GetClimbing()->GetHint()
+        : TEXT("Hold E / RB: grab | WASD / LS: local climb | Release E / RB: detach | R / Y: retry");
     DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.8f), 0.f, Canvas->ClipY - 46.f * Scale, Canvas->ClipX, 46.f * Scale);
     DrawText(Hint, Boss->CanBeCountered() ? FLinearColor::Green : FLinearColor::White,
         X, Canvas->ClipY - 33.f * Scale, GEngine->GetMediumFont(), Scale, false);

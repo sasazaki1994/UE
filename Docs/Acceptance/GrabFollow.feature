@@ -1,6 +1,9 @@
 Feature: Moving actor grab prototype
   The player can hold onto the current encounter target without changing the existing combat balance.
 
+  Background:
+    Given bUseRouteClimbing is false for the generic Grab fixture
+
   Scenario: Hold E while the boss translates and rotates
     Given the player is within grab distance of Ishibashiri
     When the Grab input binding receives an E press

@@ -1,0 +1,96 @@
+{
+  "status": "visual layout only; Grab/Climbing/collision not implemented",
+  "main_route_terraces": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "branch_terraces": [
+    4,
+    5
+  ],
+  "terraces": [
+    {
+      "name": "CLIMB_Terrace_00",
+      "center_m": [
+        -2.13,
+        -1.98,
+        4.8476
+      ],
+      "approx_width_m": 1.888
+    },
+    {
+      "name": "CLIMB_Terrace_01",
+      "center_m": [
+        -1.78,
+        -1.0,
+        5.9096
+      ],
+      "approx_width_m": 2.048
+    },
+    {
+      "name": "CLIMB_Terrace_02",
+      "center_m": [
+        -0.95,
+        -0.48,
+        6.8448
+      ],
+      "approx_width_m": 2.064
+    },
+    {
+      "name": "CLIMB_Terrace_03",
+      "center_m": [
+        0,
+        0.55,
+        7.682600000000001
+      ],
+      "approx_width_m": 2.8000000000000003
+    },
+    {
+      "name": "CLIMB_Terrace_04",
+      "center_m": [
+        0.36,
+        2.18,
+        7.138199999999999
+      ],
+      "approx_width_m": 2.624
+    },
+    {
+      "name": "CLIMB_Terrace_05",
+      "center_m": [
+        1.48,
+        2.85,
+        6.301
+      ],
+      "approx_width_m": 1.8399999999999999
+    },
+    {
+      "name": "CLIMB_Terrace_06",
+      "center_m": [
+        2.16,
+        -1.47,
+        5.2176
+      ],
+      "approx_width_m": 1.616
+    }
+  ],
+  "corruption_cores_m": [
+    [
+      2.18,
+      -1.55,
+      6.11
+    ],
+    [
+      0,
+      0.6,
+      7.84
+    ],
+    [
+      -1.22,
+      3.05,
+      6.88
+    ]
+  ]
+}

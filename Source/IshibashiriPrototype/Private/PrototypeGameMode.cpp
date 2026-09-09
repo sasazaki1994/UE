@@ -4,6 +4,7 @@
 #include "IshibashiriBoss.h"
 #include "PrototypeSmokeTest.h"
 #include "PrototypePlaythroughTest.h"
+#include "ClimbingIntegrationTest.h"
 #include "PrototypeGrabTest.h"
 #include "PrototypeClimbingTest.h"
 #include "PrototypeGamepadTest.h"
@@ -37,12 +38,12 @@ APrototypeGameMode::APrototypeGameMode()
 
 FTransform APrototypeGameMode::PlayerSpawn() const
 {
-    return FTransform(FRotator::ZeroRotator, FVector(-650.f, 0.f, 92.f));
+    return FTransform(FRotator::ZeroRotator, FVector(-1150.f, -750.f, 92.f));
 }
 
 FTransform APrototypeGameMode::BossSpawn() const
 {
-    return FTransform(FRotator(0.f, 180.f, 0.f), FVector(650.f, 0.f, 212.f));
+    return FTransform(FRotator(0.f, 180.f, 0.f), FVector(650.f, 0.f, 352.f));
 }
 
 void APrototypeGameMode::StartPlay()
@@ -71,7 +72,9 @@ void APrototypeGameMode::StartPlay()
     RetryEncounter();
     UE_LOG(LogTemp, Display, TEXT("Ishibashiri: arena ready. WASD/Left Stick move, Mouse/Right Stick camera, E/RB grab."));
 #if !UE_BUILD_SHIPPING
-    if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeGamepadTest")))
+    if (FParse::Param(FCommandLine::Get(), TEXT("ClimbingTest")))
+        GetWorld()->SpawnActor<AClimbingIntegrationTest>();
+    else if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeGamepadTest")))
         GetWorld()->SpawnActor<APrototypeGamepadTest>();
     else if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeClimbingTest")))
         GetWorld()->SpawnActor<APrototypeClimbingTest>();
@@ -139,15 +142,15 @@ void APrototypeGameMode::CreateArena()
         Sun->GetLightComponent()->SetMobility(EComponentMobility::Movable);
         Sun->GetLightComponent()->SetIntensity(3.f);
     }
-    // Soft opposite fill keeps the textured character readable from behind.
-    ADirectionalLight* Bounce = GetWorld()->SpawnActor<ADirectionalLight>(FVector(0.f, 0.f, 1200.f), FRotator(-25.f, 150.f, 0.f));
-    if (Bounce)
-    {
-        Bounce->GetLightComponent()->SetMobility(EComponentMobility::Movable);
-        Bounce->GetLightComponent()->SetIntensity(1.2f);
-        Bounce->GetLightComponent()->SetCastShadows(false);
-    }
     APointLight* Fill = GetWorld()->SpawnActor<APointLight>(FVector(0.f, 0.f, 1400.f), FRotator::ZeroRotator);
+    ADirectionalLight* SoftFill = GetWorld()->SpawnActor<ADirectionalLight>(FVector(0,0,1400),FRotator(-35,145,0));
+    if (SoftFill)
+    {
+        SoftFill->GetLightComponent()->SetMobility(EComponentMobility::Movable);
+        SoftFill->GetLightComponent()->SetIntensity(1.1f);
+        SoftFill->GetLightComponent()->SetLightColor(FLinearColor(.66f,.75f,1.f));
+        SoftFill->GetLightComponent()->SetCastShadows(false);
+    }
     if (Fill)
     {
         Fill->GetLightComponent()->SetMobility(EComponentMobility::Movable);

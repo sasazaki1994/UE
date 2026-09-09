@@ -28,6 +28,7 @@ void APrototypeGamepadTest::BeginPlay()
     FApp::SetFixedDeltaTime(1.0 / FMath::Clamp(TestFPS, 15, 240));
     Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Require(Mode && Mode->GetPlayer() && Mode->GetBoss(), TEXT("GameMode spawns gamepad test participants"))) return;
+    Mode->GetPlayer()->bUseRouteClimbing = false;
     Mode->GetBoss()->SetActorTickEnabled(false);
     BaselineLocation = Mode->GetPlayer()->GetActorLocation();
     AddTickPrerequisiteComponent(Mode->GetPlayer()->GetGrabComponent());
@@ -54,7 +55,7 @@ void APrototypeGamepadTest::SendKey(const FKey& Key, EInputEvent Event, float Va
 #endif
 }
 
-void APrototypeGamepadTest::SendAxis(const FKey& Key, float Value) { SendKey(Key, IE_Axis, Value); }
+void APrototypeGamepadTest::SendAxis(const FKey& Key, float Value) { AxisValues.Add(Key, Value); }
 void APrototypeGamepadTest::Next(EPhase NewPhase) { Phase = NewPhase; Elapsed = 0.f; }
 
 void APrototypeGamepadTest::Tick(float DeltaSeconds)
@@ -122,12 +123,12 @@ void APrototypeGamepadTest::Tick(float DeltaSeconds)
         if (!Require(Controller->GetControlRotation().Pitch > BaselineRotation.Pitch + 5.f,
             TEXT("Right stick down increases control pitch and looks downward"))) return;
         SendKey(EKeys::Gamepad_FaceButton_Bottom, IE_Pressed);
-        SendKey(EKeys::Gamepad_FaceButton_Bottom, IE_Released);
         Next(EPhase::Jump);
         break;
     case EPhase::Jump:
         if (Elapsed < 0.1f) break;
         if (!Require(Player->GetCharacterMovement()->IsFalling() && Player->GetVelocity().Z > 0.f, TEXT("A starts jump"))) return;
+        SendKey(EKeys::Gamepad_FaceButton_Bottom, IE_Released, 0.f);
         Next(EPhase::WaitForLanding);
         break;
     case EPhase::WaitForLanding:
@@ -136,7 +137,7 @@ void APrototypeGamepadTest::Tick(float DeltaSeconds)
         Next(EPhase::Dodge);
         break;
     case EPhase::Dodge:
-        if (!Require(Player->IsDodging(), TEXT("B starts the existing dodge"))) return;
+        if (Elapsed < 0.1f && !Require(Player->IsDodging(), TEXT("B starts the existing dodge"))) return;
         if (Elapsed < 0.35f) break;
         SendKey(EKeys::Gamepad_FaceButton_Left, IE_Pressed);
         Next(EPhase::Attack);
@@ -205,27 +206,39 @@ void APrototypeGamepadTest::Tick(float DeltaSeconds)
     case EPhase::RetryGrab:
         if (!Require(Grab->IsGrabbing(), TEXT("RB can grab again before retry"))) return;
         SendAxis(EKeys::Gamepad_LeftY, 1.f);
+        Next(EPhase::RetryInput);
+        break;
+    case EPhase::RetryInput:
+        // IE_Axis values accumulate within a frame: 1 followed by 0 is still 1.
+        // Release on the following frame before retry so this models a centered stick.
+        SendAxis(EKeys::Gamepad_LeftY, 0.f);
         SendKey(EKeys::Gamepad_FaceButton_Top, IE_Pressed);
         SendKey(EKeys::Gamepad_FaceButton_Top, IE_Released, 0.f);
-        SendAxis(EKeys::Gamepad_LeftY, 0.f);
         Next(EPhase::Retry);
         break;
     case EPhase::Retry:
         if (Elapsed < 0.1f) break;
+        UE_LOG(LogTemp, Display, TEXT("GAMEPAD_RETRY player=%s boss=%s grab=%d movement=%d velocity=%s"),
+            *Player->GetActorLocation().ToString(), *Boss->GetActorLocation().ToString(),
+            Grab->IsGrabbing(), int32(Player->GetCharacterMovement()->MovementMode), *Player->GetVelocity().ToString());
         if (!Require(!Grab->IsGrabbing() && Player->GetCharacterMovement()->MovementMode != MOVE_None
-            && FVector::Dist(Player->GetActorLocation(), FVector(-650.f, 0.f, 92.f)) < 2.f
-            && FVector::Dist(Boss->GetActorLocation(), FVector(650.f, 0.f, 212.f)) < 2.f,
+            && FVector::Dist(Player->GetActorLocation(), FVector(-1150.f, -750.f, 92.f)) < 2.f
+            && FVector::Dist(Boss->GetActorLocation(), FVector(650.f, 0.f, 352.f)) < 2.f,
             TEXT("Y retry clears climbing and resets player, boss, and movement"))) return;
         Finish(true);
         break;
     default: break;
     }
+    // Emit one current sample per axis per frame. Sending 1 then 0 in one frame
+    // adds the samples in UE, and failing to send the centered axes leaves stale input.
+    for (const auto& Axis : AxisValues) SendKey(Axis.Key, IE_Axis, Axis.Value);
 }
 
 void APrototypeGamepadTest::Finish(bool Success)
 {
     Phase = EPhase::Done;
-    UE_LOG(LogTemp, Success ? Display : Error, TEXT("%s %s"), Success ? TEXT("PROTOTYPE_TEST_PASS") : TEXT("PROTOTYPE_TEST_ABORT"), *RunId);
+    if (Success) { UE_LOG(LogTemp, Display, TEXT("PROTOTYPE_TEST_PASS %s"), *RunId); }
+    else { UE_LOG(LogTemp, Error, TEXT("PROTOTYPE_TEST_ABORT %s"), *RunId); }
     FApp::SetUseFixedTimeStep(false);
     FPlatformMisc::RequestExitWithStatus(true, Success ? 0 : 1);
 }

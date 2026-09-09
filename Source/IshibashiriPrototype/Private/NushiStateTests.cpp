@@ -47,7 +47,7 @@ bool FNushiStateComponentTest::RunTest(const FString& Parameters)
 
     State->StartEncounter();
     TestEqual(TEXT("Starting a dormant Nushi makes it Active"), State->GetNushiState(), ENushiState::Active);
-    TestTrue(TEXT("Active query reflects the state"), State->IsActive());
+    TestTrue(TEXT("Active query reflects the state"), State->IsNushiActive());
     State->StartEncounter();
     TestEqual(TEXT("Starting twice emits one state change"), Listener->AllPurifiedEventCount, 1);
 

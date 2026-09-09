@@ -1,0 +1,15 @@
+{
+  "asset": "Shirotsura",
+  "stage": "static initial model",
+  "rigged": false,
+  "unit": "meter",
+  "forward": "-Y",
+  "mesh_objects": 174,
+  "triangles": 74626,
+  "dimensions_xyz_m": [
+    1.3061735928058624,
+    0.33097438514232635,
+    1.7168388701975346
+  ],
+  "material_note": "GLB/FBX contain base colors, metallic/roughness and emission. Blender-only procedural bump is not baked."
+}
