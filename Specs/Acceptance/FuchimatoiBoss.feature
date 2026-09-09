@@ -46,3 +46,21 @@ Feature: Fuchimatoi boss action lifecycle
     And its head becomes snagged
     And it begins coiling around terrain
     Then Fuchimatoi should be Coiling
+
+  Scenario: Bite lunge moves the head proxy toward its target
+    Given Fuchimatoi has a bite target
+    And Fuchimatoi is in BiteLunge
+    When bite movement is advanced
+    Then the head proxy should move toward the bite target
+    And it should not overshoot the target
+
+  Scenario: Reaching the bite target does not automatically snag the head
+    Given Fuchimatoi reaches its bite target
+    Then Fuchimatoi should remain in BiteLunge
+    When a head snag is reported
+    Then Fuchimatoi should become Snagged
+
+  Scenario: Bite movement stops after snagging
+    Given Fuchimatoi is Snagged
+    When bite movement is advanced
+    Then the head proxy should not move
