@@ -134,7 +134,7 @@ try {
             Write-Host "Test passed: $LogFile"
             if ($Capture) {
                 $CaptureDir = Join-Path $ProjectRoot "Saved\Screenshots\Prototype\$RunId"
-                $ShotNames = if ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera') }
+                $ShotNames = if ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera', '09-CameraReturn') }
                 foreach ($Name in $ShotNames) {
                     $Shot = Get-Item -LiteralPath (Join-Path $CaptureDir "$Name.png") -ErrorAction Stop
                     if ($Shot.Length -lt 100) { throw "Screenshot is empty: $($Shot.FullName)" }

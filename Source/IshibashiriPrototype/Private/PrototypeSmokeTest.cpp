@@ -3,6 +3,7 @@
 #include "PrototypePlayer.h"
 #include "IshibashiriBoss.h"
 #include "Camera/PlayerCameraManager.h"
+#include "Camera/CameraComponent.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -111,6 +112,7 @@ void APrototypeSmokeTest::PlaceAtWall()
 
 bool APrototypeSmokeTest::CheckRaisedCamera()
 {
+    if (!CheckPlayerFraming()) return false;
     APrototypePlayer* Player = Mode->GetPlayer();
     APlayerController* Controller = Cast<APlayerController>(Player->GetController());
     const FVector View = Controller->PlayerCameraManager->GetCameraLocation();
@@ -120,6 +122,19 @@ bool APrototypeSmokeTest::CheckRaisedCamera()
         && !Mode->GetBoss()->GetComponentsBoundingBox(true).ExpandBy(12.f).IsInside(View)
         && !GetWorld()->OverlapBlockingTestByChannel(View, FQuat::Identity, ECC_Camera,
             FCollisionShape::MakeSphere(10.f), Params), TEXT("Raised camera clears the player, boss and arena walls"));
+}
+
+bool APrototypeSmokeTest::CheckPlayerFraming()
+{
+    const APrototypePlayer* Player = Mode->GetPlayer();
+    const APlayerCameraManager* Camera = Cast<APlayerController>(Player->GetController())->PlayerCameraManager;
+    const FMinimalViewInfo& View = Camera->GetCameraCacheView();
+    const FVector Local = View.Rotation.UnrotateVector(Player->GetActorLocation() - View.Location);
+    const float HalfWidth = Local.X * FMath::Tan(FMath::DegreesToRadians(View.FOV * 0.5f));
+    const float HalfHeight = HalfWidth / FMath::Max(1.f, View.AspectRatio);
+    return Require(Local.X > 0.f && FMath::Abs(Local.Y) < HalfWidth * 0.85f
+        && FMath::Abs(Local.Z) < HalfHeight * 0.85f,
+        TEXT("Camera keeps the player inside the view with room around them"));
 }
 
 void APrototypeSmokeTest::Capture(const TCHAR* Name)
@@ -443,7 +458,10 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
             {
                 Player->SetActorLocation(FVector(0.f, 0.f, 92.f), false, nullptr, ETeleportType::TeleportPhysics);
                 Player->GetController()->SetControlRotation(FRotator(-5.f, 0.f, 0.f));
-                Boss->SetActorLocation(FVector(-710.f, 70.f, 212.f), false, nullptr, ETeleportType::TeleportPhysics);
+                // Put the boss midway along the regular camera sightline. Its
+                // bounds do not contain the camera, so this catches regressions
+                // that only test the final camera position for obstruction.
+                Boss->SetActorLocation(FVector(-360.f, 35.f, 212.f), false, nullptr, ETeleportType::TeleportPhysics);
                 Next(EPhase::CameraBoss);
             }
         }
@@ -458,6 +476,35 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
         }
         if (Elapsed >= 0.3f)
         {
+            LockedDirection = Player->GetAttackIndicatorDirection();
+            if (!Require(LockedDirection.Equals(FVector::ForwardVector, 0.001f),
+                TEXT("Raised camera framing does not redirect the player's aim toward the boss behind them"))) return;
+            TapKey(EKeys::LeftMouseButton);
+            Next(EPhase::CameraAim);
+        }
+        break;
+
+    case EPhase::CameraAim:
+        if (!bInputSent)
+        {
+            if (!Require(Player->IsAttacking() && Player->GetActorForwardVector().Equals(LockedDirection, 0.001f)
+                && Boss->GetHealth() == 3, TEXT("Raised-view LMB swings along the displayed direction"))) return;
+            SendKey(EKeys::MouseX, IE_Axis, 20.f);
+            bInputSent = true;
+        }
+        if (Elapsed >= 0.1f && Elapsed <= 0.2f)
+        {
+            const FVector Aim = FRotator(0.f, Player->GetController()->GetControlRotation().Yaw, 0.f).Vector();
+            if (!Require(Player->IsAttacking() && Player->GetAttackIndicatorDirection().Equals(LockedDirection, 0.001f)
+                && !Aim.Equals(LockedDirection, 0.01f), TEXT("Mouse turn during a swing leaves its indicator and attack direction locked"))) return;
+        }
+        if (Elapsed >= 0.6f)
+        {
+            const FVector Aim = FRotator(0.f, Player->GetController()->GetControlRotation().Yaw, 0.f).Vector();
+            if (!Require(!Player->IsAttacking() && Player->GetAttackIndicatorDirection().Equals(Aim, 0.001f),
+                TEXT("After the swing the indicator follows the new mouse aim"))) return;
+            HeightBeforeCameraReturn = Cast<APlayerController>(Player->GetController())->PlayerCameraManager->GetCameraLocation().Z
+                - Player->GetActorLocation().Z;
             // Move clear without Retry: resetting the camera flag here would
             // conceal a bug that never exits the raised view during gameplay.
             Player->SetActorLocation(FVector(-650.f, 0.f, 92.f), false, nullptr, ETeleportType::TeleportPhysics);
@@ -468,10 +515,75 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
         break;
 
     case EPhase::CameraRestore:
-        if (Elapsed >= 0.15f)
+    {
+        if (!CheckPlayerFraming()) return;
+        APlayerController* Controller = Cast<APlayerController>(Player->GetController());
+        const FVector View = Controller->PlayerCameraManager->GetCameraLocation();
+        const UCameraComponent* NormalCamera = Player->FindComponentByClass<UCameraComponent>();
+        FCollisionQueryParams Params(SCENE_QUERY_STAT(TestCameraReturn), false, Player);
+        Params.AddIgnoredActor(Boss);
+        if (!Require(!GetWorld()->OverlapBlockingTestByChannel(View, FQuat::Identity, ECC_Camera,
+            FCollisionShape::MakeSphere(10.f), Params)
+            && !Boss->GetComponentsBoundingBox(true).ExpandBy(12.f).IsInside(View),
+            TEXT("Every return frame remains outside walls and boss geometry"))) return;
+        if (Elapsed >= 0.1f && Elapsed < Player->CameraClearDelay)
         {
-            if (!Require(!Player->IsUsingRaisedCamera(), TEXT("Normal third-person view returns after moving clear of obstructions"))) return;
-            UE_LOG(LogTemp, Display, TEXT("PROTOTYPE_CAMERA_PASS %s: four walls, boar obstruction, normal view restored"), *RunId);
+            if (!Require(Player->IsUsingRaisedCamera() && View.Z > Player->GetActorLocation().Z + 600.f,
+                TEXT("Briefly clear sightlines do not immediately drop the raised camera"))) return;
+        }
+        if (Elapsed >= 0.28f && !bInputSent)
+        {
+            if (!Require(Player->IsUsingRaisedCamera() && NormalCamera
+                && View.Z > NormalCamera->GetComponentLocation().Z + 20.f
+                && View.Z < Player->GetActorLocation().Z + HeightBeforeCameraReturn - 20.f,
+                TEXT("Camera passes through an intermediate view instead of snapping back"))) return;
+            bInputSent = true;
+            if (!bTestedCameraReobstruction)
+            {
+                Boss->SetActorLocation(Player->GetActorLocation() + FVector(-360.f, 35.f, 120.f),
+                    false, nullptr, ETeleportType::TeleportPhysics);
+                Next(EPhase::CameraReobstruct);
+                break;
+            }
+            Capture(TEXT("09-CameraReturn"));
+        }
+        if (Elapsed >= 0.75f)
+        {
+            if (!Require(!Player->IsUsingRaisedCamera() && NormalCamera
+                && View.Equals(NormalCamera->GetComponentLocation(), 1.f),
+                TEXT("Normal third-person view is fully restored after the blend"))) return;
+            // Retry must discard both the blend and the previous mouse aim.
+            PlaceAtWall();
+            Next(EPhase::CameraReset);
+        }
+        break;
+    }
+
+    case EPhase::CameraReobstruct:
+        if (Elapsed >= 0.1f)
+        {
+            if (!CheckRaisedCamera()) return;
+            bTestedCameraReobstruction = true;
+            HeightBeforeCameraReturn = Cast<APlayerController>(Player->GetController())->PlayerCameraManager->GetCameraLocation().Z
+                - Player->GetActorLocation().Z;
+            Boss->SetActorLocation(FVector(650.f, 0.f, 212.f), false, nullptr, ETeleportType::TeleportPhysics);
+            Next(EPhase::CameraRestore);
+        }
+        break;
+
+    case EPhase::CameraReset:
+        if (Elapsed >= 0.1f && !bInputSent)
+        {
+            if (!CheckRaisedCamera()) return;
+            Mode->RetryEncounter();
+            bInputSent = true;
+        }
+        else if (Elapsed >= 0.25f)
+        {
+            if (!Require(!Player->IsUsingRaisedCamera()
+                && Player->GetAttackIndicatorDirection().Equals(FVector::ForwardVector, 0.001f),
+                TEXT("Retry clears camera transition and resets the attack indicator"))) return;
+            UE_LOG(LogTemp, Display, TEXT("PROTOTYPE_CAMERA_PASS %s: four walls, boar sightline, aim lock, smooth return, re-obstruction, retry"), *RunId);
             Finish(true);
         }
         break;
