@@ -10,6 +10,7 @@ class UStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class UColossusClimbingComponent;
 class UAnimSequence;
+class UGrabComponent;
 
 UCLASS()
 class ISHIBASHIRIPROTOTYPE_API APrototypePlayer : public ACharacter
@@ -25,6 +26,11 @@ public:
     void StopCombat();
     bool ReceiveChargeHit(const FVector& From);
     void Attack();
+    void BeginGrab();
+    void ReleaseGrab();
+    bool IsGrabbing() const;
+    bool HasImportedVisuals() const;
+    UGrabComponent* GetGrabComponent() const { return GrabComponent; }
     void Dodge();
     UColossusClimbingComponent* GetClimbing() const { return Climbing; }
 
@@ -36,6 +42,11 @@ public:
     bool IsUsingRaisedCamera() const { return bUsingRaisedCamera; }
     const FString& GetFeedback() const { return Feedback; }
 
+    // Default encounter uses authored holds; disable for the original local-space Grab prototype.
+    UPROPERTY(EditAnywhere, Category="Grab") bool bUseRouteClimbing = true;
+    UPROPERTY(EditAnywhere, Category="Grab", meta=(ClampMin="1")) float GrabDistance = 360.f;
+    UPROPERTY(EditAnywhere, Category="Camera|Gamepad", meta=(ClampMin="0")) float GamepadCameraYawSpeed = 120.f;
+    UPROPERTY(EditAnywhere, Category="Camera|Gamepad", meta=(ClampMin="0")) float GamepadCameraPitchSpeed = 90.f;
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) int32 MaxHealth = 3;
     UPROPERTY(EditAnywhere, Category="Movement", meta=(ClampMin="1")) float WalkSpeed = 600.f;
     UPROPERTY(EditAnywhere, Category="Combat|Dodge", meta=(ClampMin="1")) float DodgeSpeed = 1500.f;
@@ -63,8 +74,8 @@ private:
     bool CanAct() const;
     void ShowFeedback(const FString& Text);
     void UpdateAnimation();
-    void GrabPressed();
-    void GrabReleased();
+    void TurnRate(float Value);
+    void LookUpRate(float Value);
 
     UPROPERTY(VisibleAnywhere) TObjectPtr<USpringArmComponent> SpringArm;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UCameraComponent> Camera;
@@ -72,6 +83,7 @@ private:
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Sword;
     UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> BodyMaterial;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UColossusClimbingComponent> Climbing;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> GrabComponent;
     UPROPERTY() TArray<TObjectPtr<UAnimSequence>> Animations;
     int32 CurrentAnimation = INDEX_NONE;
     bool bWeaponHidden = false;

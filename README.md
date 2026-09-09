@@ -15,18 +15,21 @@ UE 5.6 / Windows向け。白面の祓い手を操作し、約12mの巨猪へ取�
 
 ## 操作
 
-| 状況 | 操作 |
-|---|---|
-| 地上移動 / カメラ | WASD / マウス |
-| 回避 / 斬撃 | Shiftまたは右クリック / 左クリック |
-| ジャンプ | Space |
-| 取り付く | 前脚付近の金色の印に近づきE。突進中は取り付けません |
-| 登る・下りる | 登攀中にW / S |
-| 分岐 | 背中手前の分岐でD。主ルートへ戻るときはAまたはS |
-| しがみつく | 揺れの予告・揺れ中はEを押し続ける |
-| 禍根を祓う | 禍根のある岩棚で左クリック |
-| 飛び降りる | 登攀中にSpace |
-| 再挑戦 | R。登攀中・勝利後・敗北後も有効 |
+| 状況 | キーボード・マウス | ゲームパッド（Xbox表記） |
+|---|---|---|
+| 地上移動 / カメラ | WASD / マウス | 左 / 右スティック |
+| 回避 / 斬撃 | Shiftまたは右クリック / 左クリック | B / X |
+| ジャンプ | Space | A |
+| 取り付く | 前脚付近の金色の印に近づきE | 同じ場所でRB |
+| 登る・下りる | W / S | 左スティック上 / 下 |
+| 分岐 | 背中手前でD。戻るときはAまたはS | 左スティック右。戻るときは左または下 |
+| しがみつく | 揺れの予告・揺れ中はEを押し続ける | RBを押し続ける |
+| 禍根を祓う | 禍根のある岩棚で左クリック | X |
+| 飛び降りる | 登攀中にSpace | A |
+| 再挑戦 | R。登攀中・勝利後・敗北後も有効 | Y |
+
+突進中は取り付けません。通常のルート登攀ではE / RBを離しても登攀は継続し、しがみつきだけを解除します。
+スティックのデッドゾーンは0.20。ルート上の移動は方向選択方式で、倒し量による速度調整ではありません。
 
 前脚→肩→背中手前→中央頂上→背面の順に登ります。背中手前では右肩の禍根へ分岐できます。
 右肩・頂上・背面の3か所を祓うと勝利します。地上の硬直中の反撃も利用でき、ボスHPを減らせます。
@@ -42,7 +45,16 @@ UE 5.6 / Windows向け。白面の祓い手を操作し、約12mの巨猪へ取�
 
 主人公は待機・歩行・走行・斬撃・回避・登攀・ぶら下がり・しがみつき・空中姿勢・倒れの10クリップ。
 猪は待機・歩行・突進・揺れ・鎮静の5クリップです。ゲームの状態から切り替えます。
-外部のモーション素材や他作品の3Dモデルは使っていません。
+この白面・石走りのモデルとモーションは制作スクリプトで生成しています。
+main由来のCC0モデルも `Content/Characters/FreeModels/` に保持しています。出典は [モデル記録](Docs/ModelCandidates.md) を参照してください。通常プレイには白面・石走りを使用します。
+
+## mainから統合した機能
+
+Generic Gamepadの移動・カメラ・各アクションを、白面の操作とルート登攀に接続しています。
+汎用 `UGrabComponent` の対象ローカル座標による登攀も保持し、`APrototypePlayer::bUseRouteClimbing = false` で切り替えられます。このモードはE / RBを離すと即座にReleaseし、上下左右の連続移動と速度に応じたアナログ入力を使用します。2つの登攀処理は同時に開始しません。
+
+`NushiBase`、`NushiEncounterManager`、禍根・状態・スタミナの各コンポーネントと `FuchimatoiBoss` も保持しています。これらは再利用用の独立した実装であり、石走りのHP・スタミナ処理や通常マップのボスを置き換えるものではありません。
+主の活動状態を調べる関数はUE標準の `UActorComponent::IsActive()` と区別するため `UNushiStateComponent::IsNushiActive()` です。
 
 ## 検証とパッケージ化
 
@@ -51,12 +63,20 @@ UE 5.6 / Windows向け。白面の祓い手を操作し、約12mの巨猪へ取�
 .\Tools\Prototype.ps1 -Action Test -Climbing -SkipBuild -TestFPS 60
 .\Tools\Prototype.ps1 -Action Test -Climbing -SkipBuild -TestFPS 30
 .\Tools\Prototype.ps1 -Action Test -Climbing -Capture -SkipBuild
+.\Tools\Prototype.ps1 -Action Test -ClimbingGamepad -SkipBuild
+.\Tools\Prototype.ps1 -Action Test -Grab -SkipBuild
+.\Tools\Prototype.ps1 -Action Test -LocalClimbing -SkipBuild
+.\Tools\Prototype.ps1 -Action Test -Gamepad -SkipBuild
 .\Tools\Prototype.ps1 -Action Package
 ```
 
 描画検査は6場面を `Saved/Screenshots/Climbing/<RunId>/` に保存します。
 結果と制限は [登攀の検証記録](Docs/ClimbingValidation.md) を参照してください。
+`-Climbing` / `-ClimbingGamepad` は通常のルート登攀をキーボード / 模擬ゲームパッド入力で攻略します。
+`-Grab` / `-LocalClimbing` / `-Gamepad` は汎用Grabを明示的に選んだテスト用配置で、mainの相対Transform・Clamp・アナログ速度を検証します。物理コントローラーの検証とは異なります。
 以前の戦闘専用テストは小型のPrimitive猪と旧Arenaを前提とするため、現在のモデルの合格証明には使用しません。
+
+Cursorでは `IshibashiriPrototype-Cursor.code-workspace` を開き、Ctrl+Shift+Bでビルドできます。TasksメニューのPlay / Open Unreal Editor / Generate C++ completion databaseも利用できます。従来の戦闘テストタスクには上記の旧配置の制限があります。
 
 ## 実装の範囲
 

@@ -1,6 +1,7 @@
 #include "IshibashiriBoss.h"
 #include "PrototypeGameMode.h"
 #include "PrototypePlayer.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "PrimitiveAppearance.h"
 #include "ColossusClimbingComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -12,7 +13,6 @@
 #include "DrawDebugHelpers.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -136,7 +136,9 @@ void AIshibashiriBoss::BeginPlay()
 
 void AIshibashiriBoss::ResetForEncounter(const FTransform& Spawn, APrototypePlayer* Player)
 {
+    if (Target) RemoveTickPrerequisiteComponent(Target->GetCharacterMovement());
     Target = Player;
+    if (Target) AddTickPrerequisiteComponent(Target->GetCharacterMovement());
     Health = MaxHealth;
     bCounterUsed = bChargeHitPlayer = false;
     VisualTime = 0.f;
@@ -184,9 +186,9 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
     const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Mode || !Mode->IsEncounterActive() || !IsValid(Target)) return;
     VisualTime += DeltaSeconds;
-    if (Target->GetClimbing()->IsClimbing())
+    if (Target->IsGrabbing())
     {
-        RiderTime += DeltaSeconds;
+        RiderTime = Target->GetClimbing()->IsClimbing() ? RiderTime + DeltaSeconds : 0.f;
         // Continue moving under the rider. Turn inward before the full model
         // reaches the arena edge, instead of aiming at the rider on our back.
         if (GetActorLocation().Size2D() > Mode->ArenaHalfExtent-900.f)
@@ -306,6 +308,7 @@ FString AIshibashiriBoss::GetStateLabel() const
     if (IsBucking()) return TEXT("SHAKING - HOLD E!");
     if (IsBuckWarning()) return TEXT("SHAKE INCOMING - HOLD E!");
     if (Target && Target->GetClimbing()->IsClimbing()) return TEXT("CARRYING RIDER - purify the three red cores");
+    if (Target && Target->IsGrabbing()) return TEXT("CARRYING RIDER - local climbing");
     switch (State)
     {
     case EIshibashiriState::Chase: return TEXT("CHASE");
@@ -358,11 +361,18 @@ bool AIshibashiriBoss::TryPurifyCore(const FVector& Position)
 }
 void AIshibashiriBoss::UpdateCreatureAnimation()
 {
-    const bool Rider = Target && Target->GetClimbing()->IsClimbing();
+    const bool Rider = Target && Target->IsGrabbing();
     int32 Next = State == EIshibashiriState::Calmed ? 4 : IsBucking() ? 3
         : Rider ? 1 : State == EIshibashiriState::Charge ? 2 : State == EIshibashiriState::Chase ? 1 : 0;
     if (Next != AnimationIndex && CreatureAnimations.IsValidIndex(Next) && CreatureAnimations[Next])
     {
         AnimationIndex = Next; Creature->PlayAnimation(CreatureAnimations[Next],Next != 4);
     }
+}
+
+bool AIshibashiriBoss::HasImportedVisuals() const
+{
+    if (!Creature->GetSkeletalMeshAsset() || Body->IsVisible() || CreatureAnimations.Num() != 5) return false;
+    for (const UAnimSequence* Clip : CreatureAnimations) if (!Clip) return false;
+    return Creature->GetMaterial(0) != nullptr;
 }

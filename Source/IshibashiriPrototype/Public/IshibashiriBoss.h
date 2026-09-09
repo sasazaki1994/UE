@@ -31,6 +31,7 @@ public:
     bool CanBeCountered() const { return State == EIshibashiriState::Recover && !bCounterUsed && Health > 0; }
     FString GetStateLabel() const;
     FVector GetChargeDirection() const { return ChargeDirection; }
+    bool HasImportedVisuals() const;
     FVector GetClimbPosition(int32 Node) const;
     int32 GetClimbNeighbor(int32 Node, int32 Direction) const;
     bool IsRestNode(int32 Node) const { return Node >= 3; }

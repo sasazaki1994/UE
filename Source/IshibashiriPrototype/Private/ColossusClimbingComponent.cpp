@@ -109,10 +109,10 @@ void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActor
 }
 FString UColossusClimbingComponent::GetHint() const
 {
-    if (!Boss) return TEXT("E near the gold foreleg hold: grab (wait until the charge stops)");
-    if (Boss->IsBucking() || Boss->IsBuckWarning()) return TEXT("HOLD E - brace for the shake! Movement pauses during the shake.");
-    if (Node == 5) return TEXT("W: summit | D: right-shoulder core | S: descend | Space: detach");
+    if (!Boss) return TEXT("E / RB near the gold foreleg hold: grab (wait until the charge stops)");
+    if (Boss->IsBucking() || Boss->IsBuckWarning()) return TEXT("HOLD E / RB - brace for the shake! Movement pauses during the shake.");
+    if (Node == 5) return TEXT("W / LS up: summit | D / LS right: right-shoulder core | S: descend | Space / A: detach");
     if (Node == 10) return TEXT("W: shoulder core | A / S: main route");
-    return IsResting() ? TEXT("Ledge: stamina recovers | LMB: purify nearby red core | W/S: traverse | Space: detach")
-        : TEXT("W/S: climb / descend | Hold E during shaking | Space: detach");
+    return IsResting() ? TEXT("Ledge: stamina recovers | LMB / X: purify nearby red core | W/S: traverse | Space / A: detach")
+        : TEXT("W/S: climb / descend | Hold E / RB during shaking | Space / A: detach");
 }

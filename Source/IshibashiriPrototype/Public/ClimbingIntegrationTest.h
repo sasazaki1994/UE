@@ -31,4 +31,5 @@ private:
     FString RunId;
     bool bFinished = false;
     bool bCapture = false;
+    bool bGamepad = false;
 };

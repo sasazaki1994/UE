@@ -1,8 +1,86 @@
-# 検証記録 — 2026-09-07
+# 検証記録 — 2026-09-08
 
-判定：**UE 5.6.1でビルド・自動Play・描画・Windowsパッケージの起動に成功。最小プロトタイプを実行可能な状態で用意しました。**
+判定：**Grab追加前のUE 5.6.1検証実績はありますが、Grab追加後の実行検証は未完了です。2026-09-08の再検証環境にはPowerShellとWindows版UEがなく、ビルドおよびUEテストを開始できませんでした。**
 
 キーボード・マウスを使った手動の操作感評価と、10分間の連続手動プレイは未実施です。以下の自動検証結果と区別します。
+
+## Generic Gamepad対応（9月8日）
+
+### Gamepad mappings implemented
+
+- 左スティックを既存 `MoveForward` / `MoveRight` に追加しました。通常時はCharacterMovement、Grab中は同じ `ForwardInput` / `RightInput` から既存 `UGrabComponent::Climb` へ流れ、専用Climbing経路はありません。
+- 右スティックは `TurnRate` / `LookUpRate` とし、120 deg/s yaw、90 deg/s pitchをDeltaSecondsで積分します。右入力はyaw増加、上入力はpitch減少です。
+- A=Jump、B=Dodge、X=Attack、RB=Grab（Press/Release）、Y=Retryです。Space、Shift/RMB、LMB、E、RおよびWASD/Mouseは残しています。
+- 左右両スティックのX/Yに `AxisConfig` dead zone 0.20、Sensitivity 1.0、Exponent 1.0を設定しています。
+
+### Simulated gamepad test
+
+- `Docs/Acceptance/Gamepad.feature` と `PrototypeGamepadTest` を追加しました。0.15の無入力、0.25/0.5/1.0のアナログ強度、移動、カメラ符号、A/B/X、RB Grab/Climb/Release、Boss追従、Grab中Y Retryを実入力mapping経由で検査する設計です。
+- 起動コマンドは `Tools/Prototype.ps1 -Action Test -Gamepad -TestFPS 60` です。`-Gamepad` は `-Grab` / `-Climbing` / `-Playthrough` と排他です。
+- **未実行（PASSではありません）。** 現在のLinux環境には `pwsh` とWindows版Unreal Engineがないため、Simulated Gamepad InputをUE Runtime上で実行できませんでした。
+
+### UE runtime verified / Physical controller verified
+
+- **UE runtime verified: 未検証。** 今回のC++はビルド未実行で、Gamepad / Grab / Climbing / Smoke / Playthroughも再実行できていません。
+- **Physical controller verified: 未実施。** 物理XInputコントローラーおよびKB/Mとの途中切替は確認していません。実機確認後まで「Xbox Controller動作確認済み」とは扱いません。
+
+| 再検証コマンド | 現在の結果 |
+| --- | --- |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Build` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Gamepad -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Grab -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Climbing -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Playthrough -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+
+
+## Minimal Climbing（9月8日）
+
+### Implemented
+
+- Grab中だけWASDを `UGrabComponent::Climb` へ渡し、W/Sを対象ActorローカルZ、A/Dを対象ActorローカルYとして `RelativeGrabTransform` の位置へ加算します。通常のCharacterMovementとの二重適用はありません。
+- `ClimbSpeed` の既定値は180cm/sです。対象ローカル位置をX=-650..650、Y=-350..350、Z=-350..650cmにClampします。複雑な表面投影は行いません。
+- HUDにClimbing操作と現在のローカルXYZを表示します。Acceptance specは `Docs/Acceptance/Climbing.feature`、専用テストは `Tools/Prototype.ps1 -Action Test -Climbing -TestFPS <30|60|120>` です。
+- 専用テストコードは上下左右、Boss回転後のローカル移動、実Boss Chase TickとClimbingの同時進行、Release、再Grab後のRetryを検査します。
+
+### Runtime Verified
+
+- **未検証（PASSではありません）。** この環境には `pwsh`、Windows版Unreal Engine 5.6.1のEditor/ビルドツールがないため、C++ビルドもClimbing / Grab / Smoke / Playthroughの実ワールドテストも起動できません。
+- コードとspecの静的確認のみ実施しました。Climbingの操作感、カメラ、Collision、30 / 60 / 120 FPSでの挙動はRuntime Verifiedではありません。
+
+| 再検証が必要なコマンド | 現在の結果 |
+| --- | --- |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Build` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Climbing -TestFPS 30 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Climbing -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Climbing -TestFPS 120 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Grab -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Playthrough -TestFPS 60 -SkipBuild` | 実行不可：`pwsh`なし |
+
+## Grab / Moving Actor追従（9月8日）
+
+- 操作はEを押している間Grab、離すとReleaseです。石走りのActor中心から360cm以内でのみ開始できます。
+- `UGrabComponent` が対象、開始ワールド位置、対象基準の相対Transform、Grab状態を保持します。Grab中はCharacterMovementを無効化し、対象の移動後に相対Transformから主人公のワールドTransformを再計算します。Release、被弾、Victory / Defeat、Retryでは必ず解除し、MovementをFallingへ戻します。
+- Acceptance specは `Docs/Acceptance/GrabFollow.feature`、自動検証は `Tools/Prototype.ps1 -Action Test -Grab -TestFPS 60` です。テストは実入力バインド経由のE、テストが与える平行移動と90度回転、実際のBoss Chase Tickによる移動、Release、再Grab後のRリセットを分離して検査します。
+- **自動検証結果：未実施（PASSではありません）。** 2026-09-08に下表のコマンドを実行しましたが、すべて `pwsh: command not found`（終了コード127）で、UEプロセスは起動していません。RunIdとUEログは生成されていません。下記「実行結果」の既存PASSはGrab追加前の実績であり、今回の結果ではありません。
+- 実Boss確認を静的なTransform操作だけで済ませないため、GrabテストにBoss Tickを再有効化するChase追従シナリオを追加しました。このシナリオ自体もUE上では未実行です。
+- GUI、物理キーボード、マウスを利用できないため、手動確認も未実施です。
+- 現在の制限：中心距離だけの判定で、表面・部位・遮蔽を考慮しません。StaminaとGrab / Climbing専用アニメーションはありません。Climbingは上記の直方体Clampによる最小実装です。
+
+### Grab追加後の再検証試行
+
+| コマンド | 結果 |
+| --- | --- |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Build` | 未開始。`pwsh`なし、終了コード127 |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Grab -TestFPS 60` | 未開始。`pwsh`なし、終了コード127 |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Grab -TestFPS 30 -SkipBuild` | 未開始。`pwsh`なし、終了コード127 |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Grab -TestFPS 120 -SkipBuild` | 未開始。`pwsh`なし、終了コード127 |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -TestFPS 60` | 未開始。`pwsh`なし、終了コード127 |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Test -Playthrough -TestFPS 60` | 未開始。`pwsh`なし、終了コード127 |
+| `pwsh -NoProfile -File ./Tools/Prototype.ps1 -Action Package` | 未開始。`pwsh`なし、終了コード127 |
+
+したがって、Grabのビルド、30 / 60 / 120 FPSテスト、実Boss追従、Release後のWalking復帰、Collision、Camera、Retry、Smoke、Playthrough、PackageはいずれもGrab追加後のPASS判定をしていません。UE 5.6.1とPowerShellを備えたWindows環境で上記を再実行することが完了条件です。完了するまでは最小Climbing実装へ進みません。
 
 ## 9月7日の変更
 
@@ -12,6 +90,12 @@
 - 4方向の壁際と猪によるカメラ遮蔽を検査し、描画保存を5枚から7枚に増やしました。
 - `PrototypePlaythroughTest` を追加。位置・向きの直接変更、戦闘関数の直接呼び出し、HP・AI時間の変更をせず、模擬キーとマウス入力だけで攻略します。各戦で実際の回避開始、3回の反撃、ノーダメージ勝利、R再挑戦を検査します。
 - `Tools/Prototype.ps1 -Action Test -Playthrough` とCursorの `Ishibashiri: Test full playthrough` から再実行できます。`-TestSeconds 600` でゲーム内時間600秒以上まで繰り返します。
+
+## 9月8日のモデル差し替え
+
+- CC0のQuaternius Warriorを肩防具・剣込みでFBX化し、待機・走行・攻撃・ロール・被弾・死亡をUEへ取り込みました。
+- CC0のTeh_Bucket BoarをFBX化し、毛皮テクスチャ、待機・歩行・攻撃を取り込みました。突進中は歩行を高速再生します。
+- テクスチャ座標、足元の高さ、向き、戦闘色のフラッシュを調整し、モデルが読み込まれない場合だけ従来のPrimitiveへ戻る構成にしています。
 
 ## 起動するファイル
 
@@ -41,6 +125,8 @@
 | パッケージ版の入力だけの攻略・描画 | `Saved/Logs/Packaged-Playthrough.log`、RunId `c1935eebb71c4b679f4f4ec7d5b99231`、3戦連続ノーダメージ勝利・R再挑戦、終了コード0・勝利画像生成 |
 | 通常のゲーム起動（9月6日） | パッケージの起動用exeから通常モードで起動。`Saved/Logs/Playable-Launch.log` にArena生成・戦闘開始を確認。その後正常終了 |
 | Cursor向けコンパイルDB | `CodeDatabase -SkipBuild` 成功。`compile_commands.json` を生成し、ゲームソースのエントリーを確認 |
+| モデル取り込み | `Tools/Prototype.ps1 -Action ImportModels -SkipBuild` 成功。`FREE_MODELS_IMPORT_PASS`、Warrior 6クリップ、Boar 3クリップ、マテリアルスロットを確認 |
+| モデル描画 | `Saved/Logs/PrototypeVisual-60.log`、RunId `3435734854e8405685875b9a93618da1`、終了コード0、7画像を目視確認 |
 
 ### 自動Playで検証した内容
 
@@ -97,7 +183,7 @@ UEはLegendary 0.21.0で取得しました。開発元GitHub ReleasesのWindows 
 - 手動のキー入力、マウス感度、壁際のカメラ、戦闘の面白さ、10分間の連続プレイは未評価です。
 - 強制的に重ねる接触テストでも、敗北時にカメラが主人公や猪の内部へ埋まる問題を改善しました。重なった主人公は猪に隠れますが、上方から猪・床と勝敗表示を確認できます。視点の切り替わり方の好みは手動評価が残ります。
 - 猪と主人公の物理的な押し合いはなく、通常移動では猪の内部を通過できます。
-- 見た目はPrimitive、HUDは英語です。本番モデル、音、登攀、物語、成長、セーブ、複数ボス、マルチプレイは未実装です。
+- 主人公と猪は無料CC0モデル、HUDは英語です。音、登攀、物語、成長、セーブ、複数ボス、マルチプレイは未実装です。専用の猪の疾走・倒れアニメーションは元素材にないため、歩行の高速再生と状態色で表現しています。
 - UE 5.4/5.5での実行は未検証です。実測結果は5.6.1のみです。
 - Cursorでの補完操作そのものは未検証です。拡張、生成ヘッダー、コンパイルDBは揃っています。
 - UE 5.4互換のinclude順に関する警告と、一部の実行でZenキャッシュの再起動警告が出ています。上記のビルド・テスト・パッケージは成功しています。

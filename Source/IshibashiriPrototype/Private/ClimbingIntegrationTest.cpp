@@ -29,6 +29,7 @@ void AClimbingIntegrationTest::BeginPlay()
     int32 FPS=60; FParse::Value(FCommandLine::Get(),TEXT("PrototypeTestFPS="),FPS);
     FApp::SetUseFixedTimeStep(true); FApp::SetFixedDeltaTime(1.0/FMath::Clamp(FPS,15,240));
     bCapture=FParse::Param(FCommandLine::Get(),TEXT("PrototypeCapture"));
+    bGamepad=FParse::Param(FCommandLine::Get(),TEXT("ClimbingGamepad"));
     Mode=GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Check(Mode && Mode->GetPlayer() && Mode->GetBoss(),TEXT("Encounter spawned"))) return;
     AddTickPrerequisiteComponent(Mode->GetPlayer()->GetClimbing());
@@ -39,7 +40,19 @@ void AClimbingIntegrationTest::Hold(const FKey& Key,bool Down)
 {
     if (Held.Contains(Key)==Down) return;
     APlayerController* PC=Cast<APlayerController>(Mode->GetPlayer()->GetController());
-    PC->InputKey(FInputKeyEventArgs::CreateSimulated(Key,Down?IE_Pressed:IE_Released,Down?1.f:0.f));
+    FKey Mapped = Key;
+    const bool Axis = bGamepad && (Key == EKeys::W || Key == EKeys::S || Key == EKeys::A || Key == EKeys::D);
+    if (bGamepad)
+    {
+        if (Key == EKeys::E) Mapped = EKeys::Gamepad_RightShoulder;
+        else if (Key == EKeys::SpaceBar) Mapped = EKeys::Gamepad_FaceButton_Bottom;
+        else if (Key == EKeys::LeftMouseButton) Mapped = EKeys::Gamepad_FaceButton_Left;
+        else if (Key == EKeys::R) Mapped = EKeys::Gamepad_FaceButton_Top;
+        else if (Key == EKeys::W || Key == EKeys::S) Mapped = EKeys::Gamepad_LeftY;
+        else if (Key == EKeys::A || Key == EKeys::D) Mapped = EKeys::Gamepad_LeftX;
+    }
+    const float Value = Down ? (Axis && (Key == EKeys::S || Key == EKeys::A) ? -1.f : 1.f) : 0.f;
+    PC->InputKey(FInputKeyEventArgs::CreateSimulated(Mapped,Axis?IE_Axis:Down?IE_Pressed:IE_Released,Value));
     if (Down) Held.Add(Key); else Held.Remove(Key);
 }
 void AClimbingIntegrationTest::Tap(const FKey& Key) { Hold(Key,true); Release.Add(Key); }
@@ -75,6 +88,15 @@ void AClimbingIntegrationTest::Tick(float Dt)
 {
     Super::Tick(Dt); if (bFinished || !Mode) return;
     for (const FKey& Key:Release) Hold(Key,false); Release.Empty();
+    if (bGamepad)
+    {
+        // Analog axis events must be sent every frame, including zero after release/retry.
+        APlayerController* PC=Cast<APlayerController>(Mode->GetPlayer()->GetController());
+        PC->InputKey(FInputKeyEventArgs::CreateSimulated(EKeys::Gamepad_LeftY,IE_Axis,
+            float(Held.Contains(EKeys::W))-float(Held.Contains(EKeys::S))));
+        PC->InputKey(FInputKeyEventArgs::CreateSimulated(EKeys::Gamepad_LeftX,IE_Axis,
+            float(Held.Contains(EKeys::D))-float(Held.Contains(EKeys::A))));
+    }
     Time+=Dt;Total+=Dt;
     auto P=Mode->GetPlayer();auto B=Mode->GetBoss();auto C=P->GetClimbing();
     if (Total>180.f) { Check(false,TEXT("Integration test timeout")); return; }

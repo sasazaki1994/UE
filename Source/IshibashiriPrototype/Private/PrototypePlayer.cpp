@@ -3,6 +3,7 @@
 #include "PrototypeGameMode.h"
 #include "PrimitiveAppearance.h"
 #include "ColossusClimbingComponent.h"
+#include "GrabComponent.h"
 #include "Animation/AnimSequence.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
@@ -56,6 +57,7 @@ APrototypePlayer::APrototypePlayer()
     Sword->SetRelativeLocation(FVector(65.f, 48.f, 0.f));
     Sword->SetRelativeScale3D(FVector(1.3f, 0.07f, 0.12f));
     Sword->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    GrabComponent = CreateDefaultSubobject<UGrabComponent>(TEXT("GrabComponent"));
     Climbing = CreateDefaultSubobject<UColossusClimbingComponent>(TEXT("ColossusClimbing"));
     static ConstructorHelpers::FObjectFinder<USkeletalMesh> Rigged(TEXT("/Game/Characters/Rigged/Shirotsura/SK_Shirotsura"));
     GetMesh()->SetSkeletalMesh(Rigged.Object);
@@ -137,13 +139,15 @@ void APrototypePlayer::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAxis(TEXT("MoveRight"), this, &APrototypePlayer::MoveRight);
     Input->BindAxis(TEXT("Turn"), this, &APrototypePlayer::Turn);
     Input->BindAxis(TEXT("LookUp"), this, &APrototypePlayer::LookUp);
+    Input->BindAxis(TEXT("TurnRate"), this, &APrototypePlayer::TurnRate);
+    Input->BindAxis(TEXT("LookUpRate"), this, &APrototypePlayer::LookUpRate);
     Input->BindAction(TEXT("Dodge"), IE_Pressed, this, &APrototypePlayer::Dodge);
     Input->BindAction(TEXT("Attack"), IE_Pressed, this, &APrototypePlayer::Attack);
     Input->BindAction(TEXT("Jump"), IE_Pressed, this, &APrototypePlayer::TryJump);
     Input->BindAction(TEXT("Jump"), IE_Released, this, &ACharacter::StopJumping);
     Input->BindAction(TEXT("Retry"), IE_Pressed, this, &APrototypePlayer::Retry);
-    Input->BindAction(TEXT("Grab"), IE_Pressed, this, &APrototypePlayer::GrabPressed);
-    Input->BindAction(TEXT("Grab"), IE_Released, this, &APrototypePlayer::GrabReleased);
+    Input->BindAction(TEXT("Grab"), IE_Pressed, this, &APrototypePlayer::BeginGrab);
+    Input->BindAction(TEXT("Grab"), IE_Released, this, &APrototypePlayer::ReleaseGrab);
 }
 
 bool APrototypePlayer::CanAct() const
@@ -156,7 +160,7 @@ void APrototypePlayer::MoveForward(float Value)
 {
     ForwardInput = Value;
     Climbing->SetInput(ForwardInput,RightInput);
-    if (CanAct() && Controller && !IsDodging() && !Climbing->IsClimbing())
+    if (CanAct() && Controller && !IsDodging() && !IsGrabbing())
         AddMovementInput(FRotationMatrix(FRotator(0.f, Controller->GetControlRotation().Yaw, 0.f)).GetUnitAxis(EAxis::X), Value);
 }
 
@@ -164,7 +168,7 @@ void APrototypePlayer::MoveRight(float Value)
 {
     RightInput = Value;
     Climbing->SetInput(ForwardInput,RightInput);
-    if (CanAct() && Controller && !IsDodging() && !Climbing->IsClimbing())
+    if (CanAct() && Controller && !IsDodging() && !IsGrabbing())
         AddMovementInput(FRotationMatrix(FRotator(0.f, Controller->GetControlRotation().Yaw, 0.f)).GetUnitAxis(EAxis::Y), Value);
 }
 
@@ -174,14 +178,29 @@ void APrototypePlayer::TryJump()
 {
     if (!CanAct()) return;
     if (Climbing->IsClimbing()) { Climbing->Detach(); return; }
-    if (!IsDodging() && !IsAttacking()) Jump();
+    if (!IsDodging() && !IsAttacking() && !IsGrabbing()) Jump();
 }
-void APrototypePlayer::GrabPressed() { if (CanAct()) Climbing->GrabPressed(); }
-void APrototypePlayer::GrabReleased() { Climbing->GrabReleased(); }
+void APrototypePlayer::TurnRate(float Value) { AddControllerYawInput(Value * GamepadCameraYawSpeed * GetWorld()->GetDeltaSeconds()); }
+void APrototypePlayer::LookUpRate(float Value) { AddControllerPitchInput(Value * GamepadCameraPitchSpeed * GetWorld()->GetDeltaSeconds()); }
+bool APrototypePlayer::IsGrabbing() const { return Climbing->IsClimbing() || GrabComponent->IsGrabbing(); }
+void APrototypePlayer::BeginGrab()
+{
+    if (!CanAct()) return;
+    if (Climbing->IsClimbing()) { Climbing->GrabPressed(); return; }
+    if (GrabComponent->IsGrabbing() || IsDodging()) return;
+    if (bUseRouteClimbing) { Climbing->GrabPressed(); return; }
+    const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
+    if (Mode && GrabComponent->TryGrab(Mode->GetBoss(), GrabDistance)) ShowFeedback(TEXT("GRABBING"));
+}
+void APrototypePlayer::ReleaseGrab()
+{
+    Climbing->GrabReleased();
+    if (GrabComponent->IsGrabbing()) { GrabComponent->Release(); ShowFeedback(TEXT("RELEASED")); }
+}
 
 void APrototypePlayer::Dodge()
 {
-    if (!CanAct() || Climbing->IsClimbing() || IsDodging() || DodgeCooldownRemaining > 0.f || GetCharacterMovement()->IsFalling()) return;
+    if (!CanAct() || IsGrabbing() || IsDodging() || DodgeCooldownRemaining > 0.f || GetCharacterMovement()->IsFalling()) return;
     const FRotator Yaw(0.f, Controller ? Controller->GetControlRotation().Yaw : GetActorRotation().Yaw, 0.f);
     DodgeDirection = (FRotationMatrix(Yaw).GetUnitAxis(EAxis::X) * ForwardInput
         + FRotationMatrix(Yaw).GetUnitAxis(EAxis::Y) * RightInput).GetSafeNormal();
@@ -199,7 +218,7 @@ void APrototypePlayer::Dodge()
 
 void APrototypePlayer::Attack()
 {
-    if (!CanAct() || IsDodging() || AttackCooldownRemaining > 0.f) return;
+    if (!CanAct() || IsDodging() || GrabComponent->IsGrabbing() || AttackCooldownRemaining > 0.f) return;
     if (Climbing->IsClimbing())
     {
         if (!Climbing->IsResting()) return;
@@ -242,6 +261,8 @@ void APrototypePlayer::TraceAttack()
 bool APrototypePlayer::ReceiveChargeHit(const FVector& From)
 {
     if (!CanAct() || IsInvulnerable()) return false;
+    Climbing->Detach(false);
+    ReleaseGrab();
     Health = FMath::Max(0, Health - 1);
     HurtInvulnerabilityRemaining = HurtInvulnerabilityDuration;
     AttackRemaining = 0.f;
@@ -268,6 +289,7 @@ void APrototypePlayer::Tick(float DeltaSeconds)
     HurtInvulnerabilityRemaining = FMath::Max(0.f, HurtInvulnerabilityRemaining - DeltaSeconds);
     FeedbackRemaining = FMath::Max(0.f, FeedbackRemaining - DeltaSeconds);
     if (FeedbackRemaining == 0.f) Feedback.Empty();
+    if (GrabComponent->IsGrabbing()) GrabComponent->Climb(ForwardInput, RightInput, DeltaSeconds);
 
     if (IsDodging())
     {
@@ -285,7 +307,7 @@ void APrototypePlayer::Tick(float DeltaSeconds)
     }
     const float Swing = IsAttacking() ? FMath::Lerp(-65.f, 65.f, 1.f - AttackRemaining / AttackDuration) : 0.f;
     Sword->SetRelativeRotation(FRotator(0.f, Swing, 0.f));
-    GetCharacterMovement()->bOrientRotationToMovement = !IsAttacking() && !IsDodging() && !Climbing->IsClimbing();
+    GetCharacterMovement()->bOrientRotationToMovement = !IsAttacking() && !IsDodging() && !IsGrabbing();
     if (BodyMaterial)
     {
         const bool bFlash = HurtInvulnerabilityRemaining > 0.f && FMath::Sin(GetWorld()->GetTimeSeconds() * 35.f) > 0.f;
@@ -303,6 +325,7 @@ void APrototypePlayer::ShowFeedback(const FString& Text)
 void APrototypePlayer::StopCombat()
 {
     if (Climbing) Climbing->Detach(false);
+    if (GrabComponent) GrabComponent->Release();
     StopJumping();
     DodgeRemaining = AttackRemaining = 0.f;
     // LaunchCharacter queues knockback for the next movement tick. Zeroing current
@@ -335,7 +358,7 @@ void APrototypePlayer::ResetForEncounter(const FTransform& Spawn)
 void APrototypePlayer::UpdateAnimation()
 {
     const bool Climb = Climbing && Climbing->IsClimbing();
-    const bool HideWeapon = Climb && !IsAttacking();
+    const bool HideWeapon = IsGrabbing() && !IsAttacking();
     if (HideWeapon != bWeaponHidden)
     {
         bWeaponHidden = HideWeapon;
@@ -344,6 +367,7 @@ void APrototypePlayer::UpdateAnimation()
     }
     int32 Next = Health <= 0 ? 9 : IsDodging() ? 4 : IsAttacking() ? 3
         : Climb ? (Climbing->GetBoss()->IsBucking() ? 7 : Climbing->IsMoving() ? 5 : Climbing->IsResting() ? 0 : 6)
+        : GrabComponent->IsGrabbing() ? (FMath::Abs(ForwardInput)+FMath::Abs(RightInput) > .01f ? 5 : 6)
         : GetCharacterMovement()->IsFalling() ? 8 : GetVelocity().Size2D()>300.f ? 2 : GetVelocity().Size2D()>5.f ? 1 : 0;
     if (Next != CurrentAnimation && Animations.IsValidIndex(Next) && Animations[Next])
     {
@@ -356,4 +380,11 @@ void APrototypePlayer::UpdateAnimation()
 void APrototypePlayer::Retry()
 {
     if (APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>()) Mode->RetryEncounter();
+}
+
+bool APrototypePlayer::HasImportedVisuals() const
+{
+    if (!GetMesh()->GetSkeletalMeshAsset() || Body->IsVisible() || Sword->IsVisible() || Animations.Num() != 10) return false;
+    for (const UAnimSequence* Clip : Animations) if (!Clip) return false;
+    return GetMesh()->GetMaterial(0) != nullptr;
 }
