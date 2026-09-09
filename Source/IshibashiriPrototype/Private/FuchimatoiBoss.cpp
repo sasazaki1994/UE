@@ -22,6 +22,10 @@ void AFuchimatoiBoss::NotifyHeadSnagged()
 
 void AFuchimatoiBoss::BeginCoiling()
 {
+    if (ActionState == EFuchimatoiActionState::Snagged)
+    {
+        CoilingProgress = 0.f;
+    }
     TryTransition(EFuchimatoiActionState::Snagged, EFuchimatoiActionState::Coiling);
 }
 
@@ -33,6 +37,7 @@ void AFuchimatoiBoss::ReturnToSubmerged()
 void AFuchimatoiBoss::ResetFuchimatoi()
 {
     ResetNushi();
+    CoilingProgress = 0.f;
     SetActionState(EFuchimatoiActionState::Submerged);
     HeadProxyLocalLocation = FVector::ZeroVector;
     BiteTargetLocalLocation = FVector::ZeroVector;
@@ -67,6 +72,22 @@ void AFuchimatoiBoss::AdvanceBiteLunge(float DeltaSeconds)
     {
         HeadProxyLocalLocation = BiteTargetLocalLocation;
     }
+}
+
+void AFuchimatoiBoss::AdvanceCoiling(float DeltaSeconds)
+{
+    if (ActionState != EFuchimatoiActionState::Coiling
+        || DeltaSeconds <= 0.f
+        || CoilingDuration <= 0.f
+        || !FMath::IsFinite(DeltaSeconds)
+        || !FMath::IsFinite(CoilingDuration))
+    {
+        return;
+    }
+
+    // Divide in double precision so even extreme finite float inputs cannot overflow.
+    const double ProgressDelta = static_cast<double>(DeltaSeconds) / CoilingDuration;
+    CoilingProgress = static_cast<float>(FMath::Clamp(CoilingProgress + ProgressDelta, 0.0, 1.0));
 }
 
 bool AFuchimatoiBoss::IsBiteTargetReached() const
