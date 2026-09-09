@@ -6,6 +6,8 @@
 #include "KakonProgressTestListener.h"
 #include "NushiStateComponent.h"
 
+#include <limits>
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFuchimatoiBossTest,
     "IshibashiriPrototype.Nushi.Fuchimatoi.ActionLifecycle",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -171,6 +173,162 @@ bool FFuchimatoiBiteLungeMovementTest::RunTest(const FString& Parameters)
     Boss->AdvanceBiteLunge(1.f);
     TestEqual(TEXT("A lunge can move again after reset"),
         Boss->GetHeadProxyLocalLocation(), FVector(100.f, 0.f, 0.f));
+
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFuchimatoiCoilingProgressTest,
+    "IshibashiriPrototype.Nushi.Fuchimatoi.CoilingProgress",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFuchimatoiCoilingProgressTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    AFuchimatoiBoss* Boss = World->SpawnActor<AFuchimatoiBoss>();
+    UKakonProgressTestListener* StateListener = NewObject<UKakonProgressTestListener>();
+    Boss->OnFuchimatoiActionStateChanged.AddDynamic(
+        StateListener, &UKakonProgressTestListener::HandleAllPurified);
+
+    TestEqual(TEXT("Coiling progress starts at zero"), Boss->GetCoilingProgress(), 0.f);
+    TestEqual(TEXT("Default coiling duration is two seconds"), Boss->CoilingDuration, 2.f);
+    TestFalse(TEXT("Initial coiling is incomplete"), Boss->IsCoilingComplete());
+    TestFalse(TEXT("Coiling keeps actor tick disabled"), Boss->PrimaryActorTick.bCanEverTick);
+
+    Boss->AdvanceCoiling(1.f);
+    TestEqual(TEXT("Submerged does not advance coiling"), Boss->GetCoilingProgress(), 0.f);
+    Boss->BeginBiteWindup();
+    Boss->AdvanceCoiling(1.f);
+    TestEqual(TEXT("BiteWindup does not advance coiling"), Boss->GetCoilingProgress(), 0.f);
+    Boss->BeginBiteLunge();
+    Boss->AdvanceCoiling(1.f);
+    TestEqual(TEXT("BiteLunge does not advance coiling"), Boss->GetCoilingProgress(), 0.f);
+    Boss->NotifyHeadSnagged();
+    Boss->AdvanceCoiling(1.f);
+    TestEqual(TEXT("Snagged does not advance coiling"), Boss->GetCoilingProgress(), 0.f);
+    Boss->BeginCoiling();
+    TestEqual(TEXT("Coiling begins at zero"), Boss->GetCoilingProgress(), 0.f);
+    const int32 CoilingEventCount = StateListener->AllPurifiedEventCount;
+
+    Boss->AdvanceCoiling(0.5f);
+    TestEqual(TEXT("First half second advances a quarter"), Boss->GetCoilingProgress(), 0.25f);
+    Boss->BeginCoiling();
+    TestEqual(TEXT("Duplicate BeginCoiling preserves progress"), Boss->GetCoilingProgress(), 0.25f);
+    Boss->AdvanceCoiling(0.5f);
+    TestEqual(TEXT("Second half second advances to halfway"), Boss->GetCoilingProgress(), 0.5f);
+    TestFalse(TEXT("Partial coiling is incomplete"), Boss->IsCoilingComplete());
+    Boss->AdvanceCoiling(10.f);
+    TestEqual(TEXT("Coiling never overshoots one"), Boss->GetCoilingProgress(), 1.f);
+    TestTrue(TEXT("Full progress reports completion"), Boss->IsCoilingComplete());
+    TestEqual(TEXT("Completion keeps the Coiling action state"),
+        Boss->GetActionState(), EFuchimatoiActionState::Coiling);
+    TestEqual(TEXT("Advancement and completion emit no state changes"),
+        StateListener->AllPurifiedEventCount, CoilingEventCount);
+    Boss->AdvanceCoiling(1.f);
+    TestEqual(TEXT("Further advancement stays at one"), Boss->GetCoilingProgress(), 1.f);
+
+    Boss->ReturnToSubmerged();
+    TestEqual(TEXT("Explicit return still works after completion"),
+        Boss->GetActionState(), EFuchimatoiActionState::Submerged);
+    Boss->BeginCoiling();
+    TestEqual(TEXT("Illegal BeginCoiling preserves completed progress"), Boss->GetCoilingProgress(), 1.f);
+    Boss->BeginBiteWindup();
+    Boss->BeginBiteLunge();
+    Boss->NotifyHeadSnagged();
+    Boss->BeginCoiling();
+    TestEqual(TEXT("A new cycle without reset starts at zero"), Boss->GetCoilingProgress(), 0.f);
+    TestFalse(TEXT("A new cycle clears completion"), Boss->IsCoilingComplete());
+    Boss->AdvanceCoiling(0.5f);
+    Boss->ReturnToSubmerged();
+    Boss->AdvanceCoiling(1.f);
+    TestEqual(TEXT("Explicit return freezes partial progress"), Boss->GetCoilingProgress(), 0.25f);
+
+    // Reset a coiling actor with both shared state and bite data populated.
+    Boss->StartEncounter();
+    Boss->SetBiteTargetLocalLocation(FVector(100.f, 0.f, 0.f));
+    Boss->BeginBiteWindup();
+    Boss->BeginBiteLunge();
+    Boss->AdvanceBiteLunge(1.f);
+    Boss->NotifyHeadSnagged();
+    Boss->BeginCoiling();
+    Boss->AdvanceCoiling(0.5f);
+    Boss->ResetFuchimatoi();
+    TestEqual(TEXT("Reset clears partial coiling progress"), Boss->GetCoilingProgress(), 0.f);
+    TestFalse(TEXT("Reset clears coiling completion"), Boss->IsCoilingComplete());
+    TestEqual(TEXT("Reset preserves action reset"), Boss->GetActionState(), EFuchimatoiActionState::Submerged);
+    TestEqual(TEXT("Reset preserves shared Nushi reset"), Boss->GetNushiState(), ENushiState::Dormant);
+    TestEqual(TEXT("Reset preserves head proxy reset"), Boss->GetHeadProxyLocalLocation(), FVector::ZeroVector);
+    TestEqual(TEXT("Reset preserves bite target reset"), Boss->GetBiteTargetLocalLocation(), FVector::ZeroVector);
+    TestFalse(TEXT("Reset preserves unset bite target"), Boss->HasBiteTarget());
+
+    Boss->BeginBiteWindup();
+    Boss->BeginBiteLunge();
+    Boss->NotifyHeadSnagged();
+    Boss->BeginCoiling();
+    Boss->CoilingDuration = 4.f;
+    Boss->AdvanceCoiling(1.f);
+    TestEqual(TEXT("Replay uses the configured duration from zero"), Boss->GetCoilingProgress(), 0.25f);
+    Boss->AdvanceCoiling(3.f);
+    TestTrue(TEXT("Replay completes at exactly the configured duration"), Boss->IsCoilingComplete());
+    Boss->ResetFuchimatoi();
+    TestEqual(TEXT("Reset clears completed progress"), Boss->GetCoilingProgress(), 0.f);
+    TestFalse(TEXT("Reset clears completed flag"), Boss->IsCoilingComplete());
+
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFuchimatoiCoilingInvalidInputTest,
+    "IshibashiriPrototype.Nushi.Fuchimatoi.CoilingInvalidInput",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFuchimatoiCoilingInvalidInputTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    AFuchimatoiBoss* Boss = World->SpawnActor<AFuchimatoiBoss>();
+    Boss->BeginBiteWindup();
+    Boss->BeginBiteLunge();
+    Boss->NotifyHeadSnagged();
+    Boss->BeginCoiling();
+    Boss->AdvanceCoiling(0.5f);
+
+    const float InvalidInputs[] = {
+        0.f, -1.f, std::numeric_limits<float>::quiet_NaN(),
+        std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity()
+    };
+    // Validate each invalid value independently, both during progress and after completion.
+    for (const float ExpectedProgress : {0.25f, 1.f})
+    {
+        for (int32 Index = 0; Index < UE_ARRAY_COUNT(InvalidInputs); ++Index)
+        {
+            Boss->AdvanceCoiling(InvalidInputs[Index]);
+            TestEqual(FString::Printf(TEXT("Invalid delta %d preserves progress %g"), Index, ExpectedProgress),
+                Boss->GetCoilingProgress(), ExpectedProgress);
+            TestTrue(TEXT("Invalid delta leaves finite progress"), FMath::IsFinite(Boss->GetCoilingProgress()));
+
+            Boss->CoilingDuration = InvalidInputs[Index];
+            Boss->AdvanceCoiling(1.f);
+            TestEqual(FString::Printf(TEXT("Invalid duration %d preserves progress %g"), Index, ExpectedProgress),
+                Boss->GetCoilingProgress(), ExpectedProgress);
+            TestTrue(TEXT("Invalid duration leaves finite progress"), FMath::IsFinite(Boss->GetCoilingProgress()));
+            Boss->CoilingDuration = 2.f;
+        }
+        TestEqual(TEXT("Invalid inputs preserve completion status"), Boss->IsCoilingComplete(), ExpectedProgress == 1.f);
+        TestEqual(TEXT("Invalid inputs keep Coiling state"), Boss->GetActionState(), EFuchimatoiActionState::Coiling);
+        Boss->AdvanceCoiling(2.f);
+        TestEqual(TEXT("Valid advancement after invalid inputs completes safely"), Boss->GetCoilingProgress(), 1.f);
+    }
+
+    Boss->ResetFuchimatoi();
+    Boss->BeginBiteWindup();
+    Boss->BeginBiteLunge();
+    Boss->NotifyHeadSnagged();
+    Boss->BeginCoiling();
+    Boss->CoilingDuration = std::numeric_limits<float>::min();
+    Boss->AdvanceCoiling(std::numeric_limits<float>::max());
+    TestEqual(TEXT("Extreme finite inputs clamp safely to one"), Boss->GetCoilingProgress(), 1.f);
+    TestTrue(TEXT("Extreme finite inputs complete coiling"), Boss->IsCoilingComplete());
+    TestEqual(TEXT("Extreme finite inputs keep Coiling state"), Boss->GetActionState(), EFuchimatoiActionState::Coiling);
 
     World->DestroyWorld(false);
     return true;

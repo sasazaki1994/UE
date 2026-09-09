@@ -49,6 +49,17 @@ public:
     UFUNCTION(BlueprintCallable, Category="Nushi|Fuchimatoi|Bite")
     void AdvanceBiteLunge(float DeltaSeconds);
 
+    // Explicit advancement only; invalid delta time or duration leaves progress unchanged.
+    UFUNCTION(BlueprintCallable, Category="Nushi|Fuchimatoi|Coiling")
+    void AdvanceCoiling(float DeltaSeconds);
+
+    UFUNCTION(BlueprintPure, Category="Nushi|Fuchimatoi|Coiling")
+    float GetCoilingProgress() const { return CoilingProgress; }
+
+    // Completion does not change ActionState; retained until the next coiling start or reset.
+    UFUNCTION(BlueprintPure, Category="Nushi|Fuchimatoi|Coiling")
+    bool IsCoilingComplete() const { return CoilingProgress >= 1.f; }
+
     UFUNCTION(BlueprintPure, Category="Nushi|Fuchimatoi|Bite")
     FVector GetHeadProxyLocalLocation() const { return HeadProxyLocalLocation; }
 
@@ -76,9 +87,15 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Nushi|Fuchimatoi|Bite", meta=(ClampMin="0.0"))
     float BiteLungeSpeed = 1200.f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Nushi|Fuchimatoi|Coiling", meta=(ClampMin="0.0", Units="s"))
+    float CoilingDuration = 2.f;
+
 private:
     void TryTransition(EFuchimatoiActionState ExpectedState, EFuchimatoiActionState NewState);
     void SetActionState(EFuchimatoiActionState NewState);
+
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Nushi|Fuchimatoi|Coiling", meta=(AllowPrivateAccess="true"))
+    float CoilingProgress = 0.f;
 
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Nushi|Fuchimatoi", meta=(AllowPrivateAccess="true"))
     EFuchimatoiActionState ActionState = EFuchimatoiActionState::Submerged;
