@@ -39,7 +39,7 @@ private:
     EPhase Phase = EPhase::InputCamera;
     float Elapsed = 0.f;
     float TotalElapsed = 0.f;
-    float HeightBeforeCameraReturn = 0.f;
+    FVector OffsetBeforeCameraReturn = FVector::ZeroVector;
     FVector StartPosition = FVector::ZeroVector;
     FVector LockedDirection = FVector::ZeroVector;
     int32 Counters = 0;

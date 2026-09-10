@@ -1,0 +1,33 @@
+[
+  {
+    "asset": "Shirotsura",
+    "glb_skin_count": 1,
+    "glb_animations": [
+      "Climb",
+      "Death",
+      "Dodge",
+      "Grip",
+      "Hang",
+      "Idle",
+      "Jump",
+      "Run",
+      "Shirotsura_RigAction",
+      "Slash",
+      "Walk"
+    ],
+    "deformed_vertices": 20957
+  },
+  {
+    "asset": "Ishibashiri",
+    "glb_skin_count": 1,
+    "glb_animations": [
+      "Buck",
+      "Calmed",
+      "Charge",
+      "Idle",
+      "Ishibashiri_RigAction",
+      "Walk"
+    ],
+    "deformed_vertices": 10156
+  }
+]

@@ -1,11 +1,17 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Check', 'Build', 'Setup', 'Play', 'Editor', 'Test', 'Package', 'CodeDatabase')]
+    [ValidateSet('Check', 'Build', 'Setup', 'Play', 'Editor', 'Test', 'Package', 'CodeDatabase', 'ImportModels')]
     [string]$Action = 'Play',
     [string]$EngineRoot = $env:UE_ROOT,
     [switch]$SkipBuild,
     [switch]$Capture,
     [switch]$Playthrough,
+    [switch]$Camera,
+    [switch]$Grab,
+    [switch]$Climbing,
+    [switch]$LocalClimbing,
+    [switch]$ClimbingGamepad,
+    [switch]$Gamepad,
     [ValidateRange(0, 3600)][int]$TestSeconds = 0,
     [ValidateRange(15, 240)][int]$TestFPS = 60
 )
@@ -67,8 +73,10 @@ function Ensure-Map {
 }
 
 try {
-    if (($Playthrough -or $TestSeconds -gt 0) -and $Action -ne 'Test') { throw '-Playthrough and -TestSeconds require -Action Test.' }
+    if (($Camera -or $Playthrough -or $Grab -or $Climbing -or $LocalClimbing -or $ClimbingGamepad -or $Gamepad -or $TestSeconds -gt 0) -and $Action -ne 'Test') { throw 'Test switches require -Action Test.' }
+    if (@(@($Camera, $Playthrough, $Grab, $Climbing, $LocalClimbing, $ClimbingGamepad, $Gamepad) | Where-Object { $_ }).Count -gt 1) { throw 'Choose one test mode.' }
     if ($TestSeconds -gt 0 -and !$Playthrough) { throw '-TestSeconds requires -Playthrough.' }
+    if ($Capture -and ($Gamepad -or $Grab -or $LocalClimbing)) { throw '-Capture requires route climbing, smoke or playthrough tests.' }
     $ResolvedEngine = Find-Engine
     $BuildTool = Join-Path $ResolvedEngine 'Engine\Build\BatchFiles\Build.bat'
     $EditorExe = Join-Path $ResolvedEngine 'Engine\Binaries\Win64\UnrealEditor.exe'
@@ -108,6 +116,14 @@ try {
     }
     Ensure-Map
     switch ($Action) {
+        'ImportModels' {
+            $ScriptFile = Join-Path $PSScriptRoot 'ImportFreeModels.py'
+            $ImportLog = Join-Path $ProjectRoot ('Saved\Logs\ImportModels-' + [guid]::NewGuid().ToString('N') + '.log')
+            Invoke-Checked $EditorCmd @($ProjectFile, '-run=pythonscript', "-script=$ScriptFile", '-unattended', '-nop4', '-nullrhi', '-nosound', '-UTF8Output', "-abslog=$ImportLog")
+            if (!(Select-String -LiteralPath $ImportLog -SimpleMatch 'FREE_MODELS_IMPORT_PASS' -Quiet)) {
+                throw "Model import did not report success. Read $ImportLog"
+            }
+        }
         'Setup' { Write-Host 'Editor build and prototype map are ready.' }
         'Play' {
             # This is the visible game explicitly requested by the Play action.
@@ -117,24 +133,26 @@ try {
         'Test' {
             $LogDir = Join-Path $ProjectRoot 'Saved\Logs'
             New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
-            $LogName = if ($Playthrough) { "PrototypePlaythrough-$TestFPS.log" } elseif ($Capture) { "PrototypeVisual-$TestFPS.log" } else { "PrototypeSmoke-$TestFPS.log" }
+            $LogName = if ($Camera) { "PrototypeCamera-$TestFPS.log" } elseif ($Gamepad) { "PrototypeGamepad-$TestFPS.log" } elseif ($ClimbingGamepad) { "ClimbingGamepad-$TestFPS.log" } elseif ($Climbing) { "ClimbingTest-$TestFPS.log" } elseif ($LocalClimbing) { "PrototypeClimbing-$TestFPS.log" } elseif ($Grab) { "PrototypeGrab-$TestFPS.log" } elseif ($Playthrough) { "PrototypePlaythrough-$TestFPS.log" } elseif ($Capture) { "PrototypeVisual-$TestFPS.log" } else { "PrototypeSmoke-$TestFPS.log" }
             $LogFile = Join-Path $LogDir $LogName
             $RunId = [guid]::NewGuid().ToString('N')
-            $TestFlag = if ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
+            $TestFlag = if ($Camera) { '-PrototypeCameraTest' } elseif ($Gamepad) { '-PrototypeGamepadTest' } elseif ($Climbing -or $ClimbingGamepad) { '-ClimbingTest' } elseif ($LocalClimbing) { '-PrototypeClimbingTest' } elseif ($Grab) { '-PrototypeGrabTest' } elseif ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
             $TestArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01', '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
+            if ($ClimbingGamepad) { $TestArguments += '-ClimbingGamepad' }
             if ($Capture) {
                 $TestArguments += @('-PrototypeCapture', '-RenderOffscreen', '-windowed', '-ResX=1280', '-ResY=800', '-ExecCmds=t.MaxFPS 60')
             } else {
                 $TestArguments += '-nullrhi'
             }
             Invoke-Checked $EditorCmd $TestArguments
-            if (!(Select-String -LiteralPath $LogFile -SimpleMatch "PROTOTYPE_TEST_PASS $RunId" -Quiet)) {
+            $PassMarker = if ($Climbing -or $ClimbingGamepad) { "CLIMB_TEST_PASS $RunId" } else { "PROTOTYPE_TEST_PASS $RunId" }
+            if (!(Select-String -LiteralPath $LogFile -SimpleMatch $PassMarker -Quiet)) {
                 throw "Smoke test did not report success for this run. Read $LogFile"
             }
             Write-Host "Test passed: $LogFile"
             if ($Capture) {
-                $CaptureDir = Join-Path $ProjectRoot "Saved\Screenshots\Prototype\$RunId"
-                $ShotNames = if ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera', '09-CameraReturn') }
+                $CaptureDir = if ($Climbing -or $ClimbingGamepad) { Join-Path $ProjectRoot "Saved\Screenshots\Climbing\$RunId" } else { Join-Path $ProjectRoot "Saved\Screenshots\Prototype\$RunId" }
+                $ShotNames = if ($Camera) { @('06-WallCamera', '07-BossCamera', '09-CameraReturn') } elseif ($Climbing -or $ClimbingGamepad) { @('01-Ground','02-FirstLedge','03-ShoulderCore','04-Summit','05-Victory','06-ThrownOff') } elseif ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera', '09-CameraReturn') }
                 foreach ($Name in $ShotNames) {
                     $Shot = Get-Item -LiteralPath (Join-Path $CaptureDir "$Name.png") -ErrorAction Stop
                     if ($Shot.Length -lt 100) { throw "Screenshot is empty: $($Shot.FullName)" }

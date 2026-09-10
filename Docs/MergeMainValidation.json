@@ -1,0 +1,93 @@
+{
+  "date": "2026-09-09",
+  "engine": "UE 5.6.1",
+  "mergedMain": "6d08e29",
+  "editorBuild": "Success",
+  "runtimeTests": [
+    {
+      "log": "Saved/Logs/ClimbingTest-60.log",
+      "result": "Success",
+      "runId": "64033401750b4a1bb58e661d8166db49",
+      "detail": "51.95s"
+    },
+    {
+      "log": "Saved/Logs/ClimbingTest-30.log",
+      "result": "Success",
+      "runId": "44e4c9d0a2454407bb21074b3d8cd4da",
+      "detail": "52.10s"
+    },
+    {
+      "log": "Saved/Logs/ClimbingGamepad-60.log",
+      "result": "Success",
+      "runId": "a92023bbcd424e3e873c288261a7e7b6",
+      "detail": "51.95s"
+    },
+    {
+      "log": "Saved/Logs/PrototypeGrab-60.log",
+      "result": "Success",
+      "runId": "ca51db5629444cdd8dd7c4469a818992",
+      "detail": ""
+    },
+    {
+      "log": "Saved/Logs/PrototypeClimbing-60.log",
+      "result": "Success",
+      "runId": "554c279813c84889b87f5186f41a43d8",
+      "detail": ""
+    },
+    {
+      "log": "Saved/Logs/PrototypeGamepad-60.log",
+      "result": "Success",
+      "runId": "8848cffb7fe244e59c2e1ef33322231a",
+      "detail": ""
+    }
+  ],
+  "automation": {
+    "succeeded": 8,
+    "failed": 0,
+    "notRun": 0,
+    "tests": [
+      {
+        "fullTestPath": "IshibashiriPrototype.Kakon.ActorStateTransitions",
+        "state": "Success",
+        "duration": 0.009238697588443756
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Kakon.NushiProgress",
+        "state": "Success",
+        "duration": 0.017895501106977463
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.ActionLifecycle",
+        "state": "Success",
+        "duration": 0.026312101632356644
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.BiteLungeMovement",
+        "state": "Success",
+        "duration": 0.01745609939098358
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.CommonBase",
+        "state": "Success",
+        "duration": 0.018207799643278122
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.EncounterManager",
+        "state": "Success",
+        "duration": 0.01770170032978058
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.StateProgression",
+        "state": "Success",
+        "duration": 0.029817800968885422
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Player.StaminaResource",
+        "state": "Success",
+        "duration": 0.016867898404598236
+      }
+    ]
+  },
+  "physicalControllerVerified": false,
+  "packageRebuiltAfterMerge": false
+}

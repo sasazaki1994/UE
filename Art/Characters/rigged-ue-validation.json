@@ -1,0 +1,77 @@
+[
+  {
+    "animation": "/Game/Characters/Rigged/Shirotsura/AN_Shirotsura_Idle",
+    "seconds": 2.0,
+    "skeleton": "/Game/Characters/Rigged/Shirotsura/SK_Shirotsura_Skeleton.SK_Shirotsura_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Shirotsura/AN_Shirotsura_Walk",
+    "seconds": 1.0,
+    "skeleton": "/Game/Characters/Rigged/Shirotsura/SK_Shirotsura_Skeleton.SK_Shirotsura_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Shirotsura/AN_Shirotsura_Run",
+    "seconds": 0.7333333492279053,
+    "skeleton": "/Game/Characters/Rigged/Shirotsura/SK_Shirotsura_Skeleton.SK_Shirotsura_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Shirotsura/AN_Shirotsura_Slash",
+    "seconds": 0.5333333611488342,
+    "skeleton": "/Game/Characters/Rigged/Shirotsura/SK_Shirotsura_Skeleton.SK_Shirotsura_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Shirotsura/AN_Shirotsura_Dodge",
+    "seconds": 0.6000000238418579,
+    "skeleton": "/Game/Characters/Rigged/Shirotsura/SK_Shirotsura_Skeleton.SK_Shirotsura_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Shirotsura/AN_Shirotsura_Climb",
+    "seconds": 1.2000000476837158,
+    "skeleton": "/Game/Characters/Rigged/Shirotsura/SK_Shirotsura_Skeleton.SK_Shirotsura_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Shirotsura/AN_Shirotsura_Hang",
+    "seconds": 2.0,
+    "skeleton": "/Game/Characters/Rigged/Shirotsura/SK_Shirotsura_Skeleton.SK_Shirotsura_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Shirotsura/AN_Shirotsura_Grip",
+    "seconds": 1.0,
+    "skeleton": "/Game/Characters/Rigged/Shirotsura/SK_Shirotsura_Skeleton.SK_Shirotsura_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Shirotsura/AN_Shirotsura_Jump",
+    "seconds": 0.800000011920929,
+    "skeleton": "/Game/Characters/Rigged/Shirotsura/SK_Shirotsura_Skeleton.SK_Shirotsura_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Shirotsura/AN_Shirotsura_Death",
+    "seconds": 1.600000023841858,
+    "skeleton": "/Game/Characters/Rigged/Shirotsura/SK_Shirotsura_Skeleton.SK_Shirotsura_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Ishibashiri/AN_Ishibashiri_Idle",
+    "seconds": 2.0,
+    "skeleton": "/Game/Characters/Rigged/Ishibashiri/SK_Ishibashiri_Skeleton.SK_Ishibashiri_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Ishibashiri/AN_Ishibashiri_Walk",
+    "seconds": 1.600000023841858,
+    "skeleton": "/Game/Characters/Rigged/Ishibashiri/SK_Ishibashiri_Skeleton.SK_Ishibashiri_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Ishibashiri/AN_Ishibashiri_Charge",
+    "seconds": 0.800000011920929,
+    "skeleton": "/Game/Characters/Rigged/Ishibashiri/SK_Ishibashiri_Skeleton.SK_Ishibashiri_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Ishibashiri/AN_Ishibashiri_Buck",
+    "seconds": 1.2000000476837158,
+    "skeleton": "/Game/Characters/Rigged/Ishibashiri/SK_Ishibashiri_Skeleton.SK_Ishibashiri_Skeleton"
+  },
+  {
+    "animation": "/Game/Characters/Rigged/Ishibashiri/AN_Ishibashiri_Calmed",
+    "seconds": 2.0,
+    "skeleton": "/Game/Characters/Rigged/Ishibashiri/SK_Ishibashiri_Skeleton.SK_Ishibashiri_Skeleton"
+  }
+]
