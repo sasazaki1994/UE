@@ -22,20 +22,28 @@ PBR = load_module('character_pbr_test', ROOT / 'Tools/CharacterPBR.py')
 class Socket:
     def __init__(self):
         self.default_value = None
+        self.links = []
+        self.is_linked = False
 
 
 class Sockets(dict):
+    def __init__(self, owner):
+        super().__init__()
+        self.owner = owner
+
     def __getitem__(self, key):
         if key not in self:
             self[key] = Socket()
+            self[key].node = self.owner
         return super().__getitem__(key)
 
 
 class Node:
     def __init__(self, name):
         self.name = name
-        self.inputs = Sockets()
-        self.outputs = Sockets()
+        self.type = 'BUMP' if name == 'ShaderNodeBump' else name
+        self.inputs = Sockets(self)
+        self.outputs = Sockets(self)
 
 
 class Nodes(list):
@@ -53,7 +61,9 @@ class Nodes(list):
 
 class Links:
     def new(self, output, input_):
-        pass
+        link = type('Link', (), {'from_node': getattr(output, 'node', None)})()
+        input_.links[:] = [link]
+        input_.is_linked = True
 
 
 class Material:
@@ -189,6 +199,28 @@ class PBRTests(unittest.TestCase):
                                          'Shirotsura', 'fallback', path, self.root)
         self.assertEqual(missing['status'], 'not_applied')
         self.assertIn('coarse_indigo_cloth', missing['reason'])
+
+    def test_external_normal_explicitly_uses_detail_uv(self):
+        path = self.write_manifest(self.manifest())
+        material = Material('granite shoulder')
+        result = PBR.apply_external_pbr([material], FakeBpy(), 'Ishibashiri',
+                                        'strict', path, self.root)
+        self.assertEqual(result['status'], 'applied')
+        normal = material.node_tree.nodes.get('ExternalPBR_NormalGL')
+        self.assertEqual(normal.uv_map, 'PBRDetailUV')
+        self.assertEqual(normal.space, 'TANGENT')
+
+    def test_external_normal_is_layered_into_existing_bump(self):
+        path = self.write_manifest(self.manifest())
+        material = Material('granite shoulder')
+        tree = material.node_tree
+        bump = tree.nodes.new('ShaderNodeBump')
+        tree.links.new(bump.outputs['Normal'], tree.nodes.get('Principled BSDF').inputs['Normal'])
+        PBR.apply_external_pbr([material], FakeBpy(), 'Ishibashiri',
+                               'strict', path, self.root)
+        self.assertTrue(bump.inputs['Normal'].is_linked)
+        self.assertEqual(bump.inputs['Normal'].links[0].from_node.name,
+                         'ExternalPBR_NormalGL')
 
 
 if __name__ == '__main__':
