@@ -24,7 +24,7 @@ for name in ['Shirotsura','Ishibashiri']:
     dest='/Game/Characters/Rigged/'+name
     folder=root/'Art/Characters'/name/'Rigged'
     textures={}
-    for kind in ['BaseColor','Normal']:
+    for kind in ['BaseColor','Normal','Roughness']:
         t=unreal.AssetImportTask();t.filename=str(folder/('T_'+name+'_'+kind+'.png'))
         t.destination_path=dest;t.destination_name='T_'+name+'_'+kind
         t.automated=True;t.replace_existing=True;t.save=True
@@ -35,6 +35,8 @@ for name in ['Shirotsura','Ishibashiri']:
         if kind=='Normal':
             tex.set_editor_property('compression_settings',unreal.TextureCompressionSettings.TC_NORMALMAP)
             tex.set_editor_property('flip_green_channel',True)
+        elif kind=='Roughness':
+            tex.set_editor_property('compression_settings',unreal.TextureCompressionSettings.TC_MASKS)
         textures[kind]=tex
     mesh=unreal.load_asset(dest+'/SK_'+name)
     slots=mesh.get_editor_property('materials')
@@ -45,16 +47,13 @@ for name in ['Shirotsura','Ishibashiri']:
         mat.set_editor_property('used_with_skeletal_mesh',True)
         # These materials can already be rooted by the character CDO. Deleting
         # rooted expressions asserts in UE 5.6; reconnect new expressions safely.
-        for kind,prop in [('BaseColor',unreal.MaterialProperty.MP_BASE_COLOR),('Normal',unreal.MaterialProperty.MP_NORMAL)]:
-            sample=expression(mat,unreal.MaterialExpressionTextureSample,-450,0 if kind=='BaseColor' else 220,
-                0 if kind=='BaseColor' else 1)
+        for kind,prop in [('BaseColor',unreal.MaterialProperty.MP_BASE_COLOR),('Normal',unreal.MaterialProperty.MP_NORMAL),('Roughness',unreal.MaterialProperty.MP_ROUGHNESS)]:
+            sample=expression(mat,unreal.MaterialExpressionTextureSample,-450,{'BaseColor':0,'Normal':220,'Roughness':440}[kind],
+                {'BaseColor':0,'Normal':1,'Roughness':2}[kind])
             sample.set_editor_property('texture',textures[kind])
-            sample.set_editor_property('sampler_type',unreal.MaterialSamplerType.SAMPLERTYPE_COLOR if kind=='BaseColor' else unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL)
-            lib.connect_material_property(sample,'RGB',prop)
+            sample.set_editor_property('sampler_type',unreal.MaterialSamplerType.SAMPLERTYPE_COLOR if kind=='BaseColor' else (unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL if kind=='Normal' else unreal.MaterialSamplerType.SAMPLERTYPE_MASKS))
+            lib.connect_material_property(sample,'R' if kind=='Roughness' else 'RGB',prop)
         roughness,metallic=surface_values(label)
-        rough=expression(mat,unreal.MaterialExpressionConstant,-220,420)
-        rough.set_editor_property('r',roughness)
-        lib.connect_material_property(rough,'',unreal.MaterialProperty.MP_ROUGHNESS)
         if 'crimson' in label or 'ember' in label:
             emissive=expression(mat,unreal.MaterialExpressionConstant3Vector,-220,550)
             emissive.set_editor_property('constant',unreal.LinearColor(.30,.003,.002,1))

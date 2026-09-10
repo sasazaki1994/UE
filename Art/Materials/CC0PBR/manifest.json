@@ -1,0 +1,5 @@
+{"schema_version":1,"license":{"name":"CC0 1.0","verification_url":null,"verified":false},"assets":[
+{"role":"weathered_stone","asset_id":null,"source_url":null,"resolution":"2K","physical_size_m":null,"maps":{"base_color":null,"normal_gl":null,"roughness":null},"status":"unresolved_network_blocked"},
+{"role":"aged_whitewood","asset_id":null,"source_url":null,"resolution":"2K","physical_size_m":null,"maps":{"base_color":null,"normal_gl":null,"roughness":null},"status":"unresolved_network_blocked"},
+{"role":"coarse_indigo_cloth","asset_id":null,"source_url":null,"resolution":"2K","physical_size_m":null,"maps":{"base_color":null,"normal_gl":null,"roughness":null},"status":"unresolved_network_blocked"}
+]}
