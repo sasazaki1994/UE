@@ -6,6 +6,20 @@ from pathlib import Path
 root=Path(unreal.Paths.project_dir()).resolve()
 asset_tools=unreal.AssetToolsHelpers.get_asset_tools()
 lib=unreal.MaterialEditingLibrary
+
+def expression(mat,kind,x,y,ordinal=0):
+    """Reuse the first expression of a type so reruns cannot grow the graph."""
+    expressions=mat.get_editor_property('expressions')
+    found=[e for e in expressions if isinstance(e,kind)]
+    return found[ordinal] if len(found)>ordinal else lib.create_material_expression(mat,kind,x,y)
+
+def surface_values(label):
+    # Atlas color/normal is shared, but tactile response remains material-specific.
+    if any(k in label for k in ['granite','stone','mineral','petrified']): return .91,0.0
+    if any(k in label for k in ['cloth','linen','straw','paper','moss','lichen','repair']): return .96,0.0
+    if any(k in label for k in ['hide','skin','hand','bristle','hair','root']): return .78,0.0
+    if any(k in label for k in ['blade','sharpened']): return .28,.85
+    return .86,0.0
 for name in ['Shirotsura','Ishibashiri']:
     dest='/Game/Characters/Rigged/'+name
     folder=root/'Art/Characters'/name/'Rigged'
@@ -32,21 +46,22 @@ for name in ['Shirotsura','Ishibashiri']:
         # These materials can already be rooted by the character CDO. Deleting
         # rooted expressions asserts in UE 5.6; reconnect new expressions safely.
         for kind,prop in [('BaseColor',unreal.MaterialProperty.MP_BASE_COLOR),('Normal',unreal.MaterialProperty.MP_NORMAL)]:
-            sample=lib.create_material_expression(mat,unreal.MaterialExpressionTextureSample,-450,0 if kind=='BaseColor' else 220)
+            sample=expression(mat,unreal.MaterialExpressionTextureSample,-450,0 if kind=='BaseColor' else 220,
+                0 if kind=='BaseColor' else 1)
             sample.set_editor_property('texture',textures[kind])
             sample.set_editor_property('sampler_type',unreal.MaterialSamplerType.SAMPLERTYPE_COLOR if kind=='BaseColor' else unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL)
             lib.connect_material_property(sample,'RGB',prop)
-        rough=lib.create_material_expression(mat,unreal.MaterialExpressionConstant,-220,420)
-        rough.set_editor_property('r',.84)
+        roughness,metallic=surface_values(label)
+        rough=expression(mat,unreal.MaterialExpressionConstant,-220,420)
+        rough.set_editor_property('r',roughness)
         lib.connect_material_property(rough,'',unreal.MaterialProperty.MP_ROUGHNESS)
         if 'crimson' in label or 'ember' in label:
-            emissive=lib.create_material_expression(mat,unreal.MaterialExpressionConstant3Vector,-220,550)
-            emissive.set_editor_property('constant',unreal.LinearColor(.75,.008,.004,1))
+            emissive=expression(mat,unreal.MaterialExpressionConstant3Vector,-220,550)
+            emissive.set_editor_property('constant',unreal.LinearColor(.30,.003,.002,1))
             lib.connect_material_property(emissive,'',unreal.MaterialProperty.MP_EMISSIVE_COLOR)
-        if 'blade' in label or 'sharpened' in label:
-            rough.set_editor_property('r',.28)
-            metal=lib.create_material_expression(mat,unreal.MaterialExpressionConstant,-220,620)
-            metal.set_editor_property('r',.85)
+        if metallic:
+            metal=expression(mat,unreal.MaterialExpressionConstant,-220,620,1)
+            metal.set_editor_property('r',metallic)
             lib.connect_material_property(metal,'',unreal.MaterialProperty.MP_METALLIC)
         lib.recompile_material(mat)
         slot.set_editor_property('material_interface',mat)

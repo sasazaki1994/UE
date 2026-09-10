@@ -65,6 +65,8 @@ def build(name):
             elif any(k in label for k in ['blade','grip','plain_guard']): default='weapon'
             elif 'scabbard' in label or any(k in label for k in ['waist','utility_pouch','jacket_split','rear_knot']): default='pelvis'
             elif 'paper_talisman' in label or 'talisman_ink' in label: default='chest' if center.z>1.05 else 'pelvis'
+            elif 'indigo_visible_repair' in label or 'repair_stitch' in label: default='chest' if center.z>1.02 else 'pelvis'
+            elif 'straw_mantle' in label or 'shoulder_straw' in label: default='chest'
             elif any(k in label for k in ['boot','sandal']): default='foot_'+side
             elif any(k in label for k in ['gaiter','leg_wrap']): default='shin_'+side
             elif 'finger' in label or 'thumb' in label or 'palm' in label or 'right_hand' in label: default='hand_'+side
