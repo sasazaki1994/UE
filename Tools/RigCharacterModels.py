@@ -2,10 +2,13 @@
 import bpy
 import math
 import json
+import importlib.util
 from pathlib import Path
 from mathutils import Vector
 
 ROOT=Path(__file__).resolve().parents[1]/'Art'/'Characters'
+PBR_SPEC=importlib.util.spec_from_file_location('character_pbr',Path(__file__).with_name('CharacterPBR.py'))
+PBR=importlib.util.module_from_spec(PBR_SPEC);PBR_SPEC.loader.exec_module(PBR)
 
 def bone(name,head,tail,parent=None):
     b=bpy.context.object.data.edit_bones.new(name)
@@ -206,32 +209,42 @@ def make_actions(rig,hero):
 def pi_clamp(t): return max(0,min(1,t))
 
 def bake_surface(body,out,name):
+    # Source textures use the model UV; AtlasUV is a separate bake destination.
+    detail=body.data.uv_layers.active
+    if detail:
+        detail.name='PBRDetailUV'
+    else:
+        detail=body.data.uv_layers.new(name='PBRDetailUV')
+    PBR.apply_external_pbr(body.data.materials,bpy)
     bpy.ops.object.select_all(action='DESELECT');body.select_set(True)
     bpy.context.view_layer.objects.active=body
     bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT')
+    atlas=body.data.uv_layers.get('AtlasUV') or body.data.uv_layers.new(name='AtlasUV')
+    body.data.uv_layers.active=atlas
     bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.002)
     bpy.ops.object.mode_set(mode='OBJECT')
     scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=1
     scene.render.bake.use_pass_direct=False;scene.render.bake.use_pass_indirect=False
     scene.render.bake.use_pass_color=True;scene.render.bake.margin=8
     images={}
-    for kind in ['BaseColor','Normal']:
+    for kind in ['BaseColor','Normal','Roughness']:
         image=bpy.data.images.new('T_'+name+'_'+kind,width=2048,height=2048,alpha=False)
-        if kind=='Normal':image.colorspace_settings.name='Non-Color'
+        if kind!='BaseColor':image.colorspace_settings.name='Non-Color'
         for mat in body.data.materials:
             nt=mat.node_tree
             node=nt.nodes.new('ShaderNodeTexImage');node.image=image;node.name='BakeTarget_'+kind
             for n in nt.nodes:n.select=False
             node.select=True;nt.nodes.active=node
-        bpy.ops.object.bake(type='DIFFUSE' if kind=='BaseColor' else 'NORMAL')
+        bpy.ops.object.bake(type=('DIFFUSE' if kind=='BaseColor' else kind.upper()))
         image.filepath_raw=str(out/(image.name+'.png'));image.file_format='PNG';image.save();image.pack()
         images[kind]=image
     for mat in body.data.materials:
         nt=mat.node_tree;p=nt.nodes.get('Principled BSDF')
-        col=nt.nodes.get('BakeTarget_BaseColor');nor=nt.nodes.get('BakeTarget_Normal')
+        col=nt.nodes.get('BakeTarget_BaseColor');nor=nt.nodes.get('BakeTarget_Normal');rough=nt.nodes.get('BakeTarget_Roughness')
         nt.links.new(col.outputs['Color'],p.inputs['Base Color'])
         normal=nt.nodes.new('ShaderNodeNormalMap');nt.links.new(nor.outputs['Color'],normal.inputs['Color'])
         nt.links.new(normal.outputs['Normal'],p.inputs['Normal'])
+        nt.links.new(rough.outputs['Color'],p.inputs['Roughness'])
     print('SURFACE_BAKE_PASS',name)
 
 def export(name):
