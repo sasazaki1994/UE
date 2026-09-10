@@ -85,3 +85,31 @@ Python構文検査と差分検査は成功した。キャッシュ検査は意�
 公式ID/URL、ライセンス、ハッシュが未解決であることを報告した。Blender生成、UE
 取り込み、二度適用、描画比較、60 FPS登攀はツール不在のため未実施である。この
 PRはこれらが完了するまで Draft とする。
+
+## 2026-09-10 素材判定・適用前検証の修正
+
+Blender素材名を単純な部分文字列ではなく、Unicode正規化後の英単語として照合する
+ようにした。先頭番号、`•`、空白、underscore、大文字小文字を無視して、実在する
+`01 • indigo work cloth`、`05 • aged whitewood mask`、`03 • granite N` をそれぞれ
+藍布、白木、石へ分類する。紙、縄、苔、皮膚、刃などは対象にしない。
+
+CLIとBlenderは同じmanifest loader/validatorを使用する。JSON構造、license、3用途が
+各1件であること、素材とmapの必須項目、BaseColor/OpenGL Normal/Roughness、ファイル
+存在、SHA-256を全件検証してから、画像またはnodeに触れる。白面は白木・藍布だけ、
+石走りは石だけを適用先として要求し、結果には実際の素材名と用途別件数を記録する。
+
+通常生成は未取得時にも従来の手続き型素材を維持する `fallback` であり、理由付きの
+`not_applied` を `rig-info.json` に保存する。PBR導入確認では、素材不足、検証不合格、
+適用先不足のいずれでも停止する `strict` を明示する。
+
+```bash
+python -m unittest discover -s Tests -p 'test_*.py' -v
+python Tools/ManageCharacterPBR.py verify
+blender --background --factory-startup --python Tools/RigCharacterModels.py -- --pbr-mode strict
+```
+
+標準Pythonの自動テストでは、分類、誤判定防止、一時ファイルの実SHA-256、欠落・改変・
+重複・不正JSON・必須項目不足、strict/fallback、事前検証中の副作用防止、キャラクター別
+適用件数を検証する。正式manifestは引き続き未取得・license未検証であり、上記verifyが
+未取得を報告する状態を維持する。素材取得、UV・法線の実画像確認、Blender生成・描画、
+UE取り込み・描画・登攀検証は未実施であり、完了扱いにしない。

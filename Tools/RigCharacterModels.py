@@ -3,12 +3,16 @@ import bpy
 import math
 import json
 import importlib.util
+import sys
 from pathlib import Path
 from mathutils import Vector
 
 ROOT=Path(__file__).resolve().parents[1]/'Art'/'Characters'
 PBR_SPEC=importlib.util.spec_from_file_location('character_pbr',Path(__file__).with_name('CharacterPBR.py'))
 PBR=importlib.util.module_from_spec(PBR_SPEC);PBR_SPEC.loader.exec_module(PBR)
+PBR_MODE='fallback'
+if '--pbr-mode' in sys.argv:
+    PBR_MODE=sys.argv[sys.argv.index('--pbr-mode')+1]
 
 def bone(name,head,tail,parent=None):
     b=bpy.context.object.data.edit_bones.new(name)
@@ -215,7 +219,8 @@ def bake_surface(body,out,name):
         detail.name='PBRDetailUV'
     else:
         detail=body.data.uv_layers.new(name='PBRDetailUV')
-    PBR.apply_external_pbr(body.data.materials,bpy)
+    pbr_result=PBR.apply_external_pbr(body.data.materials,bpy,character=name,mode=PBR_MODE)
+    print('EXTERNAL_PBR_'+pbr_result['status'].upper(),name,pbr_result['reason'] or '',pbr_result['role_counts'])
     bpy.ops.object.select_all(action='DESELECT');body.select_set(True)
     bpy.context.view_layer.objects.active=body
     bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT')
@@ -246,11 +251,12 @@ def bake_surface(body,out,name):
         nt.links.new(normal.outputs['Normal'],p.inputs['Normal'])
         nt.links.new(rough.outputs['Color'],p.inputs['Roughness'])
     print('SURFACE_BAKE_PASS',name)
+    return pbr_result
 
 def export(name):
     rig,body=build(name)
     out=ROOT/name/'Rigged'; out.mkdir(exist_ok=True)
-    bake_surface(body,out,name)
+    pbr_result=bake_surface(body,out,name)
     clips=make_actions(rig,name=='Shirotsura')
     scene=bpy.context.scene; scene.render.fps=30
     bpy.ops.object.select_all(action='DESELECT'); body.select_set(True); rig.select_set(True)
@@ -286,7 +292,8 @@ def export(name):
     unweighted=[v.index for v in body.data.vertices if abs(sum(g.weight for g in v.groups)-1)>0.001]
     assert not unweighted, 'Unweighted or unnormalized vertices'
     report={'bone_count':len(rig.data.bones),'vertices':len(body.data.vertices),'weight_validation':'pass',
-        'animations':clips,'root_motion':False,'rig_style':'deformation skeleton; procedural in-place clips; no facial rig or IK'}
+        'animations':clips,'root_motion':False,'rig_style':'deformation skeleton; procedural in-place clips; no facial rig or IK',
+        'external_pbr':pbr_result}
     (out/'rig-info.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     print('RIG_EXPORT_PASS',name,len(rig.data.bones))
 
