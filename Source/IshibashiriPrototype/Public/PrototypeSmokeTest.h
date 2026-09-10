@@ -23,7 +23,7 @@ protected:
 private:
     enum class EPhase : uint8 { InputCamera, Movement, Dodge, InputJump, InputLanding, InputAltDodge,
         Guard, ImmediateRetry, Win, VictoryCapture, VictoryRetry, Lose, DefeatCapture, DefeatRetry,
-        CameraWall, CameraBoss, CameraRestore, Done };
+        CameraWall, CameraBoss, CameraAim, CameraRestore, CameraReobstruct, CameraReset, Done };
     bool Require(bool bCondition, const TCHAR* Message);
     void Next(EPhase NewPhase);
     void AimAtBoss();
@@ -33,11 +33,13 @@ private:
     void TapKey(const FKey& Key);
     void PlaceAtWall();
     bool CheckRaisedCamera();
+    bool CheckPlayerFraming();
 
     UPROPERTY() TObjectPtr<APrototypeGameMode> Mode;
     EPhase Phase = EPhase::InputCamera;
     float Elapsed = 0.f;
     float TotalElapsed = 0.f;
+    FVector OffsetBeforeCameraReturn = FVector::ZeroVector;
     FVector StartPosition = FVector::ZeroVector;
     FVector LockedDirection = FVector::ZeroVector;
     int32 Counters = 0;
@@ -52,6 +54,7 @@ private:
     bool bSawDodgeImmunity = false;
     bool bSawLockedCharge = false;
     bool bTestedExtraCounter = false;
+    bool bTestedCameraReobstruction = false;
     bool bCaptureScreenshots = false;
     int32 CaptureFramesRemaining = 0;
     FString PendingCapture;

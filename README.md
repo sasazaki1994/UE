@@ -31,6 +31,10 @@ UE 5.6 / Windows向け。白面の祓い手を操作し、約12mの巨猪へ取�
 突進中は取り付けません。通常のルート登攀ではE / RBを離しても登攀は継続し、しがみつきだけを解除します。
 スティックのデッドゾーンは0.20。ルート上の移動は方向選択方式で、倒し量による速度調整ではありません。
 
+地上では水色の矢印が次の斬撃方向を示し、攻撃中は白色になって判定方向に固定されます。マウス / 右スティックで狙います。矢印は方向表示で、長さは射程を示しません。登攀・Grab中は矢印を隠し、岩棚での浄化操作と専用カメラを使用します。
+
+地上の視界が猪で塞がれた場合は、巨体の外側へカメラを退避します。壁際では上方へ退避します。遮蔽がなくなって0.15秒待ち、位置と注視点を0.35秒かけて通常視点へ戻します。途中で再び遮られた場合は退避を優先します。
+
 前脚→肩→背中手前→中央頂上→背面の順に登ります。背中手前では右肩の禍根へ分岐できます。
 右肩・頂上・背面の3か所を祓うと勝利します。地上の硬直中の反撃も利用でき、ボスHPを減らせます。
 スタミナは移動中とぶら下がり中に減り、岩棚に立つと回復します。
@@ -60,6 +64,7 @@ Generic Gamepadの移動・カメラ・各アクションを、白面の操作�
 
 ```powershell
 .\Tools\Prototype.ps1 -Action Build
+.\Tools\Prototype.ps1 -Action Test -Camera -Capture -SkipBuild -TestFPS 60
 .\Tools\Prototype.ps1 -Action Test -Climbing -SkipBuild -TestFPS 60
 .\Tools\Prototype.ps1 -Action Test -Climbing -SkipBuild -TestFPS 30
 .\Tools\Prototype.ps1 -Action Test -Climbing -Capture -SkipBuild
@@ -75,6 +80,8 @@ Generic Gamepadの移動・カメラ・各アクションを、白面の操作�
 `-Climbing` / `-ClimbingGamepad` は通常のルート登攀をキーボード / 模擬ゲームパッド入力で攻略します。
 `-Grab` / `-LocalClimbing` / `-Gamepad` は汎用Grabを明示的に選んだテスト用配置で、mainの相対Transform・Clamp・アナログ速度を検証します。物理コントローラーの検証とは異なります。
 以前の戦闘専用テストは小型のPrimitive猪と旧Arenaを前提とするため、現在のモデルの合格証明には使用しません。
+
+`-Camera` は現行モデルとArenaで4方向の壁際、猪の遮蔽、攻撃方向の固定、段階的な復帰、再遮蔽、Retryを検証します。`-Capture` 併用時は `Saved/Screenshots/Prototype/<RunId>/` に3場面を保存します。統合後の検証は [カメラ統合記録](Docs/CameraIntegrationValidation.md) にまとめています。
 
 Cursorでは `IshibashiriPrototype-Cursor.code-workspace` を開き、Ctrl+Shift+Bでビルドできます。TasksメニューのPlay / Open Unreal Editor / Generate C++ completion databaseも利用できます。従来の戦闘テストタスクには上記の旧配置の制限があります。
 

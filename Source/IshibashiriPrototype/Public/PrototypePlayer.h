@@ -40,6 +40,7 @@ public:
     bool IsAttacking() const { return AttackRemaining > 0.f; }
     float GetDodgeCooldown() const { return DodgeCooldownRemaining; }
     bool IsUsingRaisedCamera() const { return bUsingRaisedCamera; }
+    FVector GetAttackIndicatorDirection() const;
     const FString& GetFeedback() const { return Feedback; }
 
     // Default encounter uses authored holds; disable for the original local-space Grab prototype.
@@ -59,6 +60,9 @@ public:
     UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="1")) float AttackRadius = 85.f;
     UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="100")) float MinimumCameraDistance = 300.f;
     UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="500")) float RaisedCameraHeight = 720.f;
+    UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="500")) float BossCameraHeight = 1000.f;
+    UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="0")) float CameraClearDelay = 0.15f;
+    UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="0.01")) float CameraReturnDuration = 0.35f;
 
 protected:
     virtual void BeginPlay() override;
@@ -98,6 +102,10 @@ private:
     float FeedbackRemaining = 0.f;
     bool bAttackConnected = false;
     bool bUsingRaisedCamera = false;
+    bool bFrameBossWithCamera = false;
+    float CameraClearElapsed = 0.f;
+    FVector RaisedCameraOffset = FVector::ZeroVector;
+    FVector RaisedCameraFocusOffset = FVector::ZeroVector;
     FVector DodgeDirection = FVector::ForwardVector;
     FVector AttackDirection = FVector::ForwardVector;
     FString Feedback;

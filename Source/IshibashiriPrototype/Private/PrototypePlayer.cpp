@@ -86,8 +86,12 @@ void APrototypePlayer::BeginPlay()
 void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
 {
     Super::CalcCamera(DeltaTime, OutResult);
+    UWorld* World = GetWorld();
+    if (!World) return;
+
     const FVector PlayerLocation = GetActorLocation();
-    const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
+    const FVector Pivot = PlayerLocation + FVector(0.f, 0.f, 90.f);
+    const APrototypeGameMode* Mode = World->GetAuthGameMode<APrototypeGameMode>();
     const AIshibashiriBoss* Boss = Mode ? Mode->GetBoss() : nullptr;
     if (Climbing->IsClimbing())
     {
@@ -106,30 +110,111 @@ void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
         OutResult.Location = Location;
         OutResult.Rotation = (PlayerLocation+FVector(0,0,40)-Location).Rotation();
         bUsingRaisedCamera = false;
+        bFrameBossWithCamera = false;
+        CameraClearElapsed = 0.f;
         return;
     }
+
+    // The boss deliberately ignores the Camera channel so it never shortens the
+    // spring arm and causes an abrupt close-up. Detect it on the Visibility
+    // channel instead, including when it is between the player and the camera
+    // rather than directly surrounding the camera position.
+    bool bBossObstructsView = false;
+    if (Boss)
+    {
+        FHitResult SightHit;
+        FCollisionQueryParams SightParams(SCENE_QUERY_STAT(CombatCameraSight), false, this);
+        bBossObstructsView = World->LineTraceSingleByChannel(
+            SightHit, Pivot, OutResult.Location, ECC_Visibility, SightParams)
+            && SightHit.GetActor() == Boss;
+    }
+
     // Check the regular spring-arm view, even while using the raised view. A small
     // hysteresis prevents rapid switching at the edge of a wall or the boar mesh.
     const float SafeDistance = MinimumCameraDistance + (bUsingRaisedCamera ? 60.f : 0.f);
     const float BossMargin = bUsingRaisedCamera ? 120.f : 70.f;
-    bUsingRaisedCamera = FVector::Dist(PlayerLocation, OutResult.Location) < SafeDistance
+    bBossObstructsView |= Boss && Boss->GetComponentsBoundingBox(true).ExpandBy(BossMargin).IsInside(OutResult.Location);
+    const bool bNeedsRaisedCamera = FVector::Dist(PlayerLocation, OutResult.Location) < SafeDistance
+        || bBossObstructsView
         || (Boss && Boss->GetComponentsBoundingBox(true).ExpandBy(BossMargin).IsInside(OutResult.Location));
-    if (!bUsingRaisedCamera) return;
+    if (!bUsingRaisedCamera && !bNeedsRaisedCamera) return;
 
-    // Step outward from the colossus so the player stays visible at ground
-    // level. CalcCamera also runs after victory/defeat when combat has stopped.
-    const FVector Pivot = PlayerLocation + FVector(0.f, 0.f, 90.f);
-    FVector Away = Boss ? (PlayerLocation-Boss->GetActorLocation()).GetSafeNormal2D() : -GetActorForwardVector();
-    if (Away.IsNearlyZero()) Away = -GetActorForwardVector();
-    const FVector RaisedLocation = PlayerLocation+Away*700.f+FVector(0,0,280.f);
     FCollisionQueryParams Params(SCENE_QUERY_STAT(RaisedCombatCamera), false, this);
     if (Boss) Params.AddIgnoredActor(Boss);
+    if (!bNeedsRaisedCamera)
+    {
+        CameraClearElapsed += FMath::Max(0.f, DeltaTime);
+        const float Progress = FMath::Clamp((CameraClearElapsed - CameraClearDelay)
+            / FMath::Max(0.01f, CameraReturnDuration), 0.f, 1.f);
+        const float Blend = Progress * Progress * (3.f - 2.f * Progress);
+        const FVector Candidate = FMath::Lerp(PlayerLocation + RaisedCameraOffset, OutResult.Location, Blend);
+        FHitResult ReturnHit;
+        const bool bWallBlocksReturn = World->SweepSingleByChannel(ReturnHit, Pivot, Candidate,
+            FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(12.f), Params);
+        FCollisionQueryParams SightParams(SCENE_QUERY_STAT(ReturnCameraSight), false, this);
+        const bool bBossBlocksReturn = Boss && (
+            Boss->GetComponentsBoundingBox(true).ExpandBy(12.f).IsInside(Candidate)
+            || (World->LineTraceSingleByChannel(ReturnHit, Pivot, Candidate, ECC_Visibility, SightParams)
+                && ReturnHit.GetActor() == Boss));
+        if (!bWallBlocksReturn && !bBossBlocksReturn)
+        {
+            // Blend look-at points near the character along with position. A
+            // quaternion-only blend can look away from the player halfway back.
+            const FVector NormalFocus = OutResult.Location + OutResult.Rotation.Vector()
+                * FVector::Dist(OutResult.Location, Pivot);
+            const FVector Focus = FMath::Lerp(PlayerLocation + RaisedCameraFocusOffset, NormalFocus, Blend);
+            OutResult.Location = Candidate;
+            OutResult.Rotation = (Focus - Candidate).Rotation();
+            if (Progress >= 1.f)
+            {
+                bUsingRaisedCamera = false;
+                bFrameBossWithCamera = false;
+                CameraClearElapsed = 0.f;
+            }
+            return;
+        }
+        // A clear destination alone is insufficient: the blended view must also
+        // clear walls and the boss. Retreat immediately if that path is blocked.
+    }
+
+    bUsingRaisedCamera = true;
+    CameraClearElapsed = 0.f;
+    bFrameBossWithCamera |= bBossObstructsView;
+
+    // Keep the raised view's yaw aligned with mouse aim. Center the pair when a
+    // boss occludes the view, instead of turning the camera toward a boss behind
+    // the player (which would reverse the apparent movement/attack direction).
+    // CalcCamera also runs after victory/defeat, when combat ticking has stopped.
+    const float Yaw = Controller ? Controller->GetControlRotation().Yaw : GetActorRotation().Yaw;
+    const FVector Forward = FRotator(0.f, Yaw, 0.f).Vector();
+    FVector Focus = bFrameBossWithCamera && Boss
+        ? (PlayerLocation + Boss->GetActorLocation()) * 0.5f
+        : PlayerLocation + Forward * 100.f;
+    const float Height = bFrameBossWithCamera ? FMath::Max(RaisedCameraHeight, BossCameraHeight) : RaisedCameraHeight;
+    FVector RaisedLocation = FVector(Focus.X, Focus.Y, PlayerLocation.Z + Height) - Forward * 160.f;
+    if (bFrameBossWithCamera && Boss && Boss->HasImportedVisuals())
+    {
+        // Preserve the colossus ground camera: looking down from above its back
+        // hides a player standing under the body. Route climbing has its own view.
+        FVector Away = (PlayerLocation - Boss->GetActorLocation()).GetSafeNormal2D();
+        if (Away.IsNearlyZero()) Away = -Forward;
+        RaisedLocation = PlayerLocation + Away * 700.f + FVector(0.f, 0.f, 280.f);
+        Focus = PlayerLocation + FVector(0.f, 0.f, 40.f);
+    }
     FHitResult Hit;
-    const bool bBlocked = GetWorld()->SweepSingleByChannel(Hit, Pivot, RaisedLocation,
+    const bool bBlocked = World->SweepSingleByChannel(Hit, Pivot, RaisedLocation,
         FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(12.f), Params);
     OutResult.Location = bBlocked ? Hit.Location : RaisedLocation;
-    const FVector Focus = PlayerLocation + FVector(0,0,40);
     OutResult.Rotation = (Focus - OutResult.Location).Rotation();
+    RaisedCameraOffset = OutResult.Location - PlayerLocation;
+    RaisedCameraFocusOffset = Focus - PlayerLocation;
+}
+
+FVector APrototypePlayer::GetAttackIndicatorDirection() const
+{
+    // Turning the camera during a swing must not turn its already committed trace.
+    return IsAttacking() ? AttackDirection
+        : FRotator(0.f, Controller ? Controller->GetControlRotation().Yaw : GetActorRotation().Yaw, 0.f).Vector();
 }
 
 void APrototypePlayer::SetupPlayerInputComponent(UInputComponent* Input)
@@ -345,6 +430,10 @@ void APrototypePlayer::ResetForEncounter(const FTransform& Spawn)
     bAttackConnected = false;
     Feedback.Empty();
     bUsingRaisedCamera = false;
+    bFrameBossWithCamera = false;
+    CameraClearElapsed = 0.f;
+    RaisedCameraOffset = FVector::ZeroVector;
+    RaisedCameraFocusOffset = FVector::ZeroVector;
     ConsumeMovementInputVector();
     SetActorTransform(Spawn, false, nullptr, ETeleportType::TeleportPhysics);
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;

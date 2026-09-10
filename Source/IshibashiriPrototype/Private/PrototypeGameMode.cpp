@@ -82,7 +82,8 @@ void APrototypeGameMode::StartPlay()
         GetWorld()->SpawnActor<APrototypeGrabTest>();
     else if (FParse::Param(FCommandLine::Get(), TEXT("PrototypePlaythrough")))
         GetWorld()->SpawnActor<APrototypePlaythroughTest>();
-    else if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeSmokeTest")))
+    else if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeSmokeTest"))
+        || FParse::Param(FCommandLine::Get(), TEXT("PrototypeCameraTest")))
         GetWorld()->SpawnActor<APrototypeSmokeTest>();
 #endif
 }

@@ -6,6 +6,7 @@ param(
     [switch]$SkipBuild,
     [switch]$Capture,
     [switch]$Playthrough,
+    [switch]$Camera,
     [switch]$Grab,
     [switch]$Climbing,
     [switch]$LocalClimbing,
@@ -72,8 +73,8 @@ function Ensure-Map {
 }
 
 try {
-    if (($Playthrough -or $Grab -or $Climbing -or $LocalClimbing -or $ClimbingGamepad -or $Gamepad -or $TestSeconds -gt 0) -and $Action -ne 'Test') { throw 'Test switches require -Action Test.' }
-    if (@(@($Playthrough, $Grab, $Climbing, $LocalClimbing, $ClimbingGamepad, $Gamepad) | Where-Object { $_ }).Count -gt 1) { throw 'Choose one test mode.' }
+    if (($Camera -or $Playthrough -or $Grab -or $Climbing -or $LocalClimbing -or $ClimbingGamepad -or $Gamepad -or $TestSeconds -gt 0) -and $Action -ne 'Test') { throw 'Test switches require -Action Test.' }
+    if (@(@($Camera, $Playthrough, $Grab, $Climbing, $LocalClimbing, $ClimbingGamepad, $Gamepad) | Where-Object { $_ }).Count -gt 1) { throw 'Choose one test mode.' }
     if ($TestSeconds -gt 0 -and !$Playthrough) { throw '-TestSeconds requires -Playthrough.' }
     if ($Capture -and ($Gamepad -or $Grab -or $LocalClimbing)) { throw '-Capture requires route climbing, smoke or playthrough tests.' }
     $ResolvedEngine = Find-Engine
@@ -132,10 +133,10 @@ try {
         'Test' {
             $LogDir = Join-Path $ProjectRoot 'Saved\Logs'
             New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
-            $LogName = if ($Gamepad) { "PrototypeGamepad-$TestFPS.log" } elseif ($ClimbingGamepad) { "ClimbingGamepad-$TestFPS.log" } elseif ($Climbing) { "ClimbingTest-$TestFPS.log" } elseif ($LocalClimbing) { "PrototypeClimbing-$TestFPS.log" } elseif ($Grab) { "PrototypeGrab-$TestFPS.log" } elseif ($Playthrough) { "PrototypePlaythrough-$TestFPS.log" } elseif ($Capture) { "PrototypeVisual-$TestFPS.log" } else { "PrototypeSmoke-$TestFPS.log" }
+            $LogName = if ($Camera) { "PrototypeCamera-$TestFPS.log" } elseif ($Gamepad) { "PrototypeGamepad-$TestFPS.log" } elseif ($ClimbingGamepad) { "ClimbingGamepad-$TestFPS.log" } elseif ($Climbing) { "ClimbingTest-$TestFPS.log" } elseif ($LocalClimbing) { "PrototypeClimbing-$TestFPS.log" } elseif ($Grab) { "PrototypeGrab-$TestFPS.log" } elseif ($Playthrough) { "PrototypePlaythrough-$TestFPS.log" } elseif ($Capture) { "PrototypeVisual-$TestFPS.log" } else { "PrototypeSmoke-$TestFPS.log" }
             $LogFile = Join-Path $LogDir $LogName
             $RunId = [guid]::NewGuid().ToString('N')
-            $TestFlag = if ($Gamepad) { '-PrototypeGamepadTest' } elseif ($Climbing -or $ClimbingGamepad) { '-ClimbingTest' } elseif ($LocalClimbing) { '-PrototypeClimbingTest' } elseif ($Grab) { '-PrototypeGrabTest' } elseif ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
+            $TestFlag = if ($Camera) { '-PrototypeCameraTest' } elseif ($Gamepad) { '-PrototypeGamepadTest' } elseif ($Climbing -or $ClimbingGamepad) { '-ClimbingTest' } elseif ($LocalClimbing) { '-PrototypeClimbingTest' } elseif ($Grab) { '-PrototypeGrabTest' } elseif ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
             $TestArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01', '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
             if ($ClimbingGamepad) { $TestArguments += '-ClimbingGamepad' }
             if ($Capture) {
@@ -151,7 +152,7 @@ try {
             Write-Host "Test passed: $LogFile"
             if ($Capture) {
                 $CaptureDir = if ($Climbing -or $ClimbingGamepad) { Join-Path $ProjectRoot "Saved\Screenshots\Climbing\$RunId" } else { Join-Path $ProjectRoot "Saved\Screenshots\Prototype\$RunId" }
-                $ShotNames = if ($Climbing -or $ClimbingGamepad) { @('01-Ground','02-FirstLedge','03-ShoulderCore','04-Summit','05-Victory','06-ThrownOff') } elseif ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera') }
+                $ShotNames = if ($Camera) { @('06-WallCamera', '07-BossCamera', '09-CameraReturn') } elseif ($Climbing -or $ClimbingGamepad) { @('01-Ground','02-FirstLedge','03-ShoulderCore','04-Summit','05-Victory','06-ThrownOff') } elseif ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera', '09-CameraReturn') }
                 foreach ($Name in $ShotNames) {
                     $Shot = Get-Item -LiteralPath (Join-Path $CaptureDir "$Name.png") -ErrorAction Stop
                     if ($Shot.Length -lt 100) { throw "Screenshot is empty: $($Shot.FullName)" }

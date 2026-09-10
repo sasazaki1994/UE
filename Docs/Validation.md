@@ -1,8 +1,38 @@
-# 検証記録 — 2026-09-08
+# 検証記録 — 2026-09-10
 
-判定：**Grab追加前のUE 5.6.1検証実績はありますが、Grab追加後の実行検証は未完了です。2026-09-08の再検証環境にはPowerShellとWindows版UEがなく、ビルドおよびUEテストを開始できませんでした。**
+この文書は旧戦闘プロトタイプと各開発段階の検証履歴です。現行の大型モデル・登攀の検証は [登攀検証](ClimbingValidation.md)、PR #17のmain統合後の検証は [カメラ統合記録](CameraIntegrationValidation.md) を参照してください。以下の旧配置でのPASSと、当時の環境制約は現在の統合構成の合否を示しません。
 
 キーボード・マウスを使った手動の操作感評価と、10分間の連続手動プレイは未実施です。以下の自動検証結果と区別します。
+
+## 9月10日の変更（main統合前の旧戦闘配置）
+
+- 遮蔽時は即座に上方へ退避し、遮蔽解消後0.15秒待ってから0.35秒で通常視点へ戻します。位置と注視点を一緒に補間し、復帰途中にも壁と猪の遮蔽を検査します。
+- 猪による退避では高度1000cmを使い、主人公と猪の中点を中心に構図を取ります。上方視点でもマウスの水平操作方向を保ちます。壁際のみの高度は720cmです。
+- 次の攻撃方向を水色のHUD矢印で表示します。攻撃中は白色で実際の攻撃方向に固定し、終了後に現在のマウス方向へ追従します。矢印は方向表示で、長さは射程を示しません。Debug描画には依存しません。
+- 自動検査に、上方視点でのLMB入力、攻撃中・攻撃後のマウス操作と矢印の整合性、段階的な復帰、復帰中の主人公の画面内保持・衝突回避、復帰中の再遮蔽、Retryによるカメラ状態の初期化を追加しました。
+- 描画保存に `09-CameraReturn.png` を追加しました。通常の描画検査は8枚を確認します。
+
+### 9月10日の再検証結果
+
+- UE 5.6.1のC++ Editorビルド成功。
+- 戦闘・入力・拡張カメラ検査は30 / 60 / 120 FPSすべて成功。RunIdは30 FPSが `c8792fe32aca491f84ebb806c5ac4cd5`、60 FPS（描画付き）が `add838e8b1894ea8b49c2570c15cf3c4`、120 FPSが `40806596002244a6bfbafa3a78900e8d`。終了コード0と各実行固有のPASSを確認しました。
+- 入力のみの3戦攻略・R再挑戦は60 FPSで成功。RunId `3ec3512aa77443239f9a5e84fd804b29`、ゲーム内時間45.32秒、終了コード0。
+- 描画画像は `Saved/Screenshots/Prototype/add838e8b1894ea8b49c2570c15cf3c4/`。上方視点で主人公・猪・方向矢印が見えること、壁際の視界、復帰途中の主人公と矢印、通常視点の予告場面を目視しました。初回の描画で見つかった矢印の見切れと復帰途中の主人公の画面外への逸脱は修正後に再検証しています。
+- Windows Developmentパッケージを再生成し、BuildCookRunの `BUILD SUCCESSFUL` と終了コード0を確認しました。配布先のゲーム本体と今回ビルドしたexeのSHA256は一致しています。
+- 更新したパッケージでも60 FPSの描画付き戦闘・入力・カメラ検査が成功。RunId `446dba763d9b49aeba660edbe5e44e26`、終了コード0、3種のPASS、8画像を確認しました。ログは `Saved/Logs/Packaged-CameraAim.log`。パッケージ画像の上方視点と復帰途中も目視しました。
+- 手動でのマウス感度・視点切り替えの操作感評価は未実施です。
+
+## 9月9日の変更
+
+- 猪が通常カメラの終点に重なる場合だけでなく、主人公とカメラの間に入って視線を遮る場合も上方視点へ切り替え、主人公と猪の中点を注視するようにしました。
+- 自動カメラ検査の猪を視線の中間に配置し、終点の包含判定だけでは通らない回帰テストに更新しました。
+
+### 9月9日の再検証結果
+
+- C++ Editorビルド成功（`Tools/Prototype.ps1 -Action Test`）。
+- 自動Playは30 / 60 / 120 FPSすべて成功。RunIdは30 FPSが `67302545e48d428cad45467662b3b7aa`、60 FPS（描画付き）が `74f371e9cfed41da804fa183396204d7`、120 FPSが `e8b1b698707c4173b1e5d41b038ed9d8`。
+- 入力のみの3戦攻略・R再挑戦は60 FPSで成功（RunId `d32b788e4a054bcabd272939f1da492b`）。
+- D3D11描画検査は成功（RunId `74f371e9cfed41da804fa183396204d7`）。猪の視線途中遮蔽を含む7画像を `Saved/Screenshots/Prototype/74f371e9cfed41da804fa183396204d7/` に保存し、`07-BossCamera.png` で主人公と猪が同時に確認できることを目視しました。
 
 ## Generic Gamepad対応（9月8日）
 
@@ -153,9 +183,9 @@
 
 ### 画像
 
-最新のEditor描画：`Saved/Screenshots/Prototype/d1c51f776e7e4eddb064cb87c9ad2877/`
+最新のEditor描画：`Saved/Screenshots/Prototype/add838e8b1894ea8b49c2570c15cf3c4/`
 
-パッケージ版の描画：`Artifacts/Windows/IshibashiriPrototype/Saved/Screenshots/Prototype/aeb1fc8923364e36b4d589c91de8465a/`
+パッケージ版の描画：`Artifacts/Windows/IshibashiriPrototype/Saved/Screenshots/Prototype/446dba763d9b49aeba660edbe5e44e26/`
 
 入力だけで到達した勝利画像：Editorは `Saved/Screenshots/Prototype/ab77629183424037b257439efb6dcb9a/08-InputVictory.png`、パッケージ版は `Artifacts/Windows/IshibashiriPrototype/Saved/Screenshots/Prototype/c1935eebb71c4b679f4f4ec7d5b99231/08-InputVictory.png`。
 
