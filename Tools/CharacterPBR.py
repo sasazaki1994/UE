@@ -25,6 +25,7 @@ TINTS = {
     'aged_whitewood': (.82, .72, .55, 1),
     'coarse_indigo_cloth': (.035, .075, .16, 1),
 }
+NODE_PREFIX = 'ExternalPBR_'
 
 
 def material_tokens(name):
@@ -78,8 +79,17 @@ def apply_external_pbr(materials, bpy, character=None, mode='fallback',
             continue
         nodes, links = mat.node_tree.nodes, mat.node_tree.links
         p = nodes.get('Principled BSDF')
+        if p is None:
+            continue
+        # Keep the authored bump chain.  Feeding the tangent-space material normal
+        # into Bump.Normal is Blender's supported way of layering height detail on
+        # a normal map (and a flat normal therefore leaves the height detail alone).
+        normal_input = p.inputs['Normal']
+        existing = normal_input.links[0].from_node if normal_input.is_linked else None
+        if existing and existing.name.startswith(NODE_PREFIX):
+            existing = None
         for node in list(nodes):
-            if node.name.startswith('ExternalPBR_'):
+            if node.name.startswith(NODE_PREFIX):
                 nodes.remove(node)
         uv = nodes.new('ShaderNodeUVMap'); uv.name = 'ExternalPBR_Coordinates'; uv.uv_map = 'PBRDetailUV'
         mapping = nodes.new('ShaderNodeMapping'); mapping.name = 'ExternalPBR_Mapping'
@@ -96,7 +106,13 @@ def apply_external_pbr(materials, bpy, character=None, mode='fallback',
         tint.inputs[0].default_value = .72; tint.inputs[2].default_value = TINTS[role]
         links.new(loaded['base_color'].outputs['Color'], tint.inputs[1]); links.new(tint.outputs['Color'], p.inputs['Base Color'])
         normal = nodes.new('ShaderNodeNormalMap'); normal.name = 'ExternalPBR_NormalGL'; normal.inputs['Strength'].default_value = .32
-        links.new(loaded['normal_gl'].outputs['Color'], normal.inputs['Color']); links.new(normal.outputs['Normal'], p.inputs['Normal'])
+        normal.space = 'TANGENT'; normal.uv_map = 'PBRDetailUV'
+        links.new(loaded['normal_gl'].outputs['Color'], normal.inputs['Color'])
+        if existing and existing.type == 'BUMP':
+            links.new(normal.outputs['Normal'], existing.inputs['Normal'])
+            links.new(existing.outputs['Normal'], normal_input)
+        else:
+            links.new(normal.outputs['Normal'], normal_input)
         links.new(loaded['roughness'].outputs['Color'], p.inputs['Roughness'])
         applied.append(mat.name); role_counts[role] += 1
     return {'status': 'applied', 'mode': mode, 'reason': None, 'errors': [],

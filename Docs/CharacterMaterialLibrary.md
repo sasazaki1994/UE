@@ -65,8 +65,11 @@ blender --background --factory-startup --python Tools/VerifyRiggedCharacters.py
 UnrealEditor-Cmd IshibashiriPrototype.uproject -run=pythonscript -script=Tools/ImportRiggedCharacters.py -unattended
 UnrealEditor-Cmd IshibashiriPrototype.uproject -run=pythonscript -script=Tools/ApplyRiggedMaterials.py -unattended
 UnrealEditor-Cmd IshibashiriPrototype.uproject -run=pythonscript -script=Tools/ApplyRiggedMaterials.py -unattended
-UnrealEditor-Cmd IshibashiriPrototype.uproject -run=pythonscript -script=Tools/VerifyRiggedCharacters.py -unattended
 ```
+
+`VerifyRiggedCharacters.py` は `bpy` を使用する **Blender用**スクリプトであり、
+UnrealEditor-Cmd では実行しない。UE取り込み後の確認は
+`ApplyRiggedMaterials.py` の検証出力とエディタ上の表示確認で行う。
 
 同一カメラ・3灯・露出で木面、上着、肩岩を撮影する。法線の凹凸方向、UV seam、
 粒度、欠落、アニメーション中の模様の追従を確認する。再適用前後の mesh material
@@ -113,3 +116,32 @@ blender --background --factory-startup --python Tools/RigCharacterModels.py -- -
 適用件数を検証する。正式manifestは引き続き未取得・license未検証であり、上記verifyが
 未取得を報告する状態を維持する。素材取得、UV・法線の実画像確認、Blender生成・描画、
 UE取り込み・描画・登攀検証は未実施であり、完了扱いにしない。
+
+## 2026-09-10 UV分離・法線合成とオフライン検証
+
+既存UVは改名せず、有効（非退化面ごとのUV面積が `1e-10` より大きい）なら
+`PBRDetailUV` へ複製し、未展開・潰れた面があれば Smart Project で入力UVを生成する。
+ベイク先の `AtlasUV` は常に別レイヤーとして展開する。外部画像とOpenGL接空間法線は
+`PBRDetailUV`、ベイクターゲットとベイク後の BaseColor／Normal／Roughness は
+UV Mapノードで明示した `AtlasUV` を使う。UE側では従来どおり取り込み時の
+`flip_green_channel` だけを適用し、Blender側では緑を反転しない。書き出し直前には
+`AtlasUV` を先頭レイヤー（FBX／UEのUV channel 0）へ置き、`PBRDetailUV` は名前付きの
+第2レイヤーとして残す。GLBの画像ノードも明示した`AtlasUV`を参照する。
+
+既存のBumpノードがPrincipledのNormalへ接続されている場合は、外部Normal Mapを
+BumpのNormal入力へ接続する。これにより高さ由来の傷・しわ・岩肌を外部微細法線の上へ
+合成し、平坦な外部Normalでも既存Bumpを維持する。名前付きノードを再利用・置換するため
+再適用でグラフを増殖させない。
+
+正式素材とは独立した方向判別用Normal、チェック柄、粗さ勾配を生成する検証は次で行う。
+生成物は `Artifacts/PBRBakeValidation/` のみに置かれ、正式manifestには登録しない。
+
+```bash
+blender --background --factory-startup --python Tools/ValidateCharacterPBRBake.py
+```
+
+このスクリプトはUVなし曲面に本番のUV生成・素材適用・ベイク処理を通し、同一カメラの
+`before-bake.png` / `after-bake.png`、二度適用時のノード数、FBX／GLB再読み込み後の
+非退化UVを検証する。この作業環境にはBlender実行ファイルがないため、スクリプトは未実行で
+比較画像と `validation-result.json` は未生成である。Pythonテスト／構文検査とBlender実描画を
+混同せず、Blender 3.6系で上記コマンドを完走してから描画検証成功とする。

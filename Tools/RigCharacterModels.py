@@ -212,32 +212,82 @@ def make_actions(rig,hero):
 
 def pi_clamp(t): return max(0,min(1,t))
 
-def bake_surface(body,out,name):
-    # Source textures use the model UV; AtlasUV is a separate bake destination.
-    detail=body.data.uv_layers.active
-    if detail:
-        detail.name='PBRDetailUV'
-    else:
-        detail=body.data.uv_layers.new(name='PBRDetailUV')
-    pbr_result=PBR.apply_external_pbr(body.data.materials,bpy,character=name,mode=PBR_MODE)
+def _uv_has_area(mesh, layer, epsilon=1e-10):
+    """A UV set is usable only when every non-degenerate face has UV area."""
+    for polygon in mesh.polygons:
+        if polygon.area <= epsilon or len(polygon.loop_indices) < 3: continue
+        points=[layer.data[index].uv for index in polygon.loop_indices]
+        area=abs(sum(points[i].x*points[(i+1)%len(points)].y-
+                     points[(i+1)%len(points)].x*points[i].y
+                     for i in range(len(points))))*.5
+        if area <= epsilon: return False
+    return bool(mesh.polygons)
+
+def _copy_uv(mesh, source, name):
+    target=mesh.uv_layers.get(name) or mesh.uv_layers.new(name=name)
+    for src,dst in zip(source.data,target.data): dst.uv=src.uv
+    return target
+
+def ensure_bake_uvs(body):
+    """Create independent source/detail and destination/atlas UV sets."""
+    mesh=body.data
+    detail=mesh.uv_layers.get('PBRDetailUV')
+    if not detail or not _uv_has_area(mesh,detail):
+        source=next((uv for uv in mesh.uv_layers
+                     if uv.name not in {'PBRDetailUV','AtlasUV'} and _uv_has_area(mesh,uv)),None)
+        if source:
+            detail=_copy_uv(mesh,source,'PBRDetailUV')
+        else:
+            detail=detail or mesh.uv_layers.new(name='PBRDetailUV')
+            mesh.uv_layers.active=detail
+            bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.002)
+            bpy.ops.object.mode_set(mode='OBJECT')
+    atlas=mesh.uv_layers.get('AtlasUV') or mesh.uv_layers.new(name='AtlasUV')
+    mesh.uv_layers.active=atlas
+    bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.002)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    atlas.active_render=True
+    assert _uv_has_area(mesh,detail),'PBRDetailUV contains missing/collapsed faces'
+    assert _uv_has_area(mesh,atlas),'AtlasUV contains missing/collapsed faces'
+    return detail,atlas
+
+def make_atlas_export_uv0(mesh):
+    """Put AtlasUV in FBX/UE channel 0 while retaining the detail UV by name."""
+    atlas=mesh.uv_layers.get('AtlasUV');detail=mesh.uv_layers.get('PBRDetailUV')
+    assert atlas and detail
+    if mesh.uv_layers[0] == atlas:
+        atlas.active_render=True;return
+    saved={name:[tuple(item.uv) for item in layer.data]
+           for name,layer in (('AtlasUV',atlas),('PBRDetailUV',detail))}
+    for layer in list(mesh.uv_layers): mesh.uv_layers.remove(layer)
+    for name in ('AtlasUV','PBRDetailUV'):
+        layer=mesh.uv_layers.new(name=name)
+        for coords,item in zip(saved[name],layer.data): item.uv=coords
+    mesh.uv_layers.get('AtlasUV').active_render=True
+
+def bake_surface(body,out,name,manifest_path=PBR.MANIFEST,asset_root=PBR.ROOT):
+    # Never rename an authored UV. Source sampling and bake destination are explicit.
+    detail,atlas=ensure_bake_uvs(body)
+    pbr_result=PBR.apply_external_pbr(body.data.materials,bpy,character=name,mode=PBR_MODE,
+                                      manifest_path=manifest_path,root=asset_root)
     print('EXTERNAL_PBR_'+pbr_result['status'].upper(),name,pbr_result['reason'] or '',pbr_result['role_counts'])
     bpy.ops.object.select_all(action='DESELECT');body.select_set(True)
     bpy.context.view_layer.objects.active=body
-    bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT')
-    atlas=body.data.uv_layers.get('AtlasUV') or body.data.uv_layers.new(name='AtlasUV')
     body.data.uv_layers.active=atlas
-    bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.002)
-    bpy.ops.object.mode_set(mode='OBJECT')
     scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=1
     scene.render.bake.use_pass_direct=False;scene.render.bake.use_pass_indirect=False
     scene.render.bake.use_pass_color=True;scene.render.bake.margin=8
     images={}
     for kind in ['BaseColor','Normal','Roughness']:
-        image=bpy.data.images.new('T_'+name+'_'+kind,width=2048,height=2048,alpha=False)
+        image=bpy.data.images.get('T_'+name+'_'+kind) or bpy.data.images.new(
+            'T_'+name+'_'+kind,width=2048,height=2048,alpha=False)
         if kind!='BaseColor':image.colorspace_settings.name='Non-Color'
         for mat in body.data.materials:
             nt=mat.node_tree
-            node=nt.nodes.new('ShaderNodeTexImage');node.image=image;node.name='BakeTarget_'+kind
+            node=nt.nodes.get('BakeTarget_'+kind) or nt.nodes.new('ShaderNodeTexImage')
+            node.image=image;node.name='BakeTarget_'+kind
             for n in nt.nodes:n.select=False
             node.select=True;nt.nodes.active=node
         bpy.ops.object.bake(type=('DIFFUSE' if kind=='BaseColor' else kind.upper()))
@@ -246,10 +296,14 @@ def bake_surface(body,out,name):
     for mat in body.data.materials:
         nt=mat.node_tree;p=nt.nodes.get('Principled BSDF')
         col=nt.nodes.get('BakeTarget_BaseColor');nor=nt.nodes.get('BakeTarget_Normal');rough=nt.nodes.get('BakeTarget_Roughness')
+        uv=nt.nodes.get('BakedPBR_AtlasUV') or nt.nodes.new('ShaderNodeUVMap');uv.name='BakedPBR_AtlasUV';uv.uv_map='AtlasUV'
+        for node in (col,nor,rough): nt.links.new(uv.outputs['UV'],node.inputs['Vector'])
         nt.links.new(col.outputs['Color'],p.inputs['Base Color'])
-        normal=nt.nodes.new('ShaderNodeNormalMap');nt.links.new(nor.outputs['Color'],normal.inputs['Color'])
+        normal=nt.nodes.get('BakedPBR_Normal') or nt.nodes.new('ShaderNodeNormalMap');normal.name='BakedPBR_Normal';normal.uv_map='AtlasUV';normal.space='TANGENT'
+        nt.links.new(nor.outputs['Color'],normal.inputs['Color'])
         nt.links.new(normal.outputs['Normal'],p.inputs['Normal'])
         nt.links.new(rough.outputs['Color'],p.inputs['Roughness'])
+    make_atlas_export_uv0(body.data)
     print('SURFACE_BAKE_PASS',name)
     return pbr_result
 
@@ -297,5 +351,6 @@ def export(name):
     (out/'rig-info.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     print('RIG_EXPORT_PASS',name,len(rig.data.bones))
 
-export('Shirotsura')
-export('Ishibashiri')
+if __name__ == '__main__':
+    export('Shirotsura')
+    export('Ishibashiri')
