@@ -246,6 +246,7 @@ def hero():
     steel=material('11 • boundary blade',(0.43,0.5,0.54),.24,.86)
     edge=material('12 • sharpened edge',(.73,.77,.76),.2,.9)
     skin=material('13 • exposed right hand',(.27,.20,.15))
+    repair=material('14 • faded indigo repair',(.030,.038,.046),rough=.94,noise=.0015)
     # Shoes, gaiters, generous work trousers.
     for side,x in [('R',-.115),('L',.115)]:
         ico('Boot_'+side,(x,-.027,.057),(.081,.141,.059),black)
@@ -293,6 +294,13 @@ def hero():
         for i in range(rows-1) for j in range(cols-1)],bone)
     mod=face.modifiers.new('Carved wood thickness','SOLIDIFY'); mod.thickness=.012
     for p in face.data.polygons: p.use_smooth=True
+    # Shallow adze marks and two tiny edge losses break the manufactured symmetry
+    # without changing the mask silhouette or the narrow-eye read at game distance.
+    for i in range(7):
+        x=(-.050+i*.016)+(i%2)*.002
+        curve('Mask_shallow_adze_mark',[(x,-.139,1.50+i*.026),(x+.011,-.141,1.515+i*.026)],.0007,linen)
+    for x,z in [(-.078,1.477),(.079,1.669)]:
+        ico('Mask_edge_chip',(x,-.105,z),(.008,.008,.012),black,1)
     for s in [-1,1]:
         curve('Narrow_eye_slit',[(s*.022,-.134,1.593),(s*.042,-.131,1.598),(s*.064,-.117,1.598)],.003,black)
     curve('Quiet_mouth',[(-.022,-.134,1.497),(0,-.138,1.501),(.020,-.134,1.497)],.0016,black)
@@ -306,6 +314,14 @@ def hero():
         curve('Scarf_fold',pts,.013,linen)
     for x,z in [(-.038,1.11),(.032,1.21)]:
         ribbon('Rear_scarf_tail',[(x,.11,1.43),(x+.024,.146,1.32),(x+.004,.125,z)],.071,linen)
+    # Short shoulder mantle: a coarse woven foundation and sparse silhouette straw.
+    # It ends above the elbows so Climb/Hang/Grip retain their existing clearance.
+    ribbon('Short_straw_mantle',[(-.205,-.005,1.355),(0,-.025,1.405),(.205,-.005,1.355)],.105,cord)
+    for side in [-1,1]:
+        for i in range(9):
+            x=side*(.055+i*.017); y=.005+(i%3)*.007
+            tube('Shoulder_straw_tuft',[(x,y,1.375),(x+side*.025,y+.012,1.305-random.random()*.025)],
+                 [.006,.001],cord,5)
     # Right human sleeve, forearm bandages and hand.
     tube('Right_sleeve',[(-.175,0,1.32),(-.245,0,1.24),(-.275,-.014,1.14)],[.091,.10,.077],navy,12)
     tube('Right_forearm',[(-.273,-.014,1.17),(-.31,-.04,1.00)],[.047,.035],linen,10)
@@ -351,6 +367,10 @@ def hero():
         for j in range(3):
             curve('Talisman_ink',[(x-.005,y-.002,z-.014-j*.013),(x+.006,y-.003,z-.021-j*.013)],.0013,black)
     ico('Utility_pouch',(-.183,.065,.869),(.053,.047,.073),root)
+    for x,z,flip in [(-.11,1.12,1),(.075,.83,-1),(-.055,.58,1)]:
+        ribbon('Indigo_visible_repair',[(x,-.132,z),(x+.035*flip,-.134,z-.065)],.035,repair)
+        for j in range(3):
+            curve('Repair_stitch',[(x-.018,-.136,z-.012-j*.017),(x+.018,-.136,z-.012-j*.017)],.0012,linen)
     ribbon('Waist_linen_tail',[(-.097,-.136,.94),(-.113,-.154,.77),(-.145,-.137,.60)],.039,linen)
     curve('Red_waist_cord',[(.125,-.15,.951),(.18,-.147,.89),(.152,-.148,.76)],.005,red)
     # Katana as a separate editable object group, posed down and outward.
@@ -403,6 +423,7 @@ def boar():
     crystal=material('09 • redblack mineral',(.10,.006,.009),.38,.3)
     dark=material('10 • nostril shadow',(.008,.007,.006))
     ivory=material('11 • paper offerings',(.60,.54,.42))
+    faded=material('12 • faded paper offerings',(.39,.35,.27),rough=.96,noise=.003)
     # Massive barrel-shaped boar with a lowered recognizable snout.
     ico('Boar_barrel',(0,.9,4.10),(2.52,4.42,2.44),hide,3,.035)
     ico('Shoulder_hump',(0,-1.7,4.60),(2.64,2.43,2.15),hide,3,.045)
@@ -448,6 +469,11 @@ def boar():
              (-1.42,-2.38,5.71,(.97,1.02,.65)),(1.44,-2.33,5.74,(1.06,1.07,.72))]):
         rock('Shoulder_crown_'+str(i),(x,y,z),sc,stones[i])
         rock('Shoulder_moss_'+str(i),(x,y,z+sc[2]*.77),(.62,.64,.10),moss,True)
+        # Rooted transition stones visually key the hide into the continuous strata.
+        for j in range(3):
+            rock('Hide_to_stone_transition',(x+(j-1)*.31,y-.42,z-.36-j*.10),
+                 (.42,.47,.24),stones[(i+j)%4])
+            curve('Transition_root',[(x,y-.2,z),(x+(j-1)*.38,y-.5,z-.22),(x+(j-1)*.48,y-.62,z-.48)],.045,rootmat)
     for s in [-1,1]:
         curve('Worn_forehead_prayer',[(s*.32,-4.87,4.22),(s*.24,-4.82,4.45),(s*.20,-4.62,4.51)],.023,rope_mat)
     # Large primary stones. Flattened shelves have deliberate standing space.
@@ -480,17 +506,20 @@ def boar():
     for k,c in enumerate(cores):
         c=Vector(c)
         rock('MAGANE_%02d_Core'%(k+1),c,(.43,.40,.41),rootmat)
+        # A root-bound nodule with only three broken mineral teeth.  The restrained
+        # cracks remain legible while preserving the three gameplay core positions.
         for j in range(7):
             a=j*2*pi/7
             start=c+Vector((.28*math.cos(a),.27*math.sin(a),-.08))
             top=start+Vector((.18*math.cos(a),.18*math.sin(a),.38+random.random()*.38))
-            tube('Redblack_crystal',[start,top],[.13,.009],crystal,5)
-            curve('Core_emissive_crack',[start+Vector((0,-.115,.015)),top],.018,ember)
+            if j in (0,2,5):
+                tube('Redblack_crystal',[start,top],[.10,.018],crystal,5)
+            curve('Core_emissive_crack',[start+Vector((0,-.115,.015)),start.lerp(top,.62)],.010,ember)
             pts=[c+Vector((0,0,.1)),c+Vector((.53*math.cos(a),.53*math.sin(a),-.06)),
                  c+Vector((1.01*math.cos(a+.18),.96*math.sin(a+.18),-.37)),
                  c+Vector((1.46*math.cos(a),1.28*math.sin(a),-.78))]
             curve('Spreading_black_root',pts,.063,rootmat)
-            if j%2==0: curve('Root_crimson_vein',[p+Vector((0,-.033,.046)) for p in pts],.016,ember)
+            if j in (0,4): curve('Root_crimson_vein',[p+Vector((0,-.033,.046)) for p in pts[:3]],.009,ember)
     # Two sweeping shimenawa route markers and sparse tassels.
     paths=[[(-2.90,-2.2,4.96),(-2.64,-3.0,5.53),(-1.37,-3.28,6.16),
         (0,-3.23,6.39),(1.36,-3.28,6.20),(2.64,-3.0,5.57),(2.90,-2.2,4.96)],
@@ -504,7 +533,10 @@ def boar():
                 a=2*pi*t/7
                 tube('Straw_tassel',[(x+.05*math.cos(a),y+.05*math.sin(a),z-.39),
                      (x+.13*math.cos(a),y+.13*math.sin(a),z-.94)],[.025,.016],rope_mat,5)
-            ribbon('Paper_shide',[(x+.17,y,z-.13),(x+.2,y-.05,z-.33),(x+.11,y-.06,z-.47),(x+.18,y-.08,z-.62)],.12,ivory)
+            sag=.025*((i+j)%3); skew=(-1 if (i+j)%2 else 1)*.035
+            ribbon('Paper_shide',[(x+.17,y,z-.13),(x+.2+skew,y-.05,z-.33-sag),
+                (x+.11,y-.06,z-.47-sag),(x+.18-skew,y-.08,z-.62-sag)],.12,
+                faded if (i+j)%2 else ivory)
     # Weathered trees on the perimeter, away from the standing route.
     for x,y,z in [(-1.78,1.03,7.89),(1.78,2.75,6.14)]:
         points=[(x,y,z),(x+.10,y+.05,z+.57),(x-.20,y+.24,z+1.13),(x-.49,y+.33,z+1.48)]
