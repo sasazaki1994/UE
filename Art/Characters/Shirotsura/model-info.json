@@ -4,8 +4,8 @@
   "rigged": false,
   "unit": "meter",
   "forward": "-Y",
-  "mesh_objects": 174,
-  "triangles": 74626,
+  "mesh_objects": 214,
+  "triangles": 75394,
   "dimensions_xyz_m": [
     1.3061735928058624,
     0.33097438514232635,

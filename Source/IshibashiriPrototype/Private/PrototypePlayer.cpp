@@ -21,7 +21,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Components/ControlRigComponent.h"
+#include "ControlRigComponent.h"
 #include "ControlRig.h"
 #include "Misc/Parse.h"
 #include "MotionWarpingComponent.h"
@@ -91,7 +91,7 @@ void APrototypePlayer::BeginPlay()
     BodyMaterial = Body->CreateDynamicMaterialInstance(0);
     SetPrimitiveColor(BodyMaterial, FLinearColor(0.08f, 0.5f, 0.8f));
     UpdateAnimation();
-    ClimbingControlRig->AddMappedSkeletalMesh(GetMesh());
+    ClimbingControlRig->AddMappedCompleteSkeletalMesh(GetMesh());
 }
 
 void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)

@@ -1,6 +1,6 @@
 {
   "bone_count": 18,
-  "vertices": 38040,
+  "vertices": 38536,
   "weight_validation": "pass",
   "animations": {
     "Idle": {
@@ -55,5 +55,34 @@
     }
   },
   "root_motion": false,
-  "rig_style": "deformation skeleton; procedural in-place clips; no facial rig or IK"
+  "rig_style": "deformation skeleton; procedural in-place clips; no facial rig or IK",
+  "external_pbr": {
+    "status": "not_applied",
+    "mode": "fallback",
+    "reason": "license: missing or invalid verification_url; official CC0 license is unverified; weathered_stone: missing or invalid asset_id; weathered_stone: missing or invalid source_url; weathered_stone/roughness: map must be an object; weathered_stone/base_color: map must be an object; weathered_stone/normal_gl: map must be an object; aged_whitewood: missing or invalid asset_id; aged_whitewood: missing or invalid source_url; aged_whitewood/roughness: map must be an object; aged_whitewood/base_color: map must be an object; aged_whitewood/normal_gl: map must be an object; coarse_indigo_cloth: missing or invalid asset_id; coarse_indigo_cloth: missing or invalid source_url; coarse_indigo_cloth/roughness: map must be an object; coarse_indigo_cloth/base_color: map must be an object; coarse_indigo_cloth/normal_gl: map must be an object",
+    "errors": [
+      "license: missing or invalid verification_url",
+      "official CC0 license is unverified",
+      "weathered_stone: missing or invalid asset_id",
+      "weathered_stone: missing or invalid source_url",
+      "weathered_stone/roughness: map must be an object",
+      "weathered_stone/base_color: map must be an object",
+      "weathered_stone/normal_gl: map must be an object",
+      "aged_whitewood: missing or invalid asset_id",
+      "aged_whitewood: missing or invalid source_url",
+      "aged_whitewood/roughness: map must be an object",
+      "aged_whitewood/base_color: map must be an object",
+      "aged_whitewood/normal_gl: map must be an object",
+      "coarse_indigo_cloth: missing or invalid asset_id",
+      "coarse_indigo_cloth: missing or invalid source_url",
+      "coarse_indigo_cloth/roughness: map must be an object",
+      "coarse_indigo_cloth/base_color: map must be an object",
+      "coarse_indigo_cloth/normal_gl: map must be an object"
+    ],
+    "applied_materials": [],
+    "role_counts": {
+      "aged_whitewood": 0,
+      "coarse_indigo_cloth": 0
+    }
+  }
 }

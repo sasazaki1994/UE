@@ -7,7 +7,7 @@
       0.33097438514232635,
       1.7168388701975346
     ],
-    "nonempty_meshes": 174,
+    "nonempty_meshes": 214,
     "finite_vertices": true
   },
   {
@@ -16,7 +16,7 @@
     "dimensions_xyz_m": [
       7.062848806381226,
       12.178528308868408,
-      9.397868394851685
+      9.399365872144699
     ],
     "nonempty_meshes": 537,
     "finite_vertices": true
