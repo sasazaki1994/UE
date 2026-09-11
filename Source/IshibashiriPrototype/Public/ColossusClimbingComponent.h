@@ -24,6 +24,7 @@ public:
     bool IsMoving() const { return Destination != INDEX_NONE; }
     bool IsResting() const;
     bool IsGripping() const { return bGripHeld; }
+    bool HasMovementInput() const { return !FMath::IsNearlyZero(ForwardInput) || !FMath::IsNearlyZero(RightInput); }
     float GetStamina() const { return Stamina; }
     int32 GetNode() const { return Node; }
     AIshibashiriBoss* GetBoss() const { return Boss; }

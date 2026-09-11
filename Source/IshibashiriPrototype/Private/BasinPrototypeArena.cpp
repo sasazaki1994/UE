@@ -23,7 +23,7 @@ void ABasinPrototypeArena::ClearGeneratedComponents()
 {
     for (UActorComponent* Component : GeneratedComponents)
         if (IsValid(Component)) Component->DestroyComponent();
-    GeneratedComponents.Reset(); VisualRockCount = BoundaryCount = AccentCount = 0;
+    GeneratedComponents.Reset(); BasinFloor = nullptr; VisualRockCount = BoundaryCount = AccentCount = 0;
 }
 
 void ABasinPrototypeArena::AddAccent(const TCHAR* Name, const FVector& Location, const FVector& Scale,
@@ -46,6 +46,7 @@ void ABasinPrototypeArena::AddFloor()
     Floor->SetCollisionProfileName(TEXT("BlockAll")); Floor->SetMaterial(0, BaseMaterial); Floor->RegisterComponent();
     if (UMaterialInstanceDynamic* Mat = Floor->CreateDynamicMaterialInstance(0)) SetPrimitiveColor(Mat, FLinearColor(.25f,.23f,.19f));
     GeneratedComponents.Add(Floor);
+    BasinFloor = Floor;
 }
 
 void ABasinPrototypeArena::AddRock(const TCHAR* Name, const FVector& Location, const FVector& Scale,

@@ -56,3 +56,15 @@ def test_basin_scenario_does_not_arrange_or_stop_gameplay() -> None:
     assert "BASIN_SCENARIO_FAIL" in source
     assert "ReleaseAll();" in source
     assert 'Tap(EKeys::R)' in source
+
+
+def test_basin_scenario_validates_floor_rest_retry_and_cleanup() -> None:
+    source = read("Source/IshibashiriPrototype/Private/BasinPlaythroughTest.cpp")
+    assert "CurrentFloor.HitResult.GetComponent() == Floor" in source
+    assert "GetScaledCapsuleHalfHeight" in source
+    assert "StaminaAtLedge + 10.f" in source
+    assert "ValidateRetryReset" in source
+    assert "GetPurifiedCount() == 0" in source
+    assert "HasMovementInput()" in source
+    assert "RestoreExecutionSettings" in source
+    assert source.count("DriveApproach()") == 3  # definition plus both approach phases
