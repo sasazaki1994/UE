@@ -186,7 +186,7 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
     const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Mode || !Mode->IsEncounterActive() || !IsValid(Target)) return;
     VisualTime += DeltaSeconds;
-    if (Target->IsGrabbing())
+    if (Target->IsGrabbing() && !Target->GetClimbing()->IsGrabWarping())
     {
         RiderTime = Target->GetClimbing()->IsClimbing() ? RiderTime + DeltaSeconds : 0.f;
         // Continue moving under the rider. Turn inward before the full model

@@ -5,6 +5,8 @@
 #include "ColossusClimbingComponent.h"
 #include "GrabComponent.h"
 #include "Animation/AnimSequence.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Camera/CameraComponent.h"
@@ -22,6 +24,7 @@
 #include "Components/ControlRigComponent.h"
 #include "ControlRig.h"
 #include "Misc/Parse.h"
+#include "MotionWarpingComponent.h"
 
 APrototypePlayer::APrototypePlayer()
 {
@@ -63,6 +66,7 @@ APrototypePlayer::APrototypePlayer()
     GrabComponent = CreateDefaultSubobject<UGrabComponent>(TEXT("GrabComponent"));
     Climbing = CreateDefaultSubobject<UColossusClimbingComponent>(TEXT("ColossusClimbing"));
     ClimbingControlRig = CreateDefaultSubobject<UControlRigComponent>(TEXT("ClimbingFBIK"));
+    MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("GrabMotionWarping"));
     static ConstructorHelpers::FClassFinder<UControlRig> ClimbingRig(TEXT("/Game/Characters/Rigged/Shirotsura/CR_Shirotsura_Climbing"));
     if (ClimbingRig.Succeeded()) ClimbingControlRig->SetControlRigClass(ClimbingRig.Class);
     static ConstructorHelpers::FObjectFinder<USkeletalMesh> Rigged(TEXT("/Game/Characters/Rigged/Shirotsura/SK_Shirotsura"));
@@ -274,7 +278,7 @@ void APrototypePlayer::TryJump()
 }
 void APrototypePlayer::TurnRate(float Value) { AddControllerYawInput(Value * GamepadCameraYawSpeed * GetWorld()->GetDeltaSeconds()); }
 void APrototypePlayer::LookUpRate(float Value) { AddControllerPitchInput(Value * GamepadCameraPitchSpeed * GetWorld()->GetDeltaSeconds()); }
-bool APrototypePlayer::IsGrabbing() const { return Climbing->IsClimbing() || GrabComponent->IsGrabbing(); }
+bool APrototypePlayer::IsGrabbing() const { return Climbing->IsClimbing() || Climbing->IsGrabWarping() || GrabComponent->IsGrabbing(); }
 void APrototypePlayer::BeginGrab()
 {
     if (!CanAct()) return;
@@ -283,6 +287,34 @@ void APrototypePlayer::BeginGrab()
     if (bUseRouteClimbing) { Climbing->GrabPressed(); return; }
     const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (Mode && GrabComponent->TryGrab(Mode->GetBoss(), GrabDistance)) ShowFeedback(TEXT("GRABBING"));
+}
+
+bool APrototypePlayer::BeginGrabWarpAnimation()
+{
+    if (!GrabMotionWarpMontage || !GrabMotionWarpAnimClass || !GetMesh()) return false;
+    GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+    GetMesh()->SetAnimInstanceClass(GrabMotionWarpAnimClass);
+    UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+    if (!AnimInstance || AnimInstance->Montage_Play(GrabMotionWarpMontage) <= 0.f)
+    {
+        EndGrabWarpAnimation();
+        return false;
+    }
+    CurrentAnimation = INDEX_NONE;
+    return true;
+}
+
+void APrototypePlayer::EndGrabWarpAnimation()
+{
+    if (UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+        if (GrabMotionWarpMontage) AnimInstance->Montage_Stop(.08f, GrabMotionWarpMontage);
+    if (GetMesh()) GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+    CurrentAnimation = INDEX_NONE;
+}
+
+float APrototypePlayer::GetGrabWarpAnimationLength() const
+{
+    return GrabMotionWarpMontage ? GrabMotionWarpMontage->GetPlayLength() : 0.f;
 }
 void APrototypePlayer::ReleaseGrab()
 {
@@ -479,6 +511,7 @@ void APrototypePlayer::ResetForEncounter(const FTransform& Spawn)
 
 void APrototypePlayer::UpdateAnimation()
 {
+    if (Climbing && Climbing->IsGrabWarping()) return;
     const bool Climb = Climbing && Climbing->IsClimbing();
     const bool HideWeapon = IsGrabbing() && !IsAttacking();
     if (HideWeapon != bWeaponHidden)

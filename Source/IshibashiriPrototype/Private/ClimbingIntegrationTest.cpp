@@ -32,10 +32,11 @@ void AClimbingIntegrationTest::BeginPlay()
     bCapture=FParse::Param(FCommandLine::Get(),TEXT("PrototypeCapture"));
     bGamepad=FParse::Param(FCommandLine::Get(),TEXT("ClimbingGamepad"));
     bClimbingIK=FParse::Param(FCommandLine::Get(),TEXT("ClimbingIKTest"));
+    bGrabMotionWarp=FParse::Param(FCommandLine::Get(),TEXT("GrabMotionWarpTest"));
     Mode=GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Check(Mode && Mode->GetPlayer() && Mode->GetBoss(),TEXT("Encounter spawned"))) return;
     AddTickPrerequisiteComponent(Mode->GetPlayer()->GetClimbing());
-    SetupGrab();
+    if (bGrabMotionWarp) Mode->RetryEncounter(); else SetupGrab();
     UE_LOG(LogTemp,Display,TEXT("CLIMB_TEST_BEGIN %s"),*RunId);
 }
 void AClimbingIntegrationTest::Hold(const FKey& Key,bool Down)
@@ -82,11 +83,52 @@ void AClimbingIntegrationTest::SetupGrab()
 void AClimbingIntegrationTest::Shot(const TCHAR* Name)
 {
     if (!bCapture) return;
-    FString Dir = bClimbingIK
+    FString Dir = bGrabMotionWarp
+        ? FPaths::ProjectSavedDir()/TEXT("Screenshots/GrabMotionWarp")/RunId
+        : bClimbingIK
         ? FPaths::ProjectSavedDir()/TEXT("Screenshots/ClimbingIK")/RunId/TEXT("After")
         : FPaths::ProjectSavedDir()/TEXT("Screenshots/Climbing")/RunId;
     IFileManager::Get().MakeDirectory(*Dir,true);
     FScreenshotRequest::RequestScreenshot(Dir/(FString(Name)+TEXT(".png")),false,false);
+}
+
+void AClimbingIntegrationTest::TickGrabMotionWarp(float Dt)
+{
+    APrototypePlayer* P=Mode->GetPlayer(); AIshibashiriBoss* B=Mode->GetBoss(); UColossusClimbingComponent* C=P->GetClimbing();
+    const FVector Entry=B->GetClimbPosition(0);
+    const float Distance=FVector::Dist(P->GetActorLocation(),Entry);
+    switch (GrabWarpPhase)
+    {
+    case 0:
+    {
+        FVector ToEntry=Entry-P->GetActorLocation(); ToEntry.Z=0.f;
+        P->GetController()->SetControlRotation(ToEntry.Rotation());
+        if (Distance>C->GrabRange-20.f) { Hold(EKeys::W,true); return; }
+        Hold(EKeys::W,false);
+        P->SetActorRotation((B->GetActorLocation()-Entry).GetSafeNormal2D().Rotation());
+        if (B->GetState()==EIshibashiriState::Charge) return;
+        Shot(TEXT("01-BeforeGrab")); Tap(EKeys::E); GrabWarpPhase=1; Time=0.f; return;
+    }
+    case 1:
+        if (!C->IsGrabWarping()) { Check(false,TEXT("Motion Warp starts from normal Grab input (asset contract required)")); return; }
+        Shot(TEXT("02-WarpStart")); GrabWarpPhase=2; Time=0.f; return;
+    case 2:
+        if (Time>.22f) { Shot(TEXT("03-Approach")); GrabWarpPhase=3; } return;
+    case 3:
+        if (Time>.48f) { Shot(TEXT("04-BeforeContact")); GrabWarpPhase=4; } return;
+    case 4:
+        if (C->IsGrabWarping()) return;
+        if (!Check(C->IsClimbing() && C->GetNode()==0,TEXT("Warp hands off to Route Climbing node 0"))) return;
+        Shot(TEXT("05-Attached")); Hold(EKeys::E,true); Hold(EKeys::W,true); GrabWarpPhase=5; Time=0.f; return;
+    case 5:
+        if (C->IsMoving() || C->GetNode()>0)
+        {
+            Shot(TEXT("06-ClimbStart")); Hold(EKeys::W,false); Hold(EKeys::E,false);
+            UE_LOG(LogTemp,Display,TEXT("GRAB_MOTION_WARP_TEST_PASS %s %.2fs"),*RunId,Total);
+            bFinished=true; FApp::SetUseFixedTimeStep(false); FPlatformMisc::RequestExitWithStatus(false,0);
+        }
+        return;
+    }
 }
 void AClimbingIntegrationTest::Tick(float Dt)
 {
@@ -102,6 +144,11 @@ void AClimbingIntegrationTest::Tick(float Dt)
             float(Held.Contains(EKeys::D))-float(Held.Contains(EKeys::A))));
     }
     Time+=Dt;Total+=Dt;
+    if (bGrabMotionWarp)
+    {
+        if (Total>45.f) { Check(false,TEXT("Grab Motion Warp validation timeout")); return; }
+        TickGrabMotionWarp(Dt); return;
+    }
     auto P=Mode->GetPlayer();auto B=Mode->GetBoss();auto C=P->GetClimbing();
     if (bClimbingIK && !bIKShakeShot && B->IsBucking() && C->IsClimbing() && C->IsGripping())
     {

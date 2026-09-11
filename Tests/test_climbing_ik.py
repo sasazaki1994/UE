@@ -8,7 +8,8 @@ def test_only_required_engine_plugins_are_enabled():
     project = json.loads((ROOT / "IshibashiriPrototype.uproject").read_text())
     enabled = {p["Name"] for p in project["Plugins"] if p.get("Enabled")}
     assert {"ControlRig", "FullBodyIK"} <= enabled
-    assert not ({"MotionWarping", "Niagara", "PCG"} & enabled)
+    assert "MotionWarping" in enabled
+    assert not ({"Niagara", "PCG"} & enabled)
 
 
 def test_real_authored_bone_names_are_used():
