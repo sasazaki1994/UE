@@ -37,3 +37,22 @@ def test_basin_visual_language_is_readable_and_non_blocking() -> None:
     assert "Accent->SetCollisionEnabled(ECollisionEnabled::NoCollision)" in source
     assert 'TEXT("BasinGroundHaze")' in source
     assert "Fog->SetFogMaxOpacity(.22f)" in source
+
+
+def test_basin_scenario_is_separate_and_requires_basin() -> None:
+    script = read("Tools/Prototype.ps1")
+    mode = read("Source/IshibashiriPrototype/Private/PrototypeGameMode.cpp")
+    assert "[switch]$BasinScenario" in script
+    assert "if ($BasinScenario -and !$Basin)" in script
+    assert "'-BasinPlaythroughTest'" in script
+    assert 'TEXT("BasinPlaythroughTest")' in mode
+
+
+def test_basin_scenario_does_not_arrange_or_stop_gameplay() -> None:
+    source = read("Source/IshibashiriPrototype/Private/BasinPlaythroughTest.cpp")
+    assert "SetActorLocation" not in source
+    assert "SetActorTickEnabled" not in source
+    assert "GrabRange - 12.f" in source
+    assert "BASIN_SCENARIO_FAIL" in source
+    assert "ReleaseAll();" in source
+    assert 'Tap(EKeys::R)' in source
