@@ -5,6 +5,7 @@
 #include "ColossusClimbingComponent.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/ControlRigComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "InputKeyEventArgs.h"
@@ -30,6 +31,7 @@ void AClimbingIntegrationTest::BeginPlay()
     FApp::SetUseFixedTimeStep(true); FApp::SetFixedDeltaTime(1.0/FMath::Clamp(FPS,15,240));
     bCapture=FParse::Param(FCommandLine::Get(),TEXT("PrototypeCapture"));
     bGamepad=FParse::Param(FCommandLine::Get(),TEXT("ClimbingGamepad"));
+    bClimbingIK=FParse::Param(FCommandLine::Get(),TEXT("ClimbingIKTest"));
     Mode=GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Check(Mode && Mode->GetPlayer() && Mode->GetBoss(),TEXT("Encounter spawned"))) return;
     AddTickPrerequisiteComponent(Mode->GetPlayer()->GetClimbing());
@@ -80,7 +82,9 @@ void AClimbingIntegrationTest::SetupGrab()
 void AClimbingIntegrationTest::Shot(const TCHAR* Name)
 {
     if (!bCapture) return;
-    FString Dir=FPaths::ProjectSavedDir()/TEXT("Screenshots/Climbing")/RunId;
+    FString Dir = bClimbingIK
+        ? FPaths::ProjectSavedDir()/TEXT("Screenshots/ClimbingIK")/RunId/TEXT("After")
+        : FPaths::ProjectSavedDir()/TEXT("Screenshots/Climbing")/RunId;
     IFileManager::Get().MakeDirectory(*Dir,true);
     FScreenshotRequest::RequestScreenshot(Dir/(FString(Name)+TEXT(".png")),false,false);
 }
@@ -99,6 +103,10 @@ void AClimbingIntegrationTest::Tick(float Dt)
     }
     Time+=Dt;Total+=Dt;
     auto P=Mode->GetPlayer();auto B=Mode->GetBoss();auto C=P->GetClimbing();
+    if (bClimbingIK && !bIKShakeShot && B->IsBucking() && C->IsClimbing() && C->IsGripping())
+    {
+        bIKShakeShot=true; Shot(TEXT("07-ShakeCling"));
+    }
     if (Total>180.f) { Check(false,TEXT("Integration test timeout")); return; }
     switch (Phase)
     {
@@ -106,6 +114,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
         if (Time>.3f)
         {
             if (!Check(P->GetMesh()->GetNumBones()>=19 && B->GetVisualMesh()->GetNumBones()>=20,TEXT("Both deformation skeletons loaded"))) return;
+            if (bClimbingIK && !Check(P->GetClimbingControlRig()->GetControlRig()!=nullptr,TEXT("Climbing Control Rig asset is instantiated"))) return;
             if (!Check(P->GetMesh()->GetSingleNodeInstance() && P->GetMesh()->GetSingleNodeInstance()->GetCurrentAsset(),TEXT("Player animation is playing"))) return;
             Shot(TEXT("01-Ground"));Hold(EKeys::W,true);Next(1);
         } break;
@@ -120,19 +129,34 @@ void AClimbingIntegrationTest::Tick(float Dt)
         if (Time>.12f)
         {
             if (!Check(C->IsClimbing() && C->GetNode()==0,TEXT("E mounts from ground after movement input"))) return;
+            if (bClimbingIK) Shot(TEXT("01-Grab"));
             BeforeBoss=B->GetActorLocation(); B->SetActorTickEnabled(true);
             Hold(EKeys::E,true);Hold(EKeys::W,true);Next(3);
         } break;
     case 3:
+        if (bClimbingIK && C->IsMoving() && C->GetIKWeight()>.5f && IKContactShot<3
+            && C->GetNode()==IKContactShot)
+        {
+            const TCHAR* Names[]={TEXT("02-ForelegClimb"),TEXT("03-HandsContact"),TEXT("04-FeetContact")};
+            Shot(Names[IKContactShot++]);
+            if (!Check(C->IsIKVerticalSlice(),TEXT("FBIK remains scoped to nodes 0-3"))) return;
+            const FClimbingIKTargets& T=C->GetIKTargets();
+            const FName Bones[]={TEXT("hand_L"),TEXT("hand_R"),TEXT("foot_L"),TEXT("foot_R")};
+            const FTransform Targets[]={T.LeftHand,T.RightHand,T.LeftFoot,T.RightFoot};
+            for (int32 I=0;I<4;++I)
+                UE_LOG(LogTemp,Display,TEXT("CLIMBING_IK_ERROR_CM %s %.2f"),*Bones[I].ToString(),
+                    FVector::Distance(P->GetMesh()->GetBoneLocation(Bones[I]),Targets[I].GetLocation()));
+        }
         if (C->GetNode()==3 && !C->IsMoving())
         {
-            Hold(EKeys::W,false);BeforeStamina=C->GetStamina();Shot(TEXT("02-FirstLedge"));Next(4);
+            Hold(EKeys::W,false);BeforeStamina=C->GetStamina();Shot(bClimbingIK ? TEXT("05-FirstShoulder") : TEXT("02-FirstLedge"));Next(4);
         } break;
     case 4:
         if (Time>1.f)
         {
             if (!Check(C->GetStamina()>BeforeStamina,TEXT("Safe ledge restores stamina"))) return;
             if (!Check(FVector::Dist(BeforeBoss,B->GetActorLocation())>50 && FVector::Dist(P->GetActorLocation(),B->GetClimbPosition(3))<3,TEXT("Rider follows moving creature"))) return;
+            if (bClimbingIK) Shot(TEXT("06-BossMoving"));
             B->AddActorWorldRotation(FRotator(0,35,0));Next(5);
         } break;
     case 5:
@@ -217,12 +241,13 @@ void AClimbingIntegrationTest::Tick(float Dt)
         if (!C->IsClimbing())
         {
             if (!Check(B->IsBucking() && C->GetStamina()>0,TEXT("Unbraced shaking throws rider off before exhaustion"))) return;
-            Shot(TEXT("06-ThrownOff"));Next(27);
+            if (!bClimbingIK) Shot(TEXT("06-ThrownOff"));
+            Next(27);
         } break;
     case 27:
         if (Time>.3f)
         {
-            UE_LOG(LogTemp,Display,TEXT("CLIMB_TEST_PASS %s %.2fs"),*RunId,Total);
+            UE_LOG(LogTemp,Display,bClimbingIK ? TEXT("CLIMBING_IK_TEST_PASS %s %.2fs") : TEXT("CLIMB_TEST_PASS %s %.2fs"),*RunId,Total);
             bFinished=true;FPlatformMisc::RequestExitWithStatus(false,0);
         } break;
     }
