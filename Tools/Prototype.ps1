@@ -6,6 +6,7 @@ param(
     [switch]$SkipBuild,
     [switch]$Capture,
     [switch]$Basin,
+    [switch]$HighQuality,
     [switch]$BasinScenario,
     [switch]$Playthrough,
     [switch]$Camera,
@@ -132,11 +133,13 @@ try {
             # This is the visible game explicitly requested by the Play action.
             $PlayArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01', '-game', '-windowed', '-ResX=1280', '-ResY=800', '-NoSplash')
             if ($Basin) { $PlayArguments += '-BasinPrototype' }
+            if ($HighQuality) { $PlayArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             & $EditorExe @PlayArguments
         }
         'Editor' {
             $EditorArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01')
             if ($Basin) { $EditorArguments += '-BasinPrototype' }
+            if ($HighQuality) { $EditorArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             & $EditorExe @EditorArguments
         }
         'Test' {
@@ -148,9 +151,11 @@ try {
             $TestFlag = if ($BasinScenario) { '-BasinPlaythroughTest' } elseif ($Camera) { '-PrototypeCameraTest' } elseif ($Gamepad) { '-PrototypeGamepadTest' } elseif ($Climbing -or $ClimbingGamepad) { '-ClimbingTest' } elseif ($LocalClimbing) { '-PrototypeClimbingTest' } elseif ($Grab) { '-PrototypeGrabTest' } elseif ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
             $TestArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01', '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
             if ($Basin) { $TestArguments += '-BasinPrototype' }
+            if ($HighQuality) { $TestArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             if ($ClimbingGamepad) { $TestArguments += '-ClimbingGamepad' }
             if ($Capture) {
-                $TestArguments += @('-PrototypeCapture', '-RenderOffscreen', '-windowed', '-ResX=1280', '-ResY=800', '-ExecCmds=t.MaxFPS 60')
+                $TestArguments += @('-PrototypeCapture', '-RenderOffscreen', '-windowed', '-ResX=1280', '-ResY=800')
+                if (!$HighQuality) { $TestArguments += '-ExecCmds=t.MaxFPS 60' }
             } else {
                 $TestArguments += '-nullrhi'
             }
