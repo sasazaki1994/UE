@@ -1,0 +1,86 @@
+name: Character regeneration validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      BLENDER_VERSION: 3.6.23
+      BLENDER_ARCHIVE: blender-3.6.23-linux-x64.tar.xz
+      BLENDER_RELEASE_URL: https://download.blender.org/release/Blender3.6
+      EVIDENCE_DIR: Artifacts/CharacterRegeneration/github-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preserve baseline assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR/Before" "$EVIDENCE_DIR/logs"
+          for path in \
+            Art/Characters/Shirotsura \
+            Art/Characters/Ishibashiri \
+            Art/Characters/Previews \
+            Content/Characters/Rigged/Shirotsura \
+            Content/Characters/Rigged/Ishibashiri
+          do
+            mkdir -p "$EVIDENCE_DIR/Before/$(dirname "$path")"
+            cp -a "$path" "$EVIDENCE_DIR/Before/$path"
+          done
+          find "$EVIDENCE_DIR/Before" -type f -print0 | sort -z |
+            xargs -0 sha256sum > "$EVIDENCE_DIR/Before/SHA256SUMS.txt"
+          git rev-parse HEAD > "$EVIDENCE_DIR/source-commit.txt"
+
+      - name: Install Blender 3.6.23
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y ca-certificates curl xz-utils xvfb libegl1 libgl1 libsm6 libx11-6 libxext6 libxi6 libxrender1 libxkbcommon0
+          mkdir -p "$RUNNER_TEMP/blender-download"
+          cd "$RUNNER_TEMP/blender-download"
+          curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --output "$BLENDER_ARCHIVE" "$BLENDER_RELEASE_URL/$BLENDER_ARCHIVE"
+          curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --output blender.sha256 "$BLENDER_RELEASE_URL/blender-$BLENDER_VERSION.sha256"
+          awk -v archive="$BLENDER_ARCHIVE" '$2 == archive || $2 == "*" archive { print }' blender.sha256 > archive.sha256
+          test "$(wc -l < archive.sha256)" -eq 1
+          sha256sum --check archive.sha256
+          tar -xJf "$BLENDER_ARCHIVE" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/blender-$BLENDER_VERSION-linux-x64" >> "$GITHUB_PATH"
+
+      - name: Regenerate, refine, rig, and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          blender --version | tee "$EVIDENCE_DIR/blender-version.txt"
+          for stage in CreateCharacterModels RefineCharacterModels RigCharacterModels VerifyRiggedCharacters
+          do
+            xvfb-run -a blender --background --factory-startup --python-exit-code 1 \
+              --python "Tools/$stage.py" 2>&1 | tee "$EVIDENCE_DIR/logs/$stage.log"
+          done
+
+      - name: Record generated asset hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR/After"
+          find Art/Characters/Shirotsura Art/Characters/Ishibashiri Art/Characters/Previews \
+            -type f -print0 | sort -z | xargs -0 sha256sum > "$EVIDENCE_DIR/After/SHA256SUMS.txt"
+          cp -a Art/Characters/Shirotsura Art/Characters/Ishibashiri Art/Characters/Previews \
+            "$EVIDENCE_DIR/After/"
+
+      # Deliberately an artifact only: generated binaries require visual and UE 5.6
+      # validation before a human may adopt or commit them.
+      - name: Upload comparison candidate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: character-regeneration-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_DIR }}/
+          if-no-files-found: warn
+          retention-days: 14
