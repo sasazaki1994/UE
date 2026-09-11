@@ -9,6 +9,7 @@
 #include "PrototypeClimbingTest.h"
 #include "PrototypeGamepadTest.h"
 #include "PrimitiveAppearance.h"
+#include "BasinPrototypeArena.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/PointLightComponent.h"
@@ -38,17 +39,25 @@ APrototypeGameMode::APrototypeGameMode()
 
 FTransform APrototypeGameMode::PlayerSpawn() const
 {
+    if (bBasinPrototype && BasinArena) return FTransform(FRotator::ZeroRotator, BasinArena->PlayerStart);
     return FTransform(FRotator::ZeroRotator, FVector(-1150.f, -750.f, 92.f));
 }
 
 FTransform APrototypeGameMode::BossSpawn() const
 {
+    if (bBasinPrototype && BasinArena) return FTransform(FRotator(0.f, 180.f, 0.f), BasinArena->BossStart);
     return FTransform(FRotator(0.f, 180.f, 0.f), FVector(650.f, 0.f, 352.f));
 }
 
 void APrototypeGameMode::StartPlay()
 {
-    CreateArena();
+    bBasinPrototype = FParse::Param(FCommandLine::Get(), TEXT("BasinPrototype"));
+    if (bBasinPrototype)
+    {
+        BasinArena = GetWorld()->SpawnActor<ABasinPrototypeArena>();
+        if (BasinArena) ArenaHalfExtent = BasinArena->ClearingHalfExtent;
+    }
+    else CreateArena();
     Super::StartPlay();
     FActorSpawnParameters Params;
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;

@@ -5,6 +5,7 @@ param(
     [string]$EngineRoot = $env:UE_ROOT,
     [switch]$SkipBuild,
     [switch]$Capture,
+    [switch]$Basin,
     [switch]$Playthrough,
     [switch]$Camera,
     [switch]$Grab,
@@ -127,9 +128,15 @@ try {
         'Setup' { Write-Host 'Editor build and prototype map are ready.' }
         'Play' {
             # This is the visible game explicitly requested by the Play action.
-            & $EditorExe $ProjectFile '/Game/Maps/L_Prototype_01' '-game' '-windowed' '-ResX=1280' '-ResY=800' '-NoSplash'
+            $PlayArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01', '-game', '-windowed', '-ResX=1280', '-ResY=800', '-NoSplash')
+            if ($Basin) { $PlayArguments += '-BasinPrototype' }
+            & $EditorExe @PlayArguments
         }
-        'Editor' { & $EditorExe $ProjectFile '/Game/Maps/L_Prototype_01' }
+        'Editor' {
+            $EditorArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01')
+            if ($Basin) { $EditorArguments += '-BasinPrototype' }
+            & $EditorExe @EditorArguments
+        }
         'Test' {
             $LogDir = Join-Path $ProjectRoot 'Saved\Logs'
             New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
@@ -138,6 +145,7 @@ try {
             $RunId = [guid]::NewGuid().ToString('N')
             $TestFlag = if ($Camera) { '-PrototypeCameraTest' } elseif ($Gamepad) { '-PrototypeGamepadTest' } elseif ($Climbing -or $ClimbingGamepad) { '-ClimbingTest' } elseif ($LocalClimbing) { '-PrototypeClimbingTest' } elseif ($Grab) { '-PrototypeGrabTest' } elseif ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
             $TestArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01', '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
+            if ($Basin) { $TestArguments += '-BasinPrototype' }
             if ($ClimbingGamepad) { $TestArguments += '-ClimbingGamepad' }
             if ($Capture) {
                 $TestArguments += @('-PrototypeCapture', '-RenderOffscreen', '-windowed', '-ResX=1280', '-ResY=800', '-ExecCmds=t.MaxFPS 60')

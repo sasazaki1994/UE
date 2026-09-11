@@ -9,6 +9,15 @@ UE 5.6 / Windows向け。白面の祓い手を操作し、約12mの巨猪へ取�
 - `Artifacts/Windows/IshibashiriPrototype.exe`：パッケージ版。隣接フォルダーも必要です。
 - `Tools/Prototype.ps1 -Action Editor`：UE Editorで開きます。Playを押すとキャラクターが生成されます。
 
+盆地の仮地形は通常アリーナを置き換える明示オプションです（同じマップを使用します）。
+
+```powershell
+.\Tools\Prototype.ps1 -Action Play -Basin
+# UnrealEditorを直接使う場合: IshibashiriPrototype.uproject /Game/Maps/L_Prototype_01 -game -BasinPrototype
+```
+
+通常起動および既存テストは従来の約80m四方のアリーナのままです。盆地で登攀やカメラを検証する場合は、既存コマンドへ `-Basin` を加えます。
+
 このPCのUEは `%USERPROFILE%/UnrealEngine/UE_5.6` から自動検出します。
 独自の場所は `-EngineRoot` または `UE_ROOT` で指定できます。
 ビルドにはMSVC v143とWindows SDKが必要です。導入条件は `.vsconfig` と [以前の環境説明](Docs/OriginalCombatPrototype.md) を参照してください。
@@ -68,6 +77,8 @@ Generic Gamepadの移動・カメラ・各アクションを、白面の操作�
 .\Tools\Prototype.ps1 -Action Test -Climbing -SkipBuild -TestFPS 60
 .\Tools\Prototype.ps1 -Action Test -Climbing -SkipBuild -TestFPS 30
 .\Tools\Prototype.ps1 -Action Test -Climbing -Capture -SkipBuild
+.\Tools\Prototype.ps1 -Action Test -Climbing -Capture -Basin -SkipBuild
+.\Tools\Prototype.ps1 -Action Test -Camera -Capture -Basin -SkipBuild
 .\Tools\Prototype.ps1 -Action Test -ClimbingGamepad -SkipBuild
 .\Tools\Prototype.ps1 -Action Test -Grab -SkipBuild
 .\Tools\Prototype.ps1 -Action Test -LocalClimbing -SkipBuild
