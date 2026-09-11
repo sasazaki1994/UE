@@ -33,6 +33,7 @@ public:
     FVector GetChargeDirection() const { return ChargeDirection; }
     bool HasImportedVisuals() const;
     FVector GetClimbPosition(int32 Node) const;
+    FTransform GetClimbFrame() const;
     int32 GetClimbNeighbor(int32 Node, int32 Direction) const;
     bool IsRestNode(int32 Node) const { return Node >= 3; }
     bool TryPurifyCore(const FVector& Position);

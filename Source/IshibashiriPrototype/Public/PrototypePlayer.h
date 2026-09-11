@@ -11,6 +11,7 @@ class UMaterialInstanceDynamic;
 class UColossusClimbingComponent;
 class UAnimSequence;
 class UGrabComponent;
+class UControlRigComponent;
 
 UCLASS()
 class ISHIBASHIRIPROTOTYPE_API APrototypePlayer : public ACharacter
@@ -33,6 +34,7 @@ public:
     UGrabComponent* GetGrabComponent() const { return GrabComponent; }
     void Dodge();
     UColossusClimbingComponent* GetClimbing() const { return Climbing; }
+    UControlRigComponent* GetClimbingControlRig() const { return ClimbingControlRig; }
 
     int32 GetHealth() const { return Health; }
     bool IsDodging() const { return DodgeRemaining > 0.f; }
@@ -78,6 +80,7 @@ private:
     bool CanAct() const;
     void ShowFeedback(const FString& Text);
     void UpdateAnimation();
+    void UpdateClimbingIK();
     void TurnRate(float Value);
     void LookUpRate(float Value);
 
@@ -88,6 +91,7 @@ private:
     UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> BodyMaterial;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UColossusClimbingComponent> Climbing;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> GrabComponent;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UControlRigComponent> ClimbingControlRig;
     UPROPERTY() TArray<TObjectPtr<UAnimSequence>> Animations;
     int32 CurrentAnimation = INDEX_NONE;
     bool bWeaponHidden = false;

@@ -6,6 +6,34 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/World.h"
 
+bool UColossusClimbingComponent::IsIKVerticalSlice() const
+{
+    return Boss && Node >= 0 && Node <= 3 && (Destination == INDEX_NONE || Destination <= 3);
+}
+
+void UColossusClimbingComponent::UpdateIK(float Dt)
+{
+    const float Desired = IsIKVerticalSlice() ? (IsResting() ? .72f : 1.f) : 0.f;
+    const float Seconds = Desired > IKWeight ? IKBlendInSeconds : IKBlendOutSeconds;
+    IKWeight = FMath::FInterpConstantTo(IKWeight, Desired, Dt, 1.f / FMath::Max(.01f, Seconds));
+    if (!Boss) return;
+
+    // Authored against the actual Shirotsura rig. Values remain in the creature
+    // component's local frame, so walking, turning and buck rotation carry them.
+    const FTransform Frame = Boss->GetClimbFrame();
+    const FVector AnchorWorld = Destination == INDEX_NONE ? Boss->GetClimbPosition(Node)
+        : FMath::Lerp(Boss->GetClimbPosition(Node), Boss->GetClimbPosition(Destination), Progress);
+    const FVector Anchor = Frame.InverseTransformPosition(AnchorWorld - FVector(0, 0, 88));
+    auto Target = [&Frame, &Anchor](const FVector& Offset, const FRotator& Rotation)
+    {
+        return FTransform(Frame.TransformRotation(Rotation.Quaternion()), Frame.TransformPosition(Anchor + Offset));
+    };
+    IKTargets.LeftHand  = Target(FVector(-18,-5, 72), FRotator(0,0,-12));
+    IKTargets.RightHand = Target(FVector( 18,-5, 66), FRotator(0,0, 12));
+    IKTargets.LeftFoot  = Target(FVector(-16,-2,-72), FRotator(0,0,-5));
+    IKTargets.RightFoot = Target(FVector( 16,-2,-78), FRotator(0,0, 5));
+}
+
 UColossusClimbingComponent::UColossusClimbingComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
@@ -55,7 +83,7 @@ void UColossusClimbingComponent::Detach(bool bJump)
 void UColossusClimbingComponent::Reset()
 {
     Detach(false); Stamina = 100.f; ForwardInput = RightInput = InputDelay = UnsafeBuckTime = 0.f;
-    bGripHeld = false;
+    bGripHeld = false; IKWeight = 0.f; IKTargets = FClimbingIKTargets();
 }
 bool UColossusClimbingComponent::TryPurify()
 {
@@ -65,6 +93,7 @@ void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActor
 {
     Super::TickComponent(Dt, Type, Tick);
     if (!Player) return;
+    UpdateIK(Dt);
     const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Mode || !Mode->IsEncounterActive()) return;
     if (!IsValid(Boss))

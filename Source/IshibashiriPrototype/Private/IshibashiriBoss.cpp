@@ -327,6 +327,10 @@ FVector AIshibashiriBoss::GetClimbPosition(int32 Node) const
     // mesh frame, so the rider stays upright when the creature shakes.
     return Creature->GetComponentTransform().TransformPosition(Route[Node])+FVector(0,0,88);
 }
+FTransform AIshibashiriBoss::GetClimbFrame() const
+{
+    return Creature->GetComponentTransform();
+}
 int32 AIshibashiriBoss::GetClimbNeighbor(int32 Node, int32 Direction) const
 {
     return Node >= 0 && Node < UE_ARRAY_COUNT(Route) && Direction >= 0 && Direction < 4 ? Neighbors[Node][Direction] : INDEX_NONE;

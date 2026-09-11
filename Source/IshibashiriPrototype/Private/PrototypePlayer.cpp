@@ -19,6 +19,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Components/ControlRigComponent.h"
+#include "ControlRig.h"
+#include "Misc/Parse.h"
 
 APrototypePlayer::APrototypePlayer()
 {
@@ -59,6 +62,9 @@ APrototypePlayer::APrototypePlayer()
     Sword->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     GrabComponent = CreateDefaultSubobject<UGrabComponent>(TEXT("GrabComponent"));
     Climbing = CreateDefaultSubobject<UColossusClimbingComponent>(TEXT("ColossusClimbing"));
+    ClimbingControlRig = CreateDefaultSubobject<UControlRigComponent>(TEXT("ClimbingFBIK"));
+    static ConstructorHelpers::FClassFinder<UControlRig> ClimbingRig(TEXT("/Game/Characters/Rigged/Shirotsura/CR_Shirotsura_Climbing"));
+    if (ClimbingRig.Succeeded()) ClimbingControlRig->SetControlRigClass(ClimbingRig.Class);
     static ConstructorHelpers::FObjectFinder<USkeletalMesh> Rigged(TEXT("/Game/Characters/Rigged/Shirotsura/SK_Shirotsura"));
     GetMesh()->SetSkeletalMesh(Rigged.Object);
     GetMesh()->SetRelativeLocation(FVector(0,0,-88));
@@ -81,6 +87,7 @@ void APrototypePlayer::BeginPlay()
     BodyMaterial = Body->CreateDynamicMaterialInstance(0);
     SetPrimitiveColor(BodyMaterial, FLinearColor(0.08f, 0.5f, 0.8f));
     UpdateAnimation();
+    ClimbingControlRig->AddMappedSkeletalMesh(GetMesh());
 }
 
 void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
@@ -368,6 +375,7 @@ void APrototypePlayer::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     UpdateAnimation();
+    UpdateClimbingIK();
     if (!CanAct()) return;
     DodgeCooldownRemaining = FMath::Max(0.f, DodgeCooldownRemaining - DeltaSeconds);
     AttackCooldownRemaining = FMath::Max(0.f, AttackCooldownRemaining - DeltaSeconds);
@@ -399,6 +407,31 @@ void APrototypePlayer::Tick(float DeltaSeconds)
         SetPrimitiveColor(BodyMaterial, IsDodging() ? FLinearColor::White
             : (bFlash ? FLinearColor(1.f, 0.15f, 0.1f) : FLinearColor(0.08f, 0.5f, 0.8f)));
     }
+}
+
+void APrototypePlayer::UpdateClimbingIK()
+{
+    if (!ClimbingControlRig || !Climbing) return;
+    const FClimbingIKTargets& T = Climbing->GetIKTargets();
+    ClimbingControlRig->SetControlTransform(TEXT("IK_Hand_L"), T.LeftHand, EControlRigComponentSpace::WorldSpace);
+    ClimbingControlRig->SetControlTransform(TEXT("IK_Hand_R"), T.RightHand, EControlRigComponentSpace::WorldSpace);
+    ClimbingControlRig->SetControlTransform(TEXT("IK_Foot_L"), T.LeftFoot, EControlRigComponentSpace::WorldSpace);
+    ClimbingControlRig->SetControlTransform(TEXT("IK_Foot_R"), T.RightFoot, EControlRigComponentSpace::WorldSpace);
+    ClimbingControlRig->SetControlFloat(TEXT("IK_Weight"), Climbing->GetIKWeight());
+#if !UE_BUILD_SHIPPING
+    if (!FParse::Param(FCommandLine::Get(), TEXT("ClimbingIKDebug"))) return;
+    const FName Bones[] = {TEXT("hand_L"),TEXT("hand_R"),TEXT("foot_L"),TEXT("foot_R")};
+    const FTransform Targets[] = {T.LeftHand,T.RightHand,T.LeftFoot,T.RightFoot};
+    for (int32 I=0; I<4; ++I)
+    {
+        const FVector Bone = GetMesh()->GetBoneLocation(Bones[I]);
+        const FVector Target = Targets[I].GetLocation();
+        const float Error = FVector::Distance(Bone,Target);
+        const FColor Color = Error <= 8.f ? FColor::Green : Error <= 20.f ? FColor::Yellow : FColor::Red;
+        DrawDebugSphere(GetWorld(),Target,5,8,Color,false,-1,0,1.5f);
+        DrawDebugLine(GetWorld(),Bone,Target,Color,false,-1,0,1.5f);
+    }
+#endif
 }
 
 void APrototypePlayer::ShowFeedback(const FString& Text)

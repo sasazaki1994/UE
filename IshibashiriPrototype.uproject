@@ -8,6 +8,8 @@
   ],
   "Plugins": [
     { "Name": "PythonScriptPlugin", "Enabled": true, "TargetAllowList": ["Editor"] },
+    { "Name": "ControlRig", "Enabled": true },
+    { "Name": "FullBodyIK", "Enabled": true },
     { "Name": "AndroidFileServer", "Enabled": false }
   ]
 }

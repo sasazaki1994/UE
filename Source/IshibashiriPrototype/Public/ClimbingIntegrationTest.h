@@ -32,4 +32,7 @@ private:
     bool bFinished = false;
     bool bCapture = false;
     bool bGamepad = false;
+    bool bClimbingIK = false;
+    int32 IKContactShot = 0;
+    bool bIKShakeShot = false;
 };

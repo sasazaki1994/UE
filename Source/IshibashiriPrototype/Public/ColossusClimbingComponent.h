@@ -6,6 +6,16 @@
 class APrototypePlayer;
 class AIshibashiriBoss;
 
+USTRUCT(BlueprintType)
+struct FClimbingIKTargets
+{
+    GENERATED_BODY()
+    UPROPERTY(VisibleAnywhere) FTransform LeftHand;
+    UPROPERTY(VisibleAnywhere) FTransform RightHand;
+    UPROPERTY(VisibleAnywhere) FTransform LeftFoot;
+    UPROPERTY(VisibleAnywhere) FTransform RightFoot;
+};
+
 UCLASS()
 class ISHIBASHIRIPROTOTYPE_API UColossusClimbingComponent : public UActorComponent
 {
@@ -27,11 +37,18 @@ public:
     bool HasMovementInput() const { return !FMath::IsNearlyZero(ForwardInput) || !FMath::IsNearlyZero(RightInput); }
     float GetStamina() const { return Stamina; }
     int32 GetNode() const { return Node; }
+    int32 GetDestination() const { return Destination; }
+    float GetIKWeight() const { return IKWeight; }
+    bool IsIKVerticalSlice() const;
+    const FClimbingIKTargets& GetIKTargets() const { return IKTargets; }
     AIshibashiriBoss* GetBoss() const { return Boss; }
     FString GetHint() const;
     UPROPERTY(EditAnywhere, Category="Climbing") float ClimbSpeed = 190.f;
     UPROPERTY(EditAnywhere, Category="Climbing") float GrabRange = 240.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|IK", meta=(ClampMin="0.01")) float IKBlendInSeconds = .22f;
+    UPROPERTY(EditAnywhere, Category="Climbing|IK", meta=(ClampMin="0.01")) float IKBlendOutSeconds = .16f;
 private:
+    void UpdateIK(float Dt);
     UPROPERTY() TObjectPtr<APrototypePlayer> Player;
     UPROPERTY() TObjectPtr<AIshibashiriBoss> Boss;
     int32 Node = INDEX_NONE;
@@ -43,4 +60,6 @@ private:
     float InputDelay = 0.f;
     float UnsafeBuckTime = 0.f;
     bool bGripHeld = false;
+    float IKWeight = 0.f;
+    FClimbingIKTargets IKTargets;
 };

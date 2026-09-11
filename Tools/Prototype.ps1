@@ -12,6 +12,7 @@ param(
     [switch]$Camera,
     [switch]$Grab,
     [switch]$Climbing,
+    [switch]$ClimbingIK,
     [switch]$LocalClimbing,
     [switch]$ClimbingGamepad,
     [switch]$Gamepad,
@@ -76,8 +77,8 @@ function Ensure-Map {
 }
 
 try {
-    if (($Camera -or $Playthrough -or $Grab -or $Climbing -or $LocalClimbing -or $ClimbingGamepad -or $Gamepad -or $BasinScenario -or $TestSeconds -gt 0) -and $Action -ne 'Test') { throw 'Test switches require -Action Test.' }
-    if (@(@($Camera, $Playthrough, $Grab, $Climbing, $LocalClimbing, $ClimbingGamepad, $Gamepad, $BasinScenario) | Where-Object { $_ }).Count -gt 1) { throw 'Choose one test mode.' }
+    if (($Camera -or $Playthrough -or $Grab -or $Climbing -or $ClimbingIK -or $LocalClimbing -or $ClimbingGamepad -or $Gamepad -or $BasinScenario -or $TestSeconds -gt 0) -and $Action -ne 'Test') { throw 'Test switches require -Action Test.' }
+    if (@(@($Camera, $Playthrough, $Grab, $Climbing, $ClimbingIK, $LocalClimbing, $ClimbingGamepad, $Gamepad, $BasinScenario) | Where-Object { $_ }).Count -gt 1) { throw 'Choose one test mode.' }
     if ($BasinScenario -and !$Basin) { throw '-BasinScenario requires -Basin.' }
     if ($TestSeconds -gt 0 -and !$Playthrough) { throw '-TestSeconds requires -Playthrough.' }
     if ($Capture -and ($Gamepad -or $Grab -or $LocalClimbing)) { throw '-Capture requires route climbing, smoke or playthrough tests.' }
@@ -145,14 +146,15 @@ try {
         'Test' {
             $LogDir = Join-Path $ProjectRoot 'Saved\Logs'
             New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
-            $LogName = if ($BasinScenario) { "BasinScenario-$TestFPS.log" } elseif ($Camera) { "PrototypeCamera-$TestFPS.log" } elseif ($Gamepad) { "PrototypeGamepad-$TestFPS.log" } elseif ($ClimbingGamepad) { "ClimbingGamepad-$TestFPS.log" } elseif ($Climbing) { "ClimbingTest-$TestFPS.log" } elseif ($LocalClimbing) { "PrototypeClimbing-$TestFPS.log" } elseif ($Grab) { "PrototypeGrab-$TestFPS.log" } elseif ($Playthrough) { "PrototypePlaythrough-$TestFPS.log" } elseif ($Capture) { "PrototypeVisual-$TestFPS.log" } else { "PrototypeSmoke-$TestFPS.log" }
+            $LogName = if ($BasinScenario) { "BasinScenario-$TestFPS.log" } elseif ($Camera) { "PrototypeCamera-$TestFPS.log" } elseif ($Gamepad) { "PrototypeGamepad-$TestFPS.log" } elseif ($ClimbingGamepad) { "ClimbingGamepad-$TestFPS.log" } elseif ($ClimbingIK) { "ClimbingIK-$TestFPS.log" } elseif ($Climbing) { "ClimbingTest-$TestFPS.log" } elseif ($LocalClimbing) { "PrototypeClimbing-$TestFPS.log" } elseif ($Grab) { "PrototypeGrab-$TestFPS.log" } elseif ($Playthrough) { "PrototypePlaythrough-$TestFPS.log" } elseif ($Capture) { "PrototypeVisual-$TestFPS.log" } else { "PrototypeSmoke-$TestFPS.log" }
             $LogFile = Join-Path $LogDir $LogName
             $RunId = [guid]::NewGuid().ToString('N')
-            $TestFlag = if ($BasinScenario) { '-BasinPlaythroughTest' } elseif ($Camera) { '-PrototypeCameraTest' } elseif ($Gamepad) { '-PrototypeGamepadTest' } elseif ($Climbing -or $ClimbingGamepad) { '-ClimbingTest' } elseif ($LocalClimbing) { '-PrototypeClimbingTest' } elseif ($Grab) { '-PrototypeGrabTest' } elseif ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
+            $TestFlag = if ($BasinScenario) { '-BasinPlaythroughTest' } elseif ($Camera) { '-PrototypeCameraTest' } elseif ($Gamepad) { '-PrototypeGamepadTest' } elseif ($Climbing -or $ClimbingGamepad -or $ClimbingIK) { '-ClimbingTest' } elseif ($LocalClimbing) { '-PrototypeClimbingTest' } elseif ($Grab) { '-PrototypeGrabTest' } elseif ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
             $TestArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01', '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
             if ($Basin) { $TestArguments += '-BasinPrototype' }
             if ($HighQuality) { $TestArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             if ($ClimbingGamepad) { $TestArguments += '-ClimbingGamepad' }
+            if ($ClimbingIK) { $TestArguments += @('-ClimbingIKTest', '-ClimbingIKDebug') }
             if ($Capture) {
                 $TestArguments += @('-PrototypeCapture', '-RenderOffscreen', '-windowed', '-ResX=1280', '-ResY=800')
                 if (!$HighQuality) { $TestArguments += '-ExecCmds=t.MaxFPS 60' }
@@ -160,14 +162,14 @@ try {
                 $TestArguments += '-nullrhi'
             }
             Invoke-Checked $EditorCmd $TestArguments
-            $PassMarker = if ($BasinScenario) { "BASIN_SCENARIO_PASS $RunId" } elseif ($Climbing -or $ClimbingGamepad) { "CLIMB_TEST_PASS $RunId" } else { "PROTOTYPE_TEST_PASS $RunId" }
+            $PassMarker = if ($BasinScenario) { "BASIN_SCENARIO_PASS $RunId" } elseif ($ClimbingIK) { "CLIMBING_IK_TEST_PASS $RunId" } elseif ($Climbing -or $ClimbingGamepad) { "CLIMB_TEST_PASS $RunId" } else { "PROTOTYPE_TEST_PASS $RunId" }
             if (!(Select-String -LiteralPath $LogFile -SimpleMatch $PassMarker -Quiet)) {
                 throw "Smoke test did not report success for this run. Read $LogFile"
             }
             Write-Host "Test passed: $LogFile"
             if ($Capture) {
-                $CaptureDir = if ($BasinScenario) { Join-Path $ProjectRoot "Saved\Screenshots\Basin\$RunId" } elseif ($Climbing -or $ClimbingGamepad) { Join-Path $ProjectRoot "Saved\Screenshots\Climbing\$RunId" } else { Join-Path $ProjectRoot "Saved\Screenshots\Prototype\$RunId" }
-                $ShotNames = if ($BasinScenario) { @('01-Start','02-BeforeMount','03-FirstLedge','04-Landed','05-Retry') } elseif ($Camera) { @('06-WallCamera', '07-BossCamera', '09-CameraReturn') } elseif ($Climbing -or $ClimbingGamepad) { @('01-Ground','02-FirstLedge','03-ShoulderCore','04-Summit','05-Victory','06-ThrownOff') } elseif ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera', '09-CameraReturn') }
+                $CaptureDir = if ($BasinScenario) { Join-Path $ProjectRoot "Saved\Screenshots\Basin\$RunId" } elseif ($ClimbingIK) { Join-Path $ProjectRoot "Saved\Screenshots\ClimbingIK\$RunId\After" } elseif ($Climbing -or $ClimbingGamepad) { Join-Path $ProjectRoot "Saved\Screenshots\Climbing\$RunId" } else { Join-Path $ProjectRoot "Saved\Screenshots\Prototype\$RunId" }
+                $ShotNames = if ($BasinScenario) { @('01-Start','02-BeforeMount','03-FirstLedge','04-Landed','05-Retry') } elseif ($ClimbingIK) { @('01-Grab','02-ForelegClimb','03-HandsContact','04-FeetContact','05-FirstShoulder','06-BossMoving','07-ShakeCling') } elseif ($Camera) { @('06-WallCamera', '07-BossCamera', '09-CameraReturn') } elseif ($Climbing -or $ClimbingGamepad) { @('01-Ground','02-FirstLedge','03-ShoulderCore','04-Summit','05-Victory','06-ThrownOff') } elseif ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera', '09-CameraReturn') }
                 foreach ($Name in $ShotNames) {
                     $Shot = Get-Item -LiteralPath (Join-Path $CaptureDir "$Name.png") -ErrorAction Stop
                     if ($Shot.Length -lt 100) { throw "Screenshot is empty: $($Shot.FullName)" }
