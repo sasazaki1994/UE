@@ -19,6 +19,7 @@ private:
     void SetupGrab();
     bool Check(bool Condition, const TCHAR* Description);
     void Shot(const TCHAR* Name);
+    void TickGrabMotionWarp(float Dt);
     UPROPERTY() TObjectPtr<APrototypeGameMode> Mode;
     TSet<FKey> Held;
     TArray<FKey> Release;
@@ -33,6 +34,8 @@ private:
     bool bCapture = false;
     bool bGamepad = false;
     bool bClimbingIK = false;
+    bool bGrabMotionWarp = false;
+    int32 GrabWarpPhase = 0;
     int32 IKContactShot = 0;
     bool bIKShakeShot = false;
 };

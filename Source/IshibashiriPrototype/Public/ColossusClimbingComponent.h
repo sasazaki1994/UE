@@ -25,12 +25,13 @@ public:
     virtual void BeginPlay() override;
     virtual void TickComponent(float Dt, ELevelTick Type, FActorComponentTickFunction* Tick) override;
     void GrabPressed();
-    void GrabReleased() { bGripHeld = false; }
+    void GrabReleased();
     void Detach(bool bJump = true);
     void Reset();
     void SetInput(float Forward, float Right) { ForwardInput = Forward; RightInput = Right; }
     bool TryPurify();
     bool IsClimbing() const { return Boss != nullptr; }
+    bool IsGrabWarping() const { return bGrabWarping; }
     bool IsMoving() const { return Destination != INDEX_NONE; }
     bool IsResting() const;
     bool IsGripping() const { return bGripHeld; }
@@ -45,10 +46,19 @@ public:
     FString GetHint() const;
     UPROPERTY(EditAnywhere, Category="Climbing") float ClimbSpeed = 190.f;
     UPROPERTY(EditAnywhere, Category="Climbing") float GrabRange = 240.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1")) float MaximumWarpDistance = 240.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1", ClampMax="179")) float MaximumWarpAngle = 100.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1")) float CompletionDistanceTolerance = 35.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1", ClampMax="90")) float CompletionAngleTolerance = 18.f;
     UPROPERTY(EditAnywhere, Category="Climbing|IK", meta=(ClampMin="0.01")) float IKBlendInSeconds = .22f;
     UPROPERTY(EditAnywhere, Category="Climbing|IK", meta=(ClampMin="0.01")) float IKBlendOutSeconds = .16f;
 private:
     void UpdateIK(float Dt);
+    bool StartGrabWarp(AIshibashiriBoss* Candidate);
+    void UpdateGrabWarp(float Dt);
+    void CancelGrabWarp(const TCHAR* Reason);
+    void CompleteGrabWarp();
+    FTransform MakeGrabWarpTarget(const AIshibashiriBoss* Candidate) const;
     UPROPERTY() TObjectPtr<APrototypePlayer> Player;
     UPROPERTY() TObjectPtr<AIshibashiriBoss> Boss;
     int32 Node = INDEX_NONE;
@@ -60,6 +70,13 @@ private:
     float InputDelay = 0.f;
     float UnsafeBuckTime = 0.f;
     bool bGripHeld = false;
+    bool bGrabWarping = false;
+    float GrabWarpElapsed = 0.f;
+    float GrabWarpDuration = 0.f;
+    float GrabWarpStartDistance = 0.f;
+    float GrabWarpStartAngle = 0.f;
+    FVector GrabWarpStartLocation = FVector::ZeroVector;
+    UPROPERTY() TObjectPtr<AIshibashiriBoss> GrabWarpBoss;
     float IKWeight = 0.f;
     FClimbingIKTargets IKTargets;
 };

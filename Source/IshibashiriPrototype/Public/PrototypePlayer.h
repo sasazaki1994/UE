@@ -12,6 +12,9 @@ class UColossusClimbingComponent;
 class UAnimSequence;
 class UGrabComponent;
 class UControlRigComponent;
+class UMotionWarpingComponent;
+class UAnimMontage;
+class UAnimInstance;
 
 UCLASS()
 class ISHIBASHIRIPROTOTYPE_API APrototypePlayer : public ACharacter
@@ -35,6 +38,10 @@ public:
     void Dodge();
     UColossusClimbingComponent* GetClimbing() const { return Climbing; }
     UControlRigComponent* GetClimbingControlRig() const { return ClimbingControlRig; }
+    UMotionWarpingComponent* GetMotionWarping() const { return MotionWarping; }
+    bool BeginGrabWarpAnimation();
+    void EndGrabWarpAnimation();
+    float GetGrabWarpAnimationLength() const;
 
     int32 GetHealth() const { return Health; }
     bool IsDodging() const { return DodgeRemaining > 0.f; }
@@ -48,6 +55,10 @@ public:
     // Default encounter uses authored holds; disable for the original local-space Grab prototype.
     UPROPERTY(EditAnywhere, Category="Grab") bool bUseRouteClimbing = true;
     UPROPERTY(EditAnywhere, Category="Grab", meta=(ClampMin="1")) float GrabDistance = 360.f;
+    // See Docs/GrabMotionWarpValidation.md. Both assets are deliberately optional
+    // so a source-only checkout fails the grab safely rather than pretending they exist.
+    UPROPERTY(EditDefaultsOnly, Category="Grab|Motion Warp") TObjectPtr<UAnimMontage> GrabMotionWarpMontage;
+    UPROPERTY(EditDefaultsOnly, Category="Grab|Motion Warp") TSubclassOf<UAnimInstance> GrabMotionWarpAnimClass;
     UPROPERTY(EditAnywhere, Category="Camera|Gamepad", meta=(ClampMin="0")) float GamepadCameraYawSpeed = 120.f;
     UPROPERTY(EditAnywhere, Category="Camera|Gamepad", meta=(ClampMin="0")) float GamepadCameraPitchSpeed = 90.f;
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) int32 MaxHealth = 3;
@@ -92,6 +103,7 @@ private:
     UPROPERTY(VisibleAnywhere) TObjectPtr<UColossusClimbingComponent> Climbing;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> GrabComponent;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UControlRigComponent> ClimbingControlRig;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UMotionWarpingComponent> MotionWarping;
     UPROPERTY() TArray<TObjectPtr<UAnimSequence>> Animations;
     int32 CurrentAnimation = INDEX_NONE;
     bool bWeaponHidden = false;
