@@ -10,6 +10,7 @@
 #include "PrototypeGamepadTest.h"
 #include "PrimitiveAppearance.h"
 #include "BasinPrototypeArena.h"
+#include "BasinPlaythroughTest.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/PointLightComponent.h"
@@ -81,7 +82,9 @@ void APrototypeGameMode::StartPlay()
     RetryEncounter();
     UE_LOG(LogTemp, Display, TEXT("Ishibashiri: arena ready. WASD/Left Stick move, Mouse/Right Stick camera, E/RB grab."));
 #if !UE_BUILD_SHIPPING
-    if (FParse::Param(FCommandLine::Get(), TEXT("ClimbingTest")))
+    if (FParse::Param(FCommandLine::Get(), TEXT("BasinPlaythroughTest")))
+        GetWorld()->SpawnActor<ABasinPlaythroughTest>();
+    else if (FParse::Param(FCommandLine::Get(), TEXT("ClimbingTest")))
         GetWorld()->SpawnActor<AClimbingIntegrationTest>();
     else if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeGamepadTest")))
         GetWorld()->SpawnActor<APrototypeGamepadTest>();

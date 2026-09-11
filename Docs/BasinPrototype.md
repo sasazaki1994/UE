@@ -16,10 +16,13 @@
 
 ```powershell
 .\Tools\Prototype.ps1 -Action Play -Basin
+.\Tools\Prototype.ps1 -Action Test -BasinScenario -Basin -Capture -SkipBuild
 .\Tools\Prototype.ps1 -Action Test -Climbing -Capture -Basin -SkipBuild
 .\Tools\Prototype.ps1 -Action Test -Camera -Capture -Basin -SkipBuild
 ```
 
-前者で手動確認する。後二者は既存の11地点・休息・しがみつき・3浄化・勝利・落下・Retryと、壁際/Boss遮蔽カメラを盆地配置で再実行し、`Saved/Screenshots/Climbing/<RunId>/` と `Saved/Screenshots/Prototype/<RunId>/` に実画像を保存する。入口と戦闘広場はClimbingの `01-Ground`、登攀中は `02`〜`04`、外周はCameraの `06-WallCamera` を確認する。
+前者で手動確認する。`-BasinScenario` は既存の部品検証とは別に、通常開始位置からAIを停止せず、距離と状態を観測しながら通常入力経路で接近、取り付き、最初の休息棚、飛び降り、床への着地、地上移動・回避、Retry、再取り付きを検証する。段階別タイムアウト時にはRunIdと両者の位置、取り付き距離、Boss・登攀・Movement状態を記録する。`-Capture` 併用時は `Saved/Screenshots/Basin/<RunId>/` に開始、取り付き直前、休息棚、着地後、Retry後を保存する。
 
-このLinux作業環境にはWindows版UE/PowerShellがないため、今回のビルド、プレイ、画像取得は未実施。上記コマンドをUE 5.6環境で実行し、初期埋まり、全身視認、地上操作、外周カメラ、攻略完了、全状態からのRetry、および画像4場面を目視判定することが残る。
+`-Climbing` と `-Camera` は従来どおり、既存の11地点・休息・しがみつき・3浄化・勝利・単独落下・Retryと、壁際/Boss遮蔽カメラを盆地配置で再実行し、`Saved/Screenshots/Climbing/<RunId>/` と `Saved/Screenshots/Prototype/<RunId>/` に実画像を保存する。既存テストは取り付き配置やBoss停止を使う部品検証として維持し、盆地シナリオの代用にはしない。
+
+Linux環境などWindows版UE/PowerShellがない場合、ビルド、プレイ、画像取得は実施できない。上記コマンドをUE 5.6環境で実行し、初期埋まり、全身視認、地上操作、外周カメラ、通常AI下の盆地シナリオ、全状態からのRetry、および指定画像を目視判定することが完了条件となる。Python静的検査のみをプレイ成功の根拠にはしない。
