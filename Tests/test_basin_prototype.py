@@ -28,3 +28,12 @@ def test_basin_switch_is_forwarded_to_play_and_tests() -> None:
     assert "[switch]$Basin" in script
     assert script.count("$TestArguments += '-BasinPrototype'") == 1
     assert script.count("$PlayArguments += '-BasinPrototype'") == 1
+
+
+def test_basin_visual_language_is_readable_and_non_blocking() -> None:
+    source = read("Source/IshibashiriPrototype/Private/BasinPrototypeArena.cpp")
+    assert 'TEXT("SacredPath%02d")' in source
+    assert 'TEXT("RitualStake%d")' in source
+    assert "Accent->SetCollisionEnabled(ECollisionEnabled::NoCollision)" in source
+    assert 'TEXT("BasinGroundHaze")' in source
+    assert "Fog->SetFogMaxOpacity(.22f)" in source
