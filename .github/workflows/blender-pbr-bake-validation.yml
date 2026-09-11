@@ -1,0 +1,85 @@
+name: Blender PBR bake validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/blender-pbr-bake-validation.yml"
+      - "Tools/ValidateCharacterPBRBake.py"
+      - "Tools/RigCharacterModels.py"
+      - "Tools/CharacterPBR.py"
+      - "Tools/ManageCharacterPBR.py"
+      - "Tests/test_character_pbr.py"
+      - "Specs/Acceptance/CharacterVisualRefinement.feature"
+
+concurrency:
+  group: blender-pbr-bake-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      BLENDER_VERSION: 3.6.23
+      BLENDER_ARCHIVE: blender-3.6.23-linux-x64.tar.xz
+      BLENDER_RELEASE_URL: https://download.blender.org/release/Blender3.6
+      OUTPUT_DIR: Artifacts/PBRBakeValidation
+      LIBGL_ALWAYS_SOFTWARE: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Python unit tests
+        run: python3 -m unittest discover -s Tests -p 'test_*.py' -v
+
+      - name: Install headless runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y ca-certificates curl jq xz-utils xvfb libegl1 libgl1 libsm6 libx11-6 libxext6 libxi6 libxrender1 libxkbcommon0
+
+      - name: Download and verify official Blender archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/blender-download"
+          cd "$RUNNER_TEMP/blender-download"
+          curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --output "$BLENDER_ARCHIVE" "$BLENDER_RELEASE_URL/$BLENDER_ARCHIVE"
+          curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --output blender.sha256 "$BLENDER_RELEASE_URL/blender-$BLENDER_VERSION.sha256"
+          awk -v archive="$BLENDER_ARCHIVE" '$2 == archive || $2 == "*" archive { print }' blender.sha256 > archive.sha256
+          test "$(wc -l < archive.sha256)" -eq 1
+          sha256sum --check archive.sha256
+          tar -xJf "$BLENDER_ARCHIVE" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/blender-$BLENDER_VERSION-linux-x64" >> "$GITHUB_PATH"
+
+      - name: Run real bake, render, and round-trip validation
+        shell: bash
+        run: |
+          set -uo pipefail
+          rm -rf "$OUTPUT_DIR"
+          mkdir -p "$OUTPUT_DIR"
+          marker="$RUNNER_TEMP/blender-validation-start"
+          touch "$marker"
+          blender --version | tee "$OUTPUT_DIR/blender-version.txt"
+          xvfb-run -a blender --background --factory-startup --python-exit-code 1 --python Tools/ValidateCharacterPBRBake.py 2>&1 | tee "$OUTPUT_DIR/blender-validation.log"
+          blender_status=${PIPESTATUS[0]}
+          if (( blender_status != 0 )); then
+            exit "$blender_status"
+          fi
+          required=(before-bake.png after-bake.png validation-result.json validation.fbx validation.glb)
+          for artifact in "${required[@]}"; do
+            test -s "$OUTPUT_DIR/$artifact"
+            test "$OUTPUT_DIR/$artifact" -nt "$marker"
+          done
+          jq -e '.status == "pass" and (.reload.fbx.vertices > 0) and (.reload.glb.vertices > 0)' "$OUTPUT_DIR/validation-result.json"
+
+      - name: Upload validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blender-pbr-bake-validation-${{ github.run_attempt }}
+          path: Artifacts/PBRBakeValidation/
+          if-no-files-found: warn
+          retention-days: 14

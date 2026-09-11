@@ -45,7 +45,7 @@ manifest.write_text(json.dumps({'schema_version':1,
                'verification_url':'generated://validation','verified':True},
     'assets':assets},indent=2),encoding='utf-8')
 
-# A curved mesh with no UVs, procedural authored bump, and a recognizable ground plane.
+# A curved mesh with no UVs and a procedural authored bump.
 bpy.ops.mesh.primitive_uv_sphere_add(segments=32,ring_count=16,location=(0,0,0))
 body=bpy.context.object;body.name='PBRValidationMesh'
 for uv in list(body.data.uv_layers): body.data.uv_layers.remove(uv)
@@ -57,10 +57,19 @@ links.new(noise.outputs['Fac'],bump.inputs['Height']);links.new(bump.outputs['No
 body.data.materials.append(mat)
 
 scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE';scene.render.resolution_x=512;scene.render.resolution_y=512
-bpy.ops.object.camera_add(location=(3,-4,2.4));camera=bpy.context.object;scene.camera=camera
-camera.rotation_euler=(1.15,0,.65)
+scene.render.resolution_percentage=100
+scene.render.image_settings.file_format='PNG';scene.render.film_transparent=False
+scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast'
+scene.view_settings.exposure=0;scene.view_settings.gamma=1
+scene.world.color=(.025,.025,.025)
+bpy.ops.object.camera_add(location=(2.8,-3.7,1.8));camera=bpy.context.object;scene.camera=camera
+camera.data.lens=58
+camera.rotation_euler=((body.location-camera.location).to_track_quat('-Z','Y').to_euler())
 bpy.ops.object.light_add(type='AREA',location=(2,-2,4));bpy.context.object.data.energy=900;bpy.context.object.data.size=4
+bpy.ops.object.light_add(type='AREA',location=(-3,-1,1.5));bpy.context.object.data.energy=500;bpy.context.object.data.size=3
+bpy.context.object.rotation_euler=((body.location-bpy.context.object.location).to_track_quat('-Z','Y').to_euler())
 
+bpy.ops.object.select_all(action='DESELECT');body.select_set(True);bpy.context.view_layer.objects.active=body
 detail,atlas=rig.ensure_bake_uvs(body)
 assert detail != atlas and rig._uv_has_area(body.data,detail) and rig._uv_has_area(body.data,atlas)
 result=rig.PBR.apply_external_pbr([mat],bpy,'Ishibashiri','strict',manifest,ROOT)
@@ -70,6 +79,7 @@ scene.render.filepath=str(OUT/'before-bake.png');bpy.ops.render.render(write_sti
 
 node_count=len(nodes)
 rig.bake_surface(body,OUT,'Validation',manifest,ROOT)
+scene.render.engine='BLENDER_EEVEE'
 scene.render.filepath=str(OUT/'after-bake.png');bpy.ops.render.render(write_still=True)
 rig.bake_surface(body,OUT,'Validation',manifest,ROOT)
 assert len(nodes)==node_count+5,'second application grew the persistent node graph'
@@ -86,10 +96,14 @@ reload_results={}
 for kind,path in exports.items():
     bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
     (bpy.ops.import_scene.fbx(filepath=str(path)) if kind=='fbx' else bpy.ops.import_scene.gltf(filepath=str(path)))
-    imported=next(obj for obj in scene.objects if obj.type=='MESH')
+    imported_meshes=[obj for obj in scene.objects if obj.type=='MESH']
+    assert len(imported_meshes)==1,kind+' reload did not contain exactly the selected validation mesh'
+    imported=imported_meshes[0]
     valid=[uv.name for uv in imported.data.uv_layers if rig._uv_has_area(imported.data,uv)]
-    assert valid,kind+' reload has no usable exported UV'
-    reload_results[kind]={'valid_uv_layers':valid,'vertices':len(imported.data.vertices)}
+    assert valid and valid[0]==imported.data.uv_layers[0].name,kind+' reload has no usable UV in channel 0'
+    assert len(imported.data.vertices)>0,kind+' reload validation mesh is empty'
+    reload_results[kind]={'mesh':imported.name,'valid_uv_layers':valid,
+                          'vertices':len(imported.data.vertices)}
 
 (OUT/'validation-result.json').write_text(json.dumps({
     'blender_version':bpy.app.version_string,'status':'pass','normal_convention':'OpenGL; no green flip in Blender',
