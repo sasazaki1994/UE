@@ -213,24 +213,34 @@ def make_actions(rig,hero):
 def pi_clamp(t): return max(0,min(1,t))
 
 def _uv_has_area(mesh, layer, epsilon=1e-10):
-    """A UV set is usable only when every non-degenerate face has UV area."""
-    for polygon in mesh.polygons:
-        if polygon.area <= epsilon or len(polygon.loop_indices) < 3: continue
-        points=[layer.data[index].uv for index in polygon.loop_indices]
-        area=abs(sum(points[i].x*points[(i+1)%len(points)].y-
-                     points[(i+1)%len(points)].x*points[i].y
-                     for i in range(len(points))))*.5
-        if area <= epsilon: return False
+    """Check the rendered triangles; signed n-gon areas can cancel on twists."""
+    mesh.calc_loop_triangles()
+    for triangle in mesh.loop_triangles:
+        if triangle.area <= epsilon: continue
+        points=[layer.data[index].uv for index in triangle.loops]
+        area=abs((points[1].x-points[0].x)*(points[2].y-points[0].y)-
+                 (points[2].x-points[0].x)*(points[1].y-points[0].y))*.5
+        # UVs are dimensionless: the world-space degeneracy threshold would
+        # reject valid sub-texel bevels on the 12 m creature. Still reject collapse.
+        if not math.isfinite(area) or area <= 1e-16: return False
     return bool(mesh.polygons)
 
 def _copy_uv(mesh, source, name):
+    source_name=source.name
     target=mesh.uv_layers.get(name) or mesh.uv_layers.new(name=name)
+    source=mesh.uv_layers[source_name]
     for src,dst in zip(source.data,target.data): dst.uv=src.uv
     return target
 
 def ensure_bake_uvs(body):
     """Create independent source/detail and destination/atlas UV sets."""
     mesh=body.data
+    # Project the same triangles that will be baked/exported. Non-planar n-gons
+    # can otherwise project an individual bevel triangle exactly edge-on.
+    if any(len(p.vertices)>3 for p in mesh.polygons):
+        bpy.context.view_layer.objects.active=body
+        modifier=body.modifiers.new('Bake triangulation','TRIANGULATE')
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
     detail=mesh.uv_layers.get('PBRDetailUV')
     if not detail or not _uv_has_area(mesh,detail):
         source=next((uv for uv in mesh.uv_layers
@@ -248,6 +258,10 @@ def ensure_bake_uvs(body):
     bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.002)
     bpy.ops.object.mode_set(mode='OBJECT')
+    # Edit-mode round trips and adding UV layers invalidate Blender RNA handles.
+    # Reacquire both layers before reading their per-loop coordinates.
+    detail=mesh.uv_layers['PBRDetailUV']
+    atlas=mesh.uv_layers['AtlasUV']
     atlas.active_render=True
     assert _uv_has_area(mesh,detail),'PBRDetailUV contains missing/collapsed faces'
     assert _uv_has_area(mesh,atlas),'AtlasUV contains missing/collapsed faces'
@@ -261,7 +275,7 @@ def make_atlas_export_uv0(mesh):
         atlas.active_render=True;return
     saved={name:[tuple(item.uv) for item in layer.data]
            for name,layer in (('AtlasUV',atlas),('PBRDetailUV',detail))}
-    for layer in list(mesh.uv_layers): mesh.uv_layers.remove(layer)
+    while mesh.uv_layers: mesh.uv_layers.remove(mesh.uv_layers[0])
     for name in ('AtlasUV','PBRDetailUV'):
         layer=mesh.uv_layers.new(name=name)
         for coords,item in zip(saved[name],layer.data): item.uv=coords

@@ -109,6 +109,6 @@ for kind,path in exports.items():
     'blender_version':bpy.app.version_string,'status':'pass','normal_convention':'OpenGL; no green flip in Blender',
     'uv_layers':['PBRDetailUV','AtlasUV'],'reload':reload_results,
     'renders':['before-bake.png','after-bake.png'],
-    'tolerance':'UV face area > 1e-10; render comparison is visual because Cycles bake filtering changes pixels.'
+    'tolerance':'For triangles with world area > 1e-10, finite UV area > 1e-16; sub-texel coverage still requires visual review.'
 },indent=2),encoding='utf-8')
 print('CHARACTER_PBR_BAKE_VALIDATION_PASS')

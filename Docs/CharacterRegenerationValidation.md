@@ -1,5 +1,90 @@
 # Character Regeneration Validation
 
+## Latest run — 2026-09-11, local UE 5.6.1 / Blender 3.6.23
+
+This section records the run performed from upstream `main` commit
+`8872159ba04df30aa069a8cc447980acc8a15593` on branch
+`codex/work_character-regeneration-20260911`. The previous blocked run below is
+historical; its “no assets changed” conclusion does not apply to this run.
+
+Blender 3.6.23 was verified against the official SHA-256 and executed from the
+repository root. Before assets and previews were copied to the ignored local
+artifact directory `Artifacts/CharacterRegeneration/20260911-local-8872159/Before/`
+with SHA-256 records. The generated assets are present in the tracked `Art/` and
+`Content/` paths.
+
+### Stage results
+
+| Stage | Result | Evidence |
+|---|---|---|
+| CreateCharacterModels | PASS | `logs/CreateCharacterModels.log` |
+| RefineCharacterModels | PASS | `logs/RefineCharacterModels.log` |
+| RigCharacterModels | PASS | `logs/RigCharacterModels.log`, `RIG_EXPORT_PASS` for 18/20 bones |
+| VerifyRiggedCharacters | PASS | `logs/VerifyRiggedCharacters.log`, `RIG_ANIMATION_VALIDATION_PASS` |
+| PBR fixture bake | PASS | `PBRBakeValidation/validation-result.json` |
+| External CC0 PBR | NOT APPLIED | manifest is unverified; procedural fallback was used |
+| UE import | PASS | `logs/UE-Import.log`, `RIGGED_CHARACTERS_IMPORT_PASS` |
+| UE material apply | PASS | `logs/UE-Materials-fixed.log`, `BAKED_MATERIALS_APPLIED` |
+| UE asset audit / repeat apply | PASS | `ue-asset-validation.json`, `REGEN_UE_ASSET_VALIDATION_PASS` |
+| UE build | PASS | `logs/Build.log`, UE 5.6.1 Editor target succeeded |
+| High Quality capture | UNVERIFIED | D3D12/SM6 capture was not run after execution approval quota was exhausted |
+
+### Before / after metrics
+
+Metrics were measured by opening the `.blend` files in Blender, counting
+triangles/vertices, and checking finite coordinates and weights. Dimensions are
+XYZ metres. The rigged mesh object count is one after the authored meshes are
+joined for export; the source-scene object counts remain in `model-info.json`.
+
+| Metric | Shirotsura Before | Shirotsura After | Ishibashiri Before | Ishibashiri After |
+|---|---:|---:|---:|---:|
+| triangles | 74,626 | 75,394 (+768) | 205,172 | 205,442 (+270) |
+| vertices | 38,040 | 38,536 (+496) | 103,834 | 103,975 (+141) |
+| dimensions XYZ (m) | 1.306174 × 0.330974 × 1.716839 | 1.306174 × 0.330974 × 1.716839 | 7.062849 × 12.178528 × 9.397869 | 7.062849 × 12.178528 × 9.399366 |
+| rig bones | 18 | 18 | 20 | 20 |
+| materials | 13 | 14 | 14 | 15 |
+| texture bytes | 9,307,136 (BC+N) | 9,254,423 (BC+N+R) | 8,568,082 (BC+N) | 8,858,879 (BC+N+R) |
+| roughness atlas | absent | 2048² PNG | absent | 2048² PNG |
+
+All 15 requested gameplay clips exist with the expected lengths. Finite animated
+mesh sampling passed for every clip, and unweighted, unnormalised, and invalid
+weights were all zero for both characters. Runtime route, three Kakon positions,
+Grab marker, ledges, collision, character height, and skeleton origins were not
+changed by this run.
+
+### UE material and import checks
+
+The normal atlas is authored in Blender’s OpenGL convention and is imported with
+UE Green Channel flip enabled. BaseColor uses sRGB; Normal uses `TC_NORMALMAP`;
+Roughness uses `TC_MASKS`. The audit found all expected skeletal meshes,
+skeletons, 15 animations, material slots, and three atlas references. A second
+material application produced identical node counts and references.
+
+### Preview and regression results
+
+Studio previews were regenerated with the existing camera/light setup:
+`Art/Characters/Previews/Shirotsura.png`, `Shirotsura_Back.png`,
+`Shirotsura_Rigged.png`, `Ishibashiri.png`, `Ishibashiri_Back.png`,
+`Ishibashiri_Top.png`, `Ishibashiri_Rigged.png`, and `ScaleComparison.png`.
+Pose samples for every clip are in the ignored run artifact under
+`After/Poses/`.
+
+The six legacy runs were recorded before and after. Grab and Camera passed in
+both runs. Climbing at 60 FPS, Climbing at 30 FPS, gamepad climbing, and the
+Basin scenario failed in both runs at the existing interaction/setup checks;
+these failures are retained as regression evidence and are not attributed to
+the regenerated geometry. Gameplay compatibility therefore remains
+**UNVERIFIED**, and no gameplay or route change was introduced.
+
+Visual assessment of the tracked Studio previews: Shirotsura **PARTIAL**
+improvement (mask, cloth repairs, hand detail, and subdued emissive roots are
+clear; animation deformation needs in-game confirmation); Ishibashiri
+**PARTIAL** improvement (rock/body/root integration and moss layering read more
+as a single mountain mass; climbing readability needs in-game confirmation).
+The generated assets are retained as a review candidate, not declared fully
+adopted, until the UE High Quality capture and the pre-existing climbing
+regressions are resolved.
+
 ## 判定
 
 **UNVERIFIED / BLOCKED — 生成物は不採用。** 2026-09-11 UTC の実行環境には Blender と

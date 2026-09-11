@@ -5,7 +5,7 @@
 #include "ColossusClimbingComponent.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Components/ControlRigComponent.h"
+#include "ControlRigComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "InputKeyEventArgs.h"
@@ -294,7 +294,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
     case 27:
         if (Time>.3f)
         {
-            UE_LOG(LogTemp,Display,bClimbingIK ? TEXT("CLIMBING_IK_TEST_PASS %s %.2fs") : TEXT("CLIMB_TEST_PASS %s %.2fs"),*RunId,Total);
+            UE_LOG(LogTemp,Display,TEXT("%s %s %.2fs"),bClimbingIK ? TEXT("CLIMBING_IK_TEST_PASS") : TEXT("CLIMB_TEST_PASS"),*RunId,Total);
             bFinished=true;FPlatformMisc::RequestExitWithStatus(false,0);
         } break;
     }

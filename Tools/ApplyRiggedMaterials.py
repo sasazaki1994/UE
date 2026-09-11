@@ -7,11 +7,10 @@ root=Path(unreal.Paths.project_dir()).resolve()
 asset_tools=unreal.AssetToolsHelpers.get_asset_tools()
 lib=unreal.MaterialEditingLibrary
 
-def expression(mat,kind,x,y,ordinal=0):
-    """Reuse the first expression of a type so reruns cannot grow the graph."""
-    expressions=mat.get_editor_property('expressions')
-    found=[e for e in expressions if isinstance(e,kind)]
-    return found[ordinal] if len(found)>ordinal else lib.create_material_expression(mat,kind,x,y)
+def expression(mat,kind,x,y,prop):
+    """Reuse the property's node through the public UE 5.6 material API."""
+    found=lib.get_material_property_input_node(mat,prop)
+    return found if isinstance(found,kind) else lib.create_material_expression(mat,kind,x,y)
 
 def surface_values(label):
     # Atlas color/normal is shared, but tactile response remains material-specific.
@@ -49,17 +48,17 @@ for name in ['Shirotsura','Ishibashiri']:
         # rooted expressions asserts in UE 5.6; reconnect new expressions safely.
         for kind,prop in [('BaseColor',unreal.MaterialProperty.MP_BASE_COLOR),('Normal',unreal.MaterialProperty.MP_NORMAL),('Roughness',unreal.MaterialProperty.MP_ROUGHNESS)]:
             sample=expression(mat,unreal.MaterialExpressionTextureSample,-450,{'BaseColor':0,'Normal':220,'Roughness':440}[kind],
-                {'BaseColor':0,'Normal':1,'Roughness':2}[kind])
+                prop)
             sample.set_editor_property('texture',textures[kind])
             sample.set_editor_property('sampler_type',unreal.MaterialSamplerType.SAMPLERTYPE_COLOR if kind=='BaseColor' else (unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL if kind=='Normal' else unreal.MaterialSamplerType.SAMPLERTYPE_MASKS))
             lib.connect_material_property(sample,'R' if kind=='Roughness' else 'RGB',prop)
         roughness,metallic=surface_values(label)
         if 'crimson' in label or 'ember' in label:
-            emissive=expression(mat,unreal.MaterialExpressionConstant3Vector,-220,550)
+            emissive=expression(mat,unreal.MaterialExpressionConstant3Vector,-220,550,unreal.MaterialProperty.MP_EMISSIVE_COLOR)
             emissive.set_editor_property('constant',unreal.LinearColor(.30,.003,.002,1))
             lib.connect_material_property(emissive,'',unreal.MaterialProperty.MP_EMISSIVE_COLOR)
         if metallic:
-            metal=expression(mat,unreal.MaterialExpressionConstant,-220,620,1)
+            metal=expression(mat,unreal.MaterialExpressionConstant,-220,620,unreal.MaterialProperty.MP_METALLIC)
             metal.set_editor_property('r',metallic)
             lib.connect_material_property(metal,'',unreal.MaterialProperty.MP_METALLIC)
         lib.recompile_material(mat)
