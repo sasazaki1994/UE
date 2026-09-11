@@ -7,6 +7,7 @@
 class UMaterialInterface;
 class USceneComponent;
 class UStaticMesh;
+class UPrimitiveComponent;
 
 /** Deterministic, primitive-only staging terrain selected with -BasinPrototype. */
 UCLASS(NotBlueprintable)
@@ -19,6 +20,7 @@ public:
     int32 GetVisualRockCount() const { return VisualRockCount; }
     int32 GetBoundaryCount() const { return BoundaryCount; }
     int32 GetAccentCount() const { return AccentCount; }
+    UPrimitiveComponent* GetFloorComponent() const { return BasinFloor; }
 
     UPROPERTY(EditAnywhere, Category="Basin", meta=(ClampMin="3000")) float ClearingHalfExtent = 4000.f;
     UPROPERTY(EditAnywhere, Category="Basin", meta=(ClampMin="400")) float RockWallHeight = 1350.f;
@@ -42,6 +44,7 @@ private:
     UPROPERTY() TObjectPtr<UStaticMesh> SphereMesh;
     UPROPERTY() TObjectPtr<UMaterialInterface> BaseMaterial;
     UPROPERTY(Transient) TArray<TObjectPtr<UActorComponent>> GeneratedComponents;
+    UPROPERTY(Transient) TObjectPtr<UPrimitiveComponent> BasinFloor;
     int32 VisualRockCount = 0;
     int32 BoundaryCount = 0;
     int32 AccentCount = 0;
