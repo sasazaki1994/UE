@@ -4,6 +4,7 @@
 #include "Components/ExponentialHeightFogComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/SceneComponent.h"
+#include "Components/SkyAtmosphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -122,5 +123,11 @@ void ABasinPrototypeArena::OnConstruction(const FTransform& Transform)
     UExponentialHeightFogComponent* Fog = NewObject<UExponentialHeightFogComponent>(this,TEXT("BasinGroundHaze"));
     Fog->SetupAttachment(Root); Fog->SetRelativeLocation(FVector(0,0,-180.f)); Fog->SetFogDensity(.012f);
     Fog->SetFogHeightFalloff(.32f); Fog->SetFogInscatteringColor(FLinearColor(.34f,.39f,.42f));
-    Fog->SetStartDistance(1200.f); Fog->SetFogMaxOpacity(.22f); Fog->RegisterComponent(); GeneratedComponents.Add(Fog);
+    Fog->SetStartDistance(1200.f); Fog->SetFogMaxOpacity(.22f); Fog->SetVolumetricFog(true);
+    Fog->SetVolumetricFogScatteringDistribution(.35f); Fog->SetVolumetricFogExtinctionScale(.55f);
+    Fog->SetVolumetricFogViewDistance(6000.f); Fog->RegisterComponent(); GeneratedComponents.Add(Fog);
+
+    // Physically based aerial perspective is useful in both profiles; expensive lighting is selected by the launcher.
+    USkyAtmosphereComponent* Atmosphere = NewObject<USkyAtmosphereComponent>(this,TEXT("BasinSkyAtmosphere"));
+    Atmosphere->SetupAttachment(Root); Atmosphere->RegisterComponent(); GeneratedComponents.Add(Atmosphere);
 }

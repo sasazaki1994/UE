@@ -18,6 +18,17 @@ UE 5.6 / Windows向け。白面の祓い手を操作し、約12mの巨猪へ取�
 
 通常起動および既存テストは従来の約80m四方のアリーナのままです。盆地で登攀やカメラを検証する場合は、既存コマンドへ `-Basin` を加えます。
 
+描画は既定の **Legacy（DX11 / SM5 / 軽量設定）** を維持します。対応Windows PCでのみ
+`-HighQuality` を明示すると、DX12 / SM6とLumen GI・Lumen Reflections・Virtual Shadow Mapsを要求します。
+
+```powershell
+.\Tools\Prototype.ps1 -Action Play -Basin -HighQuality
+.\Tools\Prototype.ps1 -Action Test -Climbing -Capture -Basin -HighQuality -SkipBuild
+```
+
+High Qualityは別マップや別Gameplayではなく、同一の石走り戦へ描画設定だけを重ねる検証経路です。
+GPU要件、比較手順、未検証項目は [画質更新記録](Docs/VisualQualityUpgrade.md) を参照してください。
+
 このPCのUEは `%USERPROFILE%/UnrealEngine/UE_5.6` から自動検出します。
 独自の場所は `-EngineRoot` または `UE_ROOT` で指定できます。
 ビルドにはMSVC v143とWindows SDKが必要です。導入条件は `.vsconfig` と [以前の環境説明](Docs/OriginalCombatPrototype.md) を参照してください。
