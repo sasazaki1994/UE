@@ -18,6 +18,7 @@ public:
     ABasinPrototypeArena();
     int32 GetVisualRockCount() const { return VisualRockCount; }
     int32 GetBoundaryCount() const { return BoundaryCount; }
+    int32 GetAccentCount() const { return AccentCount; }
 
     UPROPERTY(EditAnywhere, Category="Basin", meta=(ClampMin="3000")) float ClearingHalfExtent = 4000.f;
     UPROPERTY(EditAnywhere, Category="Basin", meta=(ClampMin="400")) float RockWallHeight = 1350.f;
@@ -31,6 +32,8 @@ private:
     void AddRock(const TCHAR* Name, const FVector& Location, const FVector& Scale, const FRotator& Rotation,
         const FLinearColor& Color);
     void AddBoundary(const TCHAR* Name, const FVector& Location, const FVector& Scale, const FRotator& Rotation);
+    void AddAccent(const TCHAR* Name, const FVector& Location, const FVector& Scale, const FRotator& Rotation,
+        const FLinearColor& Color);
     void AddFloor();
     void ClearGeneratedComponents();
 
@@ -41,4 +44,5 @@ private:
     UPROPERTY(Transient) TArray<TObjectPtr<UActorComponent>> GeneratedComponents;
     int32 VisualRockCount = 0;
     int32 BoundaryCount = 0;
+    int32 AccentCount = 0;
 };

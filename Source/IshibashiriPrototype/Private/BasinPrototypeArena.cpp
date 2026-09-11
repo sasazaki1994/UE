@@ -1,6 +1,7 @@
 #include "BasinPrototypeArena.h"
 #include "PrimitiveAppearance.h"
 #include "Components/DirectionalLightComponent.h"
+#include "Components/ExponentialHeightFogComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -22,7 +23,18 @@ void ABasinPrototypeArena::ClearGeneratedComponents()
 {
     for (UActorComponent* Component : GeneratedComponents)
         if (IsValid(Component)) Component->DestroyComponent();
-    GeneratedComponents.Reset(); VisualRockCount = BoundaryCount = 0;
+    GeneratedComponents.Reset(); VisualRockCount = BoundaryCount = AccentCount = 0;
+}
+
+void ABasinPrototypeArena::AddAccent(const TCHAR* Name, const FVector& Location, const FVector& Scale,
+    const FRotator& Rotation, const FLinearColor& Color)
+{
+    UStaticMeshComponent* Accent = NewObject<UStaticMeshComponent>(this, Name);
+    Accent->SetupAttachment(Root); Accent->SetStaticMesh(CubeMesh); Accent->SetRelativeLocation(Location);
+    Accent->SetRelativeRotation(Rotation); Accent->SetRelativeScale3D(Scale);
+    Accent->SetCollisionEnabled(ECollisionEnabled::NoCollision); Accent->SetMaterial(0, BaseMaterial); Accent->RegisterComponent();
+    if (UMaterialInstanceDynamic* Mat = Accent->CreateDynamicMaterialInstance(0)) SetPrimitiveColor(Mat, Color);
+    GeneratedComponents.Add(Accent); ++AccentCount;
 }
 
 void ABasinPrototypeArena::AddFloor()
@@ -82,9 +94,32 @@ void ABasinPrototypeArena::OnConstruction(const FTransform& Transform)
     AddRock(TEXT("EntranceShoulderNorth"),FVector(-H+300,1500,430),FVector(8,7,5),FRotator(4,12,-8),FLinearColor(.25f,.29f,.20f));
     AddRock(TEXT("EntranceShoulderSouth"),FVector(-H+300,-1500,430),FVector(8,7,5),FRotator(-5,-8,7),FLinearColor(.25f,.29f,.20f));
 
+    // A restrained sacred procession line gives the broad clearing a readable focal axis.
+    // Everything is shallow and non-blocking so combat and the camera retain the original space.
+    const FLinearColor PathColor(.46f,.30f,.16f);
+    for (int32 I=0; I<7; ++I)
+    {
+        const float X = -2800.f + I * 440.f;
+        AddAccent(*FString::Printf(TEXT("SacredPath%02d"), I), FVector(X, 0.f, 3.f),
+            FVector(2.9f, 1.15f, .06f), FRotator(0.f, (I & 1) ? 4.f : -3.f, 0.f), PathColor);
+    }
+    // Vermilion stakes and indigo crosspieces frame the destination without copying a literal shrine gate.
+    for (int32 Side=-1; Side<=1; Side+=2)
+    {
+        AddAccent(*FString::Printf(TEXT("RitualStake%d"), Side), FVector(-650.f, Side*720.f, 155.f),
+            FVector(.18f,.18f,3.1f), FRotator::ZeroRotator, FLinearColor(.58f,.08f,.035f));
+        AddAccent(*FString::Printf(TEXT("RitualCord%d"), Side), FVector(-650.f, Side*720.f, 315.f),
+            FVector(.55f,.12f,.10f), FRotator(0.f,0.f,Side*8.f), FLinearColor(.08f,.12f,.20f));
+    }
+
     UDirectionalLightComponent* Sun = NewObject<UDirectionalLightComponent>(this,TEXT("BasinSun"));
     Sun->SetupAttachment(Root); Sun->SetRelativeRotation(FRotator(-48,-32,0)); Sun->SetIntensity(3.2f); Sun->SetMobility(EComponentMobility::Movable); Sun->RegisterComponent(); GeneratedComponents.Add(Sun);
     UPointLightComponent* Fill = NewObject<UPointLightComponent>(this,TEXT("BasinFill"));
     Fill->SetupAttachment(Root); Fill->SetRelativeLocation(FVector(0,0,1500)); Fill->SetIntensity(90000.f); Fill->SetAttenuationRadius(6200.f);
     Fill->SetCastShadows(false); Fill->SetLightColor(FLinearColor(.70f,.76f,.82f)); Fill->SetMobility(EComponentMobility::Movable); Fill->RegisterComponent(); GeneratedComponents.Add(Fill);
+
+    UExponentialHeightFogComponent* Fog = NewObject<UExponentialHeightFogComponent>(this,TEXT("BasinGroundHaze"));
+    Fog->SetupAttachment(Root); Fog->SetRelativeLocation(FVector(0,0,-180.f)); Fog->SetFogDensity(.012f);
+    Fog->SetFogHeightFalloff(.32f); Fog->SetFogInscatteringColor(FLinearColor(.34f,.39f,.42f));
+    Fog->SetStartDistance(1200.f); Fog->SetFogMaxOpacity(.22f); Fog->RegisterComponent(); GeneratedComponents.Add(Fog);
 }
