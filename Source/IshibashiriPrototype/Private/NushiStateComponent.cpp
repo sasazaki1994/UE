@@ -58,6 +58,11 @@ void UNushiStateComponent::ResetNushi()
 
 void UNushiStateComponent::HandleAllKakonPurified()
 {
+    CalmNushi();
+}
+
+void UNushiStateComponent::CalmNushi()
+{
     if (State == ENushiState::Active)
     {
         SetState(ENushiState::Calm);

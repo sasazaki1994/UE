@@ -16,7 +16,7 @@ private:
     void Hold(const FKey& Key, bool Down);
     void Tap(const FKey& Key);
     void Next(int32 Value);
-    void SetupGrab();
+    void SetupGrab(bool bResetEncounter = true);
     bool Check(bool Condition, const TCHAR* Description);
     void Shot(const TCHAR* Name);
     void TickGrabMotionWarp(float Dt);
@@ -24,6 +24,7 @@ private:
     TSet<FKey> Held;
     TArray<FKey> Release;
     int32 Phase = 0;
+    int32 CompletedRoutes = 0;
     float Time = 0.f;
     float Total = 0.f;
     float BeforeStamina = 0.f;

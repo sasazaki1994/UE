@@ -1,4 +1,7 @@
 #include "IshibashiriBoss.h"
+#include "KakonActor.h"
+#include "NushiProgressComponent.h"
+#include "Components/ChildActorComponent.h"
 #include "PrototypeGameMode.h"
 #include "PrototypePlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -102,6 +105,11 @@ AIshibashiriBoss::AIshibashiriBoss()
         Core->SetRelativeScale3D(FVector(.35)); Core->SetStaticMesh(Sphere.Object);
         Core->SetMaterial(0,Material.Object); Core->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         CoreMarkers.Add(Core);
+        UChildActorComponent* Kakon = CreateDefaultSubobject<UChildActorComponent>(*FString::Printf(TEXT("CoreKakon%d"),I));
+        Kakon->SetupAttachment(Creature);
+        Kakon->SetRelativeLocation(Cores[I]);
+        Kakon->SetChildActorClass(AKakonActor::StaticClass());
+        CoreKakons.Add(Kakon);
     }
     GrabMarker = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ForelegGrabMarker"));
     GrabMarker->SetupAttachment(Creature); GrabMarker->SetRelativeLocation(Route[0]+FVector(0,0,90));
@@ -123,6 +131,19 @@ AIshibashiriBoss::AIshibashiriBoss()
 void AIshibashiriBoss::BeginPlay()
 {
     Super::BeginPlay();
+    EncounterSpawn = GetActorTransform();
+    GetNushiStateComponent()->OnNushiStateChanged.AddUniqueDynamic(this, &AIshibashiriBoss::HandleNushiStateChanged);
+    for (int32 I = 0; I < CoreKakons.Num(); ++I)
+    {
+        if (AKakonActor* Kakon = GetCoreKakon(I))
+        {
+            // Ishibashiri's existing route cores have no shell-breaking phase.
+            Kakon->MaxShellHealth = 0.f;
+            Kakon->ResetKakon();
+            Kakon->OnPurified.AddUniqueDynamic(this, &AIshibashiriBoss::HandleCorePurified);
+            RegisterKakon(Kakon);
+        }
+    }
     Health = MaxHealth;
     BodyMaterial = Body->CreateDynamicMaterialInstance(0);
     if (BodyMaterial)
@@ -134,25 +155,30 @@ void AIshibashiriBoss::BeginPlay()
     UpdateCreatureAnimation();
 }
 
-void AIshibashiriBoss::ResetForEncounter(const FTransform& Spawn, APrototypePlayer* Player)
+void AIshibashiriBoss::ConfigureEncounter(const FTransform& Spawn, APrototypePlayer* Player)
 {
+    EncounterSpawn = Spawn;
     if (Target) RemoveTickPrerequisiteComponent(Target->GetCharacterMovement());
     Target = Player;
     if (Target) AddTickPrerequisiteComponent(Target->GetCharacterMovement());
+}
+
+void AIshibashiriBoss::ResetNushi()
+{
+    Super::ResetNushi();
     Health = MaxHealth;
     bCounterUsed = bChargeHitPlayer = false;
     VisualTime = 0.f;
     RiderTime = 0.f; AnimationIndex = INDEX_NONE;
     for (int32 I=0; I<3; ++I)
     {
-        PurifiedCores[I] = false; CoreMarkers[I]->SetVisibility(true);
+        CoreMarkers[I]->SetVisibility(true);
         Creature->UnHideBoneByName(*FString::Printf(TEXT("core_%d"),I));
     }
     Creature->SetRelativeRotation(FRotator(0,90,0));
-    ChargeDirection = Spawn.GetRotation().GetForwardVector();
-    SetActorTransform(Spawn, false, nullptr, ETeleportType::TeleportPhysics);
+    ChargeDirection = EncounterSpawn.GetRotation().GetForwardVector();
+    SetActorTransform(EncounterSpawn, false, nullptr, ETeleportType::TeleportPhysics);
     EnterState(EIshibashiriState::Chase);
-    if (Target) AddTickPrerequisiteComponent(Target->GetCharacterMovement());
     UpdateVisuals();
     UpdateCreatureAnimation();
 }
@@ -204,7 +230,7 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
     Creature->SetRelativeRotation(FRotator(0,90,0));
     // Bound movement steps and carry excess time into the next state at low frame rates.
     float Remaining = DeltaSeconds;
-    while (Remaining > KINDA_SMALL_NUMBER && State != EIshibashiriState::Calmed)
+    while (Remaining > KINDA_SMALL_NUMBER && GetState() != EIshibashiriState::Calmed)
     {
         float Step = FMath::Min(Remaining, 1.f / 60.f);
         if (StateTimeRemaining > 0.f) Step = FMath::Min(Step, StateTimeRemaining);
@@ -278,8 +304,7 @@ bool AIshibashiriBoss::TryReceiveCounter()
     Health = FMath::Max(0, Health - 1);
     if (Health == 0)
     {
-        EnterState(EIshibashiriState::Calmed);
-        Mode->FinishEncounter(true);
+        GetNushiStateComponent()->CalmNushi();
     }
     UpdateVisuals();
     UpdateCreatureAnimation();
@@ -288,18 +313,19 @@ bool AIshibashiriBoss::TryReceiveCounter()
 
 void AIshibashiriBoss::UpdateVisuals()
 {
+    const EIshibashiriState DisplayState = GetState();
     FLinearColor Color(0.27f, 0.16f, 0.1f);
-    if (State == EIshibashiriState::Telegraph)
+    if (DisplayState == EIshibashiriState::Telegraph)
     {
         Color = FMath::Sin(VisualTime * 32.f) > 0.f ? FLinearColor(1.f, 0.025f, 0.01f) : FLinearColor(0.35f, 0.01f, 0.01f);
         const FVector Start = GetActorLocation() - FVector(0.f, 0.f, 343.f);
         DrawDebugDirectionalArrow(GetWorld(), Start, Start + GetActorForwardVector() * ChargeSpeed * MaxChargeDuration,
             140.f, FColor::Red, false, -1.f, 0, 8.f);
     }
-    else if (State == EIshibashiriState::Charge) Color = FLinearColor(0.8f, 0.08f, 0.015f);
+    else if (DisplayState == EIshibashiriState::Charge) Color = FLinearColor(0.8f, 0.08f, 0.015f);
     else if (CanBeCountered()) Color = FLinearColor(0.12f, 0.85f, 0.28f);
-    else if (State == EIshibashiriState::Recover) Color = FLinearColor(0.8f, 0.5f, 0.08f);
-    else if (State == EIshibashiriState::Calmed) Color = FLinearColor(0.3f, 0.6f, 0.9f);
+    else if (DisplayState == EIshibashiriState::Recover) Color = FLinearColor(0.8f, 0.5f, 0.08f);
+    else if (DisplayState == EIshibashiriState::Calmed) Color = FLinearColor(0.3f, 0.6f, 0.9f);
     SetPrimitiveColor(BodyMaterial, Color);
 }
 
@@ -309,7 +335,7 @@ FString AIshibashiriBoss::GetStateLabel() const
     if (IsBuckWarning()) return TEXT("SHAKE INCOMING - HOLD E!");
     if (Target && Target->GetClimbing()->IsClimbing()) return TEXT("CARRYING RIDER - purify the three red cores");
     if (Target && Target->IsGrabbing()) return TEXT("CARRYING RIDER - local climbing");
-    switch (State)
+    switch (GetState())
     {
     case EIshibashiriState::Chase: return TEXT("CHASE");
     case EIshibashiriState::Telegraph: return TEXT("TELEGRAPH - dodge sideways at the charge!");
@@ -342,7 +368,33 @@ bool AIshibashiriBoss::IsBuckWarning() const
 }
 int32 AIshibashiriBoss::GetPurifiedCount() const
 {
-    return int32(PurifiedCores[0])+int32(PurifiedCores[1])+int32(PurifiedCores[2]);
+    return GetNushiProgressComponent()->GetPurifiedCount();
+}
+
+AKakonActor* AIshibashiriBoss::GetCoreKakon(int32 Index) const
+{
+    return CoreKakons.IsValidIndex(Index) ? Cast<AKakonActor>(CoreKakons[Index]->GetChildActor()) : nullptr;
+}
+
+void AIshibashiriBoss::HandleCorePurified(AKakonActor* Kakon)
+{
+    for (int32 I = 0; I < CoreKakons.Num(); ++I)
+    {
+        if (GetCoreKakon(I) != Kakon) continue;
+        CoreMarkers[I]->SetVisibility(false);
+        Creature->HideBoneByName(*FString::Printf(TEXT("core_%d"),I),EPhysBodyOp::PBO_None);
+        Health = FMath::Max(0, Health - 1);
+        break;
+    }
+}
+
+void AIshibashiriBoss::HandleNushiStateChanged()
+{
+    if (GetNushiState() == ENushiState::Calm)
+    {
+        StateTimeRemaining = 0.f;
+        UpdateCreatureAnimation();
+    }
 }
 bool AIshibashiriBoss::TryPurifyCore(const FVector& Position)
 {
@@ -350,13 +402,12 @@ bool AIshibashiriBoss::TryPurifyCore(const FVector& Position)
     if (!Mode || !Mode->IsEncounterActive() || !Target || !Target->GetClimbing()->IsResting() || IsBucking()) return false;
     for (int32 I=0; I<3; ++I)
     {
-        const FVector WorldCore = Creature->GetComponentTransform().TransformPosition(Cores[I]);
-        if (!PurifiedCores[I] && FVector::Dist(Position,WorldCore) < 170.f)
+        AKakonActor* Kakon = GetCoreKakon(I);
+        if (Kakon && FVector::Dist(Position,Kakon->GetActorLocation()) < 170.f && Kakon->Purify())
         {
-            PurifiedCores[I] = true; CoreMarkers[I]->SetVisibility(false);
-            Creature->HideBoneByName(*FString::Printf(TEXT("core_%d"),I),EPhysBodyOp::PBO_None);
-            Health = FMath::Max(0,Health-1);
-            if (Health == 0) { EnterState(EIshibashiriState::Calmed); Mode->FinishEncounter(true); }
+            // Preserve mixed counter/purification victories without fabricating progress.
+            // Full purification has already reached Calm through NushiProgress here.
+            if (Health == 0) GetNushiStateComponent()->CalmNushi();
             UpdateCreatureAnimation();
             return true;
         }
@@ -366,7 +417,7 @@ bool AIshibashiriBoss::TryPurifyCore(const FVector& Position)
 void AIshibashiriBoss::UpdateCreatureAnimation()
 {
     const bool Rider = Target && Target->IsGrabbing();
-    int32 Next = State == EIshibashiriState::Calmed ? 4 : IsBucking() ? 3
+    int32 Next = GetState() == EIshibashiriState::Calmed ? 4 : IsBucking() ? 3
         : Rider ? 1 : State == EIshibashiriState::Charge ? 2 : State == EIshibashiriState::Chase ? 1 : 0;
     if (Next != AnimationIndex && CreatureAnimations.IsValidIndex(Next) && CreatureAnimations[Next])
     {

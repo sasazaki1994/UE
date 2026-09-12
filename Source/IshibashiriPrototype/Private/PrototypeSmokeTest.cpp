@@ -2,6 +2,7 @@
 #include "PrototypeGameMode.h"
 #include "PrototypePlayer.h"
 #include "IshibashiriBoss.h"
+#include "NushiEncounterManager.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Camera/CameraComponent.h"
 #include "Engine/World.h"
@@ -361,6 +362,9 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
         if (!Mode->IsEncounterActive())
         {
             if (!Require(Mode->GetResult() == EEncounterResult::Victory && Counters == 3 && Boss->GetHealth() == 0 && bSawLockedCharge, TEXT("Three counters reach victory after fixed-direction charges"))) return;
+            if (!Require(Boss->GetPurifiedCount() == 0 && Boss->GetNushiState() == ENushiState::Calm
+                && Mode->GetEncounterManager()->GetEncounterState() == ENushiEncounterState::Completed,
+                TEXT("Counter victory completes shared lifecycle without fabricating purification"))) return;
             Player->Attack();
             Player->Dodge();
             if (!Require(!Player->IsDodging() && Boss->GetHealth() == 0, TEXT("Combat input stops after victory"))) return;

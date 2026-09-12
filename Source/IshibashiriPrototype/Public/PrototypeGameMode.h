@@ -9,6 +9,7 @@ class AIshibashiriBoss;
 class UStaticMesh;
 class UMaterialInterface;
 class ABasinPrototypeArena;
+class ANushiEncounterManager;
 
 UENUM()
 enum class EEncounterResult : uint8 { Playing, Victory, Defeat };
@@ -28,12 +29,16 @@ public:
     EEncounterResult GetResult() const { return Result; }
     APrototypePlayer* GetPlayer() const { return Player; }
     AIshibashiriBoss* GetBoss() const { return Boss; }
+    ANushiEncounterManager* GetEncounterManager() const { return EncounterManager; }
     bool IsBasinPrototype() const { return bBasinPrototype; }
     ABasinPrototypeArena* GetBasinArena() const { return BasinArena; }
 
     UPROPERTY(EditAnywhere, Category="Arena", meta=(ClampMin="1200")) float ArenaHalfExtent = 4000.f;
 
 private:
+    UFUNCTION()
+    void HandleEncounterCompleted();
+
     void CreateArena();
     void CreateBlock(const FString& Name, const FVector& Position, const FVector& Scale, const FLinearColor& Color);
     FTransform PlayerSpawn() const;
@@ -41,6 +46,7 @@ private:
 
     UPROPERTY() TObjectPtr<APrototypePlayer> Player;
     UPROPERTY() TObjectPtr<AIshibashiriBoss> Boss;
+    UPROPERTY() TObjectPtr<ANushiEncounterManager> EncounterManager;
     UPROPERTY() TObjectPtr<UStaticMesh> CubeMesh;
     UPROPERTY() TObjectPtr<UMaterialInterface> BaseMaterial;
     UPROPERTY() TObjectPtr<ABasinPrototypeArena> BasinArena;

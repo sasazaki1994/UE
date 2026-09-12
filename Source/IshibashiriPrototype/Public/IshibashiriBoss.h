@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "NushiBase.h"
 #include "IshibashiriBoss.generated.h"
 
 class UCapsuleComponent;
@@ -11,24 +11,26 @@ class APrototypePlayer;
 class USkeletalMeshComponent;
 class UAnimSequence;
 class UBoxComponent;
+class UChildActorComponent;
 
 UENUM()
 enum class EIshibashiriState : uint8 { Chase, Telegraph, Charge, Recover, Calmed };
 
 UCLASS()
-class ISHIBASHIRIPROTOTYPE_API AIshibashiriBoss : public AActor
+class ISHIBASHIRIPROTOTYPE_API AIshibashiriBoss : public ANushiBase
 {
     GENERATED_BODY()
 
 public:
     AIshibashiriBoss();
     virtual void Tick(float DeltaSeconds) override;
-    void ResetForEncounter(const FTransform& Spawn, APrototypePlayer* Player);
+    void ConfigureEncounter(const FTransform& Spawn, APrototypePlayer* Player);
+    virtual void ResetNushi() override;
     bool TryReceiveCounter();
     int32 GetHealth() const { return Health; }
-    EIshibashiriState GetState() const { return State; }
+    EIshibashiriState GetState() const { return GetNushiState() == ENushiState::Calm ? EIshibashiriState::Calmed : State; }
     float GetStateTimeRemaining() const { return StateTimeRemaining; }
-    bool CanBeCountered() const { return State == EIshibashiriState::Recover && !bCounterUsed && Health > 0; }
+    bool CanBeCountered() const { return GetState() == EIshibashiriState::Recover && !bCounterUsed && Health > 0; }
     FString GetStateLabel() const;
     FVector GetChargeDirection() const { return ChargeDirection; }
     bool HasImportedVisuals() const;
@@ -40,6 +42,7 @@ public:
     bool IsBucking() const;
     bool IsBuckWarning() const;
     int32 GetPurifiedCount() const;
+    AKakonActor* GetCoreKakon(int32 Index) const;
     USkeletalMeshComponent* GetVisualMesh() const { return Creature; }
 
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) int32 MaxHealth = 3;
@@ -60,6 +63,12 @@ private:
     void CheckChargeHit(const FVector& Start, const FVector& End);
     void UpdateCreatureAnimation();
 
+    UFUNCTION()
+    void HandleCorePurified(AKakonActor* Kakon);
+
+    UFUNCTION()
+    void HandleNushiStateChanged();
+
     UPROPERTY(VisibleAnywhere) TObjectPtr<UCapsuleComponent> Collision;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Body;
     UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> ColoredParts;
@@ -70,7 +79,8 @@ private:
     UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> CoreMarkers;
     UPROPERTY() TArray<TObjectPtr<UBoxComponent>> LedgeCollision;
     UPROPERTY() TObjectPtr<UStaticMeshComponent> GrabMarker;
-    bool PurifiedCores[3] = {false,false,false};
+    UPROPERTY(VisibleAnywhere) TArray<TObjectPtr<UChildActorComponent>> CoreKakons;
+    FTransform EncounterSpawn;
     float RiderTime = 0.f;
     int32 AnimationIndex = INDEX_NONE;
     EIshibashiriState State = EIshibashiriState::Chase;

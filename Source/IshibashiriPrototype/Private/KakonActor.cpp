@@ -1,8 +1,10 @@
 #include "KakonActor.h"
+#include "Components/SceneComponent.h"
 
 AKakonActor::AKakonActor()
 {
     PrimaryActorTick.bCanEverTick = false;
+    SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("KakonRoot")));
     CurrentShellHealth = MaxShellHealth;
 }
 
@@ -34,6 +36,6 @@ bool AKakonActor::Purify()
 
 void AKakonActor::ResetKakon()
 {
-    State = EKakonState::Covered;
     CurrentShellHealth = FMath::Max(0.f, MaxShellHealth);
+    State = CurrentShellHealth > 0.f ? EKakonState::Covered : EKakonState::Exposed;
 }
