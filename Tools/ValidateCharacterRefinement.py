@@ -10,7 +10,11 @@ materials = (ROOT / 'Tools/ApplyRiggedMaterials.py').read_text(encoding='utf-8')
 
 for path in ['Tools/CreateCharacterModels.py', 'Tools/RefineCharacterModels.py',
              'Tools/RigCharacterModels.py', 'Tools/ImportRiggedCharacters.py',
-             'Tools/ApplyRiggedMaterials.py', 'Tools/VerifyRiggedCharacters.py']:
+             'Tools/ApplyRiggedMaterials.py', 'Tools/VerifyRiggedCharacters.py',
+             'Tools/RebuildReferenceShirotsura.py', 'Tools/ReferenceShirotsuraHead.py',
+             'Tools/ReferenceShirotsuraCostume.py',
+             'Tools/PolishCharacterSurfaces.py', 'Tools/VerifyCharacterQuality.py',
+             'Tools/VerifyCharacterQualityUE.py']:
     ast.parse((ROOT / path).read_text(encoding='utf-8'), filename=path)
 
 required_geometry = [
@@ -21,7 +25,9 @@ required_geometry = [
 assert all(token in create for token in required_geometry)
 assert "'Climb'" in rig and "'Hang'" in rig and "'Grip'" in rig
 assert "return .91,0.0" in materials and "return .96,0.0" in materials
-assert 'ordinal=0' in materials, 'material expressions must be reused idempotently'
+# The UE 5.6 implementation reuses the node connected to the material property.
+# Runtime repeat-application checks live in VerifyCharacterQualityUE.py.
+assert 'get_material_property_input_node(mat,prop)' in materials, 'material expressions must be reused'
 
 baseline = {}
 for name in ['Shirotsura', 'Ishibashiri']:
