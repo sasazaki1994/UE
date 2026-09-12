@@ -30,7 +30,7 @@ public:
     void StartEncounter();
 
     UFUNCTION(BlueprintCallable, Category="Nushi")
-    void ResetNushi();
+    virtual void ResetNushi();
 
     UFUNCTION(BlueprintPure, Category="Nushi")
     ENushiState GetNushiState() const;

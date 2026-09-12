@@ -2,6 +2,7 @@
 #include "PrototypeHUD.h"
 #include "PrototypePlayer.h"
 #include "IshibashiriBoss.h"
+#include "NushiEncounterManager.h"
 #include "PrototypeSmokeTest.h"
 #include "PrototypePlaythroughTest.h"
 #include "ClimbingIntegrationTest.h"
@@ -64,10 +65,11 @@ void APrototypeGameMode::StartPlay()
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     Player = GetWorld()->SpawnActor<APrototypePlayer>(APrototypePlayer::StaticClass(), PlayerSpawn(), Params);
     Boss = GetWorld()->SpawnActor<AIshibashiriBoss>(AIshibashiriBoss::StaticClass(), BossSpawn(), Params);
+    EncounterManager = GetWorld()->SpawnActor<ANushiEncounterManager>();
     APlayerController* Controller = UGameplayStatics::GetPlayerController(this, 0);
-    if (!Player || !Boss || !Controller)
+    if (!Player || !Boss || !Controller || !EncounterManager)
     {
-        UE_LOG(LogTemp, Error, TEXT("Ishibashiri: player, boss or local controller failed to spawn. Use Play, not Simulate."));
+        UE_LOG(LogTemp, Error, TEXT("Ishibashiri: player, boss, encounter manager or local controller failed to spawn. Use Play, not Simulate."));
         Result = EEncounterResult::Defeat;
         return;
     }
@@ -79,6 +81,9 @@ void APrototypeGameMode::StartPlay()
         Controller->PlayerCameraManager->ViewPitchMin = -65.f;
         Controller->PlayerCameraManager->ViewPitchMax = 20.f;
     }
+    Boss->ConfigureEncounter(BossSpawn(), Player);
+    EncounterManager->SetNushi(Boss);
+    EncounterManager->OnEncounterCompleted.AddUniqueDynamic(this, &APrototypeGameMode::HandleEncounterCompleted);
     RetryEncounter();
     UE_LOG(LogTemp, Display, TEXT("Ishibashiri: arena ready. WASD/Left Stick move, Mouse/Right Stick camera, E/RB grab."));
 #if !UE_BUILD_SHIPPING
@@ -102,10 +107,16 @@ void APrototypeGameMode::StartPlay()
 
 void APrototypeGameMode::RetryEncounter()
 {
-    if (!Player || !Boss) return;
+    if (!Player || !Boss || !EncounterManager) return;
     Result = EEncounterResult::Playing;
     Player->ResetForEncounter(PlayerSpawn());
-    Boss->ResetForEncounter(BossSpawn(), Player);
+    EncounterManager->ResetEncounter();
+    EncounterManager->StartEncounter();
+}
+
+void APrototypeGameMode::HandleEncounterCompleted()
+{
+    FinishEncounter(true);
 }
 
 void APrototypeGameMode::FinishEncounter(bool bVictory)

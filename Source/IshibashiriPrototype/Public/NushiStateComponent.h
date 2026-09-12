@@ -31,6 +31,11 @@ public:
     UFUNCTION(BlueprintCallable, Category="Nushi")
     void ResetNushi();
 
+    // Alternate encounter objectives (such as combat) may calm an active Nushi
+    // without inventing Kakon purification progress.
+    UFUNCTION(BlueprintCallable, Category="Nushi")
+    void CalmNushi();
+
     UFUNCTION(BlueprintPure, Category="Nushi")
     ENushiState GetNushiState() const { return State; }
 

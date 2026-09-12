@@ -1,0 +1,457 @@
+{
+  "date": "2026-09-12",
+  "baseCommit": "6eb4d2b61050ec38d52dc8f7a520fa81247811b1",
+  "branch": "codex/work_ishibashiri-nushi-integration",
+  "engine": "5.6.1",
+  "build": {
+    "result": "PASS",
+    "log": "Saved/NushiIntegration/Build.log"
+  },
+  "automation": {
+    "succeeded": 12,
+    "warnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "log": "Saved/NushiIntegration/AutomationFinal.log",
+    "report": "Saved/NushiIntegration/AutomationFinal/index.json",
+    "tests": [
+      {
+        "fullTestPath": "IshibashiriPrototype.Kakon.ActorStateTransitions",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Kakon.NushiProgress",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.ActionLifecycle",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.BiteLungeMovement",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.CoilingInvalidInput",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.CoilingProgress",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.CommonBase",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.EncounterManager",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.IshibashiriIntegration",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.ShelllessKakonLifecycle",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.StateProgression",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Player.StaminaResource",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      }
+    ]
+  },
+  "python": {
+    "passed": 27,
+    "failed": 0,
+    "log": "Saved/NushiIntegration/Python-tests.log",
+    "runner": "UE bundled Python 3.11 -X utf8; unittest classes and 17 fixture-free test functions through unittest.FunctionTestCase"
+  },
+  "requiredTestsPassed": 6,
+  "tests": [
+    {
+      "Name": "Climbing-Basin-60",
+      "ExitCode": 0,
+      "Arguments": {
+        "TestFPS": 60,
+        "Climbing": true,
+        "Basin": true
+      },
+      "Log": "Saved/NushiIntegration/Climbing-Basin-60.log",
+      "Markers": [
+        "[2026.09.12-05.04.41:303][344]LogTemp: Display: CLIMB_TEST_PASS bdbd25f3c88d43bb87fd7a14c2cf35bf 72.40s"
+      ],
+      "LogSha256": "9a98e511743f29aedf6f9adcf9125519cd28d0f72044dda16d60f47e0f6bc885",
+      "RunId": "bdbd25f3c88d43bb87fd7a14c2cf35bf"
+    },
+    {
+      "Name": "Climbing-Basin-30",
+      "ExitCode": 0,
+      "Arguments": {
+        "TestFPS": 30,
+        "Climbing": true,
+        "Basin": true
+      },
+      "Log": "Saved/NushiIntegration/Climbing-Basin-30.log",
+      "Markers": [
+        "[2026.09.12-05.04.51:999][180]LogTemp: Display: CLIMB_TEST_PASS 3b681591fbc046178766d35936ae5d22 72.67s"
+      ],
+      "LogSha256": "8f4a315c5626a30d45024f72a8cadd273abac107174a73e9f9328a56fcd3c5ba",
+      "RunId": "3b681591fbc046178766d35936ae5d22"
+    },
+    {
+      "Name": "ClimbingGamepad-Basin-60",
+      "ExitCode": 0,
+      "Arguments": {
+        "ClimbingGamepad": true,
+        "Basin": true,
+        "TestFPS": 60
+      },
+      "Log": "Saved/NushiIntegration/ClimbingGamepad-Basin-60.log",
+      "Markers": [
+        "[2026.09.12-05.05.04:220][344]LogTemp: Display: CLIMB_TEST_PASS 2014f1bebfb54a7580bb1ea74a93259e 72.40s"
+      ],
+      "LogSha256": "0e9ef5ee6dac88c523ebfa80e28ba537f972d11be7520dc6124a77ae6cf60c97",
+      "RunId": "2014f1bebfb54a7580bb1ea74a93259e"
+    },
+    {
+      "Name": "Grab-60",
+      "ExitCode": 0,
+      "Arguments": {
+        "TestFPS": 60,
+        "Grab": true
+      },
+      "Log": "Saved/NushiIntegration/Grab-60.log",
+      "Markers": [
+        "[2026.09.12-05.05.13:382][ 34]LogTemp: Display: PROTOTYPE_TEST_PASS 02b3f1be16464127867383c48b184f10"
+      ],
+      "LogSha256": "100e6f71f67b1450c6ab32f9aaea24ad4351d7200c143c0299582770645ddeaa",
+      "RunId": "02b3f1be16464127867383c48b184f10"
+    },
+    {
+      "Name": "LocalClimbing-60",
+      "ExitCode": 0,
+      "Arguments": {
+        "LocalClimbing": true,
+        "TestFPS": 60
+      },
+      "Log": "Saved/NushiIntegration/LocalClimbing-60.log",
+      "Markers": [
+        "[2026.09.12-05.05.20:926][126]LogTemp: Display: PROTOTYPE_TEST_PASS d14000b67f304b1b9f4a08a15303f06c"
+      ],
+      "LogSha256": "98af855486e3d69acb63c37c043c0ff977128aa4590a3e96d013a6f2f4a4e6a9",
+      "RunId": "d14000b67f304b1b9f4a08a15303f06c"
+    },
+    {
+      "Name": "Camera-Basin-60",
+      "ExitCode": 0,
+      "Arguments": {
+        "TestFPS": 60,
+        "Basin": true,
+        "Camera": true
+      },
+      "Log": "Saved/NushiIntegration/Camera-Basin-60.log",
+      "Markers": [
+        "[2026.09.12-05.05.28:490][210]LogTemp: Display: PROTOTYPE_TEST_PASS fbcca011cbf34f4bb16b70f0eadb96ef"
+      ],
+      "LogSha256": "58cd9e4097be84475e70e1ee50bf6ab0a8f55f4d5c1da59df3cee9c29b88726d",
+      "RunId": "fbcca011cbf34f4bb16b70f0eadb96ef"
+    },
+    {
+      "Name": "BasinScenario-60",
+      "ExitCode": 1,
+      "Arguments": {
+        "TestFPS": 60,
+        "BasinScenario": true,
+        "Basin": true
+      },
+      "Log": "Saved/NushiIntegration/BasinScenario-60.log",
+      "Markers": [
+        "[2026.09.12-04.56.11:016][230]LogTemp: Error: BASIN_SCENARIO_FAIL a3581e286ff84df6863be7010bad07ac reason=unexpected fall while approaching climb hold phase=0 player=V(X=-661.36, Y=214.21, Z=91.68) boss=V(X=-421.69, Y=97.58, Z=352.00) entryDistance=241.1 bossState=CHARGE - direction locked climb=0 node=-1 moving=0 movement=3"
+      ],
+      "LogSha256": "7a287e2640605006b7e40c4ef6bf0405f8f8285716b3c2f0188a52e959ebe790",
+      "RunId": "a3581e286ff84df6863be7010bad07ac"
+    },
+    {
+      "Name": "BasinScenario-30",
+      "ExitCode": 1,
+      "Arguments": {
+        "TestFPS": 30,
+        "BasinScenario": true,
+        "Basin": true
+      },
+      "Log": "Saved/NushiIntegration/BasinScenario-30.log",
+      "Markers": [
+        "[2026.09.12-04.56.20:560][116]LogTemp: Error: BASIN_SCENARIO_FAIL 4d406c5591d14ea1a085e0e042c248fa reason=unexpected fall while approaching climb hold phase=0 player=V(X=-700.96, Y=154.61, Z=92.94) boss=V(X=-497.07, Y=84.72, Z=352.00) entryDistance=251.8 bossState=CHARGE - direction locked climb=0 node=-1 moving=0 movement=3"
+      ],
+      "LogSha256": "155e4ec8fba5d20820c9e06e48dad20c49d7267edef5d281d9cda643fdebad81",
+      "RunId": "4d406c5591d14ea1a085e0e042c248fa"
+    },
+    {
+      "Name": "Smoke-60",
+      "ExitCode": 0,
+      "Arguments": {
+        "TestFPS": 60
+      },
+      "Log": "Saved/NushiIntegration/Smoke-60.log",
+      "Markers": [
+        "[2026.09.12-04.56.30:660][201]LogTemp: Display: PROTOTYPE_TEST_PASS 34ba17193da744228552f1501a910cc9"
+      ],
+      "LogSha256": "f2ecee77b4153b800e82c8bb6a0ad1475b73fa70f7d2a212fd2213297c6c7c36",
+      "RunId": "34ba17193da744228552f1501a910cc9"
+    },
+    {
+      "Name": "Gamepad-60",
+      "ExitCode": 0,
+      "Arguments": {
+        "TestFPS": 60,
+        "Gamepad": true
+      },
+      "Log": "Saved/NushiIntegration/Gamepad-60.log",
+      "Markers": [
+        "[2026.09.12-04.56.39:585][283]LogTemp: Display: PROTOTYPE_TEST_PASS a3f879cdd1ac428bae3f9183208198bb"
+      ],
+      "LogSha256": "bc9033bb685bbf59f975d19896668a57469d8c0e0bfbf892109fe52513567256",
+      "RunId": "a3f879cdd1ac428bae3f9183208198bb"
+    },
+    {
+      "Name": "Playthrough-Basin-60",
+      "ExitCode": 1,
+      "Arguments": {
+        "TestFPS": 60,
+        "Playthrough": true,
+        "Basin": true
+      },
+      "Log": "Saved/NushiIntegration/Playthrough-Basin-60.log",
+      "Markers": [
+        "[2026.09.12-04.56.48:273][843]LogTemp: Error: PROTOTYPE_TEST_FAIL 462a598397a5407ea86be4dc20b35f3e: Sideways dodge avoids charge damage throughout the encounter (round=1 time=14.05 counters=2 dodges=2)"
+      ],
+      "LogSha256": "595ab529c11ad9e35735caec74f9f32c2e1b9e8e4a1b936360c785533bbba88c",
+      "RunId": "462a598397a5407ea86be4dc20b35f3e"
+    },
+    {
+      "Name": "Climbing-Legacy-Capture-60",
+      "ExitCode": 0,
+      "Arguments": {
+        "Capture": true,
+        "Climbing": true,
+        "TestFPS": 60
+      },
+      "Log": "Saved/NushiIntegration/Climbing-Legacy-Capture-60.log",
+      "Markers": [
+        "[2026.09.12-05.02.44:414][344]LogTemp: Display: CLIMB_TEST_PASS ffe685d7153c46519e2643578b82666f 72.40s"
+      ],
+      "LogSha256": "4433c85bede37b131c09c596bab58b2c81ffb5b7fa424e672924225cac4a7de4",
+      "RunId": "ffe685d7153c46519e2643578b82666f"
+    },
+    {
+      "Name": "Climbing-Basin-HQ-Capture-60",
+      "ExitCode": 0,
+      "Arguments": {
+        "Capture": true,
+        "Climbing": true,
+        "Basin": true,
+        "TestFPS": 60,
+        "HighQuality": true
+      },
+      "Log": "Saved/NushiIntegration/Climbing-Basin-HQ-Capture-60.log",
+      "Markers": [
+        "[2026.09.12-05.03.29:434][344]LogTemp: Display: CLIMB_TEST_PASS 1311e8b7d1cb41fea5b8d0d82d154af4 72.40s"
+      ],
+      "LogSha256": "cb8d35111b861384e0fc6c6ed7438006e9d793ff905ada0fa9a7776e5b2d2c20",
+      "RunId": "1311e8b7d1cb41fea5b8d0d82d154af4"
+    },
+    {
+      "Name": "ClimbingIK-Basin-60",
+      "ExitCode": 1,
+      "Arguments": {
+        "TestFPS": 60,
+        "ClimbingIK": true,
+        "Basin": true
+      },
+      "Log": "Saved/NushiIntegration/ClimbingIK-Basin-60.log",
+      "Markers": [
+        "[2026.09.12-04.58.01:854][ 18]LogTemp: Error: CLIMB_TEST_FAIL a754a3b2bd7047ac997f66501e12051f phase=0: Climbing Control Rig asset is instantiated"
+      ],
+      "LogSha256": "f135d498e3c39f2ecd91c12b6a52def6d1f81bf4b820e6785739eab09af944bb",
+      "RunId": "a754a3b2bd7047ac997f66501e12051f"
+    },
+    {
+      "Name": "GrabMotionWarp-Basin-60",
+      "ExitCode": 1,
+      "Arguments": {
+        "GrabMotionWarp": true,
+        "TestFPS": 60,
+        "Basin": true
+      },
+      "Log": "Saved/NushiIntegration/GrabMotionWarp-Basin-60.log",
+      "Markers": [
+        "[2026.09.12-04.58.24:886][380]LogTemp: Error: CLIMB_TEST_FAIL 8a266e72cd2e40db8badbe2f86fa5b2e phase=0: Motion Warp starts from normal Grab input (asset contract required)"
+      ],
+      "LogSha256": "457b9e0f8ea1ab4a2a0e0e5d6ed1ededac5a9bd510788fde0b851c479d9ddfec",
+      "RunId": "8a266e72cd2e40db8badbe2f86fa5b2e"
+    },
+    {
+      "Name": "Playthrough-Legacy-60",
+      "ExitCode": 0,
+      "Arguments": {
+        "Playthrough": true,
+        "TestFPS": 60
+      },
+      "Log": "Saved/NushiIntegration/Playthrough-Legacy-60.log",
+      "Markers": [
+        "[2026.09.12-05.03.40:891][755]LogTemp: Display: PROTOTYPE_TEST_PASS cce43b9fa19d4e6aa8e855a5ad0f0229"
+      ],
+      "LogSha256": "f84cc9eb025ca232c83c1d95b83c4247cb6bdf440c89bdfe91f95aebd3c5a1aa",
+      "RunId": "cce43b9fa19d4e6aa8e855a5ad0f0229"
+    }
+  ],
+  "baselineFailures": [
+    {
+      "Name": "Climbing-Basin-60",
+      "ExitCode": 1,
+      "Log": "Saved/NushiIntegration/Baseline-Climbing-Basin-60.log",
+      "Markers": [
+        "[2026.09.12-04.59.41:138][ 47]LogTemp: Error: CLIMB_TEST_FAIL b7bf96f1a2e24e24a883c67e1130f8e9 phase=2: E mounts from ground after movement input"
+      ],
+      "LogSha256": "81b3855854cedc1f2bfc8f34299d419b3af83fed9d957271477848da167871bb"
+    },
+    {
+      "Name": "Climbing-Basin-30",
+      "ExitCode": 1,
+      "Log": "Saved/NushiIntegration/Baseline-Climbing-Basin-30.log",
+      "Markers": [
+        "[2026.09.12-04.59.51:361][ 25]LogTemp: Error: CLIMB_TEST_FAIL 1b9783f14bc54331a49d52105415681f phase=2: E mounts from ground after movement input"
+      ],
+      "LogSha256": "04bcc6dcc7172733333a58061a2daa27b53a50190ab69c7dc1413862ebc43e21"
+    },
+    {
+      "Name": "ClimbingGamepad-Basin-60",
+      "ExitCode": 1,
+      "Log": "Saved/NushiIntegration/Baseline-ClimbingGamepad-Basin-60.log",
+      "Markers": [
+        "[2026.09.12-05.00.01:034][ 47]LogTemp: Error: CLIMB_TEST_FAIL b659e57d81cb4750b12267e11b8dc775 phase=2: E mounts from ground after movement input"
+      ],
+      "LogSha256": "ec1770e55b578998280219923d47e15f5904c802b6d8701442eb8934396e4248"
+    },
+    {
+      "Name": "BasinScenario-60",
+      "ExitCode": 1,
+      "Log": "Saved/NushiIntegration/Baseline-BasinScenario-60.log",
+      "Markers": [
+        "[2026.09.12-05.00.11:038][230]LogTemp: Error: BASIN_SCENARIO_FAIL 0e4eade123f74fe7a0d6095d2dca0403 reason=unexpected fall while approaching climb hold phase=0 player=V(X=-661.36, Y=214.21, Z=91.68) boss=V(X=-421.69, Y=97.58, Z=352.00) entryDistance=241.1 bossState=CHARGE - direction locked climb=0 node=-1 moving=0 movement=3"
+      ],
+      "LogSha256": "62f9dcefd6975b08c61fc82366d6ccb06cdac190b65836f6f940cb6c44135766"
+    },
+    {
+      "Name": "BasinScenario-30",
+      "ExitCode": 1,
+      "Log": "Saved/NushiIntegration/Baseline-BasinScenario-30.log",
+      "Markers": [
+        "[2026.09.12-05.00.20:224][116]LogTemp: Error: BASIN_SCENARIO_FAIL 51427757bae14e44b5fd18b7ae65b20a reason=unexpected fall while approaching climb hold phase=0 player=V(X=-700.96, Y=154.61, Z=92.94) boss=V(X=-497.07, Y=84.72, Z=352.00) entryDistance=251.8 bossState=CHARGE - direction locked climb=0 node=-1 moving=0 movement=3"
+      ],
+      "LogSha256": "b9dcce03aa99e55ebceb2e1e9342f28d61c245adae4d8e3b728eae1065be8404"
+    },
+    {
+      "Name": "Playthrough-Basin-60",
+      "ExitCode": 1,
+      "Log": "Saved/NushiIntegration/Baseline-Playthrough-Basin-60.log",
+      "Markers": [
+        "[2026.09.12-05.00.30:245][843]LogTemp: Error: PROTOTYPE_TEST_FAIL ee8f7a1a5a664e91a439a166d23320ff: Sideways dodge avoids charge damage throughout the encounter (round=1 time=14.05 counters=2 dodges=2)"
+      ],
+      "LogSha256": "d8db40482e4622136c0d3b2331341a87dafd090a149a969bfd136f5a64989ce9"
+    },
+    {
+      "Name": "ClimbingIK-Basin-60",
+      "ExitCode": 1,
+      "Log": "Saved/NushiIntegration/Baseline-ClimbingIK-Basin-60.log",
+      "Markers": [
+        "[2026.09.12-05.00.39:064][ 18]LogTemp: Error: CLIMB_TEST_FAIL 6062201988b6415faa7e4b24eb3215d1 phase=0: Climbing Control Rig asset is instantiated"
+      ],
+      "LogSha256": "d8c25b6cfe8b893881e069498c0ea09d2dcb48de35efe3b5cf950cab7a3fe569"
+    },
+    {
+      "Name": "GrabMotionWarp-Basin-60",
+      "ExitCode": 1,
+      "Log": "Saved/NushiIntegration/Baseline-GrabMotionWarp-Basin-60.log",
+      "Markers": [
+        "[2026.09.12-05.00.48:834][380]LogTemp: Error: CLIMB_TEST_FAIL 6874e22b005244e9ad6a022246af7fc7 phase=0: Motion Warp starts from normal Grab input (asset contract required)"
+      ],
+      "LogSha256": "6d06791683baee7de974ab58177faa79b700c8566a02d2c0dc41a3fbd625a005"
+    }
+  ],
+  "preservation": {
+    "Route unchanged": true,
+    "Neighbors unchanged": true,
+    "Cores unchanged": true,
+    "CheckChargeHit unchanged": true,
+    "GetClimbPosition unchanged": true,
+    "GetClimbFrame unchanged": true,
+    "GetClimbNeighbor unchanged": true,
+    "IsBucking unchanged": true,
+    "IsBuckWarning unchanged": true,
+    "Content unchanged": true,
+    "Art unchanged": true,
+    "Config unchanged": true,
+    "Tools unchanged": true,
+    "Source/IshibashiriPrototype/Private/PrototypePlayer.cpp unchanged": true,
+    "Source/IshibashiriPrototype/Private/ColossusClimbingComponent.cpp unchanged": true,
+    "Source/IshibashiriPrototype/Private/GrabComponent.cpp unchanged": true,
+    "Source/IshibashiriPrototype/Private/BasinPrototypeArena.cpp unchanged": true,
+    "Source/IshibashiriPrototype/Private/FuchimatoiBoss.cpp unchanged": true
+  },
+  "sourceSha256": {
+    "Source/IshibashiriPrototype/Private/ClimbingIntegrationTest.cpp": "9d093438c2f28fd1b2718a0d328923dc28f9000c76e961a8edef5c39c9220c62",
+    "Source/IshibashiriPrototype/Private/IshibashiriBoss.cpp": "26ece93c3dc7c7a4ecbcf68a8488cef4d602e71df0a28b64420b6211683ea984",
+    "Source/IshibashiriPrototype/Private/KakonActor.cpp": "7bf9c9b6bda490b46d264170245385f6f7a3ae94d0393b85134f457f7d2cfa0e",
+    "Source/IshibashiriPrototype/Private/NushiStateComponent.cpp": "e87db675de2ec5b37a51c051a59582b7a998fbd89849a25fefb9b8f70f80bf6d",
+    "Source/IshibashiriPrototype/Private/PrototypeGameMode.cpp": "34feec5344887d852fc27c16d7924b7302c16820451d1a271d82e8ed8ac72e10",
+    "Source/IshibashiriPrototype/Private/PrototypeSmokeTest.cpp": "3f6ad199eea9d4d41cba813c426adc2bce1ba02b188c08fce2eaf407a9768c28",
+    "Source/IshibashiriPrototype/Public/ClimbingIntegrationTest.h": "6d514396ca97df88fc32ac5bf3147cb702023d71c6a9e4e482b225cc74596d6a",
+    "Source/IshibashiriPrototype/Public/IshibashiriBoss.h": "9afc89c108c30b8fd73374c9d4275a830351480ce1d41717fe56dae806b507cf",
+    "Source/IshibashiriPrototype/Public/NushiBase.h": "7b3c24a3bacd5222f3cd452d33ea7fa060465bc36cfcb1d2d8e7d6df4bb44b2b",
+    "Source/IshibashiriPrototype/Public/NushiStateComponent.h": "8656404fcc146c6f93f77c203254e38b460949c7a15692034ea166193a3192aa",
+    "Source/IshibashiriPrototype/Public/PrototypeGameMode.h": "4b89fca449d8cfec0cacd1637466a5be49fbcd8452aa7dc5138416ca55db663a",
+    "Source/IshibashiriPrototype/Private/IshibashiriNushiIntegrationTests.cpp": "6de970fbe8fff7b197fde258fa950a7c7a1ff3d54f398955c4d94ed71014bec1"
+  },
+  "visualInspection": {
+    "legacy": "Saved/Screenshots/Climbing/ffe685d7153c46519e2643578b82666f/05-Victory.png",
+    "highQualityBasin": "Saved/Screenshots/Climbing/1311e8b7d1cb41fea5b8d0d82d154af4/05-Victory.png",
+    "checked": "CORES 3/3, CALMED, Victory, Retry prompt. No pixel-by-pixel baseline comparison."
+  },
+  "knownLimitations": [
+    "BasinScenario 60/30 fails during approach identically on unchanged main.",
+    "Basin input-only Playthrough fails at round 1, 14.05 seconds identically on unchanged main.",
+    "ClimbingIK and GrabMotionWarp fail the pre-existing asset contracts on unchanged main.",
+    "Physical keyboard/gamepad, UE 5.4/5.5, packaged build and a dedicated mixed combat/climbing input playthrough were not tested."
+  ],
+  "regressionConclusion": "No new gameplay regression observed in required tests, normal arena playthrough and rendering captures; optional failures reproduced on unchanged main. Existing climbing test approach fixture corrected without changing gameplay."
+}

@@ -2,6 +2,9 @@
 #include "PrototypeGameMode.h"
 #include "PrototypePlayer.h"
 #include "IshibashiriBoss.h"
+#include "KakonActor.h"
+#include "NushiProgressComponent.h"
+#include "NushiEncounterManager.h"
 #include "ColossusClimbingComponent.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -70,14 +73,19 @@ bool AClimbingIntegrationTest::Check(bool Condition,const TCHAR* Description)
     else UE_LOG(LogTemp,Display,TEXT("CLIMB_CHECK %s: %s"),*RunId,Description);
     return Condition;
 }
-void AClimbingIntegrationTest::SetupGrab()
+void AClimbingIntegrationTest::SetupGrab(bool bResetEncounter)
 {
     for (const FKey& Key: Held.Array()) Hold(Key,false);
-    Mode->RetryEncounter(); Mode->GetBoss()->SetActorTickEnabled(false);
+    if (bResetEncounter) Mode->RetryEncounter();
+    Mode->GetBoss()->SetActorTickEnabled(false);
     APrototypePlayer* P=Mode->GetPlayer();
     FVector Entry=Mode->GetBoss()->GetClimbPosition(0); Entry.Z=92;
-    P->SetActorLocation(Entry+FVector(210,0,0));
-    P->GetController()->SetControlRotation(FRotator(-12,180,0));
+    // Approach toward the boss from outside the authored foreleg. The old
+    // fixed world-X fixture faced 128 degrees away from the current warp target
+    // and was rejected by main's existing 100-degree grab-facing limit.
+    const FVector Outward=(Entry-Mode->GetBoss()->GetActorLocation()).GetSafeNormal2D();
+    P->SetActorLocation(Entry+Outward*210.f);
+    P->GetController()->SetControlRotation(FRotator(-12,(-Outward).Rotation().Yaw,0));
     BeforeFoot=P->GetMesh()->GetBoneLocation(TEXT("foot_L"),EBoneSpaces::ComponentSpace);
 }
 void AClimbingIntegrationTest::Shot(const TCHAR* Name)
@@ -154,7 +162,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
     {
         bIKShakeShot=true; Shot(TEXT("07-ShakeCling"));
     }
-    if (Total>180.f) { Check(false,TEXT("Integration test timeout")); return; }
+    if (Total>300.f) { Check(false,TEXT("Integration test timeout")); return; }
     switch (Phase)
     {
     case 0:
@@ -224,6 +232,11 @@ void AClimbingIntegrationTest::Tick(float Dt)
         if (Time>.6f)
         {
             if (!Check(B->GetPurifiedCount()==1,TEXT("Branch leads to first purifiable core"))) return;
+            if (!Check(B->GetNushiProgressComponent()->GetRegisteredKakonCount()==3
+                && B->GetNushiProgressComponent()->GetPurifiedCount()==1
+                && B->GetNushiState()==ENushiState::Active
+                && Mode->GetEncounterManager()->GetEncounterState()==ENushiEncounterState::Running,
+                TEXT("Normal gameplay uses shared progress 1/3 and Running lifecycle"))) return;
             Tap(EKeys::LeftMouseButton);Next(11);
         } break;
     case 11:
@@ -252,13 +265,34 @@ void AClimbingIntegrationTest::Tick(float Dt)
         if (Time>.6f)
         {
             if (!Check(Mode->GetResult()==EEncounterResult::Victory && B->GetPurifiedCount()==3,TEXT("Three distinct cores finish encounter"))) return;
+            if (!Check(B->GetNushiProgressComponent()->IsAllPurified()
+                && B->GetNushiState()==ENushiState::Calm
+                && Mode->GetEncounterManager()->GetEncounterState()==ENushiEncounterState::Completed,
+                TEXT("Three Kakon propagate through Progress, Calm, Completed and Victory"))) return;
+            ++CompletedRoutes;
             Shot(TEXT("05-Victory"));Tap(EKeys::R);Next(19);
         } break;
     case 19:
         if (Time>.3f)
         {
             if (!Check(Mode->IsEncounterActive() && !C->IsClimbing() && C->GetStamina()==100 && B->GetPurifiedCount()==0,TEXT("R resets victory, attachment, stamina and cores"))) return;
-            SetupGrab();Tap(EKeys::E);Next(20);
+            if (!Check(B->GetNushiProgressComponent()->GetRegisteredKakonCount()==3
+                && !B->GetNushiProgressComponent()->IsAllPurified()
+                && B->GetNushiState()==ENushiState::Active
+                && Mode->GetEncounterManager()->GetEncounterState()==ENushiEncounterState::Running
+                && B->GetCoreKakon(0)->GetState()==EKakonState::Exposed
+                && B->GetCoreKakon(1)->GetState()==EKakonState::Exposed
+                && B->GetCoreKakon(2)->GetState()==EKakonState::Exposed,
+                TEXT("Retry resets all shared Kakon and restarts the common lifecycle"))) return;
+            // Re-run the full route after the actual keyboard/gamepad Retry.
+            // Do not hide an incomplete reset behind another setup reset.
+            SetupGrab(false);
+            if (CompletedRoutes < 2) Next(0);
+            else
+            {
+                if (!Check(CompletedRoutes==2,TEXT("Full three-core route clears again after input Retry"))) return;
+                Tap(EKeys::E);Next(20);
+            }
         } break;
     case 20:
         if (Time>.15f)
