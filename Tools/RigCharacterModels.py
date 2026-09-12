@@ -13,6 +13,10 @@ PBR=importlib.util.module_from_spec(PBR_SPEC);PBR_SPEC.loader.exec_module(PBR)
 PBR_MODE='fallback'
 if '--pbr-mode' in sys.argv:
     PBR_MODE=sys.argv[sys.argv.index('--pbr-mode')+1]
+ATLAS_SIZE=2048
+if '--atlas-size' in sys.argv:
+    ATLAS_SIZE=int(sys.argv[sys.argv.index('--atlas-size')+1])
+    if ATLAS_SIZE not in (2048,4096):raise ValueError('Atlas size must be 2048 or 4096')
 
 def bone(name,head,tail,parent=None):
     b=bpy.context.object.data.edit_bones.new(name)
@@ -65,10 +69,10 @@ def build(name):
         center=ob.matrix_world@Vector((0,0,0))
         if ob.data.vertices:
             center=sum((ob.matrix_world@v.co for v in ob.data.vertices),Vector())/len(ob.data.vertices)
-        side='L' if center.x>0 else 'R'
+        side=ob.get('rig_side','L' if center.x>0 else 'R')
         default='chest' if hero else 'back'
         if hero:
-            if any(k in label for k in ['hair','mask','eye_slit','quiet_mouth','vermilion']): default='head'
+            if any(k in label for k in ['hair','mask','head_ear','eye_slit','quiet_mouth','vermilion']): default='head'
             elif any(k in label for k in ['blade','grip','plain_guard']): default='weapon'
             elif 'scabbard' in label or any(k in label for k in ['waist','utility_pouch','jacket_split','rear_knot']): default='pelvis'
             elif 'paper_talisman' in label or 'talisman_ink' in label: default='chest' if center.z>1.05 else 'pelvis'
@@ -89,6 +93,11 @@ def build(name):
             elif any(k in label for k in ['magane','redblack_crystal','core_emissive','spreading_black','root_crimson']):
                 cores=[Vector(p) for p in [(2.18,-1.55,6.11),(0,.60,7.84),(-1.22,3.05,6.88)]]
                 default='core_'+str(min(range(3),key=lambda i:(center-cores[i]).length))
+        # Reference rebuild parts carry explicit regions so new garments and
+        # details follow the intended body segment without fragile name guesses.
+        default=ob.get('rig_region',default)
+        if default not in ('arm_deform','torso_deform','leg_deform','robe_deform') and default not in rig.data.bones:
+            raise ValueError('Unknown rig region '+default+' on '+ob.name)
         groups={}
         def weight(index,bname,w):
             if w<=0: return
@@ -102,6 +111,12 @@ def build(name):
             elif default=='torso_deform':
                 w=max(0,min(1,(p.z-1.02)/.26))
                 weight(v.index,'spine',1-w); weight(v.index,'chest',w)
+            elif default=='robe_deform':
+                pelvis=max(0,min(1,(p.z-.80)/.17))
+                thigh=max(0,min(1,(p.z-.40)/.20))
+                weight(v.index,'pelvis',pelvis)
+                weight(v.index,'thigh_'+side,(1-pelvis)*thigh)
+                weight(v.index,'shin_'+side,(1-pelvis)*(1-thigh))
             elif default=='leg_deform':
                 if hero:
                     w=max(0,min(1,(p.z-.42)/.15))
@@ -296,7 +311,7 @@ def bake_surface(body,out,name,manifest_path=PBR.MANIFEST,asset_root=PBR.ROOT):
     images={}
     for kind in ['BaseColor','Normal','Roughness']:
         image=bpy.data.images.get('T_'+name+'_'+kind) or bpy.data.images.new(
-            'T_'+name+'_'+kind,width=2048,height=2048,alpha=False)
+            'T_'+name+'_'+kind,width=ATLAS_SIZE,height=ATLAS_SIZE,alpha=False)
         if kind!='BaseColor':image.colorspace_settings.name='Non-Color'
         for mat in body.data.materials:
             nt=mat.node_tree
@@ -361,10 +376,14 @@ def export(name):
     assert not unweighted, 'Unweighted or unnormalized vertices'
     report={'bone_count':len(rig.data.bones),'vertices':len(body.data.vertices),'weight_validation':'pass',
         'animations':clips,'root_motion':False,'rig_style':'deformation skeleton; procedural in-place clips; no facial rig or IK',
-        'external_pbr':pbr_result}
+        'external_pbr':pbr_result,'atlas_size':ATLAS_SIZE}
     (out/'rig-info.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     print('RIG_EXPORT_PASS',name,len(rig.data.bones))
 
 if __name__ == '__main__':
-    export('Shirotsura')
-    export('Ishibashiri')
+    names=['Shirotsura','Ishibashiri']
+    if '--character' in sys.argv:
+        selected=sys.argv[sys.argv.index('--character')+1]
+        if selected not in names:raise ValueError('Unknown character: '+selected)
+        names=[selected]
+    for name in names:export(name)

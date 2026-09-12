@@ -1,7 +1,16 @@
-"""Explicit UE materials for the shared baked atlases; independent of FBX shader translation."""
+"""Explicit UE materials for the shared baked atlases; independent of FBX shader translation.
+
+Set CHARACTER_ASSET_FILTER to Shirotsura or Ishibashiri to update only that model.
+"""
 import unreal
 import json
+import os
 from pathlib import Path
+
+asset_filter = os.environ.get('CHARACTER_ASSET_FILTER', '').strip()
+if asset_filter and asset_filter not in ('Shirotsura', 'Ishibashiri'):
+    raise ValueError('CHARACTER_ASSET_FILTER must be Shirotsura or Ishibashiri, or unset for both')
+characters = (asset_filter,) if asset_filter else ('Shirotsura', 'Ishibashiri')
 
 root=Path(unreal.Paths.project_dir()).resolve()
 asset_tools=unreal.AssetToolsHelpers.get_asset_tools()
@@ -14,12 +23,15 @@ def expression(mat,kind,x,y,prop):
 
 def surface_values(label):
     # Atlas color/normal is shared, but tactile response remains material-specific.
+    if any(k in label for k in ['bronze','bell']): return .42,.78
+    if any(k in label for k in ['iron','fittings']): return .56,.72
+    if 'leather' in label: return .82,0.0
     if any(k in label for k in ['granite','stone','mineral','petrified']): return .91,0.0
     if any(k in label for k in ['cloth','linen','straw','paper','moss','lichen','repair']): return .96,0.0
     if any(k in label for k in ['hide','skin','hand','bristle','hair','root']): return .78,0.0
     if any(k in label for k in ['blade','sharpened']): return .28,.85
     return .86,0.0
-for name in ['Shirotsura','Ishibashiri']:
+for name in characters:
     dest='/Game/Characters/Rigged/'+name
     folder=root/'Art/Characters'/name/'Rigged'
     textures={}
@@ -53,14 +65,15 @@ for name in ['Shirotsura','Ishibashiri']:
             sample.set_editor_property('sampler_type',unreal.MaterialSamplerType.SAMPLERTYPE_COLOR if kind=='BaseColor' else (unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL if kind=='Normal' else unreal.MaterialSamplerType.SAMPLERTYPE_MASKS))
             lib.connect_material_property(sample,'R' if kind=='Roughness' else 'RGB',prop)
         roughness,metallic=surface_values(label)
-        if 'crimson' in label or 'ember' in label:
-            emissive=expression(mat,unreal.MaterialExpressionConstant3Vector,-220,550,unreal.MaterialProperty.MP_EMISSIVE_COLOR)
-            emissive.set_editor_property('constant',unreal.LinearColor(.30,.003,.002,1))
-            lib.connect_material_property(emissive,'',unreal.MaterialProperty.MP_EMISSIVE_COLOR)
-        if metallic:
-            metal=expression(mat,unreal.MaterialExpressionConstant,-220,620,unreal.MaterialProperty.MP_METALLIC)
-            metal.set_editor_property('r',metallic)
-            lib.connect_material_property(metal,'',unreal.MaterialProperty.MP_METALLIC)
+        # Numeric material names survive a mesh reimport even when slot labels
+        # change. Assign both properties for every slot to clear old responses.
+        emissive=expression(mat,unreal.MaterialExpressionConstant3Vector,-220,550,unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+        glow=unreal.LinearColor(.30,.003,.002,1) if 'crimson' in label or 'ember' in label else unreal.LinearColor(0,0,0,1)
+        emissive.set_editor_property('constant',glow)
+        lib.connect_material_property(emissive,'',unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+        metal=expression(mat,unreal.MaterialExpressionConstant,-220,620,unreal.MaterialProperty.MP_METALLIC)
+        metal.set_editor_property('r',metallic)
+        lib.connect_material_property(metal,'',unreal.MaterialProperty.MP_METALLIC)
         lib.recompile_material(mat)
         slot.set_editor_property('material_interface',mat)
         slots[i]=slot

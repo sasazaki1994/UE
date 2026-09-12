@@ -1,7 +1,16 @@
-"""Import deforming meshes, baked surface maps and the matching animation library."""
+"""Import deforming meshes, baked surface maps and the matching animation library.
+
+Set CHARACTER_ASSET_FILTER to Shirotsura or Ishibashiri to import only that model.
+"""
 from pathlib import Path
 import json
+import os
 import unreal
+
+asset_filter = os.environ.get('CHARACTER_ASSET_FILTER', '').strip()
+if asset_filter and asset_filter not in ('Shirotsura', 'Ishibashiri'):
+    raise ValueError('CHARACTER_ASSET_FILTER must be Shirotsura or Ishibashiri, or unset for both')
+characters = (asset_filter,) if asset_filter else ('Shirotsura', 'Ishibashiri')
 
 root=Path(unreal.Paths.project_dir()).resolve()
 asset_tools=unreal.AssetToolsHelpers.get_asset_tools()
@@ -14,7 +23,7 @@ def run(source,dest,name,options):
     asset_tools.import_asset_tasks([task])
     return [unreal.load_asset(p) for p in task.imported_object_paths]
 
-for name in ['Shirotsura','Ishibashiri']:
+for name in characters:
     source=root/'Art/Characters'/name/'Rigged'
     dest='/Game/Characters/Rigged/'+name
     opts=unreal.FbxImportUI()
