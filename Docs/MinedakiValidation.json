@@ -1,0 +1,179 @@
+{
+  "base": "da268ca437e7c53027e5061ff969482141367deb",
+  "validatedOn": "2026-09-14 Asia/Tokyo",
+  "engine": "UE 5.6.1 / Windows Editor Development",
+  "build": "UHT and Editor build succeeded; Saved/Minedaki-final-build.log",
+  "automation": {
+    "devices": [
+      {
+        "deviceName": "ASUS",
+        "instance": "C837CA0D40F34F28DF49A4B4A9C38360",
+        "instanceName": "ASUS-31304",
+        "platform": "WindowsEditor",
+        "oSVersion": "Windows 11 (25H2) [10.0.26200.9445] ",
+        "model": "Default",
+        "gPU": "Intel(R) UHD Graphics",
+        "cPUModel": "13th Gen Intel(R) Core(TM) i7-13620H",
+        "rAMInGB": 16,
+        "renderMode": "SM6",
+        "rHI": "",
+        "appInstanceLog": ""
+      }
+    ],
+    "reportCreatedOn": "2026.09.13-21.30.11",
+    "succeeded": 3,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "totalDuration": 0.28008779883384705,
+    "comparisonExported": false,
+    "comparisonExportDirectory": "",
+    "tests": [
+      {
+        "testDisplayName": "ActionLifecycle",
+        "fullTestPath": "IshibashiriPrototype.Nushi.Minedaki.ActionLifecycle",
+        "state": "Success",
+        "deviceInstance": [
+          "C837CA0D40F34F28DF49A4B4A9C38360"
+        ],
+        "duration": 0.23592759668827057,
+        "dateTime": "2026.09.13-21.30.10",
+        "entries": [],
+        "warnings": 0,
+        "errors": 0,
+        "artifacts": []
+      },
+      {
+        "testDisplayName": "ExhaustionRetry",
+        "fullTestPath": "IshibashiriPrototype.Nushi.Minedaki.ExhaustionRetry",
+        "state": "Success",
+        "deviceInstance": [
+          "C837CA0D40F34F28DF49A4B4A9C38360"
+        ],
+        "duration": 0.025959201157093048,
+        "dateTime": "2026.09.13-21.30.11",
+        "entries": [],
+        "warnings": 0,
+        "errors": 0,
+        "artifacts": []
+      },
+      {
+        "testDisplayName": "LocalTransformFollow",
+        "fullTestPath": "IshibashiriPrototype.Nushi.Minedaki.LocalTransformFollow",
+        "state": "Success",
+        "deviceInstance": [
+          "C837CA0D40F34F28DF49A4B4A9C38360"
+        ],
+        "duration": 0.01820100098848343,
+        "dateTime": "2026.09.13-21.30.11",
+        "entries": [
+          {
+            "event": {
+              "type": "Info",
+              "message": "Peak local drift 0.00000000 cm, 0.00000592 degrees; endpoint Pitch70 Yaw20",
+              "context": "",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.09.13-21.30.11"
+          }
+        ],
+        "warnings": 0,
+        "errors": 0,
+        "artifacts": []
+      }
+    ]
+  },
+  "playthroughAndRegression": [
+    {
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -Minedaki -SkipBuild -Capture -TestFPS 60",
+      "log": "Saved/Logs/Minedaki-60.log",
+      "marker": "MINEDAKI_TEST_PASS",
+      "passLine": "[2026.09.13-21.32.04:454][519]LogTemp: Display: MINEDAKI_TEST_PASS 93bb49d1b98f4649aad84426348671f6 rounds=2 fall_retry=1 seconds=58.649 max_position_error_cm=0.000000 max_rotation_error_deg=0.000006 peak_pitch=70.00 peak_yaw=20.00 peak_roll=24.00 gamepad=0",
+      "mode": "Minedaki keyboard rendered",
+      "passed": true
+    },
+    {
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -Minedaki -SkipBuild -TestFPS 30",
+      "log": "Saved/Logs/Minedaki-30.log",
+      "marker": "MINEDAKI_TEST_PASS",
+      "passLine": "[2026.09.13-21.26.37:843][762]LogTemp: Display: MINEDAKI_TEST_PASS 9a35067a45b8409d8a8ccfa27f623477 rounds=2 fall_retry=1 seconds=58.733 max_position_error_cm=0.000000 max_rotation_error_deg=0.000006 peak_pitch=70.00 peak_yaw=20.00 peak_roll=24.00 gamepad=0",
+      "mode": "Minedaki keyboard 30",
+      "passed": true
+    },
+    {
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -Minedaki -SkipBuild -Gamepad -TestFPS 60",
+      "log": "Saved/Logs/MinedakiGamepad-60.log",
+      "marker": "MINEDAKI_TEST_PASS",
+      "passLine": "[2026.09.13-21.26.50:926][539]LogTemp: Display: MINEDAKI_TEST_PASS 5452d28d97eb446cb050542a9fffe059 rounds=2 fall_retry=1 seconds=58.983 max_position_error_cm=0.000000 max_rotation_error_deg=0.000006 peak_pitch=70.00 peak_yaw=20.00 peak_roll=24.00 gamepad=1",
+      "mode": "Minedaki simulated gamepad 60",
+      "passed": true
+    },
+    {
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -Climbing -Basin -SkipBuild -TestFPS 60",
+      "log": "Saved/Logs/ClimbingTest-60.log",
+      "marker": "CLIMB_TEST_PASS",
+      "passLine": "[2026.09.13-21.23.27:294][344]LogTemp: Display: CLIMB_TEST_PASS 03758af01d08449393cd6d35d80ce304 72.40s",
+      "mode": "Ishibashiri climbing Basin",
+      "passed": true
+    },
+    {
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -Grab -SkipBuild -TestFPS 60",
+      "log": "Saved/Logs/PrototypeGrab-60.log",
+      "marker": "PROTOTYPE_TEST_PASS",
+      "passLine": "[2026.09.13-21.23.36:706][ 34]LogTemp: Display: PROTOTYPE_TEST_PASS f8133915474e4dd4884c79409db6ba73",
+      "mode": "Ishibashiri shared Grab",
+      "passed": true
+    },
+    {
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -Camera -Basin -SkipBuild -TestFPS 60",
+      "log": "Saved/Logs/PrototypeCamera-60.log",
+      "marker": "PROTOTYPE_TEST_PASS",
+      "passLine": "[2026.09.13-21.23.44:638][210]LogTemp: Display: PROTOTYPE_TEST_PASS 8c830114a27f4010ab4c10fcd995498b",
+      "mode": "Ishibashiri camera Basin",
+      "passed": true
+    },
+    {
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -Fuchimatoi -SkipBuild -TestFPS 60",
+      "log": "Saved/Logs/Fuchimatoi-60.log",
+      "marker": "FUCHIMATOI_TEST_PASS",
+      "passLine": "[2026.09.13-21.23.55:930][888]LogTemp: Display: FUCHIMATOI_TEST_PASS 9009d64b2d874c979cc98e1dfa1c5b7c rounds=2 seconds=48.13",
+      "mode": "Fuchimatoi",
+      "passed": true
+    },
+    {
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -Fuchimatoi -Recovery -SkipBuild -TestFPS 60",
+      "log": "Saved/Logs/FuchimatoiRecovery-60.log",
+      "marker": "FUCHIMATOI_TEST_PASS",
+      "passLine": "[2026.09.13-21.24.08:336][476]LogTemp: Display: FUCHIMATOI_TEST_PASS 27f4507bc83e4d3c8c378b43e6762012 rounds=2 seconds=91.27",
+      "mode": "Fuchimatoi Recovery",
+      "passed": true
+    }
+  ],
+  "captureRun": "93bb49d1b98f4649aad84426348671f6",
+  "captureFiles": [
+    "01-Ground.png",
+    "02-LegGrab.png",
+    "03-Waist.png",
+    "04-WallStart.png",
+    "05-Pitch45.png",
+    "06-Cling.png",
+    "07-Shake.png",
+    "08-HighWall.png",
+    "09-UpperLedge.png",
+    "10-Kakon1.png",
+    "11-SliceComplete.png"
+  ],
+  "visualReview": "Ground, leg, waist, preparing, pitch, cling, shake, high wall, upper, Kakon and completion rendered; final lighting and ground framing checked. Player visible during posture changes; HUD confirms 1/3.",
+  "regressionNote": "Regression ran before Minedaki-only arm/lighting/camera refinements. Shared Nushi, Grab, Stamina, Ishibashiri and Fuchimatoi code is unchanged.",
+  "inputNote": "Simulated PlayerController input, fixed timestep. Two clears, retry, deliberate no-cling fall and retry per run. No gameplay state writes in input driver.",
+  "existingStartupWarning": "CR_Shirotsura_Climbing missing in main; unchanged. Test verdicts use current RunId markers and Automation results.",
+  "notValidated": [
+    "physical gamepad and manual feel",
+    "real-time frame-rate performance",
+    "packaged build",
+    "arbitrary camera orbit clearance"
+  ]
+}
