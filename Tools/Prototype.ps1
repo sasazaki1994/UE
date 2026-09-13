@@ -6,6 +6,7 @@ param(
     [switch]$SkipBuild,
     [switch]$Capture,
     [switch]$Basin,
+    [switch]$Fuchimatoi,
     [switch]$HighQuality,
     [switch]$BasinScenario,
     [switch]$Playthrough,
@@ -78,11 +79,14 @@ function Ensure-Map {
 }
 
 try {
+    if ($Fuchimatoi -and ($Basin -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Fuchimatoi is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
+    $LaunchMap = '/Game/Maps/L_Prototype_01'
+    if ($Fuchimatoi) { $LaunchMap += '?game=/Script/IshibashiriPrototype.FuchimatoiGameMode' }
     if (($Camera -or $Playthrough -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad -or $Gamepad -or $BasinScenario -or $TestSeconds -gt 0) -and $Action -ne 'Test') { throw 'Test switches require -Action Test.' }
     if (@(@($Camera, $Playthrough, $Grab, $Climbing, $ClimbingIK, $GrabMotionWarp, $LocalClimbing, $ClimbingGamepad, $Gamepad, $BasinScenario) | Where-Object { $_ }).Count -gt 1) { throw 'Choose one test mode.' }
     if ($BasinScenario -and !$Basin) { throw '-BasinScenario requires -Basin.' }
     if ($TestSeconds -gt 0 -and !$Playthrough) { throw '-TestSeconds requires -Playthrough.' }
-    if ($Capture -and ($Gamepad -or $Grab -or $LocalClimbing)) { throw '-Capture requires route climbing, smoke or playthrough tests.' }
+    if ($Capture -and (($Gamepad -and !$Fuchimatoi) -or $Grab -or $LocalClimbing)) { throw '-Capture requires route climbing, smoke or playthrough tests.' }
     $ResolvedEngine = Find-Engine
     $BuildTool = Join-Path $ResolvedEngine 'Engine\Build\BatchFiles\Build.bat'
     $EditorExe = Join-Path $ResolvedEngine 'Engine\Binaries\Win64\UnrealEditor.exe'
@@ -133,13 +137,13 @@ try {
         'Setup' { Write-Host 'Editor build and prototype map are ready.' }
         'Play' {
             # This is the visible game explicitly requested by the Play action.
-            $PlayArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01', '-game', '-windowed', '-ResX=1280', '-ResY=800', '-NoSplash')
+            $PlayArguments = @($ProjectFile, $LaunchMap, '-game', '-windowed', '-ResX=1280', '-ResY=800', '-NoSplash')
             if ($Basin) { $PlayArguments += '-BasinPrototype' }
             if ($HighQuality) { $PlayArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             & $EditorExe @PlayArguments
         }
         'Editor' {
-            $EditorArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01')
+            $EditorArguments = @($ProjectFile, $LaunchMap)
             if ($Basin) { $EditorArguments += '-BasinPrototype' }
             if ($HighQuality) { $EditorArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             & $EditorExe @EditorArguments
@@ -148,10 +152,13 @@ try {
             $LogDir = Join-Path $ProjectRoot 'Saved\Logs'
             New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
             $LogName = if ($GrabMotionWarp) { "GrabMotionWarp-$TestFPS.log" } elseif ($BasinScenario) { "BasinScenario-$TestFPS.log" } elseif ($Camera) { "PrototypeCamera-$TestFPS.log" } elseif ($Gamepad) { "PrototypeGamepad-$TestFPS.log" } elseif ($ClimbingGamepad) { "ClimbingGamepad-$TestFPS.log" } elseif ($ClimbingIK) { "ClimbingIK-$TestFPS.log" } elseif ($Climbing) { "ClimbingTest-$TestFPS.log" } elseif ($LocalClimbing) { "PrototypeClimbing-$TestFPS.log" } elseif ($Grab) { "PrototypeGrab-$TestFPS.log" } elseif ($Playthrough) { "PrototypePlaythrough-$TestFPS.log" } elseif ($Capture) { "PrototypeVisual-$TestFPS.log" } else { "PrototypeSmoke-$TestFPS.log" }
+            if ($Fuchimatoi) { $LogName = if ($Gamepad) { "FuchimatoiGamepad-$TestFPS.log" } else { "Fuchimatoi-$TestFPS.log" } }
             $LogFile = Join-Path $LogDir $LogName
             $RunId = [guid]::NewGuid().ToString('N')
             $TestFlag = if ($BasinScenario) { '-BasinPlaythroughTest' } elseif ($Camera) { '-PrototypeCameraTest' } elseif ($Gamepad) { '-PrototypeGamepadTest' } elseif ($Climbing -or $ClimbingGamepad -or $ClimbingIK -or $GrabMotionWarp) { '-ClimbingTest' } elseif ($LocalClimbing) { '-PrototypeClimbingTest' } elseif ($Grab) { '-PrototypeGrabTest' } elseif ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
-            $TestArguments = @($ProjectFile, '/Game/Maps/L_Prototype_01', '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
+            if ($Fuchimatoi) { $TestFlag = '-FuchimatoiTest' }
+            $TestArguments = @($ProjectFile, $LaunchMap, '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
+            if ($Fuchimatoi -and $Gamepad) { $TestArguments += '-FuchimatoiGamepad' }
             if ($Basin) { $TestArguments += '-BasinPrototype' }
             if ($HighQuality) { $TestArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             if ($ClimbingGamepad) { $TestArguments += '-ClimbingGamepad' }
@@ -165,6 +172,7 @@ try {
             }
             Invoke-Checked $EditorCmd $TestArguments
             $PassMarker = if ($GrabMotionWarp) { "GRAB_MOTION_WARP_TEST_PASS $RunId" } elseif ($BasinScenario) { "BASIN_SCENARIO_PASS $RunId" } elseif ($ClimbingIK) { "CLIMBING_IK_TEST_PASS $RunId" } elseif ($Climbing -or $ClimbingGamepad) { "CLIMB_TEST_PASS $RunId" } else { "PROTOTYPE_TEST_PASS $RunId" }
+            if ($Fuchimatoi) { $PassMarker = "FUCHIMATOI_TEST_PASS $RunId" }
             if (!(Select-String -LiteralPath $LogFile -SimpleMatch $PassMarker -Quiet)) {
                 throw "Smoke test did not report success for this run. Read $LogFile"
             }
@@ -172,6 +180,10 @@ try {
             if ($Capture) {
                 $CaptureDir = if ($GrabMotionWarp) { Join-Path $ProjectRoot "Saved\Screenshots\GrabMotionWarp\$RunId" } elseif ($BasinScenario) { Join-Path $ProjectRoot "Saved\Screenshots\Basin\$RunId" } elseif ($ClimbingIK) { Join-Path $ProjectRoot "Saved\Screenshots\ClimbingIK\$RunId\After" } elseif ($Climbing -or $ClimbingGamepad) { Join-Path $ProjectRoot "Saved\Screenshots\Climbing\$RunId" } else { Join-Path $ProjectRoot "Saved\Screenshots\Prototype\$RunId" }
                 $ShotNames = if ($GrabMotionWarp) { @('01-BeforeGrab','02-WarpStart','03-Approach','04-BeforeContact','05-Attached','06-ClimbStart') } elseif ($BasinScenario) { @('01-Start','02-BeforeMount','03-FirstLedge','04-Landed','05-Retry') } elseif ($ClimbingIK) { @('01-Grab','02-ForelegClimb','03-HandsContact','04-FeetContact','05-FirstShoulder','06-BossMoving','07-ShakeCling') } elseif ($Camera) { @('06-WallCamera', '07-BossCamera', '09-CameraReturn') } elseif ($Climbing -or $ClimbingGamepad) { @('01-Ground','02-FirstLedge','03-ShoulderCore','04-Summit','05-Victory','06-ThrownOff') } elseif ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera', '09-CameraReturn') }
+                if ($Fuchimatoi) {
+                    $CaptureDir = Join-Path $ProjectRoot "Saved\Screenshots\Fuchimatoi\$RunId"
+                    $ShotNames = @('01-BiteWindup','02-BiteLunge','03-Snagged','04-HeadGrab','05-Kakon1','06-Coiling','07-SnakeToRock','08-Kakon2','09-FinalClimb','10-Victory')
+                }
                 foreach ($Name in $ShotNames) {
                     $Shot = Get-Item -LiteralPath (Join-Path $CaptureDir "$Name.png") -ErrorAction Stop
                     if ($Shot.Length -lt 100) { throw "Screenshot is empty: $($Shot.FullName)" }

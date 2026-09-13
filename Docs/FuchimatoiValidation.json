@@ -1,0 +1,408 @@
+{
+  "baseMain": "52411f55e21ef5d68912457f4a9e96cf89de6cf4",
+  "branch": "codex/work_fuchimatoi-primitive-slice",
+  "engine": "Unreal Engine 5.6.1",
+  "platform": "Windows",
+  "recordedUtc": "2026-09-13T01:18:57.6780632Z",
+  "build": {
+    "command": ".\\Tools\\Prototype.ps1 -Action Build",
+    "result": "Succeeded",
+    "log": "Saved/FuchimatoiValidation/Build.log",
+    "sha256": "DC182D2ED6A2B7FC03B108B001A28A433FC2A8827BDE3D53DDFE6E50825F60B5"
+  },
+  "automation": {
+    "sha256": "189D4585CCA25E581BF896A42470C73FAB4D6596B685EB810F3A0DFF794941F7",
+    "succeededWithWarnings": 0,
+    "tests": [
+      {
+        "fullTestPath": "IshibashiriPrototype.Kakon.ActorStateTransitions",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Kakon.NushiProgress",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.ActionLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.BiteLungeMovement",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.CoilingInvalidInput",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.CoilingProgress",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.PrimitiveIntegration",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.CommonBase",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.EncounterManager",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.IshibashiriIntegration",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.ShelllessKakonLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.StateProgression",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Player.StaminaResource",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      }
+    ],
+    "failed": 0,
+    "filter": "IshibashiriPrototype.",
+    "report": "Saved/FuchimatoiValidation/Automation/index.json",
+    "succeeded": 13
+  },
+  "python": {
+    "sha256": "7B49CBA61957827558C7870E4323743CBA60EBF2A89EC49FA3360D17358C1D0D",
+    "tests": 27,
+    "result": "PASS",
+    "log": "Saved/FuchimatoiValidation/Python-tests.log"
+  },
+  "runs": [
+    {
+      "name": "Fuchimatoi keyboard capture 60",
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -SkipBuild -Fuchimatoi -Capture -TestFPS 60",
+      "result": "PASS",
+      "runId": "4b6d6794206947f6afe4d3903ce2e663",
+      "marker": "[2026.09.12-09.51.25:252][888]LogTemp: Display: FUCHIMATOI_TEST_PASS 4b6d6794206947f6afe4d3903ce2e663 rounds=2 seconds=48.13",
+      "log": "Saved/FuchimatoiValidation/Final60.log",
+      "sha256": "ED8E065F4EDFE0BA0AFDB915EFA2B98E73E988E237C531DBD484F68F01FBCE8D"
+    },
+    {
+      "name": "Fuchimatoi keyboard 30",
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -SkipBuild -Fuchimatoi -TestFPS 30",
+      "result": "PASS",
+      "runId": "d5a220cf7bb44bc0b7dd20de8c1728c5",
+      "marker": "[2026.09.12-09.53.34:100][435]LogTemp: Display: FUCHIMATOI_TEST_PASS d5a220cf7bb44bc0b7dd20de8c1728c5 rounds=2 seconds=47.83",
+      "log": "Saved/FuchimatoiValidation/Final30.log",
+      "sha256": "1FBAE7C3B3120730D8D4A8DE0C89831D9A60FB39489FA2A97314CD600CB8C608"
+    },
+    {
+      "name": "Fuchimatoi gamepad 60",
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -SkipBuild -Fuchimatoi -Gamepad -TestFPS 60",
+      "result": "PASS",
+      "runId": "f32c1e6a06874cb1b12850732fb124b9",
+      "marker": "[2026.09.12-09.53.43:858][877]LogTemp: Display: FUCHIMATOI_TEST_PASS f32c1e6a06874cb1b12850732fb124b9 rounds=2 seconds=47.93",
+      "log": "Saved/FuchimatoiValidation/Gamepad60.log",
+      "sha256": "A1289F52997C7342582639D8886FEF8E4B83BB2678BD19EF32C910B2DCBED60E"
+    },
+    {
+      "name": "Ishibashiri Climbing Basin 60",
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -SkipBuild -Climbing -Basin -TestFPS 60",
+      "result": "PASS",
+      "runId": "1c0b52102a404933b25890c965be8641",
+      "marker": "[2026.09.12-09.48.19:195][344]LogTemp: Display: CLIMB_TEST_PASS 1c0b52102a404933b25890c965be8641 72.40s",
+      "log": "Saved/FuchimatoiValidation/Regression-Climbing.log",
+      "sha256": "7EDD374A8A55444624435ADBFD2B22589F0332093BD0178D2FC1E8300EB3AD39"
+    },
+    {
+      "name": "Ishibashiri ClimbingGamepad Basin 60",
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -SkipBuild -ClimbingGamepad -Basin -TestFPS 60",
+      "result": "PASS",
+      "runId": "4a94cf12ea0d43ca8a3462ae5ee9998e",
+      "marker": "[2026.09.12-09.48.29:668][344]LogTemp: Display: CLIMB_TEST_PASS 4a94cf12ea0d43ca8a3462ae5ee9998e 72.40s",
+      "log": "Saved/FuchimatoiValidation/Regression-ClimbingGamepad.log",
+      "sha256": "D54CD4FA7313708AF1E74FEC31EB23503DFF8CCA26B98FBFE699D8A025180741"
+    },
+    {
+      "name": "Ishibashiri Grab 60",
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -SkipBuild -Grab -TestFPS 60",
+      "result": "PASS",
+      "runId": "f815941664fd40f88baf1669a7d73a95",
+      "marker": "[2026.09.12-09.48.37:703][ 34]LogTemp: Display: PROTOTYPE_TEST_PASS f815941664fd40f88baf1669a7d73a95",
+      "log": "Saved/FuchimatoiValidation/Regression-Grab.log",
+      "sha256": "8DF6414FF22C7103CDD12F8509A2D26BFF5B0757FC7C4E8434D544A7C2408C69"
+    },
+    {
+      "name": "Ishibashiri Camera Basin 60",
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -SkipBuild -Camera -Basin -TestFPS 60",
+      "result": "PASS",
+      "runId": "cf0e9007a7474c94a6a9f92cb2b92d57",
+      "marker": "[2026.09.12-09.48.44:465][210]LogTemp: Display: PROTOTYPE_TEST_PASS cf0e9007a7474c94a6a9f92cb2b92d57",
+      "log": "Saved/FuchimatoiValidation/Regression-Camera.log",
+      "sha256": "6F26C4DD0784863D26E13B9047131F7D3E847445F9270414D0D5077A69B4DDA5"
+    }
+  ],
+  "captureRunId": "4b6d6794206947f6afe4d3903ce2e663",
+  "captures": [
+    {
+      "path": "Docs/FuchimatoiCaptures/01-BiteWindup.png",
+      "bytes": 371373,
+      "sha256": "4D8974BADC235E7A931001502052D54609C37A59D6F70C200BCC45A315915F80"
+    },
+    {
+      "path": "Docs/FuchimatoiCaptures/02-BiteLunge.png",
+      "bytes": 367350,
+      "sha256": "99F4739744F7CC85BA203C17F174746A1A4AA62755BCCF9A3B25F6596EF986F9"
+    },
+    {
+      "path": "Docs/FuchimatoiCaptures/03-Snagged.png",
+      "bytes": 425368,
+      "sha256": "320332932E20AFB67E86EBC4658B3AD76C6BFCFBFE782627022024608C4C8534"
+    },
+    {
+      "path": "Docs/FuchimatoiCaptures/04-HeadGrab.png",
+      "bytes": 444223,
+      "sha256": "CBF340438375008AF645D540337B4E9DAB8205E17BA4384CA9037E87AB20F84D"
+    },
+    {
+      "path": "Docs/FuchimatoiCaptures/05-Kakon1.png",
+      "bytes": 177969,
+      "sha256": "AADF306ED0DCA8EDC2EA17CCD8B12A5AD4C8B4666C2AFC840E015B9A4FC28102"
+    },
+    {
+      "path": "Docs/FuchimatoiCaptures/06-Coiling.png",
+      "bytes": 429340,
+      "sha256": "B74A46DD10A8692C604B7B5D6120E2973B226D40A757E32DBB901C0429E8AAF9"
+    },
+    {
+      "path": "Docs/FuchimatoiCaptures/07-SnakeToRock.png",
+      "bytes": 405481,
+      "sha256": "06EF745CA9D9DCF44555D8B6C807960577CE403608704B40EF32697A45613ADC"
+    },
+    {
+      "path": "Docs/FuchimatoiCaptures/08-Kakon2.png",
+      "bytes": 206885,
+      "sha256": "411979E2DE1D24BB9F9EADDD1346F868C81D15FE94AE9DF471371EEAA2359751"
+    },
+    {
+      "path": "Docs/FuchimatoiCaptures/09-FinalClimb.png",
+      "bytes": 340469,
+      "sha256": "B8005603F3D103BD57B69CC9D154CE4C53F3E7149828FF955E89A334E2B1F2DB"
+    },
+    {
+      "path": "Docs/FuchimatoiCaptures/10-Victory.png",
+      "bytes": 277856,
+      "sha256": "FD8B8EE64D96958B1C7D822645DF7A23E03122D9A2B036CD6AA76D5D6B56B6CE"
+    }
+  ],
+  "sources": [
+    {
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiArena.h",
+      "sha256": "FA3C787EE41A7B9E2D65C6F4838B86A68BDCC4F658AC8436ADB7BB8F7925FB22"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiBoss.h",
+      "sha256": "57E43654D568E8CA6BFB7644A74FFBAF6DA0A20BC29747E1BAD7080CC8B5204A"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiGameMode.h",
+      "sha256": "2F32ECBEF0524CB8332F5B1ED6C66B1E1182E13904309BD5EEF542EB894C61B9"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiHUD.h",
+      "sha256": "DA794674A29938F347197E35E95DFE2921769BF798F8285B8BA0F78BA4C518C4"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiIntegrationTest.h",
+      "sha256": "5957C582ECB1F43E630CABDA595A3142F73C9A7580689BD304BB60FAAEBD3AA1"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiPlayer.h",
+      "sha256": "4992DF93BC910AF6F103D64D2C4622F8F4AAB40A25D849956EB3E71604A4C528"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiRouteAnchor.h",
+      "sha256": "D0D99BB3916B1A11FE713A0DABEAF70CE981E7994422C732C7C2B8BC1072AA5D"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiSimulationComponent.h",
+      "sha256": "B883A48EBA8CFA5B09CFF192D03B4F67FD20DBBDF69C47AE30BC19D55C268D12"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiArena.cpp",
+      "sha256": "CD77715E20D7E71F17A3943ED1EFF3595FD80BF0E7537807849BAB744A62F329"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiBoss.cpp",
+      "sha256": "961F06D4211B3704182408A06B7C17B8D04022C6B2B964F81FC79E0A44BB1689"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiBossTests.cpp",
+      "sha256": "F11BF099A2DD3D1FFD8E202FD6EE2FC09CA1D13890082761F6B5DDBB434B5A69"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiGameMode.cpp",
+      "sha256": "4801CF50E429E7393E1577C77183F25F122E033D43439D7D84EE2D8B870C726A"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiHUD.cpp",
+      "sha256": "A19228FCF8408825024904920511C9309023E7ED2325CD408C6AFAC3F20CA8EC"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiIntegrationTest.cpp",
+      "sha256": "FACE59460F20D96AD8AFF1861D1F291D94B410BB66AEF8CE9E2E4753593802EE"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiPlayer.cpp",
+      "sha256": "23CA4600BA03C70F862DDE5233D5028B801F185EEC81EA506DA38F74DE6911FA"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiPrimitiveTests.cpp",
+      "sha256": "0BCA2FF7B4897A49C4F4DD0C49AC93F4F79A2316BC579070BEED5550DBB2F81D"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiRouteAnchor.cpp",
+      "sha256": "9E01F3EDA4476DBCE5DEFEDFB02719DFF1E95ADEBB349EA16B5B6F053A6672F5"
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiSimulationComponent.cpp",
+      "sha256": "9D13FBA8CE39AB87FCD9F2B94D218A813E3ED44274804B4B8B326CC195A7141C"
+    },
+    {
+      "path": "Tools/Prototype.ps1",
+      "sha256": "BC61B64FBE753CC43ED26F9462FC2002FD08BC2931179A613A4297587E7A1648"
+    }
+  ],
+  "preserved": [
+    {
+      "path": "Config/DefaultEngine.ini",
+      "gitBlob": "e744f5be29c6aceb06c63e7b95e8e5ee5c077ac3",
+      "matchesMain": true
+    },
+    {
+      "path": "Config/DefaultGame.ini",
+      "gitBlob": "2dfad25a94b1de705be0bceada84ac99ad9aa9dd",
+      "matchesMain": true
+    },
+    {
+      "path": "Config/DefaultInput.ini",
+      "gitBlob": "339bd0cb32b3544a99c25151975a72eecb65b40d",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/GrabComponent.cpp",
+      "gitBlob": "75feba065486797e321cf55002194d15b4083600",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/IshibashiriBoss.cpp",
+      "gitBlob": "698c62b031ba993945ff98fff0ce764d4b08763d",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/NushiBase.cpp",
+      "gitBlob": "9e7fa96a4c715bf489fe19e3b0a532cda2cbddf7",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/NushiEncounterManager.cpp",
+      "gitBlob": "ae058817f47dd6982801907a34448b6d100d6cee",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/NushiProgressComponent.cpp",
+      "gitBlob": "47e7da8fce54342f2113fd73e8d0e09ff0b47154",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/NushiStateComponent.cpp",
+      "gitBlob": "c17f7aa63fe691f39e37ed30f639ead6182337a1",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/PrototypePlayer.cpp",
+      "gitBlob": "d9befce0fe3a8bc954664a2127a6d068a0bb562c",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Private/StaminaComponent.cpp",
+      "gitBlob": "c7c9ad6c803f67bad5369ef86f3c5eea3a68b8e9",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/GrabComponent.h",
+      "gitBlob": "dc27d64f40187ca9f9d4c1dc06e3875ccdc2a66f",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/IshibashiriBoss.h",
+      "gitBlob": "47352ffd6fe084504a6e2713a5b88c618b2f08b0",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/NushiBase.h",
+      "gitBlob": "d64f170851c08a4b1915b51eeba1a13d415986f3",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/NushiEncounterManager.h",
+      "gitBlob": "9dc5659f6909a1943b6388f0a70556584c87f8a0",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/NushiProgressComponent.h",
+      "gitBlob": "de5a6b6cec47f0ce513855a3a9f6a0057083f358",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/NushiStateComponent.h",
+      "gitBlob": "2a97463ae25a00100fe2e20a69dbce5e444474cb",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/PrototypePlayer.h",
+      "gitBlob": "cb609d55cfa826044f7343f880b8ee97ee47584b",
+      "matchesMain": true
+    },
+    {
+      "path": "Source/IshibashiriPrototype/Public/StaminaComponent.h",
+      "gitBlob": "cdfcfd83182493abfa2184b7eccba7991db437b8",
+      "matchesMain": true
+    }
+  ],
+  "limitations": [
+    "Fixed simulation FPS tests do not certify GPU frame rate.",
+    "Control Rig missing-asset and startup Condition failed messages also occur in previous baseline logs; automation report has 13 successes and zero failed tests.",
+    "Coiling changes centerline length from 27.28m to 54.61m.",
+    "Falling after Coiling requires Retry; no remount route or checkpoint.",
+    "Full packaging and exhaustive camera-angle/failure-path testing were not performed."
+  ],
+  "verificationScope": "Full final Fuchimatoi input runs follow the last camera change. Ishibashiri regression was run before that Fuchimatoi-only camera adjustment; Ishibashiri sources and shared components are unchanged."
+}

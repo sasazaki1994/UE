@@ -4,6 +4,12 @@
 #include "NushiBase.h"
 #include "FuchimatoiBoss.generated.h"
 
+class AFuchimatoiArena;
+class AFuchimatoiPlayer;
+class AFuchimatoiRouteAnchor;
+class UFuchimatoiSimulationComponent;
+class UStaticMeshComponent;
+
 UENUM(BlueprintType)
 enum class EFuchimatoiActionState : uint8
 {
@@ -24,6 +30,22 @@ class ISHIBASHIRIPROTOTYPE_API AFuchimatoiBoss : public ANushiBase
 
 public:
     AFuchimatoiBoss();
+    virtual void ResetNushi() override;
+    void ConfigureEncounter(AFuchimatoiArena* Arena, AFuchimatoiPlayer* Player);
+    void AdvanceEncounter(float Dt);
+    AFuchimatoiRouteAnchor* GetRouteAnchor(int32 Node) const;
+    AKakonActor* GetKakon(int32 Index) const;
+    FVector GetHeadWorldLocation() const;
+    bool CanMount() const;
+    bool TryPurifyAtNode(int32 Node);
+    FString GetActionLabel() const;
+    float GetActionTimeRemaining() const { return ActionTimeRemaining; }
+    float GetBodyLength() const;
+    static constexpr int32 RouteNodeCount = 10;
+
+    UPROPERTY(EditAnywhere, Category="Nushi|Fuchimatoi|Bite") float WindupDuration = 1.25f;
+    UPROPERTY(EditAnywhere, Category="Nushi|Fuchimatoi|Bite") float SubmergedDuration = 1.5f;
+    UPROPERTY(EditAnywhere, Category="Nushi|Fuchimatoi|Bite") float SnaggedDuration = 4.5f;
 
     UFUNCTION(BlueprintCallable, Category="Nushi|Fuchimatoi")
     void BeginBiteWindup();
@@ -91,6 +113,24 @@ public:
     float CoilingDuration = 2.f;
 
 private:
+    void CreatePrimitiveBody();
+    void UpdateBody();
+    void WithdrawHead();
+    UFUNCTION() void HandleKakonPurified(AKakonActor* Kakon);
+
+    UPROPERTY() TObjectPtr<UFuchimatoiSimulationComponent> Simulation;
+    UPROPERTY() TObjectPtr<AFuchimatoiArena> Arena;
+    UPROPERTY() TObjectPtr<AFuchimatoiPlayer> Player;
+    UPROPERTY() TObjectPtr<UStaticMeshComponent> Head;
+    UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> BodySegments;
+    UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> BodyJoints;
+    UPROPERTY() TArray<TObjectPtr<AFuchimatoiRouteAnchor>> RouteAnchors;
+    UPROPERTY() TArray<TObjectPtr<AKakonActor>> KakonActors;
+    UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> KakonMarkers;
+    FTransform EncounterSpawn;
+    float ActionTimeRemaining = 0.f;
+    bool bPlayable = false;
+
     void TryTransition(EFuchimatoiActionState ExpectedState, EFuchimatoiActionState NewState);
     void SetActionState(EFuchimatoiActionState NewState);
 
