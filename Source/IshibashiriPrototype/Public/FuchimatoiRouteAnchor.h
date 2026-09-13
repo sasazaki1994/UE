@@ -12,6 +12,7 @@ class ISHIBASHIRIPROTOTYPE_API AFuchimatoiRouteAnchor : public AActor
 public:
     AFuchimatoiRouteAnchor();
     void Configure(bool bRock, int32 Index);
+    void SetGuidance(bool bVisible, bool bHighlighted, bool bGrab=false);
     bool IsRock() const { return bRockAnchor; }
 private:
     UPROPERTY() TObjectPtr<UStaticMeshComponent> Marker;

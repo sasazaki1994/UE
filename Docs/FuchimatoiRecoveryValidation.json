@@ -1,0 +1,322 @@
+{
+  "baseMain": "23d200abbb1b4d72b6a7dc2c937c4a632bde4699",
+  "branch": "codex/work_fuchimatoi-recovery",
+  "recordedUtc": "2026-09-13T01:50:31.4668052Z",
+  "engine": "5.6.1",
+  "build": {
+    "sha256": "26A250379848DE7F37AF0628C1946A12591E1CA21D52A585267B7E41F358547F",
+    "log": "Saved/FuchimatoiRecoveryValidation/Build.log",
+    "result": "Succeeded"
+  },
+  "automation": {
+    "sha256": "23C2B25AC60013C394B2CD26ADE57D7B2ECBFD6B9B19E8977AE36B21C9332174",
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "report": "Saved/FuchimatoiRecoveryValidation/Automation/index.json",
+    "succeeded": 13,
+    "tests": [
+      {
+        "fullTestPath": "IshibashiriPrototype.Kakon.ActorStateTransitions",
+        "state": "Success"
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Kakon.NushiProgress",
+        "state": "Success"
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.ActionLifecycle",
+        "state": "Success"
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.BiteLungeMovement",
+        "state": "Success"
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.CoilingInvalidInput",
+        "state": "Success"
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.CoilingProgress",
+        "state": "Success"
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.Fuchimatoi.PrimitiveIntegration",
+        "state": "Success"
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.CommonBase",
+        "state": "Success"
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.EncounterManager",
+        "state": "Success"
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.IshibashiriIntegration",
+        "state": "Success"
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.ShelllessKakonLifecycle",
+        "state": "Success"
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Nushi.StateProgression",
+        "state": "Success"
+      },
+      {
+        "fullTestPath": "IshibashiriPrototype.Player.StaminaResource",
+        "state": "Success"
+      }
+    ]
+  },
+  "tests": [
+    {
+      "sha256": "50383FC51D4974CA3C809E3C8D83B8EA2AF0F75F8C5198892C2E53FF58317C99",
+      "result": "PASS",
+      "marker": "FUCHIMATOI_TEST_PASS 40b0e01048a346348c826ccb9fc29cdb rounds=2 seconds=48.13",
+      "completedTelemetry": [
+        "FUCHIMATOI_TELEMETRY event=Completed bite_attempts=1 player_hits=0 rock_lures=1 snags=1 grab_attempts=1 grab_successes=1 falls=0 recovery_grabs=0 kakon_purified=3 elapsed=21.57 completion_time=21.57",
+        "FUCHIMATOI_TELEMETRY event=Completed bite_attempts=1 player_hits=0 rock_lures=1 snags=1 grab_attempts=1 grab_successes=1 falls=0 recovery_grabs=0 kakon_purified=3 elapsed=21.57 completion_time=21.57"
+      ],
+      "runId": "40b0e01048a346348c826ccb9fc29cdb",
+      "log": "Saved\\FuchimatoiRecoveryValidation\\Fuchimatoi-60.log"
+    },
+    {
+      "sha256": "0F2B426646752CA09570533728661FC374B046343C9123E78867F1853BF61FF0",
+      "result": "PASS",
+      "marker": "FUCHIMATOI_TEST_PASS 76e054e1898d4188b2d7bf147bd9503a rounds=2 seconds=47.83",
+      "completedTelemetry": [
+        "FUCHIMATOI_TELEMETRY event=Completed bite_attempts=1 player_hits=0 rock_lures=1 snags=1 grab_attempts=1 grab_successes=1 falls=0 recovery_grabs=0 kakon_purified=3 elapsed=21.40 completion_time=21.40",
+        "FUCHIMATOI_TELEMETRY event=Completed bite_attempts=1 player_hits=0 rock_lures=1 snags=1 grab_attempts=1 grab_successes=1 falls=0 recovery_grabs=0 kakon_purified=3 elapsed=21.40 completion_time=21.40"
+      ],
+      "runId": "76e054e1898d4188b2d7bf147bd9503a",
+      "log": "Saved\\FuchimatoiRecoveryValidation\\Fuchimatoi-30.log"
+    },
+    {
+      "sha256": "5611B25241577FC89DCFB825BE1DEE23AA07FE83924803D75B93BBB8B0C249A6",
+      "result": "PASS",
+      "marker": "FUCHIMATOI_TEST_PASS b44f1884ee98427f8ce6b7c3af93830a rounds=2 seconds=47.93",
+      "completedTelemetry": [
+        "FUCHIMATOI_TELEMETRY event=Completed bite_attempts=1 player_hits=0 rock_lures=1 snags=1 grab_attempts=1 grab_successes=1 falls=0 recovery_grabs=0 kakon_purified=3 elapsed=21.47 completion_time=21.47",
+        "FUCHIMATOI_TELEMETRY event=Completed bite_attempts=1 player_hits=0 rock_lures=1 snags=1 grab_attempts=1 grab_successes=1 falls=0 recovery_grabs=0 kakon_purified=3 elapsed=21.47 completion_time=21.47"
+      ],
+      "runId": "b44f1884ee98427f8ce6b7c3af93830a",
+      "log": "Saved\\FuchimatoiRecoveryValidation\\FuchimatoiGamepad-60.log"
+    },
+    {
+      "sha256": "28CDA352D9EDB957E7ABF9B1567DD45DF78E02CCF96285708B3B06D1EA5EB646",
+      "result": "PASS",
+      "marker": "FUCHIMATOI_TEST_PASS 029e2a1c0b6644ef8ec15f021a5c9cd8 rounds=2 seconds=91.27",
+      "completedTelemetry": [
+        "FUCHIMATOI_TELEMETRY event=Completed bite_attempts=5 player_hits=1 rock_lures=2 snags=2 grab_attempts=7 grab_successes=3 falls=2 recovery_grabs=2 kakon_purified=3 elapsed=64.70 completion_time=64.70",
+        "FUCHIMATOI_TELEMETRY event=Completed bite_attempts=1 player_hits=0 rock_lures=1 snags=1 grab_attempts=1 grab_successes=1 falls=0 recovery_grabs=0 kakon_purified=3 elapsed=21.57 completion_time=21.57"
+      ],
+      "runId": "029e2a1c0b6644ef8ec15f021a5c9cd8",
+      "log": "Saved\\FuchimatoiRecoveryValidation\\FuchimatoiRecovery-60.log"
+    },
+    {
+      "sha256": "454E5271261B691EACDD2491303AA26E183669BFB867EDD0438C1B50C4F714A5",
+      "result": "PASS",
+      "marker": "FUCHIMATOI_TEST_PASS a4966c8436444d0985e20225872b7ad8 rounds=2 seconds=91.07",
+      "completedTelemetry": [
+        "FUCHIMATOI_TELEMETRY event=Completed bite_attempts=5 player_hits=1 rock_lures=2 snags=2 grab_attempts=7 grab_successes=3 falls=2 recovery_grabs=2 kakon_purified=3 elapsed=64.63 completion_time=64.63",
+        "FUCHIMATOI_TELEMETRY event=Completed bite_attempts=1 player_hits=0 rock_lures=1 snags=1 grab_attempts=1 grab_successes=1 falls=0 recovery_grabs=0 kakon_purified=3 elapsed=21.40 completion_time=21.40"
+      ],
+      "runId": "a4966c8436444d0985e20225872b7ad8",
+      "log": "Saved\\FuchimatoiRecoveryValidation\\FuchimatoiRecovery-30.log"
+    },
+    {
+      "sha256": "5D53019A4998DD3411D2D1EFAF76BDC7CC3FF70AEC8A00D988D213C745B0B67A",
+      "result": "PASS",
+      "marker": "FUCHIMATOI_TEST_PASS 40206bb2a5d545ba833d623aaa04f096 rounds=2 seconds=91.31",
+      "completedTelemetry": [
+        "FUCHIMATOI_TELEMETRY event=Completed bite_attempts=5 player_hits=1 rock_lures=2 snags=2 grab_attempts=7 grab_successes=3 falls=2 recovery_grabs=2 kakon_purified=3 elapsed=64.83 completion_time=64.83",
+        "FUCHIMATOI_TELEMETRY event=Completed bite_attempts=1 player_hits=0 rock_lures=1 snags=1 grab_attempts=1 grab_successes=1 falls=0 recovery_grabs=0 kakon_purified=3 elapsed=21.47 completion_time=21.47"
+      ],
+      "runId": "40206bb2a5d545ba833d623aaa04f096",
+      "log": "Saved\\FuchimatoiRecoveryValidation\\FuchimatoiRecoveryGamepad-60.log"
+    },
+    {
+      "sha256": "48F23C4858E0A130F480A134A6B01F9C5D80C6285D314EA8F0EF1EB3EA1AE89E",
+      "result": "PASS",
+      "marker": "CLIMB_TEST_PASS a8b5b3d0ed7240c3aba05b09328ab715 72.40s",
+      "completedTelemetry": [],
+      "runId": "a8b5b3d0ed7240c3aba05b09328ab715",
+      "log": "Saved\\FuchimatoiRecoveryValidation\\ClimbingTest-60.log"
+    },
+    {
+      "sha256": "5B3B1DAFFFB46054636CED47A55732D5325913DBE2C204488AE60D47DA5598D9",
+      "result": "PASS",
+      "marker": "CLIMB_TEST_PASS c83f9faf07ba4b4f8eecd1cf6feac7d6 72.40s",
+      "completedTelemetry": [],
+      "runId": "c83f9faf07ba4b4f8eecd1cf6feac7d6",
+      "log": "Saved\\FuchimatoiRecoveryValidation\\ClimbingGamepad-60.log"
+    },
+    {
+      "sha256": "4A4146E46FD1CD033224AFDD7B3C725219647F17E30707F19B78C165A86E8EEC",
+      "result": "PASS",
+      "marker": "PROTOTYPE_TEST_PASS 3ae70fab94fa47afa889ea19a73682ec",
+      "completedTelemetry": [],
+      "runId": "3ae70fab94fa47afa889ea19a73682ec",
+      "log": "Saved\\FuchimatoiRecoveryValidation\\PrototypeGrab-60.log"
+    },
+    {
+      "sha256": "952DA3C1E7F5FE9333F2508C49C7D092834CC2ADCC0E79A6569A4A8B386B519E",
+      "result": "PASS",
+      "marker": "PROTOTYPE_TEST_PASS 0b921c8ca5964346bab8ec0acb19e1d3",
+      "completedTelemetry": [],
+      "runId": "0b921c8ca5964346bab8ec0acb19e1d3",
+      "log": "Saved\\FuchimatoiRecoveryValidation\\PrototypeCamera-60.log"
+    }
+  ],
+  "captureRunId": "029e2a1c0b6644ef8ec15f021a5c9cd8",
+  "captureSource": "Saved\\Screenshots\\Fuchimatoi\\029e2a1c0b6644ef8ec15f021a5c9cd8",
+  "captures": [
+    {
+      "sha256": "E2DAB347505EF44D3E609077C0ADD540CA1D91B0C6E8FB5DBB89A994051CFB02",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\01-BiteWindup.png",
+      "bytes": 369500
+    },
+    {
+      "sha256": "D0603D508882BD3F43FAE105E8A2DE8BEBC428893DDCB019E9DC392006045D21",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\02-BiteLunge.png",
+      "bytes": 369951
+    },
+    {
+      "sha256": "176D17C1E35733C089381A0A7C920B4EE158D4440053D0AD1B1E76C1EF27EBA9",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\03-Snagged.png",
+      "bytes": 417751
+    },
+    {
+      "sha256": "1C5650CF387F59E779319A78CAFC070978D8BAD6CC8CEF64D27CDDFECAAE6281",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\04-HeadGrab.png",
+      "bytes": 443324
+    },
+    {
+      "sha256": "18BCD2793D7737128CE6E6FCC024F4960FE7ABEBE90F0AAD89262E4AF02270FC",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\05-Kakon1.png",
+      "bytes": 176792
+    },
+    {
+      "sha256": "B7633726A526D87F7DBCF342CF5F28349D5997B5B55A22E1942DA5631A3EC8A6",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\06-Coiling.png",
+      "bytes": 433443
+    },
+    {
+      "sha256": "AFFE54E5639CCFF016ECEAAE768AF4DD7DAE6DDB97D3B987A6ACD0F4C9D0A9B7",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\07-SnakeToRock.png",
+      "bytes": 400617
+    },
+    {
+      "sha256": "18BB7E3AD015CD75244B0129721FAFC33F72EE3973082F1619199C0E53D83350",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\08-Kakon2.png",
+      "bytes": 205232
+    },
+    {
+      "sha256": "EA545BED68E95C5D2419B8AF8F698C9F3B6233CA28B5C7F2AEA931018540B769",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\09-FinalClimb.png",
+      "bytes": 70929
+    },
+    {
+      "sha256": "F0584845411603E8890ECBDD9F34BE3903EDAB664B221E85FEB0ACBC4C29A343",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\10-Victory.png",
+      "bytes": 277887
+    },
+    {
+      "sha256": "7B90FA6F847A40014F11C52D29C491D0B1A77C5BF5977897DD98586588C6B4B5",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\11-IntentionalFall.png",
+      "bytes": 426575
+    },
+    {
+      "sha256": "19C6DAAE651F006887D932B1938925B722D05322D11358934E7035714D2E2C14",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\12-RecoveryPoint.png",
+      "bytes": 418613
+    },
+    {
+      "sha256": "E0A8A6069C005D45C2C38579079B27C81155BCE292E38C81C8485A51F44EA1D6",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\13-RecoveryGrab.png",
+      "bytes": 412534
+    },
+    {
+      "sha256": "19F489DE16978C6FA2DF146144B2452E59D4534CBC16AC6154F9CE1063562169",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\14-RouteRecovered.png",
+      "bytes": 399065
+    },
+    {
+      "sha256": "A8D315460CBBA746C6F005D91EDA9E53ACBEFA58D01ED5976265189306963E67",
+      "path": "Docs\\FuchimatoiRecoveryCaptures\\15-SecondFall.png",
+      "bytes": 428180
+    }
+  ],
+  "sourceFiles": [
+    {
+      "sha256": "71FCE2855A7F2369AE65BE59B50882700EC70A9755B1CE018E2A4A217C2E5A62",
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiArena.cpp"
+    },
+    {
+      "sha256": "7EB62804B50E3F00AF90F26DBBA74BADB172541E8FF412414B3319DCAE072109",
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiBoss.cpp"
+    },
+    {
+      "sha256": "4C5CED9CF8A53A1D8611E8F2F25933B7519A7C578036E4BB5E487B712A035078",
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiGameMode.cpp"
+    },
+    {
+      "sha256": "4C1D13816AFD3889B51CEAB4596CE8683ABADB1F2B368EA1AFE222C529F35E65",
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiHUD.cpp"
+    },
+    {
+      "sha256": "E4FE15C3899D576E689F4F94735ED980485E4FCA621FD1C08ABEA9E598E2D0A9",
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiIntegrationTest.cpp"
+    },
+    {
+      "sha256": "5989D92CC49FB8997EBF39A565C9A56CF958B7AC597263796D2846B93AF837F2",
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiPlayer.cpp"
+    },
+    {
+      "sha256": "F206D4B9577513347EE60FBDC70052234A522998FCA098F5CF59A6573E942631",
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiRouteAnchor.cpp"
+    },
+    {
+      "sha256": "5BFB2A7D51DA2989CDFA3842BF9DFDA7AEF723C28DB83590F1024ADCA2D1DF3D",
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiArena.h"
+    },
+    {
+      "sha256": "333889379AF9E680BA3CB8427479EBD1C6C06139F95B0322A52CA3B6C9B9C91F",
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiBoss.h"
+    },
+    {
+      "sha256": "3B3F9802DC30812EDAAD018CDD16D463C27CA3D7D5F1805D53ACB4E07C939F28",
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiIntegrationTest.h"
+    },
+    {
+      "sha256": "E9D12E2666A9DFAC8FD8798E45EFF3FF9E273F38871CD29062CA9F93B9A8D9EA",
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiPlayer.h"
+    },
+    {
+      "sha256": "F69F30CED8689D161A0C3DC2E967E8E09E737D6D6F4441DC0816389928CFE294",
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiRouteAnchor.h"
+    },
+    {
+      "sha256": "EC2DEB928BA3DC3C92FB8625E99A69F9EFE05C30D19656A72128DE7D6E1F0D33",
+      "path": "Tools/Prototype.ps1"
+    }
+  ],
+  "bodyLengthCm": {
+    "initial": 2728.41,
+    "coiled": 5461.25,
+    "layoutChanged": false
+  },
+  "testFixtures": [
+    "InputKey for all travel/grab/detach/dodge/purify/retry",
+    "Stamina deliberately depleted on ground only to test rejection at below 25",
+    "Camera yaw/pitch fixture: 72 samples each at BaitRock, RockLedge, RockPillar"
+  ],
+  "limitations": [
+    "Fixed timestep validation, not a GPU performance guarantee",
+    "No physical gamepad hardware validation",
+    "No packaged or Shipping validation",
+    "Representative camera and fall locations only",
+    "No first-time human usability test"
+  ]
+}

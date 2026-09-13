@@ -16,6 +16,7 @@ class ISHIBASHIRIPROTOTYPE_API AFuchimatoiPlayer : public ACharacter
 public:
     AFuchimatoiPlayer();
     virtual void Tick(float Dt) override;
+    virtual void CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) override;
     virtual void SetupPlayerInputComponent(UInputComponent* Input) override;
     void ConfigureBoss(AFuchimatoiBoss* InBoss);
     void ResetForEncounter(const FTransform& Spawn);
@@ -23,15 +24,20 @@ public:
     bool CanAct() const;
     bool ReceiveBite();
     bool IsMounted() const;
+    bool IsOnRecoveryGround() const;
+    bool IsRecovering() const { return bRecoveryApproach; }
     bool IsDodging() const { return DodgeRemaining>0; }
     bool IsRouteMoving() const { return Destination!=INDEX_NONE; }
     int32 GetRouteNode() const { return Node; }
+    int32 GetGuidanceNode() const;
     int32 GetHealth() const { return Health; }
     UStaminaComponent* GetStamina() const { return Stamina; }
     UGrabComponent* GetGrab() const { return Grab; }
     UCameraComponent* GetCamera() const { return Camera; }
     UPROPERTY(EditAnywhere, Category="Fuchimatoi") float GrabRange = 440.f;
     UPROPERTY(EditAnywhere, Category="Fuchimatoi") float RouteSpeed = 300.f;
+    static constexpr float MinimumGrabStamina = 25.f;
+    static constexpr float RecoveryGrabRange = 240.f;
 private:
     void MoveForward(float Value);
     void MoveRight(float Value);
@@ -45,6 +51,7 @@ private:
     void AttackPressed();
     void RetryPressed();
     void AdvanceRoute(float Dt);
+    void DetachFromRoute();
     UPROPERTY() TObjectPtr<AFuchimatoiBoss> Boss;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> Grab;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaminaComponent> Stamina;
@@ -56,4 +63,6 @@ private:
     int32 Health=3;
     int32 Node=INDEX_NONE, Destination=INDEX_NONE;
     float RouteProgress=0, RouteDelay=0;
+    bool bRecoveryApproach=false;
+    float RecoveryStaminaGrace=0;
 };

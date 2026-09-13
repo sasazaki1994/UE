@@ -73,6 +73,8 @@ void AFuchimatoiBoss::ResetFuchimatoi()
 
 void AFuchimatoiBoss::ResetNushi()
 {
+    if (Telemetry.Elapsed>0) LogTelemetry(TEXT("Retry"));
+    Telemetry=FFuchimatoiTelemetry();
     Super::ResetNushi();
     CoilingProgress = 0.f;
     SetActionState(EFuchimatoiActionState::Submerged);
@@ -211,6 +213,12 @@ void AFuchimatoiBoss::CreatePrimitiveBody()
         }
         RouteAnchors.Add(Anchor);
     }
+    RecoveryAnchor=GetWorld()->SpawnActor<AFuchimatoiRouteAnchor>();
+    RecoveryAnchor->AttachToActor(this,FAttachmentTransformRules::KeepWorldTransform);
+    // Clear floor south of the first coiled ascent, away from rock collision.
+    RecoveryAnchor->SetActorRelativeLocation(EncounterSpawn.InverseTransformPosition(FVector(-850,-180,190)));
+    RecoveryAnchor->Configure(false,INDEX_NONE);
+    RecoveryAnchor->SetGuidance(false,true,true);
     for (int32 I=0; I<3; ++I)
     {
         AKakonActor* Kakon=GetWorld()->SpawnActorDeferred<AKakonActor>(AKakonActor::StaticClass(),FTransform::Identity,this);
@@ -231,6 +239,7 @@ void AFuchimatoiBoss::CreatePrimitiveBody()
 void AFuchimatoiBoss::UpdateBody()
 {
     if (!bPlayable) return;
+    Arena->ShowBaitSpot(!IsCoiling() && GetNushiState()!=ENushiState::Calm);
     TArray<FVector> Points;
     for (int32 I=0; I<BodyJoints.Num(); ++I)
     {
@@ -252,10 +261,24 @@ void AFuchimatoiBoss::UpdateBody()
     for (int32 Node=0; Node<RouteNodeCount; ++Node)
     {
         if (BodyForNode[Node]>=0) RouteAnchors[Node]->SetActorRelativeLocation(Points[BodyForNode[Node]]+FVector(0,0,178));
-        RouteAnchors[Node]->SetActorHiddenInGame(Node>3 && !IsCoilingComplete());
+        const int32 Current=Player?Player->GetRouteNode():INDEX_NONE;
+        const bool bMounted=Player && Player->IsMounted();
+        const bool bHeadGrab=Node==0 && CanMount() && !bMounted;
+        const int32 Next=Player?Player->GetGuidanceNode():INDEX_NONE;
+        RouteAnchors[Node]->SetGuidance(bHeadGrab || (bMounted && (Node==Current || Node==Next)
+            && (Node<=3 || IsCoilingComplete())),bHeadGrab || Node==Next,bHeadGrab);
     }
+    RecoveryAnchor->SetGuidance(CanRecover(),true,true);
     for (int32 I=0; I<KakonMarkers.Num(); ++I)
-        KakonMarkers[I]->SetVisibility(KakonActors[I]->GetState()!=EKakonState::Purified && (I==0 || IsCoilingComplete()));
+    {
+        const bool bPurified=KakonActors[I]->GetState()==EKakonState::Purified;
+        const bool bActive=!bPurified && (I==0 || (IsCoilingComplete()
+            && KakonActors[I-1]->GetState()==EKakonState::Purified));
+        KakonMarkers[I]->SetVisibility(!bPurified);
+        KakonMarkers[I]->SetRelativeScale3D(FVector(bActive?.85f:.4f));
+        SetPrimitiveColor(Cast<UMaterialInstanceDynamic>(KakonMarkers[I]->GetMaterial(0)),
+            bActive?FLinearColor(1,.03,.04):FLinearColor(.09,.04,.04));
+    }
     if (ActionState==EFuchimatoiActionState::BiteWindup && Player)
         Head->SetWorldRotation((Player->GetActorLocation()-Head->GetComponentLocation()).Rotation());
     const FLinearColor Color=GetNushiState()==ENushiState::Calm?FLinearColor(.3,.6,.95)
@@ -274,6 +297,7 @@ void AFuchimatoiBoss::WithdrawHead()
 void AFuchimatoiBoss::AdvanceEncounter(float Dt)
 {
     if (!bPlayable || !Player || !Player->CanAct() || GetNushiState()!=ENushiState::Active) return;
+    Telemetry.Elapsed+=FMath::Max(0.f,Dt);
     // Bound sweeps independently of render FPS and preserve phase time at boundaries.
     float Remaining=FMath::Max(0.f,Dt);
     while (Remaining>KINDA_SMALL_NUMBER)
@@ -287,9 +311,11 @@ void AFuchimatoiBoss::AdvanceEncounter(float Dt)
             if (ActionTimeRemaining<=0)
             {
                 BeginBiteWindup(); ActionTimeRemaining=WindupDuration;
+                ++Telemetry.BiteAttempts; LogTelemetry(TEXT("Bite"));
             }
             break;
         case EFuchimatoiActionState::BiteWindup:
+            BiteAimWorldLocation=Player->GetActorLocation();
             if (ActionTimeRemaining<=0)
             {
                 FVector Aim=Player->GetActorLocation(); Aim.Z=GetActorLocation().Z;
@@ -313,6 +339,7 @@ void AFuchimatoiBoss::AdvanceEncounter(float Dt)
             const float Distance=FMath::PointDistToSegment(FVector(PlayerPoint.X,PlayerPoint.Y,Start.Z),Start,ContactEnd);
             if (!Player->IsMounted() && Distance<145.f && FMath::Abs(PlayerPoint.Z-Start.Z)<210.f && Player->ReceiveBite())
             {
+                ++Telemetry.PlayerHits; LogTelemetry(TEXT("PlayerHit"));
                 WithdrawHead(); break;
             }
             if (Hit.bBlockingHit)
@@ -321,6 +348,7 @@ void AFuchimatoiBoss::AdvanceEncounter(float Dt)
                 {
                     HeadProxyLocalLocation=GetActorTransform().InverseTransformPosition(Hit.Location);
                     NotifyHeadSnagged(); ActionTimeRemaining=SnaggedDuration;
+                    ++Telemetry.RockLures; ++Telemetry.Snags; LogTelemetry(TEXT("Snag"));
                 }
                 else WithdrawHead();
             }
@@ -328,7 +356,7 @@ void AFuchimatoiBoss::AdvanceEncounter(float Dt)
             break;
         }
         case EFuchimatoiActionState::Snagged:
-            if (!Player->IsMounted() && ActionTimeRemaining<=0) WithdrawHead();
+            if (!Player->IsMounted() && ActionTimeRemaining<=0) { LogTelemetry(TEXT("MissedGrab")); WithdrawHead(); }
             break;
         case EFuchimatoiActionState::Coiling: AdvanceCoiling(Step); break;
         }
@@ -336,14 +364,28 @@ void AFuchimatoiBoss::AdvanceEncounter(float Dt)
     UpdateBody();
     if (ActionState==EFuchimatoiActionState::BiteWindup || ActionState==EFuchimatoiActionState::BiteLunge)
     {
-        FVector Target=HasBiteTarget()?GetActorTransform().TransformPosition(BiteTargetLocalLocation):Player->GetActorLocation();
-        Target.Z=GetHeadWorldLocation().Z;
-        DrawDebugDirectionalArrow(GetWorld(),GetHeadWorldLocation(),Target,100,FColor::Orange,false,-1,0,12);
+        const bool bLocked=ActionState==EFuchimatoiActionState::BiteLunge;
+        FVector Target=BiteAimWorldLocation; Target.Z=8;
+        const FColor Color=bLocked?FColor::Red:FColor::Orange;
+        DrawDebugCircle(GetWorld(),Target,115,32,Color,false,-1,0,8,FVector::ForwardVector,FVector::RightVector,false);
+        DrawDebugDirectionalArrow(GetWorld(),GetHeadWorldLocation(),Target,60,Color,false,-1,0,5);
+        DrawDebugDirectionalArrow(GetWorld(),Arena->GetBaitPosition(),Arena->GetBaitRock()->GetComponentLocation(),60,FColor::Yellow,false,-1,0,6);
+    }
+    if (CanRecover())
+    {
+        const FVector Point=RecoveryAnchor->GetActorLocation();
+        DrawDebugLine(GetWorld(),Point-FVector(0,0,180),Point+FVector(0,0,220),FColor(255,215,70),false,-1,0,10);
     }
     if (Player->IsMounted())
-        for (int32 Node=1; Node<(IsCoilingComplete()?RouteNodeCount:4); ++Node)
-            DrawDebugLine(GetWorld(),RouteAnchors[Node-1]->GetActorLocation()-FVector(0,0,65),
+    {
+        const int32 Node=Player->GetGuidanceNode();
+        const AFuchimatoiRouteAnchor* From=Player->IsRecovering()?RecoveryAnchor.Get():GetRouteAnchor(Player->GetRouteNode());
+        if (From && Node>=0 && Node<(IsCoilingComplete()?RouteNodeCount:4))
+        {
+            DrawDebugLine(GetWorld(),From->GetActorLocation()-FVector(0,0,65),
                 RouteAnchors[Node]->GetActorLocation()-FVector(0,0,65),Node==4||Node==6?FColor::Yellow:FColor::Cyan,false,-1,0,5);
+        }
+    }
 }
 
 AFuchimatoiRouteAnchor* AFuchimatoiBoss::GetRouteAnchor(int32 Node) const
@@ -362,12 +404,35 @@ bool AFuchimatoiBoss::CanMount() const
 {
     return bPlayable && IsSnagged() && ActionTimeRemaining>0 && GetNushiState()==ENushiState::Active;
 }
+bool AFuchimatoiBoss::IsRecoveryUnlocked() const
+{
+    return bPlayable && IsCoilingComplete() && IsCoiling() && GetNushiState()==ENushiState::Active
+        && Player && Player->CanAct();
+}
+bool AFuchimatoiBoss::CanRecover() const
+{
+    return IsRecoveryUnlocked() && Player->IsOnRecoveryGround();
+}
+void AFuchimatoiBoss::RecordGrab(bool bSuccess, bool bRecovery)
+{
+    ++Telemetry.GrabAttempts;
+    if (bSuccess) { ++Telemetry.GrabSuccesses; if (bRecovery) ++Telemetry.RecoveryGrabs; }
+    LogTelemetry(bSuccess?(bRecovery?TEXT("RecoveryGrab"):TEXT("Grab")):TEXT("GrabRejected"));
+}
+void AFuchimatoiBoss::RecordFall() { ++Telemetry.Falls; LogTelemetry(TEXT("Fall")); }
+void AFuchimatoiBoss::LogTelemetry(const TCHAR* Event) const
+{
+    UE_LOG(LogTemp,Display,TEXT("FUCHIMATOI_TELEMETRY event=%s bite_attempts=%d player_hits=%d rock_lures=%d snags=%d grab_attempts=%d grab_successes=%d falls=%d recovery_grabs=%d kakon_purified=%d elapsed=%.2f completion_time=%.2f"),
+        Event,Telemetry.BiteAttempts,Telemetry.PlayerHits,Telemetry.RockLures,Telemetry.Snags,
+        Telemetry.GrabAttempts,Telemetry.GrabSuccesses,Telemetry.Falls,Telemetry.RecoveryGrabs,
+        GetNushiProgressComponent()->GetPurifiedCount(),Telemetry.Elapsed,GetNushiState()==ENushiState::Calm?Telemetry.Elapsed:-1.f);
+}
 bool AFuchimatoiBoss::TryPurifyAtNode(int32 Node)
 {
     if (!Player || !Player->CanAct() || !Player->IsMounted() || Player->IsRouteMoving() || Player->GetRouteNode()!=Node) return false;
     for (int32 I=0; I<3; ++I)
     {
-        if (Node!=KakonNodes[I] || (I>0 && !IsCoilingComplete())) continue;
+        if (Node!=KakonNodes[I] || (I>0 && (!IsCoilingComplete() || KakonActors[I-1]->GetState()!=EKakonState::Purified))) continue;
         if (FVector::Dist(Player->GetActorLocation(),KakonActors[I]->GetActorLocation())>150.f) return false;
         return KakonActors[I]->Purify();
     }
@@ -376,6 +441,7 @@ bool AFuchimatoiBoss::TryPurifyAtNode(int32 Node)
 void AFuchimatoiBoss::HandleKakonPurified(AKakonActor* Kakon)
 {
     if (KakonActors.Num()>0 && Kakon==KakonActors[0]) BeginCoiling();
+    LogTelemetry(TEXT("Purified"));
     UpdateBody();
 }
 FString AFuchimatoiBoss::GetActionLabel() const
@@ -383,11 +449,13 @@ FString AFuchimatoiBoss::GetActionLabel() const
     if (GetNushiState()==ENushiState::Calm) return TEXT("CALM");
     switch (ActionState)
     {
-    case EFuchimatoiActionState::Submerged: return TEXT("SUBMERGED - bait the bite at the gold square");
-    case EFuchimatoiActionState::BiteWindup: return TEXT("BITE WINDUP - aim locks when orange warning ends");
-    case EFuchimatoiActionState::BiteLunge: return TEXT("BITE LUNGE - DODGE SIDEWAYS NOW");
-    case EFuchimatoiActionState::Snagged: return TEXT("SNAGGED - E / RB near the head to climb");
-    case EFuchimatoiActionState::Coiling: return IsCoilingComplete()?TEXT("COILED - follow snake and gold rock ledges"):TEXT("COILING - cling to the moving serpent");
+    case EFuchimatoiActionState::Submerged: return TEXT("LURE THE BITE INTO THE ROCK - stand on the gold square");
+    case EFuchimatoiActionState::BiteWindup: return TEXT("LURE THE BITE INTO THE ROCK - orange target follows you");
+    case EFuchimatoiActionState::BiteLunge: return TEXT("TARGET LOCKED (RED) - DODGE SIDEWAYS NOW");
+    case EFuchimatoiActionState::Snagged: return Player && Player->IsMounted()?TEXT("CLIMB TO THE RED CORE"):TEXT("GRAB NOW - E / RB at the gold head marker");
+    case EFuchimatoiActionState::Coiling: return IsCoilingComplete()
+        ?(Player && !Player->IsMounted()?TEXT("RETURN VIA THE GOLD BEACON - progress is kept"):TEXT("COILED - follow the next cyan / gold node"))
+        :TEXT("COILING - cling to the moving serpent");
     }
     return FString();
 }

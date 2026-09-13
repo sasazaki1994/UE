@@ -10,6 +10,13 @@ class AFuchimatoiRouteAnchor;
 class UFuchimatoiSimulationComponent;
 class UStaticMeshComponent;
 
+struct FFuchimatoiTelemetry
+{
+    int32 BiteAttempts=0, PlayerHits=0, RockLures=0, Snags=0;
+    int32 GrabAttempts=0, GrabSuccesses=0, Falls=0, RecoveryGrabs=0;
+    float Elapsed=0;
+};
+
 UENUM(BlueprintType)
 enum class EFuchimatoiActionState : uint8
 {
@@ -37,6 +44,14 @@ public:
     AKakonActor* GetKakon(int32 Index) const;
     FVector GetHeadWorldLocation() const;
     bool CanMount() const;
+    bool CanRecover() const;
+    bool IsRecoveryUnlocked() const;
+    AFuchimatoiRouteAnchor* GetRecoveryAnchor() const { return RecoveryAnchor; }
+    static constexpr int32 RecoveryNode = 3;
+    void RecordGrab(bool bSuccess, bool bRecovery);
+    void RecordFall();
+    void LogTelemetry(const TCHAR* Event) const;
+    const FFuchimatoiTelemetry& GetTelemetry() const { return Telemetry; }
     bool TryPurifyAtNode(int32 Node);
     FString GetActionLabel() const;
     float GetActionTimeRemaining() const { return ActionTimeRemaining; }
@@ -127,6 +142,9 @@ private:
     UPROPERTY() TArray<TObjectPtr<AFuchimatoiRouteAnchor>> RouteAnchors;
     UPROPERTY() TArray<TObjectPtr<AKakonActor>> KakonActors;
     UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> KakonMarkers;
+    UPROPERTY() TObjectPtr<AFuchimatoiRouteAnchor> RecoveryAnchor;
+    FFuchimatoiTelemetry Telemetry;
+    FVector BiteAimWorldLocation=FVector::ZeroVector;
     FTransform EncounterSpawn;
     float ActionTimeRemaining = 0.f;
     bool bPlayable = false;
