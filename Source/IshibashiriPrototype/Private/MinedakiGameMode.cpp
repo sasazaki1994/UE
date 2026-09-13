@@ -1,0 +1,29 @@
+#include "MinedakiGameMode.h"
+#include "MinedakiBoss.h"
+#include "MinedakiPlayer.h"
+#include "MinedakiArena.h"
+#include "MinedakiHUD.h"
+#include "MinedakiIntegrationTest.h"
+#include "NushiEncounterManager.h"
+#include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
+AMinedakiGameMode::AMinedakiGameMode() { DefaultPawnClass=nullptr; HUDClass=AMinedakiHUD::StaticClass(); }
+void AMinedakiGameMode::StartPlay()
+{
+    Super::StartPlay(); GetWorld()->SpawnActor<AMinedakiArena>();
+    FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    Boss=GetWorld()->SpawnActor<AMinedakiBoss>();
+    Player=GetWorld()->SpawnActor<AMinedakiPlayer>(AMinedakiPlayer::StaticClass(),AMinedakiPlayer::SpawnTransform(),Params);
+    Manager=GetWorld()->SpawnActor<ANushiEncounterManager>();
+    auto* PC=UGameplayStatics::GetPlayerController(this,0);
+    if(!Boss || !Player || !Manager || !PC) { UE_LOG(LogTemp,Error,TEXT("MINEDAKI_SPAWN_FAILED")); return; }
+    PC->Possess(Player); PC->SetInputMode(FInputModeGameOnly()); PC->bShowMouseCursor=false;
+    Player->ConfigureBoss(Boss); Boss->ConfigurePlayer(Player); Manager->SetNushi(Boss); RetryEncounter();
+#if !UE_BUILD_SHIPPING
+    if(FParse::Param(FCommandLine::Get(),TEXT("MinedakiTest"))) GetWorld()->SpawnActor<AMinedakiIntegrationTest>();
+#endif
+}
+void AMinedakiGameMode::RetryEncounter() { if(Player && Manager) { Boss->LogTelemetry(TEXT("Retry")); Player->ResetForEncounter(); Manager->ResetEncounter(); Manager->StartEncounter(); } }
