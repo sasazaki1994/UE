@@ -1,0 +1,86 @@
+{
+  "recordedUtc": "2026-09-13T12:46:30.0109067Z",
+  "renderer": "D3D11 Editor Development, 1280x800 window, no RenderOffscreen",
+  "timing": "Wall-clock post-update tick intervals, not externally measured Present times",
+  "tests": [
+    {
+      "name": "Onscreen-Realtime-FuchimatoiRecovery-60.log",
+      "runId": "f7be8f21ff3942d2bc4609fb27db3a5c",
+      "gameplay": "PASS",
+      "metrics": {
+        "avg_fps": 46.58,
+        "p95_ms": 30.38,
+        "max_ms": 49.705,
+        "over_budget_plus_1ms": 1617.0,
+        "p99_ms": 31.548,
+        "fixed_timestep": 0.0,
+        "over_50ms": 0.0,
+        "target_fps": 60.0,
+        "warmup_seconds": 2.0,
+        "rendered": 1.0,
+        "frames": 4172.0
+      },
+      "frameCsv": "Saved/FuchimatoiPerformance/f7be8f21ff3942d2bc4609fb27db3a5c/Frames.csv",
+      "frameCsvSha256": "4EC61247A78A83B526387A7BDD87C7A6EE11F2148DA7DB12054C4F79F805BE58",
+      "log": "Saved/FuchimatoiPerformance/Onscreen-Realtime-FuchimatoiRecovery-60.log",
+      "logSha256": "1652A18233B0DA3193AB3A528B2E2D1621595D53C10479D8C6FB6D6A249D9FE6",
+      "summaryVerifiedAgainstCsv": true,
+      "foregroundVerifiedThroughout": false
+    },
+    {
+      "name": "Onscreen-Realtime-FuchimatoiRecoveryGamepad-30.log",
+      "runId": "ac8b737c1f604a6a9ab6919ef579bab8",
+      "gameplay": "PASS",
+      "metrics": {
+        "avg_fps": 26.65,
+        "p95_ms": 46.37,
+        "max_ms": 53.706,
+        "over_budget_plus_1ms": 1563.0,
+        "p99_ms": 49.329,
+        "fixed_timestep": 0.0,
+        "over_50ms": 14.0,
+        "target_fps": 30.0,
+        "warmup_seconds": 2.0,
+        "rendered": 1.0,
+        "frames": 2399.0
+      },
+      "frameCsv": "Saved/FuchimatoiPerformance/ac8b737c1f604a6a9ab6919ef579bab8/Frames.csv",
+      "frameCsvSha256": "E1E9C07B65F496E2451B3EC29BA80A6319082C20F93CB225E4A62EA2D6BD5EE7",
+      "log": "Saved/FuchimatoiPerformance/Onscreen-Realtime-FuchimatoiRecoveryGamepad-30.log",
+      "logSha256": "2751C9311695C5A7AF6D96ADE2C9C536E695107B5FD80F4C269B11FB9FE54BE4",
+      "summaryVerifiedAgainstCsv": true,
+      "foregroundVerifiedThroughout": false
+    }
+  ],
+  "failedTrial": {
+    "windowRenderingVisuallyConfirmed": true,
+    "reason": "phase 7 timeout after foreground activation; cause unconfirmed",
+    "log": "Saved/FuchimatoiPerformance/Onscreen-Keyboard30-FocusChanged-Failed.log",
+    "runId": "958bb9e974594685a8a2bcbe42f8406f",
+    "result": "FAIL"
+  },
+  "physicalGamepad": {
+    "physicalInputVerified": false,
+    "xinputLastObserved": 1167,
+    "status": "Further verification waived by user",
+    "pnpRegistration": "Xbox Wireless Controller, OK"
+  },
+  "sourceFiles": [
+    {
+      "sha256": "6F0EE518CC634AF4D044B3AFEC0AF1E68E337A5C8732E53A1D58E46BE4994E67",
+      "path": "Tools/Prototype.ps1"
+    },
+    {
+      "sha256": "52E433623A880C9DBD695955DCEFF34DB4316E48D6344AFFE402826EE464F9FF",
+      "path": "Tools/Test-PhysicalGamepad.ps1"
+    },
+    {
+      "sha256": "FD1D1B180D67D860808257F3A09ED4A1380C373C5918F10826B24C4953FE3E5C",
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiIntegrationTest.cpp"
+    },
+    {
+      "sha256": "6604227AEA71AB12A86BD271484CBD211CA4F27E3C0DB69CD5B43262CB9A1855",
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiIntegrationTest.h"
+    }
+  ]
+}

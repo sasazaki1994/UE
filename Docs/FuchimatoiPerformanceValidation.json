@@ -1,0 +1,198 @@
+{
+  "recordedUtc": "2026-09-13T06:58:01.4033811Z",
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "engine": "5.6.1 Editor Development",
+  "renderer": "D3D11, offscreen, 1280x800, default prototype quality",
+  "timing": "Real wall-clock intervals between post-update ticks. First two seconds excluded. FPS caps are ceilings, not fixed simulation steps. Camera orbit fixture and screenshot writes excluded.",
+  "physicalGamepad": {
+    "slots": 4,
+    "physicalButtonsTested": false,
+    "connected": 0,
+    "api": "XInputGetState",
+    "code": 1167
+  },
+  "power": {
+    "ReadSucceeded": true,
+    "ACLineStatus": 1,
+    "BatteryPercent": 83,
+    "BatterySaver": 0
+  },
+  "powerPlan": "Turbo",
+  "build": {
+    "sha256": "2AC519F6625A54C3459152F7029E9FD7CE9B05C9E697255F6AA64F8478A26C25",
+    "log": "Saved/FuchimatoiPerformance/Build.log",
+    "result": "Succeeded"
+  },
+  "tests": [
+    {
+      "frameCsvSha256": "1EE17307B5C53089E7B89B559FB627A5754EDE1AF094F1FB67A776C301D57AC4",
+      "summaryVerifiedAgainstCsv": true,
+      "gameplay": "PASS",
+      "frameCsv": "Saved/FuchimatoiPerformance/2acd796f741b4dc99e672ff1a1c51e07/Frames.csv",
+      "capOverride": false,
+      "runId": "2acd796f741b4dc99e672ff1a1c51e07",
+      "log": "Saved/FuchimatoiPerformance/Realtime-Fuchimatoi-60.log",
+      "logSha256": "AE2FD72BF25B761D2AFD56B7EDFA54028C748189EFB7CB307B4AF7353222CC79",
+      "name": "Realtime-Fuchimatoi-60.log",
+      "metrics": {
+        "warmup_seconds": 2.0,
+        "avg_fps": 45.65,
+        "over_50ms": 0.0,
+        "over_budget_plus_1ms": 1240.0,
+        "p95_ms": 30.284,
+        "fixed_timestep": 0.0,
+        "frames": 2125.0,
+        "max_ms": 39.006,
+        "target_fps": 60.0,
+        "rendered": 1.0,
+        "p99_ms": 33.938
+      }
+    },
+    {
+      "frameCsvSha256": "D67542331BBF7999CD255C9B85E79B8175B0272E3815636A95D805263ECBFD62",
+      "summaryVerifiedAgainstCsv": true,
+      "gameplay": "PASS",
+      "frameCsv": "Saved/FuchimatoiPerformance/d578af0e045d4303b4fc1e4e87c5442d/Frames.csv",
+      "capOverride": false,
+      "runId": "d578af0e045d4303b4fc1e4e87c5442d",
+      "log": "Saved/FuchimatoiPerformance/Realtime-Fuchimatoi-30.log",
+      "logSha256": "081236A8B9D1CFCB4D371E09745EF7CBADAFFEA18ADFD154953C72B5BFA18F6F",
+      "name": "Realtime-Fuchimatoi-30.log",
+      "metrics": {
+        "warmup_seconds": 2.0,
+        "avg_fps": 26.69,
+        "over_50ms": 10.0,
+        "over_budget_plus_1ms": 718.0,
+        "p95_ms": 46.818,
+        "fixed_timestep": 0.0,
+        "frames": 1231.0,
+        "max_ms": 55.395,
+        "target_fps": 30.0,
+        "rendered": 1.0,
+        "p99_ms": 49.278
+      }
+    },
+    {
+      "frameCsvSha256": "AAA9904F7776D93AB8CEA8E287F1D1C5059D75E65C465DF62BAE58B187321DDF",
+      "summaryVerifiedAgainstCsv": true,
+      "gameplay": "PASS",
+      "frameCsv": "Saved/FuchimatoiPerformance/5eff7b97826243e7a623718b060a17d8/Frames.csv",
+      "capOverride": false,
+      "runId": "5eff7b97826243e7a623718b060a17d8",
+      "log": "Saved/FuchimatoiPerformance/Realtime-FuchimatoiRecovery-60.log",
+      "logSha256": "6427B718471A8B85E805C2769A1DFB84B3AB8ED8D6BC3900E6D768480690EF17",
+      "name": "Realtime-FuchimatoiRecovery-60.log",
+      "metrics": {
+        "warmup_seconds": 2.0,
+        "avg_fps": 48.94,
+        "over_50ms": 0.0,
+        "over_budget_plus_1ms": 2029.0,
+        "p95_ms": 29.599,
+        "fixed_timestep": 0.0,
+        "frames": 4379.0,
+        "max_ms": 35.377,
+        "target_fps": 60.0,
+        "rendered": 1.0,
+        "p99_ms": 31.827
+      }
+    },
+    {
+      "frameCsvSha256": "731BCC46F8048B6BC32275E17B600174A1E94AD7108C2F1A5492DB80F9BC55E0",
+      "summaryVerifiedAgainstCsv": true,
+      "gameplay": "PASS",
+      "frameCsv": "Saved/FuchimatoiPerformance/b745e4dfaf1b489b95af5589d5b1a71e/Frames.csv",
+      "capOverride": false,
+      "runId": "b745e4dfaf1b489b95af5589d5b1a71e",
+      "log": "Saved/FuchimatoiPerformance/Realtime-FuchimatoiRecovery-30.log",
+      "logSha256": "E4F06140B860C71635D09B9F181614AC32C2EA770061F86A97C25134B3B94D49",
+      "name": "Realtime-FuchimatoiRecovery-30.log",
+      "metrics": {
+        "warmup_seconds": 2.0,
+        "avg_fps": 26.54,
+        "over_50ms": 21.0,
+        "over_budget_plus_1ms": 1388.0,
+        "p95_ms": 46.964,
+        "fixed_timestep": 0.0,
+        "frames": 2370.0,
+        "max_ms": 56.179,
+        "target_fps": 30.0,
+        "rendered": 1.0,
+        "p99_ms": 49.237
+      }
+    },
+    {
+      "frameCsvSha256": "821EF8494781FC2078AAA8C1FE731ABA96D56CD900FDE3A7AD8707B53F501E4E",
+      "summaryVerifiedAgainstCsv": true,
+      "gameplay": "PASS",
+      "frameCsv": "Saved/FuchimatoiPerformance/0a6828bf38784156b985aa059eafca5d/Frames.csv",
+      "capOverride": false,
+      "runId": "0a6828bf38784156b985aa059eafca5d",
+      "log": "Saved/FuchimatoiPerformance/Realtime-FuchimatoiRecoveryGamepad-60.log",
+      "logSha256": "0FF802601E5470E140945B70E996C2224BA26BCE65A3EEEA2C0140ABB6AA0B6F",
+      "name": "Realtime-FuchimatoiRecoveryGamepad-60.log",
+      "metrics": {
+        "warmup_seconds": 2.0,
+        "avg_fps": 48.77,
+        "over_50ms": 0.0,
+        "over_budget_plus_1ms": 2049.0,
+        "p95_ms": 29.621,
+        "fixed_timestep": 0.0,
+        "frames": 4361.0,
+        "max_ms": 37.854,
+        "target_fps": 60.0,
+        "rendered": 1.0,
+        "p99_ms": 32.121
+      }
+    },
+    {
+      "frameCsvSha256": "C0EF2590879930D5FFD4B12F61BC4A597B40BA944C930212E2A0FC901388A2E7",
+      "summaryVerifiedAgainstCsv": true,
+      "gameplay": "PASS",
+      "frameCsv": "Saved/FuchimatoiPerformance/2f6ace8285444f508d55f02964d6b43c/Frames.csv",
+      "capOverride": true,
+      "runId": "2f6ace8285444f508d55f02964d6b43c",
+      "log": "Saved/FuchimatoiPerformance/Uncapped-FuchimatoiRecovery-60.log",
+      "logSha256": "85406C402A9D3C6C8487C23433239C2E33D9608AA94219131469D806CD2C6A38",
+      "name": "Uncapped-FuchimatoiRecovery-60.log",
+      "metrics": {
+        "warmup_seconds": 2.0,
+        "avg_fps": 239.83,
+        "over_50ms": 0.0,
+        "over_budget_plus_1ms": 1.0,
+        "p95_ms": 5.982,
+        "fixed_timestep": 0.0,
+        "frames": 21522.0,
+        "max_ms": 25.077,
+        "target_fps": 60.0,
+        "rendered": 1.0,
+        "p99_ms": 6.553
+      }
+    }
+  ],
+  "sourceFiles": [
+    {
+      "sha256": "FD1D1B180D67D860808257F3A09ED4A1380C373C5918F10826B24C4953FE3E5C",
+      "path": "Source/IshibashiriPrototype/Private/FuchimatoiIntegrationTest.cpp"
+    },
+    {
+      "sha256": "6604227AEA71AB12A86BD271484CBD211CA4F27E3C0DB69CD5B43262CB9A1855",
+      "path": "Source/IshibashiriPrototype/Public/FuchimatoiIntegrationTest.h"
+    },
+    {
+      "sha256": "51D858BDB3E3B723D04083EAEAEA36518E638E01555227CE8D45D207750DA637",
+      "path": "Tools/Prototype.ps1"
+    }
+  ],
+  "limitations": [
+    "Offscreen Editor build, not packaged visible presentation",
+    "Background system workload is uncontrolled",
+    "Wall-clock intervals do not isolate GPU, render-thread or game-thread costs",
+    "Gamepad inputs are simulated; no physical XInput device was connected"
+  ],
+  "fixedStepRegression": {
+    "result": "PASS",
+    "marker": "FUCHIMATOI_TEST_PASS 28f848f8385e4d7db6e50acf1246ac74 rounds=2 seconds=91.27",
+    "log": "Saved/FuchimatoiPerformance/FixedStepRecovery-60.log",
+    "sha256": "43A83D925384A90B0D0B279CCA0C49789A031E67904AE0966614B78BB3DC2C36"
+  }
+}

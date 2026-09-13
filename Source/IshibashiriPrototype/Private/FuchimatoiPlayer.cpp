@@ -60,6 +60,31 @@ bool AFuchimatoiPlayer::CanAct() const
     return Mode && Mode->IsEncounterActive();
 }
 bool AFuchimatoiPlayer::IsMounted() const { return Grab->IsGrabbing(); }
+int32 AFuchimatoiPlayer::GetGuidanceNode() const
+{
+    if (Destination!=INDEX_NONE) return Destination;
+    return Boss?FMath::Clamp(Node+(ForwardInput<-.4f?-1:1),0,Boss->IsCoilingComplete()?9:3):INDEX_NONE;
+}
+bool AFuchimatoiPlayer::IsOnRecoveryGround() const
+{
+    // Arena floor is Z=0. Standing on an elevated rock is not ground recovery.
+    return !IsMounted() && GetCharacterMovement()->IsMovingOnGround() && GetActorLocation().Z<200.f;
+}
+void AFuchimatoiPlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
+{
+    Super::CalcCamera(DeltaTime,OutResult);
+    // Supplement the spring arm with the same player-to-camera sphere retreat
+    // used by the Ishibashiri climbing camera. Its offset pivot can miss a ledge.
+    const FVector Focus=GetActorLocation()+FVector(0,0,35);
+    FHitResult Hit;
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(FuchimatoiCameraRetreat),false,this);
+    if (GetWorld()->SweepSingleByChannel(Hit,Focus,OutResult.Location,FQuat::Identity,ECC_Camera,
+        FCollisionShape::MakeSphere(18.f),Params))
+    {
+        OutResult.Location=Hit.Location;
+        OutResult.Rotation=(Focus-OutResult.Location).Rotation();
+    }
+}
 void AFuchimatoiPlayer::SetupPlayerInputComponent(UInputComponent* Input)
 {
     Super::SetupPlayerInputComponent(Input);
@@ -91,22 +116,38 @@ void AFuchimatoiPlayer::TurnRate(float Value) { Turn(Value*55*GetWorld()->GetDel
 void AFuchimatoiPlayer::LookRate(float Value) { Look(Value*45*GetWorld()->GetDeltaSeconds()); }
 void AFuchimatoiPlayer::GrabPressed()
 {
-    if (!CanAct() || IsMounted() || IsDodging() || !Boss || !Boss->CanMount() || Stamina->GetCurrentStamina()<25) return;
-    AFuchimatoiRouteAnchor* Anchor=Boss->GetRouteAnchor(0);
-    if (Grab->TryGrab(Anchor,GrabRange))
+    if (!CanAct() || IsMounted() || !Boss) return;
+    const bool bRecovery=Boss->CanRecover();
+    AFuchimatoiRouteAnchor* Anchor=bRecovery?Boss->GetRecoveryAnchor():Boss->GetRouteAnchor(0);
+    const bool bSuccess=!IsDodging() && (bRecovery || Boss->CanMount())
+        && Stamina->GetCurrentStamina()>=MinimumGrabStamina
+        && Grab->TryGrab(Anchor,bRecovery?RecoveryGrabRange:GrabRange);
+    Boss->RecordGrab(bSuccess,bRecovery);
+    if (bSuccess)
     {
-        Node=0; Destination=INDEX_NONE; RouteProgress=0; RouteDelay=.2f;
+        bRecoveryApproach=bRecovery;
+        Node=bRecovery?Boss->RecoveryNode:0;
+        Destination=bRecovery?Node:INDEX_NONE;
+        RouteProgress=0; RouteDelay=.2f;
+        // Brief drain relief only, no health immunity. Minimum 25 is required.
+        RecoveryStaminaGrace=bRecovery?3.f:0.f;
         Grab->SetRelativeGrabTransform(FTransform::Identity);
         GetCharacterMovement()->bOrientRotationToMovement=false;
     }
+}
+void AFuchimatoiPlayer::DetachFromRoute()
+{
+    if (IsMounted() && Boss) Boss->RecordFall();
+    Grab->Release(); Node=Destination=INDEX_NONE;
+    bRecoveryApproach=false; RecoveryStaminaGrace=0;
+    GetCharacterMovement()->bOrientRotationToMovement=true;
 }
 void AFuchimatoiPlayer::JumpPressed()
 {
     if (!CanAct()) return;
     if (IsMounted())
     {
-        Grab->Release(); Node=Destination=INDEX_NONE;
-        GetCharacterMovement()->bOrientRotationToMovement=true;
+        DetachFromRoute();
         LaunchCharacter(FVector(0,-180,260),true,true);
     }
     else Jump();
@@ -141,17 +182,19 @@ void AFuchimatoiPlayer::AdvanceRoute(float Dt)
     if (Boss->IsCoiling() && !Boss->IsCoilingComplete())
     {
         Stamina->ConsumeStamina(6.f*Dt);
-        if (Stamina->IsDepleted()) { Grab->Release(); Node=Destination=INDEX_NONE; }
+        if (Stamina->IsDepleted()) DetachFromRoute();
         return;
     }
     RouteDelay=FMath::Max(0.f,RouteDelay-Dt);
-    AFuchimatoiRouteAnchor* Current=Boss->GetRouteAnchor(Node);
-    if (!Current) { Grab->Release(); return; }
+    AFuchimatoiRouteAnchor* Current=bRecoveryApproach?Boss->GetRecoveryAnchor():Boss->GetRouteAnchor(Node);
+    if (!Current) { DetachFromRoute(); return; }
+    const float DrainDt=FMath::Max(0.f,Dt-RecoveryStaminaGrace);
+    RecoveryStaminaGrace=FMath::Max(0.f,RecoveryStaminaGrace-Dt);
     if (Current->IsRock() && Destination==INDEX_NONE) Stamina->RestoreStamina(28.f*Dt);
-    else Stamina->ConsumeStamina((IsRouteMoving()?7.f:3.f)*Dt);
+    else Stamina->ConsumeStamina((IsRouteMoving()?7.f:3.f)*DrainDt);
     if (Stamina->IsDepleted())
     {
-        Grab->Release(); Node=Destination=INDEX_NONE; return;
+        DetachFromRoute(); return;
     }
     if (Destination==INDEX_NONE && RouteDelay<=0 && FMath::Abs(ForwardInput)>.4f)
     {
@@ -174,7 +217,8 @@ void AFuchimatoiPlayer::AdvanceRoute(float Dt)
         {
             Grab->SetRelativeGrabTransform(FTransform::Identity); Node=Destination;
         }
-        else Node=INDEX_NONE;
+        else { Boss->RecordFall(); Node=INDEX_NONE; GetCharacterMovement()->bOrientRotationToMovement=true; }
+        bRecoveryApproach=false;
         Destination=INDEX_NONE; RouteDelay=.18f;
     }
 }
@@ -203,6 +247,7 @@ void AFuchimatoiPlayer::ResetForEncounter(const FTransform& Spawn)
 {
     Grab->Release(); StopJumping(); StopEncounter();
     Destination=Node=INDEX_NONE; RouteProgress=RouteDelay=0;
+    bRecoveryApproach=false; RecoveryStaminaGrace=0;
     DodgeCooldown=HitImmunity=0; Health=3; Stamina->ResetStamina();
     GetCharacterMovement()->ClearAccumulatedForces();
     GetCharacterMovement()->SetMovementMode(MOVE_Walking);

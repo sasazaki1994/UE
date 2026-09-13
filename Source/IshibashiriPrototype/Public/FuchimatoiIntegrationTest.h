@@ -20,6 +20,8 @@ private:
     void Shot(const TCHAR* Name);
     bool Check(bool Condition,const TCHAR* Message);
     void Finish();
+    bool CheckCameraOrbit(const TCHAR* Place);
+    void RecordPerformance();
     UPROPERTY() TObjectPtr<AFuchimatoiGameMode> Mode;
     TSet<FKey> Held;
     TArray<FKey> Releases;
@@ -28,4 +30,12 @@ private:
     float Time=0, Total=0, ForwardAxis=0, RightAxis=0, BeforeStamina=0;
     FVector LockedTarget, BeforeAnchor, RockBefore;
     bool bCapture=false, bGamepad=false, bDone=false, bSawDodge=false, bSawCoilFollow=false;
+    bool bRecovery=false, bMissCycleDone=false, bHitRetryDone=false, bMissedGrabDone=false;
+    int32 FallsRecovered=0;
+    FTransform RecoveryBossPose;
+    FVector RecoveryRoutePosition;
+    bool bRealtime=false;
+    int32 TargetFPS=60;
+    double PreviousFrameTime=0, PerformanceStart=0;
+    TArray<double> FrameTimes;
 };

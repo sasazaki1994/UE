@@ -11,13 +11,18 @@
 #include "GrabComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraTypes.h"
 #include "InputKeyEventArgs.h"
 #include "Engine/World.h"
+#include "Engine/Engine.h"
 #include "EngineUtils.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "Misc/App.h"
 #include "Misc/Paths.h"
+#include "Misc/FileHelper.h"
+#include "HAL/PlatformTime.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformMisc.h"
 #include "UnrealClient.h"
@@ -31,15 +36,23 @@ void AFuchimatoiIntegrationTest::BeginPlay()
 {
     Super::BeginPlay();
     FParse::Value(FCommandLine::Get(),TEXT("PrototypeTestRun="),RunId);
-    int32 FPS=60; FParse::Value(FCommandLine::Get(),TEXT("PrototypeTestFPS="),FPS);
-    FApp::SetUseFixedTimeStep(true); FApp::SetFixedDeltaTime(1.0/FPS);
+    FParse::Value(FCommandLine::Get(),TEXT("PrototypeTestFPS="),TargetFPS);
+    bRealtime=FParse::Param(FCommandLine::Get(),TEXT("FuchimatoiRealtime"));
+    FApp::SetUseFixedTimeStep(!bRealtime);
+    if (bRealtime) GEngine->SetMaxFPS(TargetFPS);
+    else FApp::SetFixedDeltaTime(1.0/TargetFPS);
+    PreviousFrameTime=PerformanceStart=FPlatformTime::Seconds();
     bCapture=FParse::Param(FCommandLine::Get(),TEXT("PrototypeCapture"));
     bGamepad=FParse::Param(FCommandLine::Get(),TEXT("FuchimatoiGamepad"));
+    bRecovery=FParse::Param(FCommandLine::Get(),TEXT("FuchimatoiRecovery"));
     Mode=GetWorld()->GetAuthGameMode<AFuchimatoiGameMode>();
     if (!Check(Mode && Mode->GetPlayer() && Mode->GetBoss() && Mode->GetEncounterManager(),TEXT("Playable encounter spawned"))) return;
     if (!Check(Mode->IsEncounterActive() && Mode->GetBoss()->GetActionState()==EFuchimatoiActionState::Submerged
         && Mode->GetBoss()->GetNushiProgressComponent()->GetRegisteredKakonCount()==3,TEXT("Start: Submerged, Active, Running, three Kakon"))) return;
     InitialActors=CountActors(GetWorld());
+    UE_LOG(LogTemp,Display,TEXT("FUCHIMATOI_LENGTH initial_cm=%.2f"),Mode->GetBoss()->GetBodyLength());
+    if (!Check(!Mode->GetBoss()->CanRecover(),TEXT("Recovery cannot skip the initial Bite phase"))) return;
+    if (bRecovery) Next(30);
 }
 void AFuchimatoiIntegrationTest::Hold(const FKey& Key,bool Down)
 {
@@ -51,6 +64,7 @@ void AFuchimatoiIntegrationTest::Hold(const FKey& Key,bool Down)
         if(Key==EKeys::LeftShift) Mapped=EKeys::Gamepad_FaceButton_Right;
         if(Key==EKeys::LeftMouseButton) Mapped=EKeys::Gamepad_FaceButton_Left;
         if(Key==EKeys::R) Mapped=EKeys::Gamepad_FaceButton_Top;
+        if(Key==EKeys::SpaceBar) Mapped=EKeys::Gamepad_FaceButton_Bottom;
     }
     Cast<APlayerController>(Mode->GetPlayer()->GetController())->InputKey(FInputKeyEventArgs::CreateSimulated(Mapped,Down?IE_Pressed:IE_Released,Down?1.f:0.f));
     if(Down) Held.Add(Key); else Held.Remove(Key);
@@ -86,11 +100,44 @@ void AFuchimatoiIntegrationTest::Shot(const TCHAR* Name)
     if (!bCapture || Rounds>0) return;
     const FString Dir=FPaths::ProjectSavedDir()/TEXT("Screenshots/Fuchimatoi")/RunId;
     IFileManager::Get().MakeDirectory(*Dir,true);
-    FScreenshotRequest::RequestScreenshot(Dir/(FString(Name)+TEXT(".png")),false,false);
+    const FString Path=Dir/(FString(Name)+TEXT(".png"));
+    // Preserve the first 1/3 recovery; later falls must not overwrite its proof.
+    if (!IFileManager::Get().FileExists(*Path)) FScreenshotRequest::RequestScreenshot(Path,false,false);
+}
+bool AFuchimatoiIntegrationTest::CheckCameraOrbit(const TCHAR* Place)
+{
+    // Orbit sweeps are a separate correctness fixture, not gameplay frame work.
+    if (bRealtime) return true;
+    AFuchimatoiPlayer* P=Mode->GetPlayer();
+    APlayerController* PC=Cast<APlayerController>(P->GetController());
+    USpringArmComponent* Arm=P->FindComponentByClass<USpringArmComponent>();
+    const FRotator Original=PC->GetControlRotation();
+    bool bClear=true;
+    for (float Pitch : {-15.f,-35.f,-60.f})
+        for (int32 Yaw=0; Yaw<360; Yaw+=15)
+        {
+            // Camera-only fixture: keep gameplay position, input and progress.
+            PC->SetControlRotation(FRotator(Pitch,Yaw,0));
+            Arm->TickComponent(1.f/60.f,LEVELTICK_All,nullptr);
+            FMinimalViewInfo View; P->CalcCamera(1.f/60.f,View);
+            const FVector Focus=P->GetActorLocation()+FVector(0,0,35);
+            FHitResult Hit;
+            FCollisionQueryParams Params(SCENE_QUERY_STAT(FuchimatoiCameraTest),false,P);
+            bClear &= !GetWorld()->LineTraceSingleByChannel(Hit,Focus,View.Location,ECC_Camera,Params);
+            bClear &= FVector::Dist(Focus,View.Location)>20.f;
+        }
+    PC->SetControlRotation(Original); Arm->TickComponent(1.f/60.f,LEVELTICK_All,nullptr);
+    return Check(bClear,*FString::Printf(TEXT("Camera sight clear in 72 yaw/pitch samples at %s"),Place));
 }
 void AFuchimatoiIntegrationTest::Tick(float Dt)
 {
     Super::Tick(Dt); if (bDone || !Mode) return;
+    if (bRealtime)
+    {
+        const double Now=FPlatformTime::Seconds();
+        if (Now-PerformanceStart>2.0) FrameTimes.Add((Now-PreviousFrameTime)*1000.0);
+        PreviousFrameTime=Now;
+    }
     for(const FKey& Key:Releases) Hold(Key,false); Releases.Empty();
     AFuchimatoiPlayer* P=Mode->GetPlayer(); AFuchimatoiBoss* B=Mode->GetBoss();
     if(bGamepad)
@@ -100,15 +147,16 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
         PC->InputKey(FInputKeyEventArgs::CreateSimulated(EKeys::Gamepad_LeftX,IE_Axis,RightAxis));
     }
     Time+=Dt; Total+=Dt; bSawDodge|=P->IsDodging();
-    if (Total>240 || Time>35) { Check(false,TEXT("Input playthrough timeout")); return; }
+    if (Total>360 || Time>35) { Check(false,TEXT("Input playthrough timeout")); return; }
     if (Phase>=1 && Phase<=4 && B->GetActionState()==EFuchimatoiActionState::BiteLunge && !LockedTarget.IsZero())
-        if (!Check(B->GetBiteTargetLocalLocation().Equals(LockedTarget),TEXT("Bite target stays locked during evasion"))) return;
+        if ((!bRealtime || !B->GetBiteTargetLocalLocation().Equals(LockedTarget))
+            && !Check(B->GetBiteTargetLocalLocation().Equals(LockedTarget),TEXT("Bite target stays locked during evasion"))) return;
     switch(Phase)
     {
     case 0:
         MoveToward(Mode->GetArena()->GetBaitPosition());
         if (FVector::Dist2D(P->GetActorLocation(),Mode->GetArena()->GetBaitPosition())<20)
-        { SetMove(0,0); LockedTarget=FVector::ZeroVector; Next(Rounds>=2?17:1); }
+        { SetMove(0,0); LockedTarget=FVector::ZeroVector; Next(Rounds>=2 || (bRecovery && !bHitRetryDone)?17:1); }
         break;
     case 1:
         if (B->GetActionState()==EFuchimatoiActionState::BiteWindup && B->GetActionTimeRemaining()<.8f)
@@ -127,8 +175,8 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
         if (B->IsSnagged())
         {
             SetMove(0,0);
-            if (!Check(bSawDodge && P->GetHealth()==3 && B->CanMount(),TEXT("Input dodge baits rock collision and opens Snagged grab"))) return;
-            Shot(TEXT("03-Snagged")); Next(5);
+            if (!Check(bSawDodge && P->GetHealth()==(bRecovery && Rounds==0?2:3) && B->CanMount(),TEXT("Input dodge baits rock collision and opens Snagged grab"))) return;
+            Shot(TEXT("03-Snagged")); Next(bRecovery && !bMissedGrabDone?40:5);
         }
         break;
     case 5:
@@ -140,6 +188,7 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
         if(Time>.15f)
         {
             if(!Check(P->IsMounted() && P->GetRouteNode()==0 && P->GetGrab()->GetGrabTarget()==B->GetRouteAnchor(0),TEXT("Grab input attaches via shared UGrabComponent"))) return;
+            if(!CheckCameraOrbit(TEXT("BaitRock"))) return;
             Shot(TEXT("04-HeadGrab")); SetMove(1,0); Next(7);
         }
         break;
@@ -161,9 +210,15 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
         }
         if(B->IsCoilingComplete())
         {
+            UE_LOG(LogTemp,Display,TEXT("FUCHIMATOI_LENGTH coiled_cm=%.2f"),B->GetBodyLength());
             if(!Check(FVector::Dist(BeforeAnchor,B->GetRouteAnchor(3)->GetActorLocation())>100
                 && RockBefore.Equals(B->GetRouteAnchor(4)->GetActorLocation(),.01f),TEXT("Coiling reconfigures snake route while rock anchor stays fixed"))) return;
-            SetMove(1,0); Next(9);
+            if (bRecovery && Rounds==0)
+            {
+                RecoveryBossPose=B->GetActorTransform(); RecoveryRoutePosition=B->GetRouteAnchor(3)->GetActorLocation();
+                Tap(EKeys::SpaceBar); Next(20);
+            }
+            else { SetMove(1,0); Next(9); }
         }
         break;
     case 9:
@@ -173,6 +228,7 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
     case 10:
         if(Time>1.2f)
         {
+            if(!CheckCameraOrbit(TEXT("RockLedge"))) return;
             if(!Check(P->GetGrab()->GetGrabTarget()==B->GetRouteAnchor(4) && B->GetRouteAnchor(4)->IsRock()
                 && P->GetStamina()->GetCurrentStamina()>BeforeStamina,TEXT("Snake to rock transfer changes grab owner and restores stamina"))) return;
             SetMove(1,0); Next(11);
@@ -182,7 +238,7 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
         if(P->GetRouteNode()==6 && !P->IsRouteMoving()) { SetMove(0,0); Next(12); }
         break;
     case 12:
-        if(Time>1.2f) { SetMove(1,0); Next(13); }
+        if(Time>1.2f) { if(!CheckCameraOrbit(TEXT("RockPillar"))) return; SetMove(1,0); Next(13); }
         break;
     case 13:
         if(P->GetRouteNode()==7 && !P->IsRouteMoving())
@@ -192,7 +248,8 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
         if(Time>.2f)
         {
             if(!Check(B->GetNushiProgressComponent()->GetPurifiedCount()==2,TEXT("Second serpent Kakon advances shared progress to 2/3"))) return;
-            SetMove(1,0); Next(15);
+            if (bRecovery && Rounds==0 && FallsRecovered==1) { Tap(EKeys::SpaceBar); Next(20); }
+            else { SetMove(1,0); Next(15); }
         }
         break;
     case 15:
@@ -205,6 +262,10 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
             if(!Check(Mode->IsVictory() && !Mode->IsEncounterActive() && B->GetNushiProgressComponent()->GetPurifiedCount()==3
                 && B->GetNushiState()==ENushiState::Calm && Mode->GetEncounterManager()->GetEncounterState()==ENushiEncounterState::Completed,
                 TEXT("Third input purification propagates Progress 3/3, Calm, Completed, Victory"))) return;
+            if(!Check(!B->CanRecover() && !B->IsRecoveryUnlocked(),TEXT("Completed/Calm disables recovery"))) return;
+            if(bRecovery && Rounds==0 && !Check(FallsRecovered==2 && B->GetTelemetry().RecoveryGrabs==2
+                && B->GetTelemetry().Falls==2 && bMissCycleDone && bMissedGrabDone && bHitRetryDone,
+                TEXT("Two recoveries and miss/hit/timeout retries complete in one encounter"))) return;
             Shot(TEXT("10-Victory"));
         }
         if(Time>.6f) { ++Rounds; Tap(EKeys::R); Next(19); }
@@ -214,7 +275,9 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
         if(P->GetHealth()==2)
         {
             if(!Check(!B->CanMount() && B->GetActionState()==EFuchimatoiActionState::Submerged,TEXT("A direct player hit damages and grants no grab opportunity"))) return;
-            Tap(EKeys::R); Next(18);
+            if (bRecovery && !bHitRetryDone)
+            { bHitRetryDone=true; bSawDodge=false; Next(0); }
+            else { Tap(EKeys::R); Next(18); }
         }
         break;
     case 18: if(Time>.2f) { if(Check(P->GetHealth()==3 && !P->IsMounted(),TEXT("Retry also resets player hit state"))) Finish(); } break;
@@ -225,9 +288,107 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
                 && !B->HasBiteTarget() && B->GetHeadProxyLocalLocation().IsZero() && B->GetCoilingProgress()==0
                 && B->GetNushiProgressComponent()->GetPurifiedCount()==0 && B->GetNushiState()==ENushiState::Active
                 && !P->IsMounted() && P->GetHealth()==3 && P->GetStamina()->GetCurrentStamina()==100
-                && CountActors(GetWorld())==InitialActors,TEXT("Input Retry resets player, boss, target, coil, progress, lifecycle without actor growth"))) return;
+                && CountActors(GetWorld())==InitialActors && !B->CanRecover() && B->GetTelemetry().RecoveryGrabs==0,
+                TEXT("Input Retry resets player, boss, target, coil, progress, lifecycle without actor growth"))) return;
             for(int32 I=0;I<3;++I) if(!Check(B->GetKakon(I)->GetState()==EKakonState::Exposed,TEXT("Retry restores each Kakon"))) return;
             bSawDodge=false; bSawCoilFollow=false; Next(0);
+        }
+        break;
+    case 20:
+        if(Time>.15f)
+        {
+            if(!Check(!P->IsMounted() && P->GetCharacterMovement()->IsFalling() && !B->CanRecover(),
+                TEXT("Detach input falls; airborne recovery is disabled"))) return;
+            Shot(FallsRecovered==0?TEXT("11-IntentionalFall"):TEXT("15-SecondFall"));
+            Tap(EKeys::E); Next(21);
+        }
+        break;
+    case 21:
+        if(P->IsMounted()) { Check(false,TEXT("Airborne grab input cannot recover")); return; }
+        // A high detach can land on the bait rock first. Walk off using input
+        // before asserting the ground-only recovery condition.
+        if(P->GetCharacterMovement()->IsMovingOnGround() && !P->IsOnRecoveryGround())
+            MoveToward(B->GetRecoveryAnchor()->GetActorLocation());
+        if(P->IsOnRecoveryGround())
+        {
+            SetMove(0,0);
+            if(!Check(B->CanRecover() && B->GetNushiProgressComponent()->GetPurifiedCount()==FallsRecovered+1
+                && B->IsCoilingComplete() && B->IsCoiling() && B->GetActorTransform().Equals(RecoveryBossPose)
+                && B->GetRouteAnchor(3)->GetActorLocation().Equals(RecoveryRoutePosition)
+                && B->GetRouteAnchor(4)->GetActorLocation().Equals(RockBefore)
+                && B->GetKakon(0)->GetState()==EKakonState::Purified
+                && B->GetKakon(1)->GetState()==(FallsRecovered==0?EKakonState::Exposed:EKakonState::Purified)
+                && B->GetKakon(2)->GetState()==EKakonState::Exposed,
+                TEXT("Floor landing preserves all Kakon, progress, boss pose, coil and route phase"))) return;
+            Shot(TEXT("12-RecoveryPoint")); Next(22);
+        }
+        break;
+    case 22:
+        MoveToward(B->GetRecoveryAnchor()->GetActorLocation());
+        if(FVector::Dist2D(P->GetActorLocation(),B->GetRecoveryAnchor()->GetActorLocation())<100)
+        {
+            SetMove(0,0);
+            // Test fixture only: exercise the stamina boundary without waiting
+            // for an accidental depletion. All mounting and travel use inputs.
+            P->GetStamina()->ConsumeStamina(100); Tap(EKeys::E); Next(23);
+        }
+        break;
+    case 23:
+        if(Time>.1f)
+        {
+            if(!Check(!P->IsMounted() && P->GetStamina()->GetCurrentStamina()<P->MinimumGrabStamina,
+                TEXT("Recovery rejects low stamina instead of instant falling"))) return;
+            Next(24);
+        }
+        break;
+    case 24:
+        if(P->GetStamina()->GetCurrentStamina()>=P->MinimumGrabStamina)
+        { Tap(EKeys::E); Next(25); }
+        break;
+    case 25:
+        if(Time>.15f)
+        {
+            if(!Check(P->IsMounted() && P->IsRecovering() && !B->CanRecover()
+                && P->GetGrab()->GetGrabTarget()==B->GetRecoveryAnchor(),TEXT("Recovery input uses shared local-transform grab"))) return;
+            Shot(TEXT("13-RecoveryGrab")); Next(26);
+        }
+        break;
+    case 26:
+        if(!P->IsRecovering())
+        {
+            if(!Check(P->IsMounted() && P->GetRouteNode()==B->RecoveryNode && !P->IsRouteMoving()
+                && P->GetGrab()->GetGrabTarget()==B->GetRouteAnchor(B->RecoveryNode)
+                && FVector::Dist(P->GetActorLocation(),B->GetRouteAnchor(B->RecoveryNode)->GetActorLocation())<3
+                && P->GetStamina()->GetCurrentStamina()>=25,
+                TEXT("Recovery reconnects to existing node 3 with stable pose and stamina"))) return;
+            ++FallsRecovered; Shot(TEXT("14-RouteRecovered")); SetMove(1,0); Next(9);
+        }
+        break;
+    case 30:
+        MoveToward(FVector(-300,-900,92));
+        if(FVector::Dist2D(P->GetActorLocation(),FVector(-300,-900,92))<20) { SetMove(0,0); Next(31); }
+        break;
+    case 31:
+        if(B->GetActionState()==EFuchimatoiActionState::BiteLunge)
+        { MoveToward(P->GetActorLocation()+FVector(0,-1000,0)); Next(32); }
+        break;
+    case 32:
+        if(Time>.05f && !bSawDodge) Tap(EKeys::LeftShift);
+        if(B->GetActionState()==EFuchimatoiActionState::Submerged)
+        {
+            SetMove(0,0);
+            if(!Check(P->GetHealth()==3 && B->GetTelemetry().RockLures==0 && !B->CanMount(),
+                TEXT("Bite misses player and rock then naturally returns to Submerged"))) return;
+            bMissCycleDone=true; bSawDodge=false; Next(0);
+        }
+        break;
+    case 40:
+        if(B->GetActionState()==EFuchimatoiActionState::Submerged)
+        {
+            if(!Check(!P->IsMounted() && !B->CanMount() && !B->CanRecover()
+                && B->GetNushiProgressComponent()->GetPurifiedCount()==0,
+                TEXT("Missed Snag timeout returns to Submerged with no Retry"))) return;
+            bMissedGrabDone=true; bSawDodge=false; Next(0);
         }
         break;
     }
@@ -235,7 +396,31 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
 void AFuchimatoiIntegrationTest::Finish()
 {
     if(!Check(Rounds==2,TEXT("Two complete input-driven clears and retries"))) return;
+    if (bRealtime) RecordPerformance();
+    if (bDone) return;
     bDone=true; FApp::SetUseFixedTimeStep(false);
     UE_LOG(LogTemp,Display,TEXT("FUCHIMATOI_TEST_PASS %s rounds=%d seconds=%.2f"),*RunId,Rounds,Total);
     FPlatformMisc::RequestExitWithStatus(false,0);
+}
+
+void AFuchimatoiIntegrationTest::RecordPerformance()
+{
+    const FString Dir=FPaths::ProjectSavedDir()/TEXT("FuchimatoiPerformance")/RunId;
+    IFileManager::Get().MakeDirectory(*Dir,true);
+    TArray<FString> Rows; Rows.Add(TEXT("frame,wall_ms"));
+    double Sum=0; int32 OverBudget=0, Hitches=0;
+    for (int32 I=0; I<FrameTimes.Num(); ++I)
+    {
+        const double Ms=FrameTimes[I]; Sum+=Ms;
+        OverBudget+=Ms>1000.0/TargetFPS+1.0;
+        Hitches+=Ms>50.0;
+        Rows.Add(FString::Printf(TEXT("%d,%.4f"),I,Ms));
+    }
+    if (!Check(FrameTimes.Num()>0 && FFileHelper::SaveStringArrayToFile(Rows,*(Dir/TEXT("Frames.csv"))),
+        TEXT("Realtime wall-clock frame samples saved"))) return;
+    FrameTimes.Sort();
+    const auto Percentile=[&](double P) { return FrameTimes[FMath::Clamp(FMath::CeilToInt(P*FrameTimes.Num())-1,0,FrameTimes.Num()-1)]; };
+    UE_LOG(LogTemp,Display,TEXT("FUCHIMATOI_PERF %s target_fps=%d frames=%d avg_fps=%.2f p95_ms=%.3f p99_ms=%.3f max_ms=%.3f over_budget_plus_1ms=%d over_50ms=%d warmup_seconds=2 rendered=1 fixed_timestep=0"),
+        *RunId,TargetFPS,FrameTimes.Num(),1000.0*FrameTimes.Num()/Sum,
+        Percentile(.95),Percentile(.99),FrameTimes.Last(),OverBudget,Hitches);
 }

@@ -30,7 +30,26 @@ void AFuchimatoiHUD::DrawHUD()
         Line(FString::Printf(TEXT("NODE %d/10 - %s | W/S or LS: climb | LMB/X: purify | Space/A: detach"),
             Player->GetRouteNode()+1,Node && Node->IsRock()?TEXT("ROCK - REST TO REFILL"):TEXT("SNAKE - stamina drains")));
     }
-    else Line(FString::Printf(TEXT("%s | E/RB: grab | Shift/B: dodge | R/Y: retry"),Boss->CanMount()?TEXT("GRAB POSSIBLE - reach the head"):TEXT("Bait the bite in front of the gold rock")));
+    else if (Boss->IsRecoveryUnlocked())
+    {
+        Line(Player->IsOnRecoveryGround()
+            ?(Player->GetStamina()->GetCurrentStamina()<Player->MinimumGrabStamina
+                ?TEXT("RECOVERY: rest on ground until STAMINA 25 | E/RB: grab")
+                :TEXT("RECOVERY READY: E/RB near gold beacon | progress is kept"))
+            :TEXT("Land on the floor, then return to the gold recovery beacon"));
+        const FVector Point=Boss->GetRecoveryAnchor()->GetActorLocation();
+        FVector Screen=Project(Point);
+        if (Screen.Z>0)
+            DrawText(FString::Printf(TEXT("RETURN HERE  %.1fm"),FVector::Dist2D(Point,Player->GetActorLocation())/100.f),
+                FLinearColor(1,.85,.2),FMath::Clamp(Screen.X,25.f,Canvas->ClipX-230.f),
+                FMath::Clamp(Screen.Y,190.f,Canvas->ClipY-50.f),GEngine->GetMediumFont(),Scale);
+        else Line(TEXT("Gold beacon is behind the camera - turn to find it"),FLinearColor(1,.85,.2));
+    }
+    else if (Boss->GetActionState()==EFuchimatoiActionState::BiteLunge)
+        Line(TEXT("Shift/B: dodge sideways | Wait for gold head marker, then E/RB"));
+    else if (Boss->IsCoiling())
+        Line(TEXT("Wait for Coiling to finish, then land on the floor to recover"));
+    else Line(FString::Printf(TEXT("%s | E/RB: grab | Shift/B: dodge | R/Y: retry"),Boss->CanMount()?TEXT("GRAB NOW - reach the gold head marker"):TEXT("Reach the gold square in front of the rock")));
     Line(TEXT("WASD / LS: move | Mouse / RS: camera | Purify red cores; gold ledges restore stamina"));
     if (!Mode->IsEncounterActive())
     {

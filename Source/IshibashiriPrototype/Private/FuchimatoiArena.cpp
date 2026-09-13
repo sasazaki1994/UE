@@ -33,7 +33,7 @@ AFuchimatoiArena::AFuchimatoiArena()
     Part(TEXT("FinalLedge"),FVector(-120,-520,1780),FVector(4,3,1),true);
     Part(TEXT("CanyonBack"),FVector(-700,1950,1050),FVector(64,1,22),true);
     Part(TEXT("CanyonEnd"),FVector(2450,0,900),FVector(1,40,19),true);
-    Part(TEXT("BaitSpot"),FVector(140,0,4),FVector(1.9,1.9,.04),false);
+    BaitSpot=Part(TEXT("BaitSpot"),FVector(140,0,4),FVector(1.9,1.9,.04),false);
 }
 void AFuchimatoiArena::BeginPlay()
 {
@@ -68,3 +68,4 @@ AFuchimatoiRouteAnchor* AFuchimatoiArena::GetRockAnchor(int32 Node) const
 {
     return RockAnchors.Num()==2 ? (Node==4?RockAnchors[0].Get():Node==6?RockAnchors[1].Get():nullptr) : nullptr;
 }
+void AFuchimatoiArena::ShowBaitSpot(bool bShow) { BaitSpot->SetVisibility(bShow); }

@@ -1,5 +1,7 @@
 # 淵纏い Primitive Vertical Slice
 
+この文書はPR #36時点の記録。Coiling後の落下復帰・再挑戦・誘導表示の改善と最新検証は [淵纏い：落下復帰と再挑戦](FuchimatoiRecovery.md) を参照。
+
 基準は `sasazaki1994/UE` の `main`、`52411f55e21ef5d68912457f4a9e96cf89de6cf4`（PR #35統合後）。作業ブランチは `codex/work_fuchimatoi-primitive-slice`。
 
 噛みつきを岩へ誘導し、回避して生まれたGrab機会から登り、第一禍根で身体を巻き付かせ、蛇と岩棚・岩柱を行き来して残りの禍根を祓う。共通Nushiの完了をVictoryへ接続し、入力Retryから再クリアまで実装した。

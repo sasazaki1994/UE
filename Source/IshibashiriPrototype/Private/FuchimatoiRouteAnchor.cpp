@@ -25,3 +25,12 @@ void AFuchimatoiRouteAnchor::Configure(bool bRock, int32 Index)
     SetPrimitiveColor(Marker->CreateDynamicMaterialInstance(0), bRock ? FLinearColor(1,.7,.08) : FLinearColor(.1,.95,.9));
     Tags.Add(FName(*FString::Printf(TEXT("FuchimatoiRoute%d"),Index)));
 }
+
+void AFuchimatoiRouteAnchor::SetGuidance(bool bVisible, bool bHighlighted, bool bGrab)
+{
+    SetActorHiddenInGame(!bVisible);
+    Marker->SetRelativeScale3D(FVector(bHighlighted ? .65f : .18f));
+    const FLinearColor Color=bGrab ? FLinearColor(1,.8,.15)
+        : bRockAnchor ? FLinearColor(1,.7,.08) : FLinearColor(.1,.95,.9);
+    SetPrimitiveColor(Cast<UMaterialInstanceDynamic>(Marker->GetMaterial(0)),Color*(bHighlighted?1.f:.3f));
+}

@@ -45,7 +45,8 @@ bool AFuchimatoiGameMode::IsEncounterActive() const { return Manager && !bDefeat
 bool AFuchimatoiGameMode::IsVictory() const { return Manager && Manager->GetEncounterState()==ENushiEncounterState::Completed; }
 void AFuchimatoiGameMode::HandleCompleted()
 {
-    Player->StopEncounter(); UE_LOG(LogTemp,Display,TEXT("FUCHIMATOI_VICTORY via EncounterManager"));
+    Player->StopEncounter(); Boss->LogTelemetry(TEXT("Completed"));
+    UE_LOG(LogTemp,Display,TEXT("FUCHIMATOI_VICTORY via EncounterManager"));
 }
 void AFuchimatoiGameMode::Defeat()
 {
