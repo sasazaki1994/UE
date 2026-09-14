@@ -1,4 +1,5 @@
 #include "PrototypeHUD.h"
+#include "CampaignGameInstance.h"
 #include "PrototypeGameMode.h"
 #include "PrototypePlayer.h"
 #include "PlayerSenseComponent.h"
@@ -58,6 +59,8 @@ void APrototypeHUD::DrawHUD()
         Y += 26.f * Scale * Size;
     };
     Line(TEXT("MAGAHARAI / ISHIBASHIRI"), FLinearColor(0.85f, 0.88f, 0.78f), 1.2f);
+    if (const auto* Campaign=GetGameInstance<UCampaignGameInstance>(); Campaign && Campaign->IsCampaignActive())
+        Line(TEXT("Q / LT: 境断ち    F / LB: 左腕"),FLinearColor(.3f,.9f,1.f),.8f);
     if (!Player || !Boss)
     {
         Line(TEXT("Spawn failed. Use Play, not Simulate. See Output Log."), FLinearColor::Red);

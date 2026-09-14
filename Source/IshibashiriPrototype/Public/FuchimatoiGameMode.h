@@ -23,9 +23,11 @@ public:
     ANushiEncounterManager* GetEncounterManager() const { return Manager; }
 private:
     UFUNCTION() void HandleCompleted();
+    void AdvanceCampaign();
     UPROPERTY() TObjectPtr<AFuchimatoiBoss> Boss;
     UPROPERTY() TObjectPtr<AFuchimatoiPlayer> Player;
     UPROPERTY() TObjectPtr<AFuchimatoiArena> Arena;
     UPROPERTY() TObjectPtr<ANushiEncounterManager> Manager;
     bool bDefeated=false;
+    FTimerHandle CampaignAdvanceTimer;
 };

@@ -1,0 +1,17 @@
+{
+  "step": "3B",
+  "baseline": "31c95dd1c8e0e5a48b3d77eec12d31994fddb33f",
+  "environment": "Linux container; Windows UE 5.6.1 unavailable",
+  "results": {
+    "python_source_contract": "PASS",
+    "ue_build": "NOT_RUN",
+    "campaign_automation": "NOT_RUN",
+    "campaign_input_smoke": "NOT_RUN",
+    "ishibashiri_climbing_grab_camera": "NOT_RUN",
+    "fuchimatoi_normal_recovery": "NOT_RUN",
+    "minedaki_full_recovery": "NOT_RUN",
+    "magatsune_full_recovery": "NOT_RUN",
+    "player_sense_runtime": "NOT_RUN"
+  },
+  "notes": "NOT_RUN entries are not claimed as PASS. Run Prototype.ps1 on Windows with UE 5.6.1."
+}

@@ -38,6 +38,7 @@ public:
 private:
     UFUNCTION()
     void HandleEncounterCompleted();
+    void AdvanceCampaign();
 
     void CreateArena();
     void CreateBlock(const FString& Name, const FVector& Position, const FVector& Scale, const FLinearColor& Color);
@@ -52,4 +53,5 @@ private:
     UPROPERTY() TObjectPtr<ABasinPrototypeArena> BasinArena;
     bool bBasinPrototype = false;
     EEncounterResult Result = EEncounterResult::Playing;
+    FTimerHandle CampaignAdvanceTimer;
 };
