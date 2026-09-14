@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<rect width="1600" height="1000" fill="#17191b"/>
+<style>
+.t{font-family:'Noto Sans JP','Yu Gothic',sans-serif;fill:#eee}.h{font-size:34px;font-weight:700}.s{font-size:19px}.xs{font-size:15px}.panel{fill:#23262a;stroke:#555;stroke-width:2}.hide{fill:#5a4638;stroke:#9a7d62;stroke-width:3}.rock{fill:#66645e;stroke:#aaa69a;stroke-width:3}.moss{fill:#53664a}.root{stroke:#3f2a29;stroke-width:14;fill:none}.k{fill:#6e151c;stroke:#c65b5e;stroke-width:3}.tusk{fill:#d8d0b7;stroke:#aaa;stroke-width:2}.route{fill:#d6c26b;stroke:#fff0a0;stroke-width:2}
+</style>
+<text x="50" y="58" class="t h">石走り — Tripo AI 3D Reference</text>
+<text x="50" y="90" class="t s">巨大猪 + 山体。Gameplay契約: 既存11 Route / 3禍根 / Grab地点 / CollisionをVisualより優先。</text>
+<g transform="translate(45,125)"><rect class="panel" width="500" height="610" rx="18"/><text class="t s" x="20" y="36">LEFT SIDE — PRIMARY</text>
+<ellipse class="hide" cx="270" cy="330" rx="180" ry="118"/><ellipse class="hide" cx="110" cy="350" rx="92" ry="78"/>
+<path class="tusk" d="M45 366 Q10 410 66 398 Q94 385 100 363 Z"/>
+<path class="rock" d="M160 276 Q210 180 285 198 Q350 165 405 238 L430 320 L190 315 Z"/>
+<path class="moss" d="M186 267 Q230 220 278 230 Q315 203 370 248 L390 285 L200 292 Z"/>
+<path class="root" d="M190 235 Q150 295 128 360 M245 205 Q223 273 206 329 M330 205 Q352 263 366 330"/>
+<path class="hide" d="M160 400 L140 548 L185 548 L206 405 M330 407 L315 548 L361 548 L376 405"/>
+<circle class="k" cx="192" cy="260" r="16"/><circle class="k" cx="300" cy="206" r="16"/><circle class="k" cx="405" cy="283" r="16"/>
+<g><circle class="route" cx="150" cy="408" r="8"/><circle class="route" cx="168" cy="370" r="8"/><circle class="route" cx="182" cy="330" r="8"/><circle class="route" cx="205" cy="290" r="8"/><circle class="route" cx="240" cy="252" r="8"/><circle class="route" cx="278" cy="225" r="8"/><circle class="route" cx="318" cy="228" r="8"/><circle class="route" cx="352" cy="246" r="8"/><circle class="route" cx="381" cy="278" r="8"/><circle class="route" cx="400" cy="318" r="8"/><circle class="route" cx="420" cy="350" r="8"/></g>
+<text class="t xs" x="20" y="590">黄=既存Route概念位置 / 赤=3禍根。生成後にVisualをRouteへ合わせる。</text></g>
+<g transform="translate(570,125)"><rect class="panel" width="460" height="610" rx="18"/><text class="t s" x="20" y="36">FRONT / HEAD</text>
+<ellipse class="hide" cx="230" cy="320" rx="145" ry="125"/><ellipse class="hide" cx="230" cy="350" rx="98" ry="80"/>
+<path class="rock" d="M105 290 Q130 170 220 180 Q300 140 360 240 L372 300 Z"/><path class="moss" d="M128 260 Q170 190 230 205 Q290 180 338 245 L344 280 Z"/>
+<path class="tusk" d="M150 365 Q95 420 160 405 L194 370 Z"/><path class="tusk" d="M310 365 Q365 420 300 405 L266 370 Z"/>
+<circle cx="190" cy="325" r="10" fill="#111"/><circle cx="270" cy="325" r="10" fill="#111"/>
+<path class="root" d="M155 225 Q135 280 150 332 M307 213 Q330 275 315 330"/>
+<text class="t xs" x="20" y="590">頭部は猪。岩山が乗るが「岩の塊だけ」にしない。生体感を残す。</text></g>
+<g transform="translate(1055,125)"><rect class="panel" width="500" height="610" rx="18"/><text class="t s" x="20" y="36">TOP / MATERIAL LANGUAGE</text>
+<ellipse class="hide" cx="245" cy="300" rx="175" ry="100"/><path class="rock" d="M110 295 Q170 185 250 195 Q335 174 390 270 Q355 345 260 372 Q160 360 110 295 Z"/>
+<path class="moss" d="M145 280 Q190 220 248 228 Q310 210 360 270 Q330 318 260 338 Q190 330 145 280 Z"/>
+<path class="root" d="M145 260 Q235 295 350 245 M160 310 Q245 270 360 315"/>
+<circle class="k" cx="155" cy="274" r="16"/><circle class="k" cx="257" cy="225" r="16"/><circle class="k" cx="364" cy="290" r="16"/>
+<rect x="36" y="430" width="34" height="34" fill="#5a4638"/><text class="t xs" x="80" y="454">皮: 湿った焦茶</text>
+<rect x="36" y="475" width="34" height="34" fill="#66645e"/><text class="t xs" x="80" y="499">岩盤: 花崗岩/割れ</text>
+<rect x="245" y="430" width="34" height="34" fill="#53664a"/><text class="t xs" x="289" y="454">苔/地衣</text>
+<rect x="245" y="475" width="34" height="34" fill="#3f2a29"/><text class="t xs" x="289" y="499">枯根/穢れ</text>
+<text class="t xs" x="20" y="590">注連縄・紙垂は局所。祭祀物を全身に過剰装飾しない。</text></g>
+<g transform="translate(50,780)"><text class="t s">TRIPO LOCKS</text>
+<text class="t xs" x="0" y="34">・約12m級の巨大猪。重量感のある低重心　・背中は岩山/苔/根が融合　・皮膚、剛毛、岩盤が一体化しすぎず素材差を残す</text>
+<text class="t xs" x="0" y="63">・3禍根は肩〜背中〜後方の登攀終点として視認可能　・11 Routeの足場を塞がない　・脚/肩/背中のGrab面を滑らかに潰さない</text>
+<text class="t xs" x="0" y="92">・Calm後も死亡/崩壊/消滅させない　・怪獣的な角/ドラゴン要素/金属装甲は禁止　・自然と獣が共生した古い山の主として作る</text>
+<text class="t xs" x="0" y="132">Pipeline: Tripo AI mesh → Blender scale/topology/rig → preserve anchors → UE5 regression → High Quality review</text></g>
+</svg>
