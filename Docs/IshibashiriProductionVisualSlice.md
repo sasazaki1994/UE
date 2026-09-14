@@ -22,7 +22,7 @@ The reference Shirotsura documented in `ShirotsuraReferenceCheckpoint.md` is a s
 
 ### Shirotsura
 
-The existing rig, geometry, clips, and material slots remain intact. Two collision-free, non-shadow-casting presentation proxies follow the rig's existing `weapon` and `hand_L` bones. The narrow desaturated blade response reinforces the readable sword silhouette; the compact red-black arm response reinforces the abnormal left arm. They do not perform traces, select targets, modify stamina, or own encounter state. The existing whitewood mask, charcoal/indigo clothing, cord, straw, bell/fittings, corruption and blade material separation remains the authored base; no unvalidated static reference model was imported.
+The existing rig, geometry, clips, and material slots remain intact. Two collision-free, non-shadow-casting presentation proxies follow the rig's existing `weapon` and `hand_L` bones. They are hidden in ordinary play and appear only while their respective Sense is held, so the imported blade and corrupted arm remain the normal silhouettes rather than being doubled by primitive geometry. The narrow desaturated blade response reinforces direction; the compact red-black arm response reinforces danger. They do not perform traces, select targets, modify stamina, or own encounter state. The existing whitewood mask, charcoal/indigo clothing, cord, straw, bell/fittings, corruption and blade material separation remains the authored base; no unvalidated static reference model was imported.
 
 ### Ishibashiri material/readability
 
@@ -38,7 +38,7 @@ Boundary Sense is direction feedback on 境断ち: response amplitude uses the e
 
 ### Purify and Calm
 
-Existing Attack/Purify timing and Slash selection are retained. The sequence is input -> Slash clip -> existing `TryPurify` -> Kakon state broadcast -> local core marker and core bone extinguish. No VFX owns progress. This is a minimal source presentation hook, not a claim of final Niagara quality.
+Existing Attack/Purify timing and Slash selection are retained. The sequence is input -> Slash clip -> existing `TryPurify` -> Kakon state broadcast -> imported core bone extinguish, while a collision-free marker contracts and fades for at most 0.35 seconds. The tail also updates while riding and never gates input, progress, or selection of the next Kakon. No VFX owns progress. This is a minimal source presentation hook, not a claim of final Niagara quality.
 
 At 3/3, the existing Nushi Calm lifecycle selects `AN_Ishibashiri_Calmed`; there is no death, explosion, disappearance, or destructive geometry event. The Basin hook slightly lowers fog density/opacity and lifts key intensity. Retry restores the encounter atmosphere and Kakon state.
 

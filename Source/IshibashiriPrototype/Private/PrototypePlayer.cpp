@@ -472,7 +472,10 @@ void APrototypePlayer::Tick(float DeltaSeconds)
     const float Boundary = Sense->IsBoundarySenseActive() ? Sense->GetBoundaryReading().Strength : 0.f;
     const float BladePulse = Boundary * (.72f + .12f * FMath::Sin(PresentationTime * 5.f));
     SetPrimitiveColor(BoundaryBladeMaterial, FLinearColor(.18f + BladePulse*.48f, .22f + BladePulse*.46f, .20f + BladePulse*.32f));
-    BoundaryBladeReaction->SetVisibility(!bWeaponHidden);
+    // The imported boundary blade is the normal silhouette. Show the tiny
+    // response proxy only while Sense is held, avoiding duplicate primitive
+    // geometry in ordinary play.
+    BoundaryBladeReaction->SetVisibility(Sense->IsBoundarySenseActive() && !bWeaponHidden);
     BoundaryBladeReaction->SetRelativeScale3D(FVector(.025f + BladePulse*.008f, .035f + BladePulse*.008f, 1.05f));
     float ArmStrength = 0.f;
     if (Sense->IsCorruptionSenseActive())
@@ -485,6 +488,7 @@ void APrototypePlayer::Tick(float DeltaSeconds)
         default: ArmStrength = .28f; break;
         }
     }
+    CorruptedArmReaction->SetVisibility(Sense->IsCorruptionSenseActive());
     SetPrimitiveColor(CorruptedArmMaterial, FLinearColor(.055f + ArmStrength*.25f, .008f, .012f + ArmStrength*.025f));
     CorruptedArmReaction->SetRelativeScale3D(FVector(.13f, .09f, .32f) * (1.f + ArmStrength*.08f));
 }

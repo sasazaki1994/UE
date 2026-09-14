@@ -88,6 +88,9 @@ private:
     int32 Health = 3;
     float StateTimeRemaining = 0.f;
     float VisualTime = 0.f;
+    // A short, presentation-only tail after the gameplay Kakon has already
+    // transitioned. It never gates progress or input.
+    TArray<float> PurifyPresentationRemaining;
     bool bCounterUsed = false;
     bool bChargeHitPlayer = false;
     FVector ChargeDirection = FVector::ForwardVector;
