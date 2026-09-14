@@ -1,6 +1,6 @@
 # 峰抱き — 完成Primitive主戦
 
-基準コミット `a5ceaac2bb1efd7a5d3d7181dee472d3f3a051f2` の1/3 Sliceを、既存の Grab / Cling / Stamina / Kakon / Nushi Progress / State / EncounterManager / Retryだけで3/3まで拡張した。境断ち、左腕能力、札、GAS等は導入していない。
+基準コミット `01b7cbf017ca98c7b8bfaa21acbe91eb0a68dae6`（PR #40 merge済み）の3/3実装を、既存の Grab / Cling / Stamina / Kakon / Nushi Progress / State / EncounterManager / Retryだけを対象に静的監査した。境断ち、左腕能力、札、GAS等は導入していない。
 
 ## 起動と最終フロー
 
@@ -54,7 +54,7 @@ Retryは既存Actorを再Spawnせず、Player、Grab、Stamina、Boss/Body trans
 | Keyboard 60/30, Gamepad 60, Capture | `Prototype.ps1 -Action Test -Minedaki ...` | 未検証: 同上 |
 | 石走り / 淵纏いRegression | 指定の各 `Prototype.ps1 -Action Test` | 未検証: 同上 |
 
-既存の `Docs/MinedakiCaptures/` は旧1/3 Runの画像であり、実行していない新Runを装って置換していない。UE 5.6.1環境で `-Capture` を実行すると、Toolsが要求する15枚（Ground Grab、Phase1 wall climb、First Shake、Kakon1、Phase2 transition、Arm route、Kakon2、Phase3 transition、Final Cling、Kakon3、Calm、Victory、Fall、Recovery、Retry）を検証する。
+既存の `Docs/MinedakiCaptures/` は旧1/3 Runの画像であり、実行していない新Runを装って置換していない。UE 5.6.1環境で `-Capture` を実行すると、Toolsが要求する16枚（Ground Grab、Phase1 wall climb、First Shake、Kakon1、Phase2 transition、Arm route、Kakon2、Phase3 transition、Final Route、Final Cling、Kakon3、Calm、Victory、Fall、Recovery、Retry）を検証する。Capture要求を同一frameで上書きしないよう、Calm/Victory/RetryおよびFinal Routeを別frameに分離した。
 
 ## 未検証・残る弱点
 
@@ -64,4 +64,4 @@ Retryは既存Actorを再Spawnせず、Player、Grab、Stamina、Boss/Body trans
 2. Route判断は「変形を待ち、開いた緑Nodeを進む」一段階で、リプレイ時の分岐はない。
 3. Recoveryは安全棚への復帰を明確化するため着地後に位置補正し、棚から再Grabするが、落下軌道そのものを連続的に誘導する表現は未完成。
 
-次はUE 5.6.1でUHT/Editor buildと全Automationを先に通し、入力driverのタイミング、Recovery棚への着地、Camera遮蔽を修正する。その後15 Captureと指定Regressionを取得し、人間操作でCling予告とStamina余裕を調整する。
+次はUE 5.6.1でUHT/Editor buildと全Automationを先に通し、入力driverのタイミング、Recovery棚への着地、Camera遮蔽を確認する。その後16 Captureと指定Regressionを取得し、人間操作でCling予告とStamina余裕を確認する。これらが未実行のため、現時点の判定は `STEP 1 NOT VALIDATED` とする。
