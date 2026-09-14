@@ -8,6 +8,7 @@ param(
     [switch]$Basin,
     [switch]$Fuchimatoi,
     [switch]$Minedaki,
+    [switch]$Magatsune,
     [switch]$Recovery,
     [switch]$Realtime,
     [switch]$Onscreen,
@@ -83,6 +84,8 @@ function Ensure-Map {
 }
 
 try {
+    if (@(@($Minedaki,$Magatsune,$Fuchimatoi) | Where-Object { $_ }).Count -gt 1) { throw 'Choose one encounter: -Fuchimatoi, -Minedaki, or -Magatsune.' }
+    if ($Magatsune -and ($Basin -or $Recovery -or $Realtime -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Magatsune is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
     if ($Minedaki -and ($Fuchimatoi -or $Basin -or $Recovery -or $Realtime -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Minedaki is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
     if ($Onscreen -and !$Realtime) { throw '-Onscreen requires -Realtime.' }
     if ($Realtime -and (!$Fuchimatoi -or $Action -ne 'Test' -or $Capture)) { throw '-Realtime requires -Action Test -Fuchimatoi without -Capture (screenshots distort frame timing).' }
@@ -91,11 +94,12 @@ try {
     $LaunchMap = '/Game/Maps/L_Prototype_01'
     if ($Fuchimatoi) { $LaunchMap += '?game=/Script/IshibashiriPrototype.FuchimatoiGameMode' }
     if ($Minedaki) { $LaunchMap += '?game=/Script/IshibashiriPrototype.MinedakiGameMode' }
+    if ($Magatsune) { $LaunchMap += '?game=/Script/IshibashiriPrototype.MagatsuneGameMode' }
     if (($Camera -or $Playthrough -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad -or $Gamepad -or $BasinScenario -or $TestSeconds -gt 0) -and $Action -ne 'Test') { throw 'Test switches require -Action Test.' }
     if (@(@($Camera, $Playthrough, $Grab, $Climbing, $ClimbingIK, $GrabMotionWarp, $LocalClimbing, $ClimbingGamepad, $Gamepad, $BasinScenario) | Where-Object { $_ }).Count -gt 1) { throw 'Choose one test mode.' }
     if ($BasinScenario -and !$Basin) { throw '-BasinScenario requires -Basin.' }
     if ($TestSeconds -gt 0 -and !$Playthrough) { throw '-TestSeconds requires -Playthrough.' }
-    if ($Capture -and (($Gamepad -and !$Fuchimatoi -and !$Minedaki) -or $Grab -or $LocalClimbing)) { throw '-Capture requires route climbing, smoke or playthrough tests.' }
+    if ($Capture -and (($Gamepad -and !$Fuchimatoi -and !$Minedaki -and !$Magatsune) -or $Grab -or $LocalClimbing)) { throw '-Capture requires route climbing, smoke or playthrough tests.' }
     $ResolvedEngine = Find-Engine
     $BuildTool = Join-Path $ResolvedEngine 'Engine\Build\BatchFiles\Build.bat'
     $EditorExe = Join-Path $ResolvedEngine 'Engine\Binaries\Win64\UnrealEditor.exe'
@@ -163,6 +167,7 @@ try {
             $LogName = if ($GrabMotionWarp) { "GrabMotionWarp-$TestFPS.log" } elseif ($BasinScenario) { "BasinScenario-$TestFPS.log" } elseif ($Camera) { "PrototypeCamera-$TestFPS.log" } elseif ($Gamepad) { "PrototypeGamepad-$TestFPS.log" } elseif ($ClimbingGamepad) { "ClimbingGamepad-$TestFPS.log" } elseif ($ClimbingIK) { "ClimbingIK-$TestFPS.log" } elseif ($Climbing) { "ClimbingTest-$TestFPS.log" } elseif ($LocalClimbing) { "PrototypeClimbing-$TestFPS.log" } elseif ($Grab) { "PrototypeGrab-$TestFPS.log" } elseif ($Playthrough) { "PrototypePlaythrough-$TestFPS.log" } elseif ($Capture) { "PrototypeVisual-$TestFPS.log" } else { "PrototypeSmoke-$TestFPS.log" }
             if ($Fuchimatoi) { $LogName = if ($Gamepad) { "FuchimatoiGamepad-$TestFPS.log" } else { "Fuchimatoi-$TestFPS.log" } }
             if ($Minedaki) { $LogName = if ($Gamepad) { "MinedakiGamepad-$TestFPS.log" } else { "Minedaki-$TestFPS.log" } }
+            if ($Magatsune) { $LogName = if ($Gamepad) { "MagatsuneGamepad-$TestFPS.log" } else { "Magatsune-$TestFPS.log" } }
             if ($Recovery) { $LogName = if ($Gamepad) { "FuchimatoiRecoveryGamepad-$TestFPS.log" } else { "FuchimatoiRecovery-$TestFPS.log" } }
             if ($Realtime) { $LogName = "Realtime-$LogName" }
             if ($Onscreen) { $LogName = "Onscreen-$LogName" }
@@ -171,9 +176,11 @@ try {
             $TestFlag = if ($BasinScenario) { '-BasinPlaythroughTest' } elseif ($Camera) { '-PrototypeCameraTest' } elseif ($Gamepad) { '-PrototypeGamepadTest' } elseif ($Climbing -or $ClimbingGamepad -or $ClimbingIK -or $GrabMotionWarp) { '-ClimbingTest' } elseif ($LocalClimbing) { '-PrototypeClimbingTest' } elseif ($Grab) { '-PrototypeGrabTest' } elseif ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
             if ($Fuchimatoi) { $TestFlag = '-FuchimatoiTest' }
             if ($Minedaki) { $TestFlag = '-MinedakiTest' }
+            if ($Magatsune) { $TestFlag = '-MagatsuneTest' }
             $TestArguments = @($ProjectFile, $LaunchMap, '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
             if ($Fuchimatoi -and $Gamepad) { $TestArguments += '-FuchimatoiGamepad' }
             if ($Minedaki -and $Gamepad) { $TestArguments += '-MinedakiGamepad' }
+            if ($Magatsune -and $Gamepad) { $TestArguments += '-MagatsuneGamepad' }
             if ($Recovery) { $TestArguments += '-FuchimatoiRecovery' }
             if ($Realtime) { $TestArguments += '-FuchimatoiRealtime' }
             if ($Basin) { $TestArguments += '-BasinPrototype' }
@@ -194,6 +201,7 @@ try {
             $PassMarker = if ($GrabMotionWarp) { "GRAB_MOTION_WARP_TEST_PASS $RunId" } elseif ($BasinScenario) { "BASIN_SCENARIO_PASS $RunId" } elseif ($ClimbingIK) { "CLIMBING_IK_TEST_PASS $RunId" } elseif ($Climbing -or $ClimbingGamepad) { "CLIMB_TEST_PASS $RunId" } else { "PROTOTYPE_TEST_PASS $RunId" }
             if ($Fuchimatoi) { $PassMarker = "FUCHIMATOI_TEST_PASS $RunId" }
             if ($Minedaki) { $PassMarker = "MINEDAKI_TEST_PASS $RunId" }
+            if ($Magatsune) { $PassMarker = "MAGATSUNE_TEST_PASS $RunId" }
             if (!(Select-String -LiteralPath $LogFile -SimpleMatch $PassMarker -Quiet)) {
                 throw "Smoke test did not report success for this run. Read $LogFile"
             }
@@ -210,6 +218,10 @@ try {
                 if ($Minedaki) {
                     $CaptureDir = Join-Path $ProjectRoot "Saved\Screenshots\Minedaki\$RunId"
                     $ShotNames = @('01-GroundGrab','02-Phase1WallClimb','03-FirstShake','04-Kakon1','05-Phase2BodyTransition','06-ArmRoutePlatform','07-Kakon2','08-Phase3Transition','09-FinalRoute','10-FinalCling','11-Kakon3','12-Calm','13-Victory','14-Fall','15-Recovery','16-Retry')
+                }
+                if ($Magatsune) {
+                    $CaptureDir = Join-Path $ProjectRoot "Saved\Screenshots\Magatsune\$RunId"
+                    $ShotNames = @('01-Arrival','02-RootMovement','03-FirstGrab','04-Kakon1','05-Phase2Opening','06-RootRockTransition','07-Kakon2','08-FinalRootRise','09-FinalCling','10-Kakon3','11-Calm','12-Victory')
                 }
                 foreach ($Name in $ShotNames) {
                     $Shot = Get-Item -LiteralPath (Join-Path $CaptureDir "$Name.png") -ErrorAction Stop

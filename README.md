@@ -1,5 +1,14 @@
 # 禍祓い — 石走り・登攀プロトタイプ
 
+最終局面「禍津根」のPrimitive Vertical Sliceは **`.\Tools\Prototype.ps1 -Action Play -Magatsune`** で起動します。禍津根は第四の主ではなく、地表へ噴出した禍をRoot A → Root/岩柱 → 中央核の順に鎮める「生きて動く地形」です。既存Grab / Cling / Staminaと共通Kakon / Nushi Lifecycleを再利用し、3/3後は破壊せず静止してVictoryへ進みます。詳細と未実行のUE検証は [禍津根Vertical Slice](Docs/MagatsuneVerticalSlice.md) を参照してください。
+
+```powershell
+.\Tools\Prototype.ps1 -Action Play -Magatsune
+.\Tools\Prototype.ps1 -Action Test -Magatsune -SkipBuild -TestFPS 60
+.\Tools\Prototype.ps1 -Action Test -Magatsune -SkipBuild -TestFPS 30
+.\Tools\Prototype.ps1 -Action Test -Magatsune -SkipBuild -Gamepad -TestFPS 60
+```
+
 第三の主「峰抱き」の完成Primitive主戦は **`.\Tools\Prototype.ps1 -Action Play -Minedaki`** で起動します。脚から背中へ登り、巨体の崖登り、腕橋、肩から頭部への身体変形ルートをClingで渡って3つの禍根を祓うと、共通Nushi進行で **3/3 → Calm → Encounter Completed → Victory** になります。落下時は進行を保持して安全棚から再Grabでき、R / Yの全Retryも残しています。詳細は [峰抱き完成主戦・検証](Docs/MinedakiSlice.md) を参照してください。通常起動の石走りと `-Fuchimatoi` は維持しています。
 
 UE 5.6 / Windows向け。白面の祓い手を操作し、約12mの巨猪へ取り付き、移動する背中の岩棚を登って3つの禍根を祓います。
