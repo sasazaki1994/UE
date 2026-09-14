@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<rect width="1600" height="1000" fill="#17191b"/>
+<style>
+.t{font-family:'Noto Sans JP','Yu Gothic',sans-serif;fill:#eee}.h{font-size:34px;font-weight:700}.s{font-size:19px}.xs{font-size:15px}.panel{fill:#23262a;stroke:#555;stroke-width:2}.line{stroke:#d5d2c8;stroke-width:5;fill:none;stroke-linecap:round;stroke-linejoin:round}.cloth{fill:#252b35;stroke:#9096a0;stroke-width:3}.mask{fill:#eee9db;stroke:#999;stroke-width:3}.corrupt{stroke:#7b1d24;stroke-width:9;fill:none}.sword{stroke:#bfc7c8;stroke-width:8}.accent{fill:#8b252a}.rope{stroke:#9d815a;stroke-width:7;fill:none}
+</style>
+<text x="50" y="58" class="t h">白面の祓い手 — Tripo AI 3D Reference</text>
+<text x="50" y="90" class="t s">目的: 本番3D生成の外形・素材・左右差を固定。既存Skeleton / Grab / Climbing契約へ後段で合わせる。</text>
+<g transform="translate(45,125)">
+<rect class="panel" x="0" y="0" width="350" height="610" rx="18"/><text class="t s" x="20" y="36">FRONT</text>
+<ellipse class="mask" cx="175" cy="105" rx="47" ry="60"/><path class="line" d="M150 88 Q175 105 200 88 M158 120 Q175 132 192 120"/>
+<path class="cloth" d="M126 170 Q175 145 224 170 L254 410 Q225 455 200 480 L175 432 L148 480 Q120 452 96 410 Z"/>
+<path class="line" d="M126 190 L77 342 M224 190 L274 342 M143 420 L133 575 M207 420 L218 575"/>
+<path class="corrupt" d="M77 342 L64 270 M70 310 L44 287 M70 302 L94 276"/>
+<path class="rope" d="M110 322 Q175 347 240 322"/><circle cx="205" cy="340" r="10" fill="#a88b55"/>
+<path class="sword" d="M244 250 L300 565"/><path class="line" d="M235 247 L260 242"/>
+<text class="t xs" x="22" y="590">白面 / 濃紺〜墨色衣 / 左腕のみ穢れ</text>
+</g>
+<g transform="translate(420,125)">
+<rect class="panel" width="350" height="610" rx="18"/><text class="t s" x="20" y="36">RIGHT SIDE</text>
+<ellipse class="mask" cx="173" cy="105" rx="38" ry="60"/><path class="line" d="M184 70 Q218 85 220 105"/>
+<path class="cloth" d="M145 168 Q185 155 211 185 L232 420 L200 474 L175 440 L151 476 L125 418 Z"/>
+<path class="line" d="M150 190 L118 350 M200 190 L237 350 M156 432 L143 575 M195 432 L210 575"/>
+<path class="sword" d="M229 255 L282 570"/><path class="rope" d="M132 322 Q180 340 218 321"/>
+<text class="t xs" x="22" y="590">長い上衣は走行・登攀で脚に干渉しない</text>
+</g>
+<g transform="translate(795,125)">
+<rect class="panel" width="350" height="610" rx="18"/><text class="t s" x="20" y="36">BACK</text>
+<ellipse cx="175" cy="105" rx="47" ry="60" fill="#2b2a2a" stroke="#777" stroke-width="3"/>
+<path class="cloth" d="M126 170 Q175 148 224 170 L254 410 Q224 458 203 482 L175 438 L146 482 Q118 455 96 410 Z"/>
+<path class="line" d="M126 190 L80 345 M224 190 L271 345 M144 423 L133 575 M206 423 L218 575"/>
+<path class="corrupt" d="M80 345 L66 268 M67 306 L45 282 M70 300 L95 277"/>
+<path class="rope" d="M110 322 Q175 347 240 322"/>
+<path class="sword" d="M240 245 L291 565"/>
+<text class="t xs" x="22" y="590">背面も非対称。縄帯・札・鈴を残す</text>
+</g>
+<g transform="translate(1170,125)">
+<rect class="panel" width="385" height="610" rx="18"/><text class="t s" x="20" y="36">3/4 + MATERIAL</text>
+<ellipse class="mask" cx="170" cy="112" rx="45" ry="60"/>
+<path class="cloth" d="M122 175 Q174 151 218 180 L250 410 Q218 452 194 476 L169 438 L140 480 Q115 451 96 409 Z"/>
+<path class="line" d="M129 193 L79 346 M217 192 L265 332 M144 423 L132 575 M203 423 L220 575"/>
+<path class="corrupt" d="M79 346 L59 267 M62 308 L37 283 M67 301 L91 274"/>
+<path class="sword" d="M251 260 L310 557"/>
+<rect x="278" y="90" width="34" height="34" fill="#eee9db"/><text class="t xs" x="320" y="114">面: 汚れた白木</text>
+<rect x="278" y="137" width="34" height="34" fill="#252b35"/><text class="t xs" x="320" y="161">衣: 墨/濃紺 布</text>
+<rect x="278" y="184" width="34" height="34" fill="#7b1d24"/><text class="t xs" x="320" y="208">穢れ: 赤黒</text>
+<rect x="278" y="231" width="34" height="34" fill="#9d815a"/><text class="t xs" x="320" y="255">縄/札: 枯色</text>
+<text class="t xs" x="20" y="590">境断ち: 長身・細身。過剰な西洋装飾は避ける</text>
+</g>
+<g transform="translate(50,780)"><text class="t s" x="0" y="0">TRIPO LOCKS</text>
+<text class="t xs" x="0" y="34">・成人男性、細身で山仕事に耐える実用体型　・顔は常時「白面」で隠す　・左腕のみ枝状/亀裂状の穢れ　・右手/身体は人間のまま</text>
+<text class="t xs" x="0" y="63">・衣装は和風ファンタジーだが武士鎧ではなく山の作業着/祓い装束寄り　・境断ちは長い祭祀刀　・腰縄、札、小さな鈴を残す</text>
+<text class="t xs" x="0" y="92">・左右対称化しない　・巨大肩当て、派手な金属鎧、現代装備、SF意匠は禁止　・T/A pose化は後工程で実施可</text>
+<text class="t xs" x="0" y="132">Pipeline: ChatGPT reference → Tripo AI → Blender cleanup/rig/weights → UE5 import → gameplay regression → High Quality review</text>
+</g>
+</svg>
