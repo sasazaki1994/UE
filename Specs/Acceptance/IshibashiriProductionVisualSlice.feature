@@ -27,6 +27,12 @@ Feature: Ishibashiri production visual slice
     Then route and Kakon authoring guidance retains high contrast
     And normal play omits internal state and telemetry text
 
+  Scenario: Purification keeps gameplay timing authoritative
+    Given the player purifies the current exposed Kakon
+    Then gameplay transitions it to Purified immediately
+    And a presentation-only marker converges for no more than 0.35 seconds
+    And the visual tail does not gate input, progress, or the next Kakon
+
   Scenario: Gameplay contract is unchanged
     Then the eleven route coordinates and neighbors are unchanged
     And Grab, Climb, Cling, Stamina, three Kakon, Retry and camera behavior remain gameplay-owned

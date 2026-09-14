@@ -158,6 +158,7 @@ void AIshibashiriBoss::BeginPlay()
         CoreMarkerMaterials.Add(CoreMaterial);
         SetPrimitiveColor(CoreMaterial, FLinearColor(.16f,.008f,.006f));
     }
+    PurifyPresentationRemaining.Init(0.f, CoreMarkers.Num());
     SetPrimitiveColor(GrabMarker->CreateDynamicMaterialInstance(0), FLinearColor(1,.68,.05));
     UpdateCreatureAnimation();
 }
@@ -176,6 +177,7 @@ void AIshibashiriBoss::ResetNushi()
     Health = MaxHealth;
     bCounterUsed = bChargeHitPlayer = false;
     VisualTime = 0.f;
+    PurifyPresentationRemaining.Init(0.f, CoreMarkers.Num());
     RiderTime = 0.f; AnimationIndex = INDEX_NONE;
     for (int32 I=0; I<3; ++I)
     {
@@ -219,6 +221,8 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
     const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Mode || !Mode->IsEncounterActive() || !IsValid(Target)) return;
     VisualTime += DeltaSeconds;
+    for (float& Remaining : PurifyPresentationRemaining)
+        Remaining = FMath::Max(0.f, Remaining - DeltaSeconds);
     if (Target->IsGrabbing() && !Target->GetClimbing()->IsGrabWarping())
     {
         RiderTime = Target->GetClimbing()->IsClimbing() ? RiderTime + DeltaSeconds : 0.f;
@@ -230,6 +234,9 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
         SetActorLocation(GetActorLocation()+GetActorForwardVector()*85.f*DeltaSeconds,true,&Hit);
         if (Hit.bBlockingHit) AddActorWorldRotation(FRotator(0,90,0));
         Creature->SetRelativeRotation(FRotator(IsBucking() ? FMath::Sin(RiderTime*19.f)*4.f : 0.f,90,0));
+        // Sense/Kakon presentation must continue while the player is on the
+        // creature; this branch intentionally skips only ground combat AI.
+        UpdateVisuals();
         UpdateCreatureAnimation();
         return;
     }
@@ -341,13 +348,21 @@ void AIshibashiriBoss::UpdateVisuals()
         AKakonActor* Kakon=GetCoreKakon(I);
         const EKakonState KakonState=Kakon?Kakon->GetState():EKakonState::Purified;
         const bool Current=I==GetPurifiedCount();
-        CoreMarkers[I]->SetVisibility(KakonState!=EKakonState::Purified && (Debug || Current));
+        const float PurifyTail=PurifyPresentationRemaining.IsValidIndex(I)?PurifyPresentationRemaining[I]:0.f;
+        CoreMarkers[I]->SetVisibility((KakonState!=EKakonState::Purified && (Debug || Current)) || PurifyTail>0.f);
         const float SenseStrength=SenseActive&&Current?Target->GetSense()->GetBoundaryReading().Strength:0.f;
         const float Pulse=.5f+.5f*FMath::Sin(VisualTime*(SenseActive?5.f:2.f)+I);
+        FLinearColor CoreColor(.025f,.018f,.014f);
+        if(KakonState==EKakonState::Covered)
+            CoreColor=FLinearColor(.025f,.018f,.014f); // Wet, dormant veining.
+        else if(KakonState==EKakonState::Exposed)
+            CoreColor=FLinearColor(.10f+(.10f+.24f*SenseStrength)*Pulse,.004f,.006f);
+        else if(KakonState==EKakonState::Purified)
+            CoreColor=FLinearColor(.12f*PurifyTail/.35f,.025f,.018f);
         if(CoreMarkerMaterials.IsValidIndex(I)) SetPrimitiveColor(CoreMarkerMaterials[I],Debug
-            ? FLinearColor(1.f,.015f,.005f)
-            : FLinearColor(.10f+(.10f+.24f*SenseStrength)*Pulse,.004f,.006f));
-        CoreMarkers[I]->SetRelativeScale3D(FVector(Debug?.35f:.20f+(SenseStrength*.08f)));
+            ? FLinearColor(1.f,.015f,.005f) : CoreColor);
+        const float TailScale=PurifyTail>0.f?FMath::Lerp(.05f,.20f,PurifyTail/.35f):.20f;
+        CoreMarkers[I]->SetRelativeScale3D(FVector(Debug?.35f:TailScale+(SenseStrength*.08f)));
     }
 }
 
@@ -403,7 +418,9 @@ void AIshibashiriBoss::HandleCorePurified(AKakonActor* Kakon)
     for (int32 I = 0; I < CoreKakons.Num(); ++I)
     {
         if (GetCoreKakon(I) != Kakon) continue;
-        CoreMarkers[I]->SetVisibility(false);
+        if(PurifyPresentationRemaining.IsValidIndex(I)) PurifyPresentationRemaining[I]=.35f;
+        // The imported core returns to the body immediately; the separate,
+        // collision-free marker supplies the brief convergence tail.
         Creature->HideBoneByName(*FString::Printf(TEXT("core_%d"),I),EPhysBodyOp::PBO_None);
         Health = FMath::Max(0, Health - 1);
         break;
