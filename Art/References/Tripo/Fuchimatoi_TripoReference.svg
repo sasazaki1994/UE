@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<rect width="1600" height="1000" fill="#16191b"/>
+<style>.t{font-family:'Noto Sans JP','Yu Gothic',sans-serif;fill:#eee}.h{font-size:34px;font-weight:700}.s{font-size:19px}.xs{font-size:15px}.panel{fill:#22272a;stroke:#565c60;stroke-width:2}.body{fill:#34464b;stroke:#829398;stroke-width:4}.belly{fill:#66715f}.rock{fill:#66645f;stroke:#aaa59a;stroke-width:3}.k{fill:#701820;stroke:#d06b70;stroke-width:3}.route{fill:#d7c96d}.water{fill:#294752;opacity:.7}</style>
+<text x="50" y="58" class="t h">淵纏い — Tripo AI 3D Reference</text><text x="50" y="90" class="t s">巨大な渓谷大蛇。噛みつき → 岩へ誘導 → 頭部Grab → 巻き付き → 3禍根のGameplayをVisualより優先。</text>
+<g transform="translate(45,125)"><rect class="panel" width="720" height="610" rx="18"/><text class="t s" x="20" y="36">FULL SILHOUETTE / COILING</text>
+<path class="water" d="M30 470 Q160 435 290 470 T550 470 T700 470 L700 570 L30 570 Z"/>
+<path class="body" d="M80 430 C130 330 230 300 305 365 C360 415 410 400 430 335 C455 245 555 205 640 255 C690 285 675 355 625 365 C575 375 520 335 515 295 C510 260 550 235 590 245" fill="none" stroke-width="62" stroke-linecap="round"/>
+<ellipse class="body" cx="610" cy="250" rx="82" ry="55"/><path d="M645 268 L703 290 L652 312 Z" fill="#d8d0b7"/><circle cx="632" cy="232" r="9" fill="#101010"/>
+<circle class="k" cx="480" cy="310" r="15"/><circle class="k" cx="330" cy="390" r="15"/><circle class="k" cx="608" cy="205" r="15"/>
+<rect class="rock" x="188" y="390" width="78" height="125" rx="16"/><rect class="rock" x="386" y="350" width="75" height="165" rx="16"/>
+<g fill="#d7c96d"><circle cx="603" cy="259" r="7"/><circle cx="550" cy="276" r="7"/><circle cx="495" cy="309" r="7"/><circle cx="470" cy="345" r="7"/><circle cx="425" cy="402" r="7"/><circle cx="382" cy="407" r="7"/><circle cx="343" cy="391" r="7"/><circle cx="415" cy="351" r="7"/><circle cx="512" cy="280" r="7"/><circle cx="606" cy="208" r="7"/></g>
+<text class="t xs" x="20" y="590">黄=10 Route概念 / 赤=3禍根。岩棚・岩柱への接続が視覚的に成立する胴体径を確保。</text></g>
+<g transform="translate(790,125)"><rect class="panel" width="765" height="610" rx="18"/><text class="t s" x="20" y="36">HEAD / MATERIAL / LOCKS</text>
+<ellipse class="body" cx="220" cy="235" rx="150" ry="95"/><path d="M315 250 L430 300 L325 340 Q350 290 315 250 Z" fill="#d8d0b7"/><circle cx="255" cy="205" r="14" fill="#0d0d0d"/>
+<path d="M105 240 Q220 300 330 240" stroke="#829398" stroke-width="10" fill="none"/><path d="M105 190 Q170 130 260 150 Q315 160 350 200" stroke="#66715f" stroke-width="22" fill="none"/>
+<rect x="480" y="110" width="34" height="34" fill="#34464b"/><text class="t xs" x="525" y="134">背: 湿った青墨/鱗</text><rect x="480" y="156" width="34" height="34" fill="#66715f"/><text class="t xs" x="525" y="180">腹: 岩苔色</text><rect x="480" y="202" width="34" height="34" fill="#701820"/><text class="t xs" x="525" y="226">禍根: 赤黒</text><rect x="480" y="248" width="34" height="34" fill="#d8d0b7"/><text class="t xs" x="525" y="272">牙: 古い象牙</text>
+<text class="t xs" x="32" y="405">・全長感は長大。ドラゴンの手足・翼・角は禁止。</text><text class="t xs" x="32" y="438">・頭部はGrabできる平滑な面を残し、牙で入口を塞がない。</text><text class="t xs" x="32" y="471">・Coiling時、胴体が岩棚/岩柱の足場として読める太さを維持。</text><text class="t xs" x="32" y="504">・禍根1=首〜上胴、2=巻き付き胴、3=高所頭頂。</text><text class="t xs" x="32" y="537">・Calm後は死体化せず、水と岩に馴染む静かな生体として残す。</text><text class="t xs" x="32" y="585">Tripo → Blender rig/curve cleanup → preserve route anchors → UE5</text></g>
+<g transform="translate(50,780)"><text class="t s">VISUAL DIRECTION</text><text class="t xs" x="0" y="34">古い淵に棲む水蛇。濡れた鱗、苔、泥、擦れた岩粉。派手な発光は禍根だけに制限し、全身を魔法生物化しない。</text><text class="t xs" x="0" y="66">噛みつき時の口・頭部シルエット、頭部Grab面、身体と岩の往復ルートの可読性を最優先。</text></g></svg>
