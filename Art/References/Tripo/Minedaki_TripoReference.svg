@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<rect width="1600" height="1000" fill="#17191b"/>
+<style>.t{font-family:'Noto Sans JP','Yu Gothic',sans-serif;fill:#eee}.h{font-size:34px;font-weight:700}.s{font-size:19px}.xs{font-size:15px}.panel{fill:#23262a;stroke:#555;stroke-width:2}.fur{fill:#4a443c;stroke:#91877a;stroke-width:4}.skin{fill:#6a5a4d}.rock{fill:#66645f;stroke:#aaa59a;stroke-width:3}.moss{fill:#53664a}.k{fill:#711820;stroke:#d06b70;stroke-width:3}.route{fill:#d7c96d}</style>
+<text x="50" y="58" class="t h">峰抱き — Tripo AI 3D Reference</text><text x="50" y="90" class="t s">巨大山猿。脚→背中→腕橋→肩/首→頭頂。身体変形そのものが登攀ルートになる。</text>
+<g transform="translate(45,125)"><rect class="panel" width="470" height="610" rx="18"/><text class="t s" x="20" y="36">FRONT — REST</text>
+<ellipse class="fur" cx="235" cy="138" rx="80" ry="72"/><ellipse class="skin" cx="235" cy="151" rx="50" ry="45"/>
+<path class="fur" d="M150 210 Q235 165 320 210 L350 410 Q320 465 280 470 L235 420 L190 470 Q145 455 120 410 Z"/>
+<path class="fur" d="M150 235 L75 470 L120 490 L200 290 M320 235 L395 470 L350 490 L270 290"/>
+<path class="fur" d="M185 430 L155 575 L210 575 L235 455 M285 430 L315 575 L260 575 L235 455"/>
+<circle class="k" cx="175" cy="260" r="15"/><circle class="k" cx="90" cy="430" r="15"/><circle class="k" cx="235" cy="105" r="15"/>
+<text class="t xs" x="20" y="590">禍根1=肩甲骨上部 / 2=左前腕先端 / 3=頭頂</text></g>
+<g transform="translate(540,125)"><rect class="panel" width="500" height="610" rx="18"/><text class="t s" x="20" y="36">SIDE — CLIFF CLIMB / ARM BRIDGE</text>
+<rect class="rock" x="355" y="90" width="95" height="465" rx="20"/><path class="fur" d="M205 210 Q270 180 315 240 L330 390 Q290 438 245 420 L205 365 Z"/>
+<ellipse class="fur" cx="268" cy="150" rx="65" ry="58"/><path class="fur" d="M210 250 L95 430 L132 455 L245 318"/><path class="fur" d="M300 255 Q350 290 384 345 L366 380 Q325 348 278 320 Z"/>
+<path class="fur" d="M235 385 L180 550 L225 560 L270 414"/><path class="fur" d="M285 392 L330 540 L375 525 L318 400"/>
+<g fill="#d7c96d"><circle cx="203" cy="450" r="7"/><circle cx="217" cy="405" r="7"/><circle cx="230" cy="360" r="7"/><circle cx="247" cy="320" r="7"/><circle cx="265" cy="280" r="7"/><circle cx="285" cy="245" r="7"/><circle cx="315" cy="230" r="7"/><circle cx="335" cy="270" r="7"/><circle cx="340" cy="315" r="7"/><circle cx="315" cy="352" r="7"/><circle cx="275" cy="365" r="7"/><circle cx="300" cy="220" r="7"/><circle cx="280" cy="185" r="7"/><circle cx="265" cy="150" r="7"/></g>
+<text class="t xs" x="20" y="590">腕が橋になるPhase2、反対腕/上体を掛け直すPhase3を造形で阻害しない。</text></g>
+<g transform="translate(1065,125)"><rect class="panel" width="490" height="610" rx="18"/><text class="t s" x="20" y="36">MATERIAL / DESIGN LOCKS</text>
+<ellipse class="fur" cx="245" cy="190" rx="145" ry="110"/><path class="skin" d="M170 205 Q245 145 320 205 Q300 285 245 295 Q190 285 170 205 Z"/>
+<path class="moss" d="M120 145 Q170 95 230 118 Q285 88 355 145 Q320 168 285 160 Q210 145 120 145 Z"/>
+<rect x="45" y="355" width="34" height="34" fill="#4a443c"/><text class="t xs" x="90" y="379">毛: 焦茶/湿気</text><rect x="45" y="402" width="34" height="34" fill="#6a5a4d"/><text class="t xs" x="90" y="426">皮膚: 土色</text><rect x="245" y="355" width="34" height="34" fill="#66645f"/><text class="t xs" x="290" y="379">岩粉/擦れ</text><rect x="245" y="402" width="34" height="34" fill="#53664a"/><text class="t xs" x="290" y="426">苔: 局所</text>
+<text class="t xs" x="28" y="485">・ゴリラより山猿寄り。巨大だが過度に筋肉怪獣化しない。</text><text class="t xs" x="28" y="516">・長い腕、強い指、崖への接地面を明確に。</text><text class="t xs" x="28" y="547">・腕橋としてプレイヤーが乗れる幅を残す。</text><text class="t xs" x="28" y="578">・金属鎧、武器、人工装備は禁止。</text></g>
+<g transform="translate(50,780)"><text class="t s">TRIPO LOCKS</text><text class="t xs" x="0" y="34">・Phase1の左脚〜背中、Phase2の左腕橋、Phase3の反対肩〜首〜頭頂のシルエットを保持。14 Route概念点を塞がない。</text><text class="t xs" x="0" y="66">・身体変形は伸びるゴム腕ではなく、巨大な関節と体重移動で崖へ腕を掛け直す印象。Calmでは静かな山の主へ戻る。</text><text class="t xs" x="0" y="102">Pipeline: Tripo AI base → Blender joint/rig correction → anchor preservation → UE5 Cling/Recovery regression</text></g></svg>
