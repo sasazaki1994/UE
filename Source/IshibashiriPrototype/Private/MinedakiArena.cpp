@@ -21,6 +21,9 @@ AMinedakiArena::AMinedakiArena()
     };
     Part(TEXT("Ground"),FVector(-600,0,-60),FVector(100,90,1.2));
     Part(TEXT("CliffAndUpperPlateau"),FVector(-3900,0,1000),FVector(36,45,20));
+    // Small recovery ledges require a short walk and an explicit shared Grab; they do not bypass the route.
+    Part(TEXT("RecoveryLedgeKakon1"),FVector(-2850,-500,3450),FVector(8,7,1));
+    Part(TEXT("RecoveryLedgeKakon2"),FVector(-2850,500,3700),FVector(8,7,1));
     for(int32 I=0;I<4;++I) Part(*FString::Printf(TEXT("HandHold%d"),I),FVector(-2070,I%2?-480:480,600+I*420),FVector(1,3,.9));
     for(int32 I=0;I<5;++I) Part(*FString::Printf(TEXT("HeightBand%d"),I),FVector(-2090,0,100+I*450),FVector(.3,45,.2));
 }

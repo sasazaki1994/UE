@@ -30,7 +30,7 @@ void AMinedakiPlayer::ConfigureBoss(AMinedakiBoss* InBoss)
     Boss=InBoss; AddTickPrerequisiteActor(Boss); Grab->AddTickPrerequisiteActor(this);
     auto* Primitive=FindComponentByClass<UStaticMeshComponent>(); SetPrimitiveColor(Primitive->CreateDynamicMaterialInstance(0),FLinearColor(1,.72,.08));
 }
-bool AMinedakiPlayer::CanAct() const { return Boss && Boss->GetNushiState()==ENushiState::Active && !bFallen && !Boss->IsSliceComplete(); }
+bool AMinedakiPlayer::CanAct() const { return Boss && Boss->GetNushiState()==ENushiState::Active && !bFallen; }
 bool AMinedakiPlayer::IsMounted() const { return Grab->IsGrabbing(); }
 void AMinedakiPlayer::SetupPlayerInputComponent(UInputComponent* Input)
 {
@@ -57,30 +57,34 @@ void AMinedakiPlayer::GrabPressed()
     bGripHeld=true;
     if(!CanAct() || IsMounted()) return;
     ++Boss->Telemetry.GrabAttempts;
-    if(Boss->GetActionState()!=EMinedakiActionState::Grounded || Stamina->GetCurrentStamina()<MinimumGrabStamina
-        || FVector::Dist(GetActorLocation(),Boss->GetRouteWorld(0))>GrabRange) return;
+    const int32 StartNode=bRecovering?Boss->GetRecoveryNode():0;
+    const FVector Anchor=bRecovering?Boss->GetRecoveryAnchorWorld():Boss->GetRouteWorld(0);
+    if((!bRecovering && Boss->GetActionState()!=EMinedakiActionState::Grounded) || Stamina->GetCurrentStamina()<MinimumGrabStamina
+        || FVector::Dist(GetActorLocation(),Anchor)>GrabRange) return;
     // Range is validated against the leg; target is the unscaled parent body frame.
     if(!Grab->TryGrab(Boss->GetGrabFrame(),FVector::Dist(GetActorLocation(),Boss->GetGrabFrame()->GetActorLocation())+1)) return;
-    Node=0; Destination=INDEX_NONE; Progress=0; RouteDelay=.2f;
-    Grab->SetRelativeGrabTransform(FTransform(FRotator(0,180,0),Boss->GetRouteLocal(0)));
+    Node=StartNode; Destination=INDEX_NONE; Progress=0; RouteDelay=.2f;
+    Grab->SetRelativeGrabTransform(FTransform(FRotator(0,180,0),Boss->GetRouteLocal(StartNode)));
     GetCharacterMovement()->bOrientRotationToMovement=false;
-    ++Boss->Telemetry.GrabSuccesses; Boss->NotifyRouteNode(0); Boss->LogTelemetry(TEXT("LegGrab"));
+    ++Boss->Telemetry.GrabSuccesses; Boss->NotifyRouteNode(StartNode);
+    if(bRecovering) { bRecovering=false; RecoveryGrace=2.f; ++Boss->Telemetry.RecoverySuccesses; Boss->LogTelemetry(TEXT("RecoverySuccess_Regrab")); }
+    else Boss->LogTelemetry(TEXT("LegGrab"));
 }
 void AMinedakiPlayer::JumpPressed() { if(CanAct()) { if(IsMounted()) Fall(); else Jump(); } }
-void AMinedakiPlayer::AttackPressed() { if(CanAct()) Boss->TryPurifyFirstKakon(); }
+void AMinedakiPlayer::AttackPressed() { if(CanAct()) Boss->TryPurifyKakon(); }
 void AMinedakiPlayer::RetryPressed() { if(auto* Mode=GetWorld()->GetAuthGameMode<AMinedakiGameMode>()) Mode->RetryEncounter(); }
 void AMinedakiPlayer::ResolveShake()
 {
     if(!IsMounted()) return;
-    if(!IsClinging() || Stamina->GetCurrentStamina()<=ShakeCost) { Fall(Stamina->GetCurrentStamina()<=ShakeCost); return; }
+    if(!IsClinging() || Stamina->GetCurrentStamina()<=ShakeCost) { ++Boss->Telemetry.ShakeFailures; Fall(Stamina->GetCurrentStamina()<=ShakeCost); return; }
     Stamina->ConsumeStamina(ShakeCost);
+    ++Boss->Telemetry.ShakeSuccesses;
 }
 void AMinedakiPlayer::Fall(bool bExhausted)
 {
     if(!IsMounted()) return;
     Grab->Release(); Node=Destination=INDEX_NONE; bGripHeld=false; bFallen=true;
     ++Boss->Telemetry.Falls; if(bExhausted) ++Boss->Telemetry.Exhaustions;
-    // Recoverable failure boundary; a future recovery route can replace the retry.
     SetActorRotation(FRotator(0,180,0)); GetCharacterMovement()->bOrientRotationToMovement=true;
     LaunchCharacter(FVector(400,-200,0),true,true); Boss->LogTelemetry(bExhausted?TEXT("StaminaFall"):TEXT("Fall"));
 }
@@ -90,26 +94,29 @@ void AMinedakiPlayer::Tick(float Dt)
     if(!Boss || !FMath::IsFinite(Dt) || Dt<=0) return;
     if(bFallen)
     {
-        // A late fall above the plateau is returned to the ground after landing.
         if(GetCharacterMovement()->IsMovingOnGround() || GetActorLocation().Z<-200)
-        { SetActorLocation(SpawnTransform().GetLocation()); GetCharacterMovement()->StopMovementImmediately(); }
+        {
+            bFallen=false; bRecovering=true; ++Boss->Telemetry.RecoveryStarts; Stamina->RestoreStamina(35.f);
+            SetActorLocation(Boss->GetRecoveryAnchorWorld()); GetCharacterMovement()->StopMovementImmediately();
+            Boss->LogTelemetry(TEXT("RecoveryStarted_Anchor"));
+        }
         return;
     }
     if(!CanAct()) return;
     if(!IsMounted()) { Stamina->RestoreStamina(RestRestore*Dt); return; }
     if(IsClinging()) Boss->Telemetry.ClingSeconds+=Dt;
-    const bool Wall=Boss->IsWallMoving();
-    const bool Rest=Boss->GetActionState()==EMinedakiActionState::UpperPlatform && Node==4 && !IsRouteMoving();
+    RecoveryGrace=FMath::Max(0.f,RecoveryGrace-Dt);
+    const bool Wall=Boss->IsWallMoving()||Boss->IsBodyTransitioning();
+    const bool Rest=(Node==4||Node==7||Node==11) && !IsRouteMoving();
     if(Rest) Stamina->RestoreStamina(RestRestore*Dt);
-    else Stamina->ConsumeStamina((Wall?WallDrain+(IsClinging()?ClingExtraDrain:0):IsRouteMoving()?ClimbDrain:GrabDrain)*Dt);
+    else if(RecoveryGrace<=0) Stamina->ConsumeStamina((Wall?WallDrain+(IsClinging()?ClingExtraDrain:0):IsRouteMoving()?ClimbDrain:GrabDrain)*Dt);
     if(Stamina->IsDepleted()) { Fall(true); return; }
     if(Wall) return;
     RouteDelay=FMath::Max(0.f,RouteDelay-Dt);
     if(!IsRouteMoving() && RouteDelay<=0 && FMath::Abs(ForwardInput)>.4f)
     {
         int32 Next=Node+(ForwardInput>0?1:-1);
-        int32 Max=Boss->GetActionState()==EMinedakiActionState::UpperPlatform?7:4;
-        if(Next>=0 && Next<=Max) { Destination=Next; Progress=0; }
+        if(Boss->IsRouteNodeEnabled(Next)) { Destination=Next; Progress=0; }
     }
     if(!IsRouteMoving()) return;
     const FVector From=Boss->GetRouteLocal(Node), To=Boss->GetRouteLocal(Destination);
@@ -120,7 +127,7 @@ void AMinedakiPlayer::Tick(float Dt)
 void AMinedakiPlayer::ResetForEncounter()
 {
     Grab->Release(); StopJumping(); ConsumeMovementInputVector();
-    Node=Destination=INDEX_NONE; ForwardInput=Progress=RouteDelay=0; bGripHeld=bFallen=false;
+    Node=Destination=INDEX_NONE; ForwardInput=Progress=RouteDelay=RecoveryGrace=0; bGripHeld=bFallen=bRecovering=false;
     Stamina->ResetStamina(); GetCharacterMovement()->ClearAccumulatedForces(); GetCharacterMovement()->StopMovementImmediately();
     GetCharacterMovement()->SetMovementMode(MOVE_Walking); GetCharacterMovement()->bOrientRotationToMovement=true;
     SetActorTransform(SpawnTransform(),false,nullptr,ETeleportType::TeleportPhysics);
