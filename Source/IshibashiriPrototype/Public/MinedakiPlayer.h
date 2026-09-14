@@ -5,6 +5,7 @@
 class AMinedakiBoss;
 class UGrabComponent;
 class UStaminaComponent;
+class UPlayerSenseComponent;
 UCLASS()
 class ISHIBASHIRIPROTOTYPE_API AMinedakiPlayer : public ACharacter
 {
@@ -26,6 +27,7 @@ public:
     int32 GetRouteNode() const { return Node; }
     UGrabComponent* GetGrab() const { return Grab; }
     UStaminaComponent* GetStamina() const { return Stamina; }
+    UPlayerSenseComponent* GetSense() const { return Sense; }
     static FTransform SpawnTransform() { return FTransform(FRotator(0,180,0),FVector(1100,-205,90)); }
     UPROPERTY(EditAnywhere, Category="Minedaki", meta=(Units="cm")) float GrabRange=230.f;
     UPROPERTY(EditAnywhere, Category="Minedaki", meta=(Units="cm/s")) float RouteSpeed=300.f;
@@ -49,9 +51,11 @@ private:
     void JumpPressed();
     void AttackPressed();
     void RetryPressed();
+    void BoundarySensePressed(); void BoundarySenseReleased(); void ArmSensePressed(); void ArmSenseReleased();
     UPROPERTY() TObjectPtr<AMinedakiBoss> Boss;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> Grab;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaminaComponent> Stamina;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UPlayerSenseComponent> Sense;
     int32 Node=INDEX_NONE, Destination=INDEX_NONE;
     float ForwardInput=0, Progress=0, RouteDelay=0;
     bool bGripHeld=false, bFallen=false, bRecovering=false;

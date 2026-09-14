@@ -1,6 +1,7 @@
 #include "PrototypeHUD.h"
 #include "PrototypeGameMode.h"
 #include "PrototypePlayer.h"
+#include "PlayerSenseComponent.h"
 #include "IshibashiriBoss.h"
 #include "ColossusClimbingComponent.h"
 #include "Engine/Canvas.h"
@@ -66,6 +67,8 @@ void APrototypeHUD::DrawHUD()
     Line(FString::Printf(TEXT("%s  (%.2fs)"), *Boss->GetStateLabel(), Boss->GetStateTimeRemaining()), Boss->CanBeCountered() ? FLinearColor::Green : FLinearColor::White);
     Line(FString::Printf(TEXT("E / RB grab / brace | STAMINA %.0f / 100 | CORES %d / 3"),
         Player->GetClimbing()->GetStamina(),Boss->GetPurifiedCount()),FLinearColor(1,.75,.25));
+    if(Player->GetSense()->IsBoundarySenseActive()) Line(FString::Printf(TEXT("BOUNDARY SENSE: %s"),*Player->GetSense()->GetBoundaryStrengthLabel()),FLinearColor(.3f,.9f,1));
+    if(Player->GetSense()->IsCorruptionSenseActive()) Line(FString::Printf(TEXT("CORRUPTION SENSE: %s"),*Player->GetSense()->GetCorruptionWarningLabel()),FLinearColor(1,.35f,.55f));
     Line(TEXT("Move: WASD / LS | Camera: Mouse / RS | Attack: LMB / X | Dodge: Shift / B"), FLinearColor(.7f,.8f,.85f), .75f);
     if (!Player->IsGrabbing()) Line(TEXT("Cyan arrow: slash direction | White: committed swing"), FLinearColor(.2f,.9f,1.f), .75f);
     Line(Player->GetFeedback(), FLinearColor::Yellow);

@@ -2,6 +2,7 @@
 #include "MinedakiGameMode.h"
 #include "MinedakiBoss.h"
 #include "MinedakiPlayer.h"
+#include "PlayerSenseComponent.h"
 #include "StaminaComponent.h"
 #include "NushiProgressComponent.h"
 #include "NushiEncounterManager.h"
@@ -17,6 +18,8 @@ void AMinedakiHUD::DrawHUD()
     float Y=20; auto Line=[&](const FString& Text,FLinearColor Color=FLinearColor::White) { DrawText(Text,Color,24,Y,GEngine->GetMediumFont()); Y+=25; };
     Line(TEXT("MINEDAKI / THE CLIMBING MOUNTAIN"),FLinearColor(.4,1,.8));
     Line(FString::Printf(TEXT("State: %s | KAKON %d/3 | STAMINA %.0f/100 | NODE %d/%d"),*B->GetActionLabel(),B->GetNushiProgressComponent()->GetPurifiedCount(),P->GetStamina()->GetCurrentStamina(),P->GetRouteNode()+1,AMinedakiBoss::RouteNodeCount));
+    if(P->GetSense()->IsBoundarySenseActive()) Line(FString::Printf(TEXT("BOUNDARY SENSE: %s"),*P->GetSense()->GetBoundaryStrengthLabel()),FLinearColor(.3f,.9f,1));
+    if(P->GetSense()->IsCorruptionSenseActive()) Line(FString::Printf(TEXT("CORRUPTION SENSE: %s | RECOVERY x%.1f"),*P->GetSense()->GetCorruptionWarningLabel(),P->GetSense()->GetRecoveryMultiplier()),FLinearColor(1,.35f,.55f));
     const bool Victory=Mode->GetManager()->GetEncounterState()==ENushiEncounterState::Completed;
     Line(Victory?TEXT("VICTORY - MINEDAKI CALMED / ENCOUNTER COMPLETED | R / Y: Retry"):
         P->HasFallen()?TEXT("FALL - recovery anchor will preserve KAKON progress"):

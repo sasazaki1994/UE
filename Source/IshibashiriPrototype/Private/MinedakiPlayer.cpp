@@ -3,6 +3,8 @@
 #include "MinedakiGameMode.h"
 #include "GrabComponent.h"
 #include "StaminaComponent.h"
+#include "PlayerSenseComponent.h"
+#include "NushiProgressComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -19,6 +21,7 @@ AMinedakiPlayer::AMinedakiPlayer()
     GetCharacterMovement()->MaxWalkSpeed=480; GetCharacterMovement()->bOrientRotationToMovement=true;
     Grab=CreateDefaultSubobject<UGrabComponent>(TEXT("SharedGrab"));
     Stamina=CreateDefaultSubobject<UStaminaComponent>(TEXT("SharedStamina"));
+    Sense=CreateDefaultSubobject<UPlayerSenseComponent>(TEXT("PlayerSense"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
     static ConstructorHelpers::FObjectFinder<UMaterialInterface> Material(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
     auto* Body=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Climber")); Body->SetupAttachment(RootComponent);
@@ -29,6 +32,7 @@ void AMinedakiPlayer::ConfigureBoss(AMinedakiBoss* InBoss)
 {
     Boss=InBoss; AddTickPrerequisiteActor(Boss); Grab->AddTickPrerequisiteActor(this);
     auto* Primitive=FindComponentByClass<UStaticMeshComponent>(); SetPrimitiveColor(Primitive->CreateDynamicMaterialInstance(0),FLinearColor(1,.72,.08));
+    Sense->ClearBoundaryTargets(); for(int32 I=0;I<3;++I) Sense->RegisterBoundaryTarget(Boss->GetKakon(I),I==0);
 }
 bool AMinedakiPlayer::CanAct() const { return Boss && Boss->GetNushiState()==ENushiState::Active && !bFallen; }
 bool AMinedakiPlayer::IsMounted() const { return Grab->IsGrabbing(); }
@@ -45,6 +49,8 @@ void AMinedakiPlayer::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Jump"),IE_Released,this,&ACharacter::StopJumping);
     Input->BindAction(TEXT("Attack"),IE_Pressed,this,&AMinedakiPlayer::AttackPressed);
     Input->BindAction(TEXT("Retry"),IE_Pressed,this,&AMinedakiPlayer::RetryPressed);
+    Input->BindAction(TEXT("BoundarySense"),IE_Pressed,this,&AMinedakiPlayer::BoundarySensePressed); Input->BindAction(TEXT("BoundarySense"),IE_Released,this,&AMinedakiPlayer::BoundarySenseReleased);
+    Input->BindAction(TEXT("ArmSense"),IE_Pressed,this,&AMinedakiPlayer::ArmSensePressed); Input->BindAction(TEXT("ArmSense"),IE_Released,this,&AMinedakiPlayer::ArmSenseReleased);
 }
 void AMinedakiPlayer::Forward(float Value) { ForwardInput=Value; if(CanAct() && !IsMounted()) AddMovementInput(FRotator(0,GetControlRotation().Yaw,0).Vector(),Value); }
 void AMinedakiPlayer::Right(float Value) { if(CanAct() && !IsMounted()) AddMovementInput(FRotationMatrix(FRotator(0,GetControlRotation().Yaw,0)).GetUnitAxis(EAxis::Y),Value); }
@@ -71,7 +77,7 @@ void AMinedakiPlayer::GrabPressed()
     else Boss->LogTelemetry(TEXT("LegGrab"));
 }
 void AMinedakiPlayer::JumpPressed() { if(CanAct()) { if(IsMounted()) Fall(); else Jump(); } }
-void AMinedakiPlayer::AttackPressed() { if(CanAct()) Boss->TryPurifyKakon(); }
+void AMinedakiPlayer::AttackPressed() { if(CanAct() && Boss->TryPurifyKakon()) Sense->NotifyPurifyAfterSense(); }
 void AMinedakiPlayer::RetryPressed() { if(auto* Mode=GetWorld()->GetAuthGameMode<AMinedakiGameMode>()) Mode->RetryEncounter(); }
 void AMinedakiPlayer::ResolveShake()
 {
@@ -90,25 +96,25 @@ void AMinedakiPlayer::Fall(bool bExhausted)
 }
 void AMinedakiPlayer::Tick(float Dt)
 {
-    Super::Tick(Dt);
+    Super::Tick(Dt); for(int32 I=0;Boss&&I<3;++I) Sense->SetBoundaryTargetAvailable(Boss->GetKakon(I), I==Boss->GetNushiProgressComponent()->GetPurifiedCount()); if(Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(Boss && Boss->GetActionState()==EMinedakiActionState::Shaking ? ECorruptionWarning::Danger : Boss && Boss->IsBodyTransitioning() ? ECorruptionWarning::Transition : ECorruptionWarning::None);
     if(!Boss || !FMath::IsFinite(Dt) || Dt<=0) return;
     if(bFallen)
     {
         if(GetCharacterMovement()->IsMovingOnGround() || GetActorLocation().Z<-200)
         {
-            bFallen=false; bRecovering=true; ++Boss->Telemetry.RecoveryStarts; Stamina->RestoreStamina(35.f);
+            bFallen=false; bRecovering=true; ++Boss->Telemetry.RecoveryStarts; Stamina->RestoreStamina((35.f)*Sense->GetRecoveryMultiplier());
             SetActorLocation(Boss->GetRecoveryAnchorWorld()); GetCharacterMovement()->StopMovementImmediately();
             Boss->LogTelemetry(TEXT("RecoveryStarted_Anchor"));
         }
         return;
     }
     if(!CanAct()) return;
-    if(!IsMounted()) { Stamina->RestoreStamina(RestRestore*Dt); return; }
+    if(!IsMounted()) { Stamina->RestoreStamina((RestRestore*Dt)*Sense->GetRecoveryMultiplier()); return; }
     if(IsClinging()) Boss->Telemetry.ClingSeconds+=Dt;
     RecoveryGrace=FMath::Max(0.f,RecoveryGrace-Dt);
     const bool Wall=Boss->IsWallMoving()||Boss->IsBodyTransitioning();
     const bool Rest=(Node==4||Node==7||Node==11) && !IsRouteMoving();
-    if(Rest) Stamina->RestoreStamina(RestRestore*Dt);
+    if(Rest) Stamina->RestoreStamina((RestRestore*Dt)*Sense->GetRecoveryMultiplier());
     else if(RecoveryGrace<=0) Stamina->ConsumeStamina((Wall?WallDrain+(IsClinging()?ClingExtraDrain:0):IsRouteMoving()?ClimbDrain:GrabDrain)*Dt);
     if(Stamina->IsDepleted()) { Fall(true); return; }
     if(Wall) return;
@@ -127,6 +133,7 @@ void AMinedakiPlayer::Tick(float Dt)
 void AMinedakiPlayer::ResetForEncounter()
 {
     Grab->Release(); StopJumping(); ConsumeMovementInputVector();
+    Sense->ResetSense();
     Node=Destination=INDEX_NONE; ForwardInput=Progress=RouteDelay=RecoveryGrace=0; bGripHeld=bFallen=bRecovering=false;
     Stamina->ResetStamina(); GetCharacterMovement()->ClearAccumulatedForces(); GetCharacterMovement()->StopMovementImmediately();
     GetCharacterMovement()->SetMovementMode(MOVE_Walking); GetCharacterMovement()->bOrientRotationToMovement=true;
@@ -143,3 +150,6 @@ void AMinedakiPlayer::CalcCamera(float Dt,FMinimalViewInfo& View)
     if(GetWorld()->SweepSingleByChannel(Hit,Focus,View.Location,FQuat::Identity,ECC_Camera,FCollisionShape::MakeSphere(18),Params)) View.Location=Hit.Location;
     View.Rotation=(Focus-View.Location).Rotation(); View.FOV=80;
 }
+
+void AMinedakiPlayer::BoundarySensePressed(){Sense->BeginBoundarySense();if(Boss)Boss->RefreshSenseGuidance();} void AMinedakiPlayer::BoundarySenseReleased(){Sense->EndBoundarySense();if(Boss)Boss->RefreshSenseGuidance();}
+void AMinedakiPlayer::ArmSensePressed(){Sense->BeginCorruptionSense(); Sense->SetCorruptionWarning(Boss && (Boss->GetActionState()==EMinedakiActionState::Shaking) ? ECorruptionWarning::Danger : Boss && Boss->IsBodyTransitioning() ? ECorruptionWarning::Transition : ECorruptionWarning::None);} void AMinedakiPlayer::ArmSenseReleased(){Sense->EndCorruptionSense();}

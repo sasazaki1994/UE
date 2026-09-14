@@ -1,6 +1,9 @@
 #include "FuchimatoiBoss.h"
 #include "FuchimatoiArena.h"
 #include "FuchimatoiPlayer.h"
+#include "PlayerSenseComponent.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "FuchimatoiRouteAnchor.h"
 #include "FuchimatoiSimulationComponent.h"
 #include "KakonActor.h"
@@ -265,7 +268,8 @@ void AFuchimatoiBoss::UpdateBody()
         const bool bMounted=Player && Player->IsMounted();
         const bool bHeadGrab=Node==0 && CanMount() && !bMounted;
         const int32 Next=Player?Player->GetGuidanceNode():INDEX_NONE;
-        RouteAnchors[Node]->SetGuidance(bHeadGrab || (bMounted && (Node==Current || Node==Next)
+        const bool SenseReveal=FParse::Param(FCommandLine::Get(),TEXT("DebugGuidance"))||(Player&&Player->GetSense()->IsBoundarySenseActive());
+        RouteAnchors[Node]->SetGuidance(bHeadGrab || (SenseReveal && bMounted && (Node==Current || Node==Next)
             && (Node<=3 || IsCoilingComplete())),bHeadGrab || Node==Next,bHeadGrab);
     }
     RecoveryAnchor->SetGuidance(CanRecover(),true,true);
@@ -274,7 +278,8 @@ void AFuchimatoiBoss::UpdateBody()
         const bool bPurified=KakonActors[I]->GetState()==EKakonState::Purified;
         const bool bActive=!bPurified && (I==0 || (IsCoilingComplete()
             && KakonActors[I-1]->GetState()==EKakonState::Purified));
-        KakonMarkers[I]->SetVisibility(!bPurified);
+        const bool SenseReveal=FParse::Param(FCommandLine::Get(),TEXT("DebugGuidance"))||(Player&&Player->GetSense()->IsBoundarySenseActive());
+        KakonMarkers[I]->SetVisibility(SenseReveal&&!bPurified);
         KakonMarkers[I]->SetRelativeScale3D(FVector(bActive?.85f:.4f));
         SetPrimitiveColor(Cast<UMaterialInstanceDynamic>(KakonMarkers[I]->GetMaterial(0)),
             bActive?FLinearColor(1,.03,.04):FLinearColor(.09,.04,.04));

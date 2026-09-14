@@ -44,6 +44,10 @@ GPU要件、比較手順、未検証項目は [画質更新記録](Docs/VisualQu
 独自の場所は `-EngineRoot` または `UE_ROOT` で指定できます。
 ビルドにはMSVC v143とWindows SDKが必要です。導入条件は `.vsconfig` と [以前の環境説明](Docs/OriginalCombatPrototype.md) を参照してください。
 
+## 主人公固有Sense（STEP 3A）
+
+通常の攻略情報は常時マーカーではなく、2つのHold操作で能動的に読み取ります。**Q / LT** の境断ちは、未浄化かつ現在Phaseで到達可能な禍根の方向を `WEAK / MEDIUM / STRONG` で示し、利用可能なRouteだけを薄く表示します。**F / LB** の穢れた左腕は、Shake / Bite / Pulse / 身体Transition / Safe Pointのうち現在のEncounterで意味がある状態を表示します。左腕中と解除後2秒はStamina回復が50%になります。Grab等の既存操作は変更していません。従来の開発表示は `-DebugGuidance` で維持できます。詳細は [Player Sense Gameplay](Docs/PlayerSenseGameplay.md) を参照してください。
+
 ## 操作
 
 | 状況 | キーボード・マウス | ゲームパッド（Xbox表記） |

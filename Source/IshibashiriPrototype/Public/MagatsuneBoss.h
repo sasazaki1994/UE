@@ -44,6 +44,7 @@ public:
     FString GetPhaseLabel() const;
     FMagatsuneTelemetry Telemetry;
     void LogTelemetry(const TCHAR* Event) const;
+    void RefreshSenseGuidance() { RefreshRoutes(); }
     static constexpr int32 RouteNodeCount=12;
     static constexpr int32 KakonNodes[3]={3,7,11};
     UPROPERTY(EditAnywhere,Category="Magatsune") float PulsePeriod=4.f;

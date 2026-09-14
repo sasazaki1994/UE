@@ -1,5 +1,8 @@
 #include "MinedakiBoss.h"
 #include "MinedakiPlayer.h"
+#include "PlayerSenseComponent.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "KakonActor.h"
 #include "NushiProgressComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -173,7 +176,9 @@ bool AMinedakiBoss::TryPurifyKakon()
 }
 void AMinedakiBoss::SetRouteVisibility()
 {
-    const int32 Max=GetMaximumRouteNode(); for(int32 I=0;I<RouteMarkers.Num();++I) RouteMarkers[I]->SetVisibility(I<=Max&&!(IsBodyTransitioning()&&I>Max));
+    const bool Reveal=FParse::Param(FCommandLine::Get(),TEXT("DebugGuidance"))||(Player&&Player->GetSense()->IsBoundarySenseActive());
+    const int32 Max=GetMaximumRouteNode(); for(int32 I=0;I<RouteMarkers.Num();++I) RouteMarkers[I]->SetVisibility(Reveal&&I<=Max&&!(IsBodyTransitioning()&&I>Max));
+    const int32 Active=GetNushiProgressComponent()->GetPurifiedCount(); for(int32 I=0;I<CoreMarkers.Num();++I) CoreMarkers[I]->SetVisibility(Reveal&&I==Active&&GetKakon(I)&&!GetKakon(I)->IsHidden());
 }
 void AMinedakiBoss::UpdateArmHolds()
 {

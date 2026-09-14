@@ -4,6 +4,9 @@
 #include "Components/ChildActorComponent.h"
 #include "PrototypeGameMode.h"
 #include "PrototypePlayer.h"
+#include "PlayerSenseComponent.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "PrimitiveAppearance.h"
 #include "ColossusClimbingComponent.h"
@@ -160,7 +163,7 @@ void AIshibashiriBoss::ConfigureEncounter(const FTransform& Spawn, APrototypePla
     EncounterSpawn = Spawn;
     if (Target) RemoveTickPrerequisiteComponent(Target->GetCharacterMovement());
     Target = Player;
-    if (Target) AddTickPrerequisiteComponent(Target->GetCharacterMovement());
+    if (Target) { AddTickPrerequisiteComponent(Target->GetCharacterMovement()); Target->ConfigureSenseTargets(this); }
 }
 
 void AIshibashiriBoss::ResetNushi()
@@ -327,6 +330,8 @@ void AIshibashiriBoss::UpdateVisuals()
     else if (DisplayState == EIshibashiriState::Recover) Color = FLinearColor(0.8f, 0.5f, 0.08f);
     else if (DisplayState == EIshibashiriState::Calmed) Color = FLinearColor(0.3f, 0.6f, 0.9f);
     SetPrimitiveColor(BodyMaterial, Color);
+    const bool Reveal=FParse::Param(FCommandLine::Get(),TEXT("DebugGuidance"))||(Target&&Target->GetSense()->IsBoundarySenseActive());
+    for(int32 I=0;I<CoreMarkers.Num();++I) CoreMarkers[I]->SetVisibility(Reveal&&GetCoreKakon(I)&&GetCoreKakon(I)->GetState()!=EKakonState::Purified);
 }
 
 FString AIshibashiriBoss::GetStateLabel() const

@@ -5,6 +5,7 @@
 class AFuchimatoiBoss;
 class UGrabComponent;
 class UStaminaComponent;
+class UPlayerSenseComponent;
 class USpringArmComponent;
 class UCameraComponent;
 
@@ -32,6 +33,7 @@ public:
     int32 GetGuidanceNode() const;
     int32 GetHealth() const { return Health; }
     UStaminaComponent* GetStamina() const { return Stamina; }
+    UPlayerSenseComponent* GetSense() const { return Sense; }
     UGrabComponent* GetGrab() const { return Grab; }
     UCameraComponent* GetCamera() const { return Camera; }
     UPROPERTY(EditAnywhere, Category="Fuchimatoi") float GrabRange = 440.f;
@@ -50,11 +52,13 @@ private:
     void DodgePressed();
     void AttackPressed();
     void RetryPressed();
+    void BoundarySensePressed(); void BoundarySenseReleased(); void ArmSensePressed(); void ArmSenseReleased();
     void AdvanceRoute(float Dt);
     void DetachFromRoute();
     UPROPERTY() TObjectPtr<AFuchimatoiBoss> Boss;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> Grab;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaminaComponent> Stamina;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UPlayerSenseComponent> Sense;
     UPROPERTY(VisibleAnywhere) TObjectPtr<USpringArmComponent> Arm;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UCameraComponent> Camera;
     float ForwardInput=0, RightInput=0;
