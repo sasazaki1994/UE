@@ -17,7 +17,10 @@ public:
     AMinedakiPlayer* GetPlayer() const { return Player; }
     ANushiEncounterManager* GetManager() const { return Manager; }
 private:
+    UFUNCTION() void HandleCompleted();
+    void AdvanceCampaign();
     UPROPERTY() TObjectPtr<AMinedakiBoss> Boss;
     UPROPERTY() TObjectPtr<AMinedakiPlayer> Player;
     UPROPERTY() TObjectPtr<ANushiEncounterManager> Manager;
+    FTimerHandle CampaignAdvanceTimer;
 };

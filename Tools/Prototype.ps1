@@ -5,6 +5,7 @@ param(
     [string]$EngineRoot = $env:UE_ROOT,
     [switch]$SkipBuild,
     [switch]$Capture,
+    [switch]$Campaign,
     [switch]$Basin,
     [switch]$Fuchimatoi,
     [switch]$Minedaki,
@@ -84,7 +85,8 @@ function Ensure-Map {
 }
 
 try {
-    if (@(@($Minedaki,$Magatsune,$Fuchimatoi) | Where-Object { $_ }).Count -gt 1) { throw 'Choose one encounter: -Fuchimatoi, -Minedaki, or -Magatsune.' }
+    if (@(@($Campaign,$Minedaki,$Magatsune,$Fuchimatoi) | Where-Object { $_ }).Count -gt 1) { throw 'Choose -Campaign or one encounter.' }
+    if ($Campaign -and ($Basin -or $Recovery -or $Realtime -or $Onscreen -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad -or $Gamepad)) { throw '-Campaign cannot be combined with encounter/test scenario switches.' }
     if ($Magatsune -and ($Basin -or $Recovery -or $Realtime -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Magatsune is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
     if ($Minedaki -and ($Fuchimatoi -or $Basin -or $Recovery -or $Realtime -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Minedaki is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
     if ($Onscreen -and !$Realtime) { throw '-Onscreen requires -Realtime.' }
@@ -92,6 +94,7 @@ try {
     if ($Recovery -and (!$Fuchimatoi -or $Action -ne 'Test')) { throw '-Recovery requires -Action Test -Fuchimatoi.' }
     if ($Fuchimatoi -and ($Basin -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Fuchimatoi is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
     $LaunchMap = '/Game/Maps/L_Prototype_01'
+    if ($Campaign) { $LaunchMap += '?game=/Script/IshibashiriPrototype.CampaignGameMode' }
     if ($Fuchimatoi) { $LaunchMap += '?game=/Script/IshibashiriPrototype.FuchimatoiGameMode' }
     if ($Minedaki) { $LaunchMap += '?game=/Script/IshibashiriPrototype.MinedakiGameMode' }
     if ($Magatsune) { $LaunchMap += '?game=/Script/IshibashiriPrototype.MagatsuneGameMode' }
@@ -152,6 +155,7 @@ try {
             # This is the visible game explicitly requested by the Play action.
             $PlayArguments = @($ProjectFile, $LaunchMap, '-game', '-windowed', '-ResX=1280', '-ResY=800', '-NoSplash')
             if ($Basin) { $PlayArguments += '-BasinPrototype' }
+            if ($Campaign) { $PlayArguments += '-Campaign' }
             if ($HighQuality) { $PlayArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             & $EditorExe @PlayArguments
         }
@@ -168,6 +172,7 @@ try {
             if ($Fuchimatoi) { $LogName = if ($Gamepad) { "FuchimatoiGamepad-$TestFPS.log" } else { "Fuchimatoi-$TestFPS.log" } }
             if ($Minedaki) { $LogName = if ($Gamepad) { "MinedakiGamepad-$TestFPS.log" } else { "Minedaki-$TestFPS.log" } }
             if ($Magatsune) { $LogName = if ($Gamepad) { "MagatsuneGamepad-$TestFPS.log" } else { "Magatsune-$TestFPS.log" } }
+            if ($Campaign) { $LogName = "Campaign-$TestFPS.log" }
             if ($Recovery) { $LogName = if ($Gamepad) { "FuchimatoiRecoveryGamepad-$TestFPS.log" } else { "FuchimatoiRecovery-$TestFPS.log" } }
             if ($Realtime) { $LogName = "Realtime-$LogName" }
             if ($Onscreen) { $LogName = "Onscreen-$LogName" }
@@ -177,11 +182,13 @@ try {
             if ($Fuchimatoi) { $TestFlag = '-FuchimatoiTest' }
             if ($Minedaki) { $TestFlag = '-MinedakiTest' }
             if ($Magatsune) { $TestFlag = '-MagatsuneTest' }
+            if ($Campaign) { $TestFlag = '-ExecCmds=Automation RunTests IshibashiriPrototype.Campaign;Automation Quit' }
             $TestArguments = @($ProjectFile, $LaunchMap, '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
             if ($Fuchimatoi -and $Gamepad) { $TestArguments += '-FuchimatoiGamepad' }
             if ($Minedaki -and $Gamepad) { $TestArguments += '-MinedakiGamepad' }
             if ($Magatsune -and $Gamepad) { $TestArguments += '-MagatsuneGamepad' }
             if ($Recovery) { $TestArguments += '-FuchimatoiRecovery' }
+            if ($Campaign) { $TestArguments += '-Campaign' }
             if ($Realtime) { $TestArguments += '-FuchimatoiRealtime' }
             if ($Basin) { $TestArguments += '-BasinPrototype' }
             if ($HighQuality) { $TestArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
@@ -202,9 +209,11 @@ try {
             if ($Fuchimatoi) { $PassMarker = "FUCHIMATOI_TEST_PASS $RunId" }
             if ($Minedaki) { $PassMarker = "MINEDAKI_TEST_PASS $RunId" }
             if ($Magatsune) { $PassMarker = "MAGATSUNE_TEST_PASS $RunId" }
+            if ($Campaign) { $PassMarker = 'Automation Test Queue Empty' }
             if (!(Select-String -LiteralPath $LogFile -SimpleMatch $PassMarker -Quiet)) {
                 throw "Smoke test did not report success for this run. Read $LogFile"
             }
+            if ($Campaign -and (Select-String -LiteralPath $LogFile -Pattern 'Result=\{Fail\}|Test Failed' -Quiet)) { throw "Campaign automation reported a failure. Read $LogFile" }
             Write-Host "Test passed: $LogFile"
             if ($Realtime -and !(Select-String -LiteralPath $LogFile -SimpleMatch "FUCHIMATOI_PERF $RunId" -Quiet)) { throw "Realtime test did not record performance. Read $LogFile" }
             if ($Capture) {

@@ -1,4 +1,5 @@
 #include "FuchimatoiGameMode.h"
+#include "CampaignGameInstance.h"
 #include "FuchimatoiBoss.h"
 #include "FuchimatoiArena.h"
 #include "FuchimatoiPlayer.h"
@@ -38,6 +39,7 @@ void AFuchimatoiGameMode::StartPlay()
 void AFuchimatoiGameMode::RetryEncounter()
 {
     if (!Player || !Manager) return;
+    GetWorldTimerManager().ClearTimer(CampaignAdvanceTimer);
     Player->ResetForEncounter(Arena->GetPlayerSpawn());
     Manager->ResetEncounter(); bDefeated=false; Manager->StartEncounter();
 }
@@ -47,7 +49,10 @@ void AFuchimatoiGameMode::HandleCompleted()
 {
     Player->StopEncounter(); Boss->LogTelemetry(TEXT("Completed"));
     UE_LOG(LogTemp,Display,TEXT("FUCHIMATOI_VICTORY via EncounterManager"));
+    if(auto* Campaign=GetGameInstance<UCampaignGameInstance>(); Campaign && Campaign->IsCurrentEncounter(ECampaignState::Fuchimatoi))
+        GetWorldTimerManager().SetTimer(CampaignAdvanceTimer,this,&AFuchimatoiGameMode::AdvanceCampaign,2.f,false);
 }
+void AFuchimatoiGameMode::AdvanceCampaign(){if(auto* C=GetGameInstance<UCampaignGameInstance>();C&&C->CompleteEncounter(ECampaignState::Fuchimatoi))C->TravelToCurrentChapter(this);}
 void AFuchimatoiGameMode::Defeat()
 {
     if (!IsEncounterActive()) return;

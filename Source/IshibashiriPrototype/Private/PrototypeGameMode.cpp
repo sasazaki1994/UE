@@ -1,4 +1,5 @@
 #include "PrototypeGameMode.h"
+#include "CampaignGameInstance.h"
 #include "PrototypeHUD.h"
 #include "PrototypePlayer.h"
 #include "IshibashiriBoss.h"
@@ -108,6 +109,7 @@ void APrototypeGameMode::StartPlay()
 void APrototypeGameMode::RetryEncounter()
 {
     if (!Player || !Boss || !EncounterManager) return;
+    GetWorldTimerManager().ClearTimer(CampaignAdvanceTimer);
     Result = EEncounterResult::Playing;
     Player->ResetForEncounter(PlayerSpawn());
     EncounterManager->ResetEncounter();
@@ -117,6 +119,13 @@ void APrototypeGameMode::RetryEncounter()
 void APrototypeGameMode::HandleEncounterCompleted()
 {
     FinishEncounter(true);
+    if (auto* Campaign=GetGameInstance<UCampaignGameInstance>(); Campaign && Campaign->IsCurrentEncounter(ECampaignState::Ishibashiri))
+        GetWorldTimerManager().SetTimer(CampaignAdvanceTimer,this,&APrototypeGameMode::AdvanceCampaign,2.f,false);
+}
+
+void APrototypeGameMode::AdvanceCampaign()
+{
+    if(auto* Campaign=GetGameInstance<UCampaignGameInstance>(); Campaign && Campaign->CompleteEncounter(ECampaignState::Ishibashiri)) Campaign->TravelToCurrentChapter(this);
 }
 
 void APrototypeGameMode::FinishEncounter(bool bVictory)
