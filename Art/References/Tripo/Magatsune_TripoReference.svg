@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<rect width="1600" height="1000" fill="#151718"/>
+<style>.t{font-family:'Noto Sans JP','Yu Gothic',sans-serif;fill:#eee}.h{font-size:34px;font-weight:700}.s{font-size:19px}.xs{font-size:15px}.panel{fill:#222527;stroke:#555;stroke-width:2}.root{stroke:#2d2022;stroke-width:45;fill:none;stroke-linecap:round}.root2{stroke:#4b2d2d;stroke-width:18;fill:none;stroke-linecap:round}.rock{fill:#5f5e59;stroke:#aaa59a;stroke-width:3}.tree{stroke:#4a4037;stroke-width:22;fill:none}.k{fill:#711820;stroke:#d06b70;stroke-width:3}.route{fill:#d7c96d}</style>
+<text x="50" y="58" class="t h">禍津根 — Tripo AI 3D Reference</text><text x="50" y="90" class="t s">第四の主ではない。「黒い根・岩柱・腐食樹木・中央核」が地表へ噴出した、生きて動く地形。</text>
+<g transform="translate(45,125)"><rect class="panel" width="720" height="610" rx="18"/><text class="t s" x="20" y="36">WIDE COMPOSITION — LIVING TERRAIN</text>
+<path class="rock" d="M40 500 L120 400 L180 450 L245 330 L300 440 L390 300 L450 445 L540 350 L620 455 L690 405 L700 560 L30 560 Z"/>
+<path class="root" d="M80 500 Q180 410 250 455 Q330 495 390 390 Q450 290 530 410 Q590 480 670 420"/>
+<path class="root2" d="M140 495 Q190 360 260 310 M315 455 Q330 320 390 230 M470 420 Q515 310 590 285"/>
+<circle class="k" cx="258" cy="315" r="17"/><circle class="k" cx="535" cy="390" r="17"/><circle class="k" cx="410" cy="235" r="19"/>
+<path class="tree" d="M120 465 L105 300 M103 345 L70 320 M108 370 L145 340 M625 440 L640 275 M638 330 L602 300 M638 350 L675 315"/>
+<g fill="#d7c96d"><circle cx="90" cy="475" r="7"/><circle cx="155" cy="430" r="7"/><circle cx="215" cy="390" r="7"/><circle cx="258" cy="320" r="7"/><circle cx="330" cy="420" r="7"/><circle cx="385" cy="348" r="7"/><circle cx="455" cy="420" r="7"/><circle cx="530" cy="392" r="7"/><circle cx="505" cy="335" r="7"/><circle cx="465" cy="290" r="7"/><circle cx="435" cy="260" r="7"/><circle cx="408" cy="232" r="7"/></g>
+<text class="t xs" x="20" y="590">黄=12 Route概念 / 赤=3禍根。地形が変形してもSafe PointとRoot Grab面を消さない。</text></g>
+<g transform="translate(790,125)"><rect class="panel" width="765" height="610" rx="18"/><text class="t s" x="20" y="36">CENTRAL CORE / MATERIAL LANGUAGE</text>
+<path class="root" d="M80 420 Q180 300 280 390 Q365 465 440 320 Q505 200 650 330"/>
+<path class="rock" d="M275 380 Q320 230 390 175 Q455 235 480 385 Q410 430 275 380 Z"/>
+<circle class="k" cx="390" cy="210" r="28"/><path class="root2" d="M310 360 Q360 280 390 210 M455 365 Q430 270 390 210"/>
+<rect x="70" y="485" width="34" height="34" fill="#2d2022"/><text class="t xs" x="115" y="509">根: 黒褐/炭化</text><rect x="270" y="485" width="34" height="34" fill="#5f5e59"/><text class="t xs" x="315" y="509">岩: 灰/割れ</text><rect x="470" y="485" width="34" height="34" fill="#4a4037"/><text class="t xs" x="515" y="509">腐食樹木</text><rect x="620" y="485" width="34" height="34" fill="#711820"/><text class="t xs" x="665" y="509">禍: 赤黒</text>
+<text class="t xs" x="28" y="565">発光する魔法樹ではなく、自然災害として噴出した異常地形。中心核だけが明確な収束点。</text></g>
+<g transform="translate(50,780)"><text class="t s">TRIPO LOCKS</text><text class="t xs" x="0" y="34">・生物の顔、目、口、手足を作らない　・Root Aの脈動、Phase2の根/岩柱往復、Final Riseの傾斜が読める構成</text><text class="t xs" x="0" y="65">・3禍根: 地表根終端 / Root B終端 / 中央核　・Calm後は爆発・消滅せず、角度と高さが落ち着いて静止する</text><text class="t xs" x="0" y="98">・Tripoは根、岩柱、腐食樹木、中央核など部品生成にも使用可。Gameplay Root transformとRouteは既存実装を基準に組み直す。</text><text class="t xs" x="0" y="132">Pipeline: Tripo component meshes → Blender cleanup → UE5 assembly around existing route/safe-point transforms</text></g></svg>
