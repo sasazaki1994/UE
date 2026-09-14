@@ -77,6 +77,7 @@ private:
     UPROPERTY(VisibleAnywhere) TObjectPtr<USkeletalMeshComponent> Creature;
     UPROPERTY() TArray<TObjectPtr<UAnimSequence>> CreatureAnimations;
     UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> CoreMarkers;
+    UPROPERTY() TArray<TObjectPtr<UMaterialInstanceDynamic>> CoreMarkerMaterials;
     UPROPERTY() TArray<TObjectPtr<UBoxComponent>> LedgeCollision;
     UPROPERTY() TObjectPtr<UStaticMeshComponent> GrabMarker;
     UPROPERTY(VisibleAnywhere) TArray<TObjectPtr<UChildActorComponent>> CoreKakons;

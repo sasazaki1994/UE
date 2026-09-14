@@ -153,7 +153,11 @@ void AIshibashiriBoss::BeginPlay()
         for (UStaticMeshComponent* Part : ColoredParts) Part->SetMaterial(0, BodyMaterial);
     EnterState(EIshibashiriState::Chase);
     for (UStaticMeshComponent* Core : CoreMarkers)
-        SetPrimitiveColor(Core->CreateDynamicMaterialInstance(0), FLinearColor(1,.015,.005));
+    {
+        UMaterialInstanceDynamic* CoreMaterial = Core->CreateDynamicMaterialInstance(0);
+        CoreMarkerMaterials.Add(CoreMaterial);
+        SetPrimitiveColor(CoreMaterial, FLinearColor(.16f,.008f,.006f));
+    }
     SetPrimitiveColor(GrabMarker->CreateDynamicMaterialInstance(0), FLinearColor(1,.68,.05));
     UpdateCreatureAnimation();
 }
@@ -330,8 +334,21 @@ void AIshibashiriBoss::UpdateVisuals()
     else if (DisplayState == EIshibashiriState::Recover) Color = FLinearColor(0.8f, 0.5f, 0.08f);
     else if (DisplayState == EIshibashiriState::Calmed) Color = FLinearColor(0.3f, 0.6f, 0.9f);
     SetPrimitiveColor(BodyMaterial, Color);
-    const bool Reveal=FParse::Param(FCommandLine::Get(),TEXT("DebugGuidance"))||(Target&&Target->GetSense()->IsBoundarySenseActive());
-    for(int32 I=0;I<CoreMarkers.Num();++I) CoreMarkers[I]->SetVisibility(Reveal&&GetCoreKakon(I)&&GetCoreKakon(I)->GetState()!=EKakonState::Purified);
+    const bool Debug=FParse::Param(FCommandLine::Get(),TEXT("DebugGuidance"));
+    const bool SenseActive=Target&&Target->GetSense()->IsBoundarySenseActive();
+    for(int32 I=0;I<CoreMarkers.Num();++I)
+    {
+        AKakonActor* Kakon=GetCoreKakon(I);
+        const EKakonState KakonState=Kakon?Kakon->GetState():EKakonState::Purified;
+        const bool Current=I==GetPurifiedCount();
+        CoreMarkers[I]->SetVisibility(KakonState!=EKakonState::Purified && (Debug || Current));
+        const float SenseStrength=SenseActive&&Current?Target->GetSense()->GetBoundaryReading().Strength:0.f;
+        const float Pulse=.5f+.5f*FMath::Sin(VisualTime*(SenseActive?5.f:2.f)+I);
+        if(CoreMarkerMaterials.IsValidIndex(I)) SetPrimitiveColor(CoreMarkerMaterials[I],Debug
+            ? FLinearColor(1.f,.015f,.005f)
+            : FLinearColor(.10f+(.10f+.24f*SenseStrength)*Pulse,.004f,.006f));
+        CoreMarkers[I]->SetRelativeScale3D(FVector(Debug?.35f:.20f+(SenseStrength*.08f)));
+    }
 }
 
 FString AIshibashiriBoss::GetStateLabel() const

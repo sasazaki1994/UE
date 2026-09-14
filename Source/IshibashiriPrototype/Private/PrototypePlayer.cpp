@@ -65,6 +65,22 @@ APrototypePlayer::APrototypePlayer()
     Sword->SetRelativeLocation(FVector(65.f, 48.f, 0.f));
     Sword->SetRelativeScale3D(FVector(1.3f, 0.07f, 0.12f));
     Sword->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    // Presentation-only proxies follow the imported rig; gameplay traces remain unchanged.
+    BoundaryBladeReaction = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoundaryBladeReaction"));
+    BoundaryBladeReaction->SetupAttachment(GetMesh(), TEXT("weapon"));
+    BoundaryBladeReaction->SetStaticMesh(Cube.Object);
+    BoundaryBladeReaction->SetRelativeLocation(FVector(0.f, 0.f, 54.f));
+    BoundaryBladeReaction->SetRelativeScale3D(FVector(.025f, .035f, 1.05f));
+    BoundaryBladeReaction->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    BoundaryBladeReaction->SetCastShadow(false);
+    BoundaryBladeReaction->SetMaterial(0, Material.Object);
+    CorruptedArmReaction = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CorruptedArmReaction"));
+    CorruptedArmReaction->SetupAttachment(GetMesh(), TEXT("hand_L"));
+    CorruptedArmReaction->SetStaticMesh(Sphere.Object);
+    CorruptedArmReaction->SetRelativeScale3D(FVector(.13f, .09f, .32f));
+    CorruptedArmReaction->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    CorruptedArmReaction->SetCastShadow(false);
+    CorruptedArmReaction->SetMaterial(0, Material.Object);
     GrabComponent = CreateDefaultSubobject<UGrabComponent>(TEXT("GrabComponent"));
     Climbing = CreateDefaultSubobject<UColossusClimbingComponent>(TEXT("ColossusClimbing"));
     ClimbingControlRig = CreateDefaultSubobject<UControlRigComponent>(TEXT("ClimbingFBIK"));
@@ -91,6 +107,8 @@ void APrototypePlayer::BeginPlay()
     Health = MaxHealth;
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
     BodyMaterial = Body->CreateDynamicMaterialInstance(0);
+    BoundaryBladeMaterial = BoundaryBladeReaction->CreateDynamicMaterialInstance(0);
+    CorruptedArmMaterial = CorruptedArmReaction->CreateDynamicMaterialInstance(0);
     SetPrimitiveColor(BodyMaterial, FLinearColor(0.08f, 0.5f, 0.8f));
     UpdateAnimation();
     ClimbingControlRig->AddMappedCompleteSkeletalMesh(GetMesh());
@@ -416,6 +434,7 @@ bool APrototypePlayer::ReceiveChargeHit(const FVector& From)
 void APrototypePlayer::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    PresentationTime += FMath::Max(0.f, DeltaSeconds);
     for(int32 I=0;SenseBoss&&I<3;++I) Sense->SetBoundaryTargetAvailable(SenseBoss->GetCoreKakon(I),I==SenseBoss->GetPurifiedCount()); if(Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(SenseBoss&&(SenseBoss->IsBuckWarning()||SenseBoss->GetState()==EIshibashiriState::Telegraph||SenseBoss->GetState()==EIshibashiriState::Charge)?ECorruptionWarning::Danger:SenseBoss&&SenseBoss->GetState()==EIshibashiriState::Recover?ECorruptionWarning::Safe:ECorruptionWarning::None);
     UpdateAnimation();
     UpdateClimbingIK();
@@ -450,6 +469,24 @@ void APrototypePlayer::Tick(float DeltaSeconds)
         SetPrimitiveColor(BodyMaterial, IsDodging() ? FLinearColor::White
             : (bFlash ? FLinearColor(1.f, 0.15f, 0.1f) : FLinearColor(0.08f, 0.5f, 0.8f)));
     }
+    const float Boundary = Sense->IsBoundarySenseActive() ? Sense->GetBoundaryReading().Strength : 0.f;
+    const float BladePulse = Boundary * (.72f + .12f * FMath::Sin(PresentationTime * 5.f));
+    SetPrimitiveColor(BoundaryBladeMaterial, FLinearColor(.18f + BladePulse*.48f, .22f + BladePulse*.46f, .20f + BladePulse*.32f));
+    BoundaryBladeReaction->SetVisibility(!bWeaponHidden);
+    BoundaryBladeReaction->SetRelativeScale3D(FVector(.025f + BladePulse*.008f, .035f + BladePulse*.008f, 1.05f));
+    float ArmStrength = 0.f;
+    if (Sense->IsCorruptionSenseActive())
+    {
+        switch (Sense->GetCorruptionWarning())
+        {
+        case ECorruptionWarning::Danger: ArmStrength = .72f + .22f * FMath::Abs(FMath::Sin(PresentationTime*8.f)); break;
+        case ECorruptionWarning::Transition: ArmStrength = .45f + .18f * (.5f + .5f*FMath::Sin(PresentationTime*3.f)); break;
+        case ECorruptionWarning::Safe: ArmStrength = .18f; break;
+        default: ArmStrength = .28f; break;
+        }
+    }
+    SetPrimitiveColor(CorruptedArmMaterial, FLinearColor(.055f + ArmStrength*.25f, .008f, .012f + ArmStrength*.025f));
+    CorruptedArmReaction->SetRelativeScale3D(FVector(.13f, .09f, .32f) * (1.f + ArmStrength*.08f));
 }
 
 void APrototypePlayer::UpdateClimbingIK()
@@ -511,6 +548,7 @@ void APrototypePlayer::ResetForEncounter(const FTransform& Spawn)
     CameraClearElapsed = 0.f;
     RaisedCameraOffset = FVector::ZeroVector;
     RaisedCameraFocusOffset = FVector::ZeroVector;
+    PresentationTime = 0.f;
     ConsumeMovementInputVector();
     SetActorTransform(Spawn, false, nullptr, ETeleportType::TeleportPhysics);
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;

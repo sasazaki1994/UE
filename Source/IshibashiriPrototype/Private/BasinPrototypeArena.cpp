@@ -24,7 +24,23 @@ void ABasinPrototypeArena::ClearGeneratedComponents()
 {
     for (UActorComponent* Component : GeneratedComponents)
         if (IsValid(Component)) Component->DestroyComponent();
-    GeneratedComponents.Reset(); BasinFloor = nullptr; VisualRockCount = BoundaryCount = AccentCount = 0;
+    GeneratedComponents.Reset(); BasinFloor = nullptr; GroundFog = nullptr; KeyLight = nullptr;
+    VisualRockCount = BoundaryCount = AccentCount = TreeCount = 0;
+}
+
+void ABasinPrototypeArena::AddTree(const TCHAR* Name, const FVector& Location, float Height, float Width)
+{
+    AddAccent(*FString::Printf(TEXT("%sTrunk"),Name),Location+FVector(0,0,Height*.5f),
+        FVector(Width/100.f,Width/100.f,Height/100.f),FRotator::ZeroRotator,FLinearColor(.075f,.052f,.035f));
+    AddRock(*FString::Printf(TEXT("%sCrown"),Name),Location+FVector(0,0,Height*.82f),
+        FVector(Width*.028f,Width*.028f,Height*.008f),FRotator(0,17,0),FLinearColor(.065f,.095f,.055f));
+    ++TreeCount;
+}
+
+void ABasinPrototypeArena::SetCalmPresentation(bool bCalm)
+{
+    if (GroundFog) { GroundFog->SetFogDensity(bCalm ? .008f : .012f); GroundFog->SetFogMaxOpacity(bCalm ? .16f : .22f); }
+    if (KeyLight) KeyLight->SetIntensity(bCalm ? 3.55f : 3.2f);
 }
 
 void ABasinPrototypeArena::AddAccent(const TCHAR* Name, const FVector& Location, const FVector& Scale,
@@ -113,9 +129,13 @@ void ABasinPrototypeArena::OnConstruction(const FTransform& Transform)
         AddAccent(*FString::Printf(TEXT("RitualCord%d"), Side), FVector(-650.f, Side*720.f, 315.f),
             FVector(.55f,.12f,.10f), FRotator(0.f,0.f,Side*8.f), FLinearColor(.08f,.12f,.20f));
     }
+    const FVector Trees[]={{-2500,-1900,0},{-2050,2050,0},{850,-2550,0},{1750,2300,0},{2850,-1450,0},{3100,1050,0}};
+    for(int32 I=0;I<UE_ARRAY_COUNT(Trees);++I)
+        AddTree(*FString::Printf(TEXT("OldCedar%02d"),I),Trees[I],720.f+(I%3)*110.f,34.f+(I%2)*7.f);
 
     UDirectionalLightComponent* Sun = NewObject<UDirectionalLightComponent>(this,TEXT("BasinSun"));
     Sun->SetupAttachment(Root); Sun->SetRelativeRotation(FRotator(-48,-32,0)); Sun->SetIntensity(3.2f); Sun->SetMobility(EComponentMobility::Movable); Sun->RegisterComponent(); GeneratedComponents.Add(Sun);
+    KeyLight = Sun;
     UPointLightComponent* Fill = NewObject<UPointLightComponent>(this,TEXT("BasinFill"));
     Fill->SetupAttachment(Root); Fill->SetRelativeLocation(FVector(0,0,1500)); Fill->SetIntensity(90000.f); Fill->SetAttenuationRadius(6200.f);
     Fill->SetCastShadows(false); Fill->SetLightColor(FLinearColor(.70f,.76f,.82f)); Fill->SetMobility(EComponentMobility::Movable); Fill->RegisterComponent(); GeneratedComponents.Add(Fill);
@@ -126,6 +146,7 @@ void ABasinPrototypeArena::OnConstruction(const FTransform& Transform)
     Fog->SetStartDistance(1200.f); Fog->SetFogMaxOpacity(.22f); Fog->SetVolumetricFog(true);
     Fog->SetVolumetricFogScatteringDistribution(.35f); Fog->SetVolumetricFogExtinctionScale(.55f);
     Fog->SetVolumetricFogDistance(6000.f); Fog->RegisterComponent(); GeneratedComponents.Add(Fog);
+    GroundFog = Fog;
 
     // Physically based aerial perspective is useful in both profiles; expensive lighting is selected by the launcher.
     USkyAtmosphereComponent* Atmosphere = NewObject<USkyAtmosphereComponent>(this,TEXT("BasinSkyAtmosphere"));
