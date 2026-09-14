@@ -109,6 +109,7 @@ void APrototypeGameMode::StartPlay()
 void APrototypeGameMode::RetryEncounter()
 {
     if (!Player || !Boss || !EncounterManager) return;
+    if (BasinArena) BasinArena->SetCalmPresentation(false);
     GetWorldTimerManager().ClearTimer(CampaignAdvanceTimer);
     Result = EEncounterResult::Playing;
     Player->ResetForEncounter(PlayerSpawn());
@@ -118,6 +119,7 @@ void APrototypeGameMode::RetryEncounter()
 
 void APrototypeGameMode::HandleEncounterCompleted()
 {
+    if (BasinArena) BasinArena->SetCalmPresentation(true);
     FinishEncounter(true);
     if (auto* Campaign=GetGameInstance<UCampaignGameInstance>(); Campaign && Campaign->IsCurrentEncounter(ECampaignState::Ishibashiri))
         GetWorldTimerManager().SetTimer(CampaignAdvanceTimer,this,&APrototypeGameMode::AdvanceCampaign,2.f,false);

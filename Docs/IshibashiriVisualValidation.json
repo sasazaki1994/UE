@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "0f712b5e1203accfee91fee54b74b79675916b83",
+  "status": "SOURCE_IMPLEMENTED_VISUAL_VALIDATION_NOT_RUN",
+  "environment": {
+    "platform": "Linux container",
+    "unreal_5_6_1": false,
+    "windows_msvc": false,
+    "blender": false
+  },
+  "checks": {
+    "source_audit": "PASS",
+    "runtime_asset_reference_audit": "PASS",
+    "python_source_contract": "PASS",
+    "json_parse": "PASS",
+    "git_diff_check": "PASS",
+    "uht": "NOT_RUN",
+    "editor_development_build": "NOT_RUN",
+    "ishibashiri_normal": "NOT_RUN",
+    "climbing": "NOT_RUN",
+    "grab": "NOT_RUN",
+    "camera": "NOT_RUN",
+    "boundary_sense": "NOT_RUN",
+    "corruption_sense": "NOT_RUN",
+    "victory": "NOT_RUN",
+    "retry": "NOT_RUN",
+    "fixed_60_fps": "NOT_RUN",
+    "fixed_30_fps": "NOT_RUN",
+    "legacy": "NOT_RUN",
+    "high_quality": "NOT_RUN"
+  },
+  "captures": {
+    "encounter_opening": "NOT_RUN",
+    "shirotsura_close": "NOT_RUN",
+    "ishibashiri_full_body": "NOT_RUN",
+    "scale_comparison": "NOT_RUN",
+    "charge": "NOT_RUN",
+    "ground_grab": "NOT_RUN",
+    "climbing": "NOT_RUN",
+    "boundary_sense": "NOT_RUN",
+    "corruption_sense": "NOT_RUN",
+    "kakon_covered": "NOT_RUN",
+    "kakon_exposed": "NOT_RUN",
+    "purify": "NOT_RUN",
+    "kakon_purified": "NOT_RUN",
+    "buck_cling": "NOT_RUN",
+    "kakon_3_of_3": "NOT_RUN",
+    "calm": "NOT_RUN",
+    "victory": "NOT_RUN",
+    "basin_wide": "NOT_RUN",
+    "legacy_before_after": "NOT_RUN"
+  },
+  "performance": {
+    "skeletal_mesh_runtime_triangles": "NOT_RUN",
+    "recorded_static_triangles": {"shirotsura": 32194, "ishibashiri": 205442},
+    "material_slots": {"shirotsura": 14, "ishibashiri": 15},
+    "texture_resolution": "2048px BaseColor/Normal/Roughness per character",
+    "niagara_emitters_added": 0,
+    "basin_dynamic_lights": 2,
+    "shadow_casting_dynamic_lights": 1,
+    "fps_gpu_profile": "NOT_RUN"
+  }
+}

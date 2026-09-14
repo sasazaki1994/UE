@@ -104,6 +104,10 @@ private:
     UPROPERTY(VisibleAnywhere) TObjectPtr<UCameraComponent> Camera;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Body;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> Sword;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> BoundaryBladeReaction;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> CorruptedArmReaction;
+    UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> BoundaryBladeMaterial;
+    UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> CorruptedArmMaterial;
     UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> BodyMaterial;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UColossusClimbingComponent> Climbing;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> GrabComponent;
@@ -132,4 +136,5 @@ private:
     FVector DodgeDirection = FVector::ForwardVector;
     FVector AttackDirection = FVector::ForwardVector;
     FString Feedback;
+    float PresentationTime = 0.f;
 };

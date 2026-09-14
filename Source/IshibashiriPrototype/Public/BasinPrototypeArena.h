@@ -20,6 +20,8 @@ public:
     int32 GetVisualRockCount() const { return VisualRockCount; }
     int32 GetBoundaryCount() const { return BoundaryCount; }
     int32 GetAccentCount() const { return AccentCount; }
+    int32 GetTreeCount() const { return TreeCount; }
+    void SetCalmPresentation(bool bCalm);
     UPrimitiveComponent* GetFloorComponent() const { return BasinFloor; }
 
     UPROPERTY(EditAnywhere, Category="Basin", meta=(ClampMin="3000")) float ClearingHalfExtent = 4000.f;
@@ -36,6 +38,7 @@ private:
     void AddBoundary(const TCHAR* Name, const FVector& Location, const FVector& Scale, const FRotator& Rotation);
     void AddAccent(const TCHAR* Name, const FVector& Location, const FVector& Scale, const FRotator& Rotation,
         const FLinearColor& Color);
+    void AddTree(const TCHAR* Name, const FVector& Location, float Height, float Width);
     void AddFloor();
     void ClearGeneratedComponents();
 
@@ -48,4 +51,7 @@ private:
     int32 VisualRockCount = 0;
     int32 BoundaryCount = 0;
     int32 AccentCount = 0;
+    int32 TreeCount = 0;
+    UPROPERTY(Transient) TObjectPtr<class UExponentialHeightFogComponent> GroundFog;
+    UPROPERTY(Transient) TObjectPtr<class UDirectionalLightComponent> KeyLight;
 };

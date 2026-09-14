@@ -9,6 +9,8 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 
 void APrototypeHUD::DrawHUD()
 {
@@ -18,6 +20,7 @@ void APrototypeHUD::DrawHUD()
     if (!Mode) return;
     const APrototypePlayer* Player = Mode->GetPlayer();
     const AIshibashiriBoss* Boss = Mode->GetBoss();
+    const bool bDebugGuidance = FParse::Param(FCommandLine::Get(), TEXT("DebugGuidance"));
     const float Scale = FMath::Clamp(Canvas->ClipY / 900.f, 0.65f, 1.4f);
     if (Player && Mode->IsEncounterActive() && PlayerOwner && !Player->IsGrabbing())
     {
@@ -51,8 +54,8 @@ void APrototypeHUD::DrawHUD()
     }
     const float X = 22.f * Scale;
     float Y = 18.f * Scale;
-    const float Width = FMath::Min(630.f * Scale, Canvas->ClipX - X * 2.f);
-    DrawRect(FLinearColor(0.015f, 0.02f, 0.025f, 0.78f), X - 8.f, Y - 8.f, Width, 195.f * Scale);
+    const float Width = FMath::Min((bDebugGuidance ? 630.f : 430.f) * Scale, Canvas->ClipX - X * 2.f);
+    DrawRect(FLinearColor(0.015f, 0.02f, 0.025f, 0.72f), X - 8.f, Y - 8.f, Width, (bDebugGuidance ? 195.f : 105.f) * Scale);
     auto Line = [this, X, &Y, Scale](const FString& Text, FLinearColor Color = FLinearColor::White, float Size = 1.f)
     {
         DrawText(Text, Color, X, Y, GEngine->GetMediumFont(), Scale * Size, false);
@@ -66,21 +69,26 @@ void APrototypeHUD::DrawHUD()
         Line(TEXT("Spawn failed. Use Play, not Simulate. See Output Log."), FLinearColor::Red);
         return;
     }
-    Line(FString::Printf(TEXT("PLAYER HP  %d / %d       BOSS HP  %d / %d"), Player->GetHealth(), Player->MaxHealth, Boss->GetHealth(), Boss->MaxHealth));
-    Line(FString::Printf(TEXT("%s  (%.2fs)"), *Boss->GetStateLabel(), Boss->GetStateTimeRemaining()), Boss->CanBeCountered() ? FLinearColor::Green : FLinearColor::White);
-    Line(FString::Printf(TEXT("E / RB grab / brace | STAMINA %.0f / 100 | CORES %d / 3"),
-        Player->GetClimbing()->GetStamina(),Boss->GetPurifiedCount()),FLinearColor(1,.75,.25));
+    Line(FString::Printf(TEXT("STAMINA  %.0f / 100        KAKON  %d / 3"),
+        Player->GetClimbing()->GetStamina(),Boss->GetPurifiedCount()),FLinearColor(.82f,.78f,.57f));
     if(Player->GetSense()->IsBoundarySenseActive()) Line(FString::Printf(TEXT("BOUNDARY SENSE: %s"),*Player->GetSense()->GetBoundaryStrengthLabel()),FLinearColor(.3f,.9f,1));
     if(Player->GetSense()->IsCorruptionSenseActive()) Line(FString::Printf(TEXT("CORRUPTION SENSE: %s"),*Player->GetSense()->GetCorruptionWarningLabel()),FLinearColor(1,.35f,.55f));
-    Line(TEXT("Move: WASD / LS | Camera: Mouse / RS | Attack: LMB / X | Dodge: Shift / B"), FLinearColor(.7f,.8f,.85f), .75f);
-    if (!Player->IsGrabbing()) Line(TEXT("Cyan arrow: slash direction | White: committed swing"), FLinearColor(.2f,.9f,1.f), .75f);
-    Line(Player->GetFeedback(), FLinearColor::Yellow);
+    if (bDebugGuidance)
+    {
+        Line(FString::Printf(TEXT("PLAYER HP %d/%d | BOSS HP %d/%d | %s (%.2fs)"),Player->GetHealth(),Player->MaxHealth,
+            Boss->GetHealth(),Boss->MaxHealth,*Boss->GetStateLabel(),Boss->GetStateTimeRemaining()));
+        Line(TEXT("Move WASD/LS | Camera Mouse/RS | Attack LMB/X | Dodge Shift/B"),FLinearColor(.7f,.8f,.85f),.75f);
+    }
+    if (!Player->GetFeedback().IsEmpty()) Line(Player->GetFeedback(), FLinearColor(.88f,.76f,.42f),.85f);
 
-    const FString Hint = Player->bUseRouteClimbing ? Player->GetClimbing()->GetHint()
-        : TEXT("Hold E / RB: grab | WASD / LS: local climb | Release E / RB: detach | R / Y: retry");
-    DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.8f), 0.f, Canvas->ClipY - 46.f * Scale, Canvas->ClipX, 46.f * Scale);
-    DrawText(Hint, Boss->CanBeCountered() ? FLinearColor::Green : FLinearColor::White,
-        X, Canvas->ClipY - 33.f * Scale, GEngine->GetMediumFont(), Scale, false);
+    if (bDebugGuidance || Player->IsGrabbing())
+    {
+        const FString Hint = Player->bUseRouteClimbing ? Player->GetClimbing()->GetHint()
+            : TEXT("Hold E / RB: grab | WASD / LS: local climb | Release E / RB: detach | R / Y: retry");
+        DrawRect(FLinearColor(0.f,0.f,0.f,.72f),0.f,Canvas->ClipY-46.f*Scale,Canvas->ClipX,46.f*Scale);
+        DrawText(Hint,Boss->CanBeCountered()?FLinearColor::Green:FLinearColor::White,
+            X,Canvas->ClipY-33.f*Scale,GEngine->GetMediumFont(),Scale,false);
+    }
 
     if (!Mode->IsEncounterActive())
     {
