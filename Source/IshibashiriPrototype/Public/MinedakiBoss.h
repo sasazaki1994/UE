@@ -54,6 +54,7 @@ public:
     float GetClimbTime() const { return ClimbTime; }
     FMinedakiTelemetry Telemetry;
     void LogTelemetry(const TCHAR* Event) const;
+    void RefreshSenseGuidance() { SetRouteVisibility(); }
     static constexpr int32 RouteNodeCount=14;
     static constexpr int32 WallStartNode=4;
     static constexpr int32 Kakon1Node=6;

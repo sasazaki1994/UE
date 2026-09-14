@@ -4,6 +4,7 @@
 #include "PrimitiveAppearance.h"
 #include "ColossusClimbingComponent.h"
 #include "GrabComponent.h"
+#include "PlayerSenseComponent.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -36,6 +37,7 @@ APrototypePlayer::APrototypePlayer()
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
     GetCharacterMovement()->JumpZVelocity = 500.f;
     GetCharacterMovement()->AirControl = 0.3f;
+    Sense = CreateDefaultSubobject<UPlayerSenseComponent>(TEXT("PlayerSense"));
 
     SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraArm"));
     SpringArm->SetupAttachment(RootComponent);
@@ -244,7 +246,15 @@ void APrototypePlayer::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Retry"), IE_Pressed, this, &APrototypePlayer::Retry);
     Input->BindAction(TEXT("Grab"), IE_Pressed, this, &APrototypePlayer::BeginGrab);
     Input->BindAction(TEXT("Grab"), IE_Released, this, &APrototypePlayer::ReleaseGrab);
+    Input->BindAction(TEXT("BoundarySense"),IE_Pressed,this,&APrototypePlayer::BoundarySensePressed);
+    Input->BindAction(TEXT("BoundarySense"),IE_Released,this,&APrototypePlayer::BoundarySenseReleased);
+    Input->BindAction(TEXT("ArmSense"),IE_Pressed,this,&APrototypePlayer::ArmSensePressed);
+    Input->BindAction(TEXT("ArmSense"),IE_Released,this,&APrototypePlayer::ArmSenseReleased);
 }
+
+void APrototypePlayer::ConfigureSenseTargets(AIshibashiriBoss* Boss){SenseBoss=Boss;Sense->ClearBoundaryTargets();for(int32 I=0;Boss&&I<3;++I)Sense->RegisterBoundaryTarget(Boss->GetCoreKakon(I),I==0);}
+void APrototypePlayer::BoundarySensePressed(){Sense->BeginBoundarySense();} void APrototypePlayer::BoundarySenseReleased(){Sense->EndBoundarySense();}
+void APrototypePlayer::ArmSensePressed(){Sense->BeginCorruptionSense();Sense->SetCorruptionWarning(SenseBoss&&(SenseBoss->IsBuckWarning()||SenseBoss->GetState()==EIshibashiriState::Telegraph||SenseBoss->GetState()==EIshibashiriState::Charge)?ECorruptionWarning::Danger:SenseBoss&&SenseBoss->GetState()==EIshibashiriState::Recover?ECorruptionWarning::Safe:ECorruptionWarning::None);} void APrototypePlayer::ArmSenseReleased(){Sense->EndCorruptionSense();}
 
 bool APrototypePlayer::CanAct() const
 {
@@ -406,6 +416,7 @@ bool APrototypePlayer::ReceiveChargeHit(const FVector& From)
 void APrototypePlayer::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    for(int32 I=0;SenseBoss&&I<3;++I) Sense->SetBoundaryTargetAvailable(SenseBoss->GetCoreKakon(I),I==SenseBoss->GetPurifiedCount()); if(Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(SenseBoss&&(SenseBoss->IsBuckWarning()||SenseBoss->GetState()==EIshibashiriState::Telegraph||SenseBoss->GetState()==EIshibashiriState::Charge)?ECorruptionWarning::Danger:SenseBoss&&SenseBoss->GetState()==EIshibashiriState::Recover?ECorruptionWarning::Safe:ECorruptionWarning::None);
     UpdateAnimation();
     UpdateClimbingIK();
     if (!CanAct()) return;
@@ -488,6 +499,7 @@ void APrototypePlayer::StopCombat()
 void APrototypePlayer::ResetForEncounter(const FTransform& Spawn)
 {
     StopCombat();
+    Sense->ResetSense();
     Climbing->Reset(); CurrentAnimation = INDEX_NONE;
     Health = MaxHealth;
     DodgeCooldownRemaining = AttackCooldownRemaining = HurtInvulnerabilityRemaining = 0.f;

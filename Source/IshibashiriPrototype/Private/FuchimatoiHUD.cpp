@@ -2,6 +2,7 @@
 #include "FuchimatoiGameMode.h"
 #include "FuchimatoiBoss.h"
 #include "FuchimatoiPlayer.h"
+#include "PlayerSenseComponent.h"
 #include "FuchimatoiRouteAnchor.h"
 #include "NushiProgressComponent.h"
 #include "StaminaComponent.h"
@@ -24,6 +25,8 @@ void AFuchimatoiHUD::DrawHUD()
     Line(Boss->GetActionLabel(),FLinearColor(1,.8,.3));
     Line(FString::Printf(TEXT("HP %d/3 | KAKON %d/3 | STAMINA %.0f/100 | COIL %.0f%%"),Player->GetHealth(),
         Boss->GetNushiProgressComponent()->GetPurifiedCount(),Player->GetStamina()->GetCurrentStamina(),Boss->GetCoilingProgress()*100));
+    if(Player->GetSense()->IsBoundarySenseActive()) Line(FString::Printf(TEXT("BOUNDARY SENSE: %s"),*Player->GetSense()->GetBoundaryStrengthLabel()),FLinearColor(.3f,.9f,1));
+    if(Player->GetSense()->IsCorruptionSenseActive()) Line(FString::Printf(TEXT("CORRUPTION SENSE: %s | RECOVERY x%.1f"),*Player->GetSense()->GetCorruptionWarningLabel(),Player->GetSense()->GetRecoveryMultiplier()),FLinearColor(1,.35f,.55f));
     if (Player->IsMounted())
     {
         AFuchimatoiRouteAnchor* Node=Boss->GetRouteAnchor(Player->GetRouteNode());

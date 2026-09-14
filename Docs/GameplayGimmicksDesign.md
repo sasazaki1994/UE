@@ -223,3 +223,9 @@ Status: Adopted Design / implementation staged
 `観察する → 主の習性を利用する → 道を作る/見抜く → 巨体へ取り付く → 動く身体を登る → 禍根を見つける → 禍だけを祓う → 主を鎮める`
 
 「巨大な敵のHPを削って倒す」のではなく、**巨大な主の行動・身体・地形を読み解き、禍だけを切り離す**ことを本作のゲームプレイ上の独自性とする。
+
+## STEP 3A implementation status (2026-09-14)
+
+**Implemented in source:** shared registered-target `UPlayerSenseComponent`; Boundary Sense direction/strength/distance bands; phase-filtered Kakon selection; sense-gated route/Kakon debug primitives for the connected encounters; separate corruption warning categories; one 50% stamina-recovery risk with a two-second tail in the three `UStaminaComponent` encounters; Q/LT and F/LB hold mappings; HUD status; retry reset; debug telemetry; Gherkin, source-contract and UE Automation coverage. See [Player Sense Gameplay](PlayerSenseGameplay.md).
+
+**Not implemented:** production sword/arm VFX and audio, full campaign connection, talismans/shimenawa, continuous authored warning lead times, a new combat system, or changes to the existing Kakon purification lifecycle. Windows UE build/runtime/regression validation and the legacy Ishibashiri scalar-stamina risk hook remain outstanding.

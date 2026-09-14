@@ -5,6 +5,8 @@
 #include "FuchimatoiSimulationComponent.h"
 #include "GrabComponent.h"
 #include "StaminaComponent.h"
+#include "PlayerSenseComponent.h"
+#include "NushiProgressComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -28,6 +30,7 @@ AFuchimatoiPlayer::AFuchimatoiPlayer()
     GetCharacterMovement()->JumpZVelocity=520;
     Grab=CreateDefaultSubobject<UGrabComponent>(TEXT("SharedGrab"));
     Stamina=CreateDefaultSubobject<UStaminaComponent>(TEXT("SharedStamina"));
+    Sense=CreateDefaultSubobject<UPlayerSenseComponent>(TEXT("PlayerSense"));
     Arm=CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraArm"));
     Arm->SetupAttachment(RootComponent); Arm->TargetArmLength=1050;
     Arm->TargetOffset=FVector(0,0,110); Arm->bUsePawnControlRotation=true;
@@ -53,6 +56,7 @@ void AFuchimatoiPlayer::ConfigureBoss(AFuchimatoiBoss* InBoss)
     Grab->AddTickPrerequisiteActor(this);
     TArray<UStaticMeshComponent*> Parts; GetComponents(Parts);
     for (UStaticMeshComponent* Part:Parts) SetPrimitiveColor(Part->CreateDynamicMaterialInstance(0),FLinearColor(.93,.76,.34));
+    Sense->ClearBoundaryTargets(); for(int32 I=0;I<3;++I) Sense->RegisterBoundaryTarget(Boss->GetKakon(I),I==0);
 }
 bool AFuchimatoiPlayer::CanAct() const
 {
@@ -99,6 +103,8 @@ void AFuchimatoiPlayer::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Dodge"),IE_Pressed,this,&AFuchimatoiPlayer::DodgePressed);
     Input->BindAction(TEXT("Attack"),IE_Pressed,this,&AFuchimatoiPlayer::AttackPressed);
     Input->BindAction(TEXT("Retry"),IE_Pressed,this,&AFuchimatoiPlayer::RetryPressed);
+    Input->BindAction(TEXT("BoundarySense"),IE_Pressed,this,&AFuchimatoiPlayer::BoundarySensePressed); Input->BindAction(TEXT("BoundarySense"),IE_Released,this,&AFuchimatoiPlayer::BoundarySenseReleased);
+    Input->BindAction(TEXT("ArmSense"),IE_Pressed,this,&AFuchimatoiPlayer::ArmSensePressed); Input->BindAction(TEXT("ArmSense"),IE_Released,this,&AFuchimatoiPlayer::ArmSenseReleased);
 }
 void AFuchimatoiPlayer::MoveForward(float Value)
 {
@@ -163,7 +169,7 @@ void AFuchimatoiPlayer::DodgePressed()
 }
 void AFuchimatoiPlayer::AttackPressed()
 {
-    if (CanAct() && Boss) Boss->TryPurifyAtNode(Node);
+    if (CanAct() && Boss && Boss->TryPurifyAtNode(Node)) Sense->NotifyPurifyAfterSense();
 }
 void AFuchimatoiPlayer::RetryPressed()
 {
@@ -190,7 +196,7 @@ void AFuchimatoiPlayer::AdvanceRoute(float Dt)
     if (!Current) { DetachFromRoute(); return; }
     const float DrainDt=FMath::Max(0.f,Dt-RecoveryStaminaGrace);
     RecoveryStaminaGrace=FMath::Max(0.f,RecoveryStaminaGrace-Dt);
-    if (Current->IsRock() && Destination==INDEX_NONE) Stamina->RestoreStamina(28.f*Dt);
+    if (Current->IsRock() && Destination==INDEX_NONE) Stamina->RestoreStamina((28.f*Dt)*Sense->GetRecoveryMultiplier());
     else Stamina->ConsumeStamina((IsRouteMoving()?7.f:3.f)*DrainDt);
     if (Stamina->IsDepleted())
     {
@@ -224,7 +230,7 @@ void AFuchimatoiPlayer::AdvanceRoute(float Dt)
 }
 void AFuchimatoiPlayer::Tick(float Dt)
 {
-    Super::Tick(Dt);
+    Super::Tick(Dt); for(int32 I=0;Boss&&I<3;++I) Sense->SetBoundaryTargetAvailable(Boss->GetKakon(I), I==Boss->GetNushiProgressComponent()->GetPurifiedCount()); if(Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(Boss && (Boss->GetActionState()==EFuchimatoiActionState::BiteWindup||Boss->GetActionState()==EFuchimatoiActionState::BiteLunge) ? ECorruptionWarning::Danger : Boss && Boss->GetActionState()==EFuchimatoiActionState::Coiling ? ECorruptionWarning::Transition : Boss && Boss->GetActionState()==EFuchimatoiActionState::Snagged ? ECorruptionWarning::Safe : ECorruptionWarning::None);
     if (!CanAct()) return;
     HitImmunity=FMath::Max(0.f,HitImmunity-Dt); DodgeCooldown=FMath::Max(0.f,DodgeCooldown-Dt);
     if (IsDodging())
@@ -233,7 +239,7 @@ void AFuchimatoiPlayer::Tick(float Dt)
         DodgeRemaining=FMath::Max(0.f,DodgeRemaining-Dt);
         if (!IsDodging()) GetCharacterMovement()->StopMovementImmediately();
     }
-    if (IsMounted()) AdvanceRoute(Dt); else Stamina->RestoreStamina(18.f*Dt);
+    if (IsMounted()) AdvanceRoute(Dt); else Stamina->RestoreStamina((18.f*Dt)*Sense->GetRecoveryMultiplier());
     Arm->TargetArmLength=FMath::FInterpTo(Arm->TargetArmLength,IsMounted()?1400.f:1050.f,Dt,3.f);
     if (GetActorLocation().Z < -400) GetWorld()->GetAuthGameMode<AFuchimatoiGameMode>()->Defeat();
 }
@@ -246,6 +252,7 @@ void AFuchimatoiPlayer::StopEncounter()
 void AFuchimatoiPlayer::ResetForEncounter(const FTransform& Spawn)
 {
     Grab->Release(); StopJumping(); StopEncounter();
+    Sense->ResetSense();
     Destination=Node=INDEX_NONE; RouteProgress=RouteDelay=0;
     bRecoveryApproach=false; RecoveryStaminaGrace=0;
     DodgeCooldown=HitImmunity=0; Health=3; Stamina->ResetStamina();
@@ -257,3 +264,6 @@ void AFuchimatoiPlayer::ResetForEncounter(const FTransform& Spawn)
     if (Controller) Controller->SetControlRotation(FRotator(-22,110,0));
     Arm->TargetArmLength=1050;
 }
+
+void AFuchimatoiPlayer::BoundarySensePressed(){Sense->BeginBoundarySense();} void AFuchimatoiPlayer::BoundarySenseReleased(){Sense->EndBoundarySense();}
+void AFuchimatoiPlayer::ArmSensePressed(){Sense->BeginCorruptionSense(); Sense->SetCorruptionWarning(Boss && (Boss->GetActionState()==EFuchimatoiActionState::BiteWindup||Boss->GetActionState()==EFuchimatoiActionState::BiteLunge) ? ECorruptionWarning::Danger : Boss && Boss->GetActionState()==EFuchimatoiActionState::Coiling ? ECorruptionWarning::Transition : Boss && Boss->GetActionState()==EFuchimatoiActionState::Snagged ? ECorruptionWarning::Safe : ECorruptionWarning::None);} void AFuchimatoiPlayer::ArmSenseReleased(){Sense->EndCorruptionSense();}

@@ -15,6 +15,8 @@ class UControlRigComponent;
 class UMotionWarpingComponent;
 class UAnimMontage;
 class UAnimInstance;
+class UPlayerSenseComponent;
+class AIshibashiriBoss;
 
 UCLASS()
 class ISHIBASHIRIPROTOTYPE_API APrototypePlayer : public ACharacter
@@ -51,6 +53,8 @@ public:
     bool IsUsingRaisedCamera() const { return bUsingRaisedCamera; }
     FVector GetAttackIndicatorDirection() const;
     const FString& GetFeedback() const { return Feedback; }
+    UPlayerSenseComponent* GetSense() const { return Sense; }
+    void ConfigureSenseTargets(AIshibashiriBoss* Boss);
 
     // Default encounter uses authored holds; disable for the original local-space Grab prototype.
     UPROPERTY(EditAnywhere, Category="Grab") bool bUseRouteClimbing = true;
@@ -94,6 +98,7 @@ private:
     void UpdateClimbingIK();
     void TurnRate(float Value);
     void LookUpRate(float Value);
+    void BoundarySensePressed(); void BoundarySenseReleased(); void ArmSensePressed(); void ArmSenseReleased();
 
     UPROPERTY(VisibleAnywhere) TObjectPtr<USpringArmComponent> SpringArm;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UCameraComponent> Camera;
@@ -104,6 +109,8 @@ private:
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> GrabComponent;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UControlRigComponent> ClimbingControlRig;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UMotionWarpingComponent> MotionWarping;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UPlayerSenseComponent> Sense;
+    UPROPERTY() TObjectPtr<AIshibashiriBoss> SenseBoss;
     UPROPERTY() TArray<TObjectPtr<UAnimSequence>> Animations;
     int32 CurrentAnimation = INDEX_NONE;
     bool bWeaponHidden = false;

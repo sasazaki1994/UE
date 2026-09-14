@@ -1,5 +1,8 @@
 #include "MagatsuneBoss.h"
 #include "MagatsunePlayer.h"
+#include "PlayerSenseComponent.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "KakonActor.h"
 #include "NushiProgressComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -78,5 +81,5 @@ void AMagatsuneBoss::HandlePurified(AKakonActor* K)
     if(I<2) { Phase=I==0?EMagatsunePhase::RootRockRoute:EMagatsunePhase::FinalRise; PhaseTime=0; bPulseResolved=false; ++Telemetry.PhaseTransitions; GetKakon(I+1)->SetActorHiddenInGame(false); GetKakon(I+1)->ApplyShellDamage(GetKakon(I+1)->MaxShellHealth); RefreshRoutes(); }
     else { Telemetry.ClearSeconds=Telemetry.Elapsed; Phase=EMagatsunePhase::Calming; CalmTime=0; }
 }
-void AMagatsuneBoss::RefreshRoutes() { for(int32 I=0;I<RouteMarkers.Num();++I) RouteMarkers[I]->SetVisibility(IsRouteNodeEnabled(I)); }
+void AMagatsuneBoss::RefreshRoutes() { const bool Reveal=FParse::Param(FCommandLine::Get(),TEXT("DebugGuidance"))||(Player&&Player->GetSense()->IsBoundarySenseActive());for(int32 I=0;I<RouteMarkers.Num();++I) RouteMarkers[I]->SetVisibility(Reveal&&IsRouteNodeEnabled(I)); }
 void AMagatsuneBoss::LogTelemetry(const TCHAR* E) const { UE_LOG(LogTemp,Display,TEXT("MAGATSUNE_TELEMETRY %s grab=%d/%d transitions=%d kakon=%d cling=%.2f pulses=%d falls=%d recovery=%d exhaustion=%d retry=%d elapsed=%.2f clear=%.2f"),E,Telemetry.GrabSuccesses,Telemetry.GrabAttempts,Telemetry.PhaseTransitions,Telemetry.KakonPurified,Telemetry.ClingSeconds,Telemetry.LargePulses,Telemetry.Falls,Telemetry.Recoveries,Telemetry.Exhaustions,Telemetry.Retries,Telemetry.Elapsed,Telemetry.ClearSeconds); }
