@@ -60,7 +60,7 @@ void AMinedakiIntegrationTest::MoveToward(FVector Target)
 }
 void AMinedakiIntegrationTest::Shot(const TCHAR* Name)
 {
-    if(!bCapture || Rounds!=0 || Captures.Contains(Name)) return;
+    if(!bCapture || Captures.Contains(Name)) return;
     const FString Dir=FPaths::ProjectSavedDir()/TEXT("Screenshots/Minedaki")/RunId; IFileManager::Get().MakeDirectory(*Dir,true);
     FScreenshotRequest::RequestScreenshot(Dir/(FString(Name)+TEXT(".png")),false,false); Captures.Add(Name);
 }
@@ -95,26 +95,32 @@ void AMinedakiIntegrationTest::Tick(float Dt)
         if(B->GetActionState()==EMinedakiActionState::ArmBridge)
         {
             Hold(EKeys::E,false); if(!Check(B->GetNushiProgressComponent()->GetPurifiedCount()==1&&B->IsRouteNodeEnabled(8),TEXT("Kakon1 opens arm route"))) return;
-            if(Rounds==0&&!bFallValidated) { Shot(TEXT("13-Fall")); Tap(EKeys::SpaceBar); Next(6); } else { Move(1); Next(7); }
+            if(Rounds==0&&RecoveryRuns==0) { Shot(TEXT("14-Fall")); Tap(EKeys::SpaceBar); Next(6); } else { Move(1); Next(7); }
         } break;
     case 6:
-        if(P->IsRecovering()) { Shot(TEXT("14-Recovery")); MoveToward(B->GetRecoveryAnchorWorld()); if(FVector::Dist(P->GetActorLocation(),B->GetRecoveryAnchorWorld())<P->GrabRange-30) { Move(0); Tap(EKeys::E); bFallValidated=true; Next(7); } }
+        if(P->IsRecovering()) { Shot(TEXT("15-Recovery")); MoveToward(B->GetRecoveryAnchorWorld()); if(FVector::Dist(P->GetActorLocation(),B->GetRecoveryAnchorWorld())<P->GrabRange-30) { Move(0); Tap(EKeys::E); ++RecoveryRuns; Next(7); } }
         break;
     case 7: Shot(TEXT("06-ArmRoutePlatform")); if(P->GetRouteNode()==AMinedakiBoss::Kakon2Node&&!P->IsRouteMoving()) { Move(0); Shot(TEXT("07-Kakon2")); Tap(EKeys::LeftMouseButton); Hold(EKeys::E,true); Next(8); } else Move(1); break;
-    case 8: Shot(TEXT("08-Phase3Transition")); if(B->GetActionState()==EMinedakiActionState::FinalRoute) { Hold(EKeys::E,false); Move(1); Next(9); } break;
-    case 9: if(B->GetActionState()==EMinedakiActionState::FinalRoute) Shot(TEXT("09-FinalCling")); if(P->GetRouteNode()==AMinedakiBoss::Kakon3Node&&!P->IsRouteMoving()) { Move(0); Shot(TEXT("10-Kakon3")); Tap(EKeys::LeftMouseButton); Next(10); } break;
+    case 8: Shot(TEXT("08-Phase3Transition")); if(B->GetActionState()==EMinedakiActionState::FinalRoute) { Hold(EKeys::E,false); Shot(TEXT("09-FinalRoute")); Next(14); } break;
+    case 9: if(B->GetActionState()==EMinedakiActionState::FinalRoute) Shot(TEXT("10-FinalCling")); if(P->GetRouteNode()==AMinedakiBoss::Kakon3Node&&!P->IsRouteMoving()) { Move(0); Shot(TEXT("11-Kakon3")); Tap(EKeys::LeftMouseButton); Next(10); } break;
     case 10:
-        if(B->GetNushiState()==ENushiState::Calm&&Mode->GetManager()->GetEncounterState()==ENushiEncounterState::Completed)
+        if(B->GetActionState()==EMinedakiActionState::Calm&&B->GetNushiState()==ENushiState::Calm&&Mode->GetManager()->GetEncounterState()==ENushiEncounterState::Completed)
         {
-            Shot(TEXT("11-Calm")); Shot(TEXT("12-Victory"));
+            Shot(TEXT("12-Calm"));
             if(!Check(B->GetNushiProgressComponent()->GetPurifiedCount()==3&&B->Telemetry.Phase1Completes==1&&B->Telemetry.Phase2Completes==1&&B->Telemetry.Phase3Completes==1,TEXT("3/3 Calm Completed Victory lifecycle"))) return;
-            ++Rounds; Tap(EKeys::R); Shot(TEXT("15-Retry")); Next(11);
+            Next(13);
         } break;
+    case 12:
+        if(P->IsRecovering()) { MoveToward(B->GetRecoveryAnchorWorld()); if(FVector::Dist(P->GetActorLocation(),B->GetRecoveryAnchorWorld())<P->GrabRange-30) { Move(0); Tap(EKeys::E); ++RecoveryRuns; Next(9); } }
+        break;
+    case 13: Shot(TEXT("13-Victory")); if(Time>.2f) { ++Rounds; Tap(EKeys::R); Next(11); } break;
+    case 14: if(Time>.2f) { if(Rounds==0&&RecoveryRuns==1) { Tap(EKeys::SpaceBar); Next(12); } else { Move(1); Next(9); } } break;
     case 11:
         if(Time>.25f)
         {
             if(!Check(!P->IsMounted()&&!P->HasFallen()&&!P->IsRecovering()&&P->GetStamina()->GetCurrentStamina()==100&&B->GetActionState()==EMinedakiActionState::Grounded&&B->GetNushiProgressComponent()->GetPurifiedCount()==0&&ActorCount(GetWorld())==InitialActors,TEXT("Retry fully resets without actor growth"))) return;
-            if(Rounds>=2&&bFallValidated) { UE_LOG(LogTemp,Display,TEXT("MINEDAKI_TEST_PASS %s rounds=2 recovery=1 seconds=%.3f max_position_error_cm=%.6f max_rotation_error_deg=%.6f gamepad=%d"),*RunId,Total,MaxFollowError,MaxAngleError,bGamepad); bDone=true; FApp::SetUseFixedTimeStep(false); FPlatformMisc::RequestExitWithStatus(false,0); }
+            Shot(TEXT("16-Retry"));
+            if(Rounds>=2&&RecoveryRuns>=2) { UE_LOG(LogTemp,Display,TEXT("MINEDAKI_TEST_PASS %s rounds=2 recovery=2 seconds=%.3f max_position_error_cm=%.6f max_rotation_error_deg=%.6f gamepad=%d"),*RunId,Total,MaxFollowError,MaxAngleError,bGamepad); bDone=true; FApp::SetUseFixedTimeStep(false); FPlatformMisc::RequestExitWithStatus(false,0); }
             else { bSawShake=false; Next(0); }
         } break;
     }

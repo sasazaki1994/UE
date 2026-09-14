@@ -7,6 +7,7 @@ Feature: Minedaki full encounter
     Then progress should be 3 of 3
     And Minedaki should be Calm
     And the encounter should be Completed
+    And the Minedaki action should reach Calm before the Victory capture
     And the HUD should show Victory
 
   Scenario: Body movement opens each later route
@@ -32,4 +33,5 @@ Feature: Minedaki full encounter
     When Retry is requested twice
     Then all three Kakon and common progress should reset
     And the boss, body, routes, player, Grab, stamina, camera, encounter and HUD should reset
+    And recovery grace and Minedaki telemetry should reset
     And no encounter actor should be duplicated

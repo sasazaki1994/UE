@@ -27,5 +27,6 @@ private:
     FTransform WallRelative;
     int32 Phase=0, Rounds=0, InitialActors=0;
     float Time=0, Total=0, ForwardAxis=0, RightAxis=0, MaxFollowError=0, MaxAngleError=0, PeakPitch=0, PeakYaw=0, PeakRoll=0;
-    bool bGamepad=false, bCapture=false, bDone=false, bSawShake=false, bFallValidated=false;
+    bool bGamepad=false, bCapture=false, bDone=false, bSawShake=false;
+    int32 RecoveryRuns=0;
 };

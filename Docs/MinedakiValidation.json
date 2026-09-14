@@ -1,15 +1,80 @@
 {
-  "base": "a5ceaac2bb1efd7a5d3d7181dee472d3f3a051f2",
-  "scope": "Minedaki full encounter 3/3",
+  "base": "01b7cbf017ca98c7b8bfaa21acbe91eb0a68dae6",
+  "scope": "Minedaki full encounter 3/3 verification",
   "recordedOn": "2026-09-14 UTC",
-  "environment": "Linux container without pwsh or Unreal Engine 5.6.1",
-  "checks": {
-    "gitDiffCheck": { "status": "PASS", "command": "git diff --check" },
-    "uhtEditorDevelopment": { "status": "NOT_RUN", "reason": "Windows UE 5.6.1 and pwsh unavailable" },
-    "automation": { "status": "NOT_RUN", "planned": ["ActionLifecycle", "LocalTransformFollow", "ExhaustionRetry", "FullEncounterLifecycle", "BodyRouteTransition", "FallRecovery", "RetryReset"] },
-    "inputPlaythrough": { "status": "NOT_RUN", "planned": ["Keyboard 60 FPS clear-retry-clear with recovery", "Keyboard 30 FPS clear", "Simulated gamepad 60 FPS clear"] },
-    "regression": { "status": "NOT_RUN", "planned": ["Ishibashiri -Climbing -Basin 60", "Ishibashiri -Grab 60", "Ishibashiri -Camera -Basin 60", "Ishibashiri -ClimbingGamepad -Basin 60", "Fuchimatoi 60", "Fuchimatoi Recovery 60", "all common Nushi automation"] },
-    "captures": { "status": "NOT_RUN", "countRequired": 15, "reason": "render-capable UE environment unavailable; existing captures remain historical 1/3 evidence" }
+  "environment": {
+    "platform": "Linux container",
+    "ueVersion": "NOT_RUN (Unreal Engine is not installed)",
+    "powershell": "NOT_RUN (pwsh is not installed)"
   },
-  "historicalBaseline": "The previous 1/3 slice validation passed on UE 5.6.1/Windows at the base commit; it is not evidence for this 3/3 change."
+  "runId": null,
+  "checks": {
+    "sourceAudit": {
+      "status": "PASS",
+      "result": "Audited PR #40 (8ae33a9) and the Minedaki/common lifecycle sources. Fixed capture sequencing, omitted final-route evidence, missing second recovery run, invalid transition-duration handling, and transition null/state guards."
+    },
+    "gitDiffCheck": {
+      "status": "PASS",
+      "command": "git diff --check"
+    },
+    "jsonValidation": {
+      "status": "PASS",
+      "command": "python3 -m json.tool Docs/MinedakiValidation.json"
+    },
+    "sourceContractTests": {
+      "status": "PASS",
+      "command": "python3 -m pytest -q Tests/test_minedaki_source_contract.py"
+    },
+    "uht": {
+      "status": "NOT_RUN",
+      "command": ".\\Tools\\Prototype.ps1 -Action Build -Minedaki",
+      "reason": "Windows, pwsh, and Unreal Engine 5.6.1 are unavailable"
+    },
+    "editorDevelopment": {
+      "status": "NOT_RUN",
+      "command": ".\\Tools\\Prototype.ps1 -Action Build -Minedaki",
+      "reason": "Windows, pwsh, and Unreal Engine 5.6.1 are unavailable"
+    },
+    "automation": {
+      "status": "NOT_RUN",
+      "planned": [
+        "IshibashiriPrototype.Nushi.Minedaki.ActionLifecycle",
+        "IshibashiriPrototype.Nushi.Minedaki.LocalTransformFollow",
+        "IshibashiriPrototype.Nushi.Minedaki.ExhaustionRetry",
+        "IshibashiriPrototype.Nushi.Minedaki.FullEncounterLifecycle",
+        "IshibashiriPrototype.Nushi.Minedaki.BodyRouteTransition",
+        "IshibashiriPrototype.Nushi.Minedaki.FallRecovery",
+        "IshibashiriPrototype.Nushi.Minedaki.RetryReset"
+      ]
+    },
+    "keyboard60": { "status": "NOT_RUN", "command": ".\\Tools\\Prototype.ps1 -Action Test -Minedaki -TestFPS 60" },
+    "keyboard30": { "status": "NOT_RUN", "command": ".\\Tools\\Prototype.ps1 -Action Test -Minedaki -TestFPS 30" },
+    "simulatedGamepad60": { "status": "NOT_RUN", "command": ".\\Tools\\Prototype.ps1 -Action Test -Minedaki -Gamepad -TestFPS 60" },
+    "recoveryRun": {
+      "status": "NOT_RUN",
+      "planned": "The input driver now performs falls and input-driven re-grabs after both KAKON 1 and KAKON 2."
+    },
+    "ishibashiriRegression": {
+      "status": "NOT_RUN",
+      "planned": ["-Climbing -Basin 60", "-Grab 60", "-Camera -Basin 60", "-ClimbingGamepad -Basin 60"]
+    },
+    "fuchimatoiRegression": {
+      "status": "NOT_RUN",
+      "planned": ["-Fuchimatoi 60", "-Fuchimatoi -Recovery 60"]
+    },
+    "commonNushiAutomation": { "status": "NOT_RUN" },
+    "captures": {
+      "status": "NOT_RUN",
+      "countRequired": 16,
+      "reason": "A render-capable UE environment is unavailable; existing files are historical 1/3 evidence and were not relabeled.",
+      "planned": ["Ground Grab", "Phase 1 Wall Climb", "Phase 1 Shake", "Kakon 1", "Arm Bridge Transition", "Arm Bridge Route", "Kakon 2", "Final Transition", "Final Route", "Final Cling", "Kakon 3", "Calm", "Victory", "Fall", "Recovery", "Retry"]
+    }
+  },
+  "failures": [],
+  "knownIssues": [
+    "The 3/3 flow remains uncompiled and unexecuted in UE 5.6.1 in this environment.",
+    "No current 3/3 screenshots were produced; Docs/MinedakiCaptures contains only historical 1/3 captures.",
+    "Camera occlusion, real input stamina margins, and rendered Calm presentation require UE validation."
+  ],
+  "verdict": "STEP 1 NOT VALIDATED"
 }

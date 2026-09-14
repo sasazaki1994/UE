@@ -123,6 +123,7 @@ void AMinedakiBoss::AdvancePostKakon(float Dt)
     if(!FMath::IsFinite(Dt)||Dt<=0) return;
     if(IsBodyTransitioning())
     {
+        if(RouteTransitionSeconds<=0) { FinishTransition(); return; }
         TransitionTime=FMath::Min(TransitionTime+Dt,RouteTransitionSeconds); const float T=FMath::SmoothStep(0.f,1.f,TransitionTime/RouteTransitionSeconds);
         if(ActionState==EMinedakiActionState::ArmBridgeTransition) { BodyRoot->SetRelativeRotation({-12*T,18*T,-20*T}); LeftArm->SetRelativeLocation(FMath::Lerp(FVector(-70,-390,1020),FVector(-30,-610,1450),T)); LeftArm->SetRelativeRotation({0,0,70*T}); LeftArm->SetRelativeScale3D({2.2,2.2,FMath::Lerp(9.f,12.f,T)}); }
         else { BodyRoot->SetRelativeRotation({FMath::Lerp(-12.f,28.f,T),FMath::Lerp(18.f,-16.f,T),FMath::Lerp(-20.f,30.f,T)}); RightArm->SetRelativeLocation(FMath::Lerp(FVector(-70,390,1020),FVector(-100,520,1510),T)); RightArm->SetRelativeRotation({0,0,-65*T}); }
@@ -131,6 +132,7 @@ void AMinedakiBoss::AdvancePostKakon(float Dt)
     }
     if(ActionState==EMinedakiActionState::Calming)
     {
+        if(CalmSeconds<=0) { BodyRoot->SetRelativeRotation(FRotator(8,0,0)); ActionState=EMinedakiActionState::Calm; LogTelemetry(TEXT("Calm")); return; }
         CalmTime=FMath::Min(CalmTime+Dt,CalmSeconds); const float T=FMath::SmoothStep(0.f,1.f,CalmTime/CalmSeconds); BodyRoot->SetRelativeRotation(FMath::Lerp(FRotator(28,-16,30),FRotator(8,0,0),T));
         if(CalmTime>=CalmSeconds) { ActionState=EMinedakiActionState::Calm; LogTelemetry(TEXT("Calm")); }
     }
@@ -144,8 +146,16 @@ void AMinedakiBoss::BeginPhase(int32 Phase)
 }
 void AMinedakiBoss::FinishTransition()
 {
-    if(ActionState==EMinedakiActionState::ArmBridgeTransition) { ActionState=EMinedakiActionState::ArmBridge; GetKakon(1)->SetActorHiddenInGame(false); GetKakon(1)->ApplyShellDamage(GetKakon(1)->MaxShellHealth); CoreMarkers[1]->SetVisibility(true); ++Telemetry.Phase2Completes; LogTelemetry(TEXT("Phase2Completed_ArmRouteOpen")); }
-    else { ActionState=EMinedakiActionState::FinalRoute; GetKakon(2)->SetActorHiddenInGame(false); GetKakon(2)->ApplyShellDamage(GetKakon(2)->MaxShellHealth); CoreMarkers[2]->SetVisibility(true); ++Telemetry.Phase3Completes; LogTelemetry(TEXT("Phase3Completed_FinalRouteOpen")); }
+    const bool bArmTransition=ActionState==EMinedakiActionState::ArmBridgeTransition;
+    const bool bFinalTransition=ActionState==EMinedakiActionState::FinalTransition;
+    if(!bArmTransition && !bFinalTransition) return;
+    const int32 KakonIndex=bArmTransition?1:2;
+    AKakonActor* Kakon=GetKakon(KakonIndex);
+    if(!IsValid(Kakon) || !CoreMarkers.IsValidIndex(KakonIndex) || !IsValid(CoreMarkers[KakonIndex].Get())) return;
+    ActionState=bArmTransition?EMinedakiActionState::ArmBridge:EMinedakiActionState::FinalRoute;
+    Kakon->SetActorHiddenInGame(false); Kakon->ApplyShellDamage(Kakon->MaxShellHealth); CoreMarkers[KakonIndex]->SetVisibility(true);
+    if(bArmTransition) { ++Telemetry.Phase2Completes; LogTelemetry(TEXT("Phase2Completed_ArmRouteOpen")); }
+    else { ++Telemetry.Phase3Completes; LogTelemetry(TEXT("Phase3Completed_FinalRouteOpen")); }
     SetRouteVisibility();
 }
 void AMinedakiBoss::HandleKakonPurified(AKakonActor* Kakon)

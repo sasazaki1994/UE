@@ -209,7 +209,7 @@ try {
                 }
                 if ($Minedaki) {
                     $CaptureDir = Join-Path $ProjectRoot "Saved\Screenshots\Minedaki\$RunId"
-                    $ShotNames = @('01-GroundGrab','02-Phase1WallClimb','03-FirstShake','04-Kakon1','05-Phase2BodyTransition','06-ArmRoutePlatform','07-Kakon2','08-Phase3Transition','09-FinalCling','10-Kakon3','11-Calm','12-Victory','13-Fall','14-Recovery','15-Retry')
+                    $ShotNames = @('01-GroundGrab','02-Phase1WallClimb','03-FirstShake','04-Kakon1','05-Phase2BodyTransition','06-ArmRoutePlatform','07-Kakon2','08-Phase3Transition','09-FinalRoute','10-FinalCling','11-Kakon3','12-Calm','13-Victory','14-Fall','15-Recovery','16-Retry')
                 }
                 foreach ($Name in $ShotNames) {
                     $Shot = Get-Item -LiteralPath (Join-Path $CaptureDir "$Name.png") -ErrorAction Stop
