@@ -11,6 +11,7 @@
 #include "NushiProgressComponent.h"
 #include "Components/SceneComponent.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include <limits>
 namespace
 {
@@ -114,6 +115,38 @@ bool FMinedakiExhaustion::RunTest(const FString& Parameters)
     TestTrue(TEXT("Stamina exhaustion releases and marks fall"),!P->IsMounted() && P->HasFallen() && B->Telemetry.Exhaustions==1);
     P->ResetForEncounter(); B->ResetNushi();
     TestTrue(TEXT("Retry restores stamina and failure flags"),!P->HasFallen() && P->GetStamina()->GetCurrentStamina()==100 && B->Telemetry.Exhaustions==0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMinedakiFullEncounter,"IshibashiriPrototype.Nushi.Minedaki.FullEncounterLifecycle",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FMinedakiFullEncounter::RunTest(const FString& Parameters)
+{
+    FMinedakiWorld F; auto* B=F.Boss(); auto* M=F.World->SpawnActor<ANushiEncounterManager>(); M->SetNushi(B); M->StartEncounter();
+    B->NotifyRouteNode(4); B->AdvanceWallClimb(1000);
+    for(int32 I=0;I<3;++I) { TestTrue(TEXT("Current Kakon exposed"),B->GetKakon(I)->GetState()==EKakonState::Exposed); TestTrue(TEXT("Purification accepted"),B->GetKakon(I)->Purify()); if(I<2) for(int32 N=0;N<200;++N) B->Tick(.02f); }
+    TestEqual(TEXT("Progress 3/3"),B->GetNushiProgressComponent()->GetPurifiedCount(),3); TestEqual(TEXT("Nushi Calm"),B->GetNushiState(),ENushiState::Calm); TestEqual(TEXT("Encounter Completed"),M->GetEncounterState(),ENushiEncounterState::Completed); return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMinedakiBodyRoute,"IshibashiriPrototype.Nushi.Minedaki.BodyRouteTransition",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FMinedakiBodyRoute::RunTest(const FString& Parameters)
+{
+    FMinedakiWorld F; auto* B=F.Boss(); B->StartEncounter(); B->NotifyRouteNode(4); B->AdvanceWallClimb(1000); TestFalse(TEXT("Arm route initially closed"),B->IsRouteNodeEnabled(8));
+    auto* P=F.World->SpawnActor<ACharacter>(); auto* G=NewObject<UGrabComponent>(P); G->RegisterComponent(); P->SetActorLocation(B->GetRouteWorld(6)); TestTrue(TEXT("Shared grab"),G->TryGrab(B->GetGrabFrame(),1000)); const FTransform Relative=G->GetRelativeGrabTransform();
+    B->GetKakon(0)->Purify(); for(int32 N=0;N<200;++N) { B->Tick(.02f); G->TickComponent(.02f,LEVELTICK_All,nullptr); }
+    TestTrue(TEXT("Body posture opens arm route"),B->IsRouteNodeEnabled(8)); TestTrue(TEXT("Relative transform survives body transition"),P->GetActorTransform().GetRelativeTransform(B->GetGrabFrame()->GetActorTransform()).Equals(Relative,.01f)); return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMinedakiFallRecovery,"IshibashiriPrototype.Nushi.Minedaki.FallRecovery",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FMinedakiFallRecovery::RunTest(const FString& Parameters)
+{
+    FMinedakiWorld F; auto* B=F.Boss(); auto* P=F.World->SpawnActor<AMinedakiPlayer>(); P->ConfigureBoss(B); B->ConfigurePlayer(P); B->StartEncounter(); B->NotifyRouteNode(4); B->AdvanceWallClimb(1000);
+    for(int32 Progress=1;Progress<=2;++Progress) { if(Progress==1) B->GetKakon(0)->Purify(); else B->GetKakon(1)->Purify(); for(int32 N=0;N<200;++N) B->Tick(.02f); P->SetActorLocation(B->GetRouteWorld(B->GetRecoveryNode())); P->GetGrab()->TryGrab(B->GetGrabFrame(),1000); P->Fall(); TestEqual(TEXT("Fall preserves progress"),B->GetNushiProgressComponent()->GetPurifiedCount(),Progress); P->GetCharacterMovement()->SetMovementMode(MOVE_Walking); P->Tick(.02f); TestTrue(TEXT("Recovery anchor becomes active"),P->IsRecovering()); }
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMinedakiRetryReset,"IshibashiriPrototype.Nushi.Minedaki.RetryReset",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FMinedakiRetryReset::RunTest(const FString& Parameters)
+{
+    FMinedakiWorld F; auto* B=F.Boss(); auto* M=F.World->SpawnActor<ANushiEncounterManager>(); M->SetNushi(B);
+    const int32 Registered=B->GetNushiProgressComponent()->GetRegisteredKakonCount();
+    for(int32 Cycle=0;Cycle<3;++Cycle) { M->StartEncounter(); B->NotifyRouteNode(4); B->AdvanceWallClimb(1000); B->GetKakon(0)->Purify(); M->ResetEncounter(); TestEqual(TEXT("Retry progress zero"),B->GetNushiProgressComponent()->GetPurifiedCount(),0); TestEqual(TEXT("No registered actor growth"),B->GetNushiProgressComponent()->GetRegisteredKakonCount(),Registered); TestEqual(TEXT("Route reset"),B->GetActionState(),EMinedakiActionState::Grounded); }
     return true;
 }
 #endif

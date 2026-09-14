@@ -26,4 +26,4 @@ void AMinedakiGameMode::StartPlay()
     if(FParse::Param(FCommandLine::Get(),TEXT("MinedakiTest"))) GetWorld()->SpawnActor<AMinedakiIntegrationTest>();
 #endif
 }
-void AMinedakiGameMode::RetryEncounter() { if(Player && Manager) { Boss->LogTelemetry(TEXT("Retry")); Player->ResetForEncounter(); Manager->ResetEncounter(); Manager->StartEncounter(); } }
+void AMinedakiGameMode::RetryEncounter() { if(Player && Manager && Boss) { Boss->LogTelemetry(TEXT("Retry")); Player->ResetForEncounter(); Manager->ResetEncounter(); Manager->StartEncounter(); } }

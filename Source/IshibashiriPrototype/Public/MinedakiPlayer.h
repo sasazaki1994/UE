@@ -21,6 +21,7 @@ public:
     bool IsMounted() const;
     bool IsClinging() const { return bGripHeld && IsMounted(); }
     bool HasFallen() const { return bFallen; }
+    bool IsRecovering() const { return bRecovering; }
     bool IsRouteMoving() const { return Destination!=INDEX_NONE; }
     int32 GetRouteNode() const { return Node; }
     UGrabComponent* GetGrab() const { return Grab; }
@@ -53,5 +54,6 @@ private:
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaminaComponent> Stamina;
     int32 Node=INDEX_NONE, Destination=INDEX_NONE;
     float ForwardInput=0, Progress=0, RouteDelay=0;
-    bool bGripHeld=false, bFallen=false;
+    bool bGripHeld=false, bFallen=false, bRecovering=false;
+    float RecoveryGrace=0;
 };
