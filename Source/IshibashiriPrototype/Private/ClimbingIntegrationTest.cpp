@@ -36,6 +36,8 @@ void AClimbingIntegrationTest::BeginPlay()
     bGamepad=FParse::Param(FCommandLine::Get(),TEXT("ClimbingGamepad"));
     bClimbingIK=FParse::Param(FCommandLine::Get(),TEXT("ClimbingIKTest"));
     bGrabMotionWarp=FParse::Param(FCommandLine::Get(),TEXT("GrabMotionWarpTest"));
+    bCampaignE2E=FParse::Param(FCommandLine::Get(),TEXT("CampaignE2E"));
+    bGamepad|=FParse::Param(FCommandLine::Get(),TEXT("CampaignGamepad"));
     Mode=GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Check(Mode && Mode->GetPlayer() && Mode->GetBoss(),TEXT("Encounter spawned"))) return;
     AddTickPrerequisiteComponent(Mode->GetPlayer()->GetClimbing());
@@ -54,6 +56,8 @@ void AClimbingIntegrationTest::Hold(const FKey& Key,bool Down)
         else if (Key == EKeys::SpaceBar) Mapped = EKeys::Gamepad_FaceButton_Bottom;
         else if (Key == EKeys::LeftMouseButton) Mapped = EKeys::Gamepad_FaceButton_Left;
         else if (Key == EKeys::R) Mapped = EKeys::Gamepad_FaceButton_Top;
+        else if (Key == EKeys::Q) Mapped = EKeys::Gamepad_LeftTrigger;
+        else if (Key == EKeys::F) Mapped = EKeys::Gamepad_LeftShoulder;
         else if (Key == EKeys::W || Key == EKeys::S) Mapped = EKeys::Gamepad_LeftY;
         else if (Key == EKeys::A || Key == EKeys::D) Mapped = EKeys::Gamepad_LeftX;
     }
@@ -77,16 +81,17 @@ void AClimbingIntegrationTest::SetupGrab(bool bResetEncounter)
 {
     for (const FKey& Key: Held.Array()) Hold(Key,false);
     if (bResetEncounter) Mode->RetryEncounter();
-    Mode->GetBoss()->SetActorTickEnabled(false);
+    if (!bCampaignE2E) Mode->GetBoss()->SetActorTickEnabled(false);
     APrototypePlayer* P=Mode->GetPlayer();
     FVector Entry=Mode->GetBoss()->GetClimbPosition(0); Entry.Z=92;
     // Approach toward the boss from outside the authored foreleg. The old
     // fixed world-X fixture faced 128 degrees away from the current warp target
     // and was rejected by main's existing 100-degree grab-facing limit.
     const FVector Outward=(Entry-Mode->GetBoss()->GetActorLocation()).GetSafeNormal2D();
+    BeforeFoot=P->GetMesh()->GetBoneLocation(TEXT("foot_L"),EBoneSpaces::ComponentSpace);
+    if (bCampaignE2E) { Next(-1); return; }
     P->SetActorLocation(Entry+Outward*210.f);
     P->GetController()->SetControlRotation(FRotator(-12,(-Outward).Rotation().Yaw,0));
-    BeforeFoot=P->GetMesh()->GetBoneLocation(TEXT("foot_L"),EBoneSpaces::ComponentSpace);
 }
 void AClimbingIntegrationTest::Shot(const TCHAR* Name)
 {
@@ -158,6 +163,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
         TickGrabMotionWarp(Dt); return;
     }
     auto P=Mode->GetPlayer();auto B=Mode->GetBoss();auto C=P->GetClimbing();
+    if(bCampaignE2E){bSawCampaignCharge|=B->GetState()==EIshibashiriState::Charge;bSawCampaignDodge|=P->IsDodging();}
     if (bClimbingIK && !bIKShakeShot && B->IsBucking() && C->IsClimbing() && C->IsGripping())
     {
         bIKShakeShot=true; Shot(TEXT("07-ShakeCling"));
@@ -165,6 +171,18 @@ void AClimbingIntegrationTest::Tick(float Dt)
     if (Total>300.f) { Check(false,TEXT("Integration test timeout")); return; }
     switch (Phase)
     {
+    case -1:
+    {
+        const FVector Entry=B->GetClimbPosition(0);
+        const float DesiredYaw=(Entry-P->GetActorLocation()).Rotation().Yaw;
+        const float Error=FMath::FindDeltaAngleDegrees(P->GetController()->GetControlRotation().Yaw,DesiredYaw);
+        Cast<APlayerController>(P->GetController())->InputKey(FInputKeyEventArgs::CreateSimulated(
+            bGamepad?EKeys::Gamepad_RightX:EKeys::MouseX,IE_Axis,bGamepad?FMath::Clamp(Error/45.f,-1.f,1.f):FMath::Clamp(Error*5.f,-300.f,300.f)));
+        if(B->GetState()==EIshibashiriState::Charge)Tap(EKeys::LeftShift);
+        Hold(EKeys::W,FMath::Abs(Error)<15.f&&FVector::Dist2D(P->GetActorLocation(),Entry)>180.f);
+        if(FVector::Dist2D(P->GetActorLocation(),Entry)<=180.f){Hold(EKeys::W,false);Shot(TEXT("01-Ground"));Tap(EKeys::Q);Tap(EKeys::F);Tap(EKeys::E);Next(2);}
+        break;
+    }
     case 0:
         if (Time>.3f)
         {
@@ -270,7 +288,9 @@ void AClimbingIntegrationTest::Tick(float Dt)
                 && Mode->GetEncounterManager()->GetEncounterState()==ENushiEncounterState::Completed,
                 TEXT("Three Kakon propagate through Progress, Calm, Completed and Victory"))) return;
             ++CompletedRoutes;
-            Shot(TEXT("05-Victory"));Tap(EKeys::R);Next(19);
+            Shot(TEXT("05-Victory"));
+            if(bCampaignE2E&&CompletedRoutes>=2){if(!Check(bSawCampaignCharge&&bSawCampaignDodge,TEXT("Campaign ground approach includes Charge and Dodge input")))return;Hold(EKeys::F,true);UE_LOG(LogTemp,Display,TEXT("CLIMB_TEST_PASS %s routes=2 retry=1 sense=boundary,corruption"),*RunId);bFinished=true;FApp::SetUseFixedTimeStep(false);}
+            else {Tap(EKeys::R);Next(19);}
         } break;
     case 19:
         if (Time>.3f)
@@ -287,7 +307,10 @@ void AClimbingIntegrationTest::Tick(float Dt)
             // Re-run the full route after the actual keyboard/gamepad Retry.
             // Do not hide an incomplete reset behind another setup reset.
             SetupGrab(false);
-            if (CompletedRoutes < 2) Next(0);
+            if (CompletedRoutes < 2)
+            {
+                if (!bCampaignE2E) Next(0);
+            }
             else
             {
                 if (!Check(CompletedRoutes==2,TEXT("Full three-core route clears again after input Retry"))) return;

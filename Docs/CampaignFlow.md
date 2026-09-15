@@ -1,4 +1,4 @@
-# 禍祓い Campaign Flow (STEP 3B)
+# 禍祓い Campaign Flow (STEP 3B foundation / STEP 3C E2E)
 
 ## 目的と構成
 
@@ -41,7 +41,7 @@ Travel直前に現在Pawnの `UPlayerSenseComponent::ResetSense` を呼び、Bou
 
 ## Automation
 
-`IshibashiriPrototype.Campaign` に `CampaignOrder`、`EncounterCompletionAdvance`、`RetryDoesNotAdvance`、`SenseResetBetweenChapters`、`FullCampaignStateLifecycle` を追加した。テストは明示的なCompleted fixtureでState責務だけを検証し、Kakonや通常Gameplayを自動浄化しない。acceptance specは `Specs/CampaignFlow.feature`。
+`IshibashiriPrototype.Campaign` のState fixtureは引き続きState責務だけを検証する。STEP 3Cの `Prototype.ps1 -Action Test -Campaign` はそれとは別に、カードと既存Encounter DriverのPlayerController入力を連結する。acceptance specは `Specs/CampaignFlow.feature`、実行可否と結果は `Docs/CampaignE2EValidation.md`。
 
 ## Validation
 
@@ -51,4 +51,4 @@ Travel直前に現在Pawnの `UPlayerSenseComponent::ResetSense` を呼び、Bou
 
 - Save/Continue、Checkpoint、Profile。
 - 本番Map、探索、村、NPC、音声、Sequencer、BGM、完成アート。
-- 4戦を実入力で攻略するCampaign E2E（State fixtureのみ）。
+- Windows UE 5.6.1でのSTEP 3C Campaign E2E実行証跡（このLinux環境ではUNVERIFIED）。

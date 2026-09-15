@@ -90,7 +90,7 @@ void APrototypeGameMode::StartPlay()
 #if !UE_BUILD_SHIPPING
     if (FParse::Param(FCommandLine::Get(), TEXT("BasinPlaythroughTest")))
         GetWorld()->SpawnActor<ABasinPlaythroughTest>();
-    else if (FParse::Param(FCommandLine::Get(), TEXT("ClimbingTest")))
+    else if (FParse::Param(FCommandLine::Get(), TEXT("ClimbingTest")) || FParse::Param(FCommandLine::Get(), TEXT("CampaignE2E")))
         GetWorld()->SpawnActor<AClimbingIntegrationTest>();
     else if (FParse::Param(FCommandLine::Get(), TEXT("PrototypeGamepadTest")))
         GetWorld()->SpawnActor<APrototypeGamepadTest>();

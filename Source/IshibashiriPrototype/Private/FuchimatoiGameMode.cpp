@@ -33,7 +33,7 @@ void AFuchimatoiGameMode::StartPlay()
     Manager->OnEncounterCompleted.AddUniqueDynamic(this,&AFuchimatoiGameMode::HandleCompleted);
     RetryEncounter();
 #if !UE_BUILD_SHIPPING
-    if (FParse::Param(FCommandLine::Get(),TEXT("FuchimatoiTest"))) GetWorld()->SpawnActor<AFuchimatoiIntegrationTest>();
+    if (FParse::Param(FCommandLine::Get(),TEXT("FuchimatoiTest")) || FParse::Param(FCommandLine::Get(),TEXT("CampaignE2E"))) GetWorld()->SpawnActor<AFuchimatoiIntegrationTest>();
 #endif
 }
 void AFuchimatoiGameMode::RetryEncounter()
