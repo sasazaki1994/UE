@@ -6,6 +6,7 @@ param(
     [switch]$SkipBuild,
     [switch]$Capture,
     [switch]$Campaign,
+    [switch]$Approach,
     [switch]$Basin,
     [switch]$Fuchimatoi,
     [switch]$Minedaki,
@@ -85,7 +86,7 @@ function Ensure-Map {
 }
 
 try {
-    if (@(@($Campaign,$Minedaki,$Magatsune,$Fuchimatoi) | Where-Object { $_ }).Count -gt 1) { throw 'Choose -Campaign or one encounter.' }
+    if (@(@($Campaign,$Approach,$Minedaki,$Magatsune,$Fuchimatoi) | Where-Object { $_ }).Count -gt 1) { throw 'Choose -Campaign, -Approach or one encounter.' }
     if ($Campaign -and ($Basin -or $Recovery -or $Realtime -or $Onscreen -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Campaign cannot be combined with encounter/test scenario switches other than -Gamepad.' }
     if ($Magatsune -and ($Basin -or $Recovery -or $Realtime -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Magatsune is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
     if ($Minedaki -and ($Fuchimatoi -or $Basin -or $Recovery -or $Realtime -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Minedaki is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
@@ -95,6 +96,7 @@ try {
     if ($Fuchimatoi -and ($Basin -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Fuchimatoi is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
     $LaunchMap = '/Game/Maps/L_Prototype_01'
     if ($Campaign) { $LaunchMap += '?game=/Script/IshibashiriPrototype.CampaignGameMode' }
+    if ($Approach) { $LaunchMap += '?game=/Script/IshibashiriPrototype.IshibashiriApproachGameMode' }
     if ($Fuchimatoi) { $LaunchMap += '?game=/Script/IshibashiriPrototype.FuchimatoiGameMode' }
     if ($Minedaki) { $LaunchMap += '?game=/Script/IshibashiriPrototype.MinedakiGameMode' }
     if ($Magatsune) { $LaunchMap += '?game=/Script/IshibashiriPrototype.MagatsuneGameMode' }
@@ -156,6 +158,7 @@ try {
             $PlayArguments = @($ProjectFile, $LaunchMap, '-game', '-windowed', '-ResX=1280', '-ResY=800', '-NoSplash')
             if ($Basin) { $PlayArguments += '-BasinPrototype' }
             if ($Campaign) { $PlayArguments += '-Campaign' }
+            if ($Approach) { $PlayArguments += '-Approach' }
             if ($HighQuality) { $PlayArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             & $EditorExe @PlayArguments
         }
@@ -183,6 +186,7 @@ try {
             if ($Minedaki) { $TestFlag = '-MinedakiTest' }
             if ($Magatsune) { $TestFlag = '-MagatsuneTest' }
             if ($Campaign) { $TestFlag = '-CampaignE2E' }
+            if ($Approach) { $TestFlag = '-ApproachTest' }
             $TestArguments = @($ProjectFile, $LaunchMap, '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
             if ($Fuchimatoi -and $Gamepad) { $TestArguments += '-FuchimatoiGamepad' }
             if ($Minedaki -and $Gamepad) { $TestArguments += '-MinedakiGamepad' }
@@ -210,6 +214,7 @@ try {
             if ($Minedaki) { $PassMarker = "MINEDAKI_TEST_PASS $RunId" }
             if ($Magatsune) { $PassMarker = "MAGATSUNE_TEST_PASS $RunId" }
             if ($Campaign) { $PassMarker = 'CAMPAIGN_E2E_PASS' }
+            if ($Approach) { $PassMarker = 'APPROACH_TEST_PASS' }
             if (!(Select-String -LiteralPath $LogFile -SimpleMatch $PassMarker -Quiet)) {
                 throw "Smoke test did not report success for this run. Read $LogFile"
             }

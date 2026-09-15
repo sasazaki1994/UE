@@ -9,7 +9,7 @@ def read(path: str) -> str:
 
 def test_campaign_has_fixed_minimal_state_order():
     header = read("Source/IshibashiriPrototype/Public/CampaignGameInstance.h")
-    states = ["Title", "Prologue", "Ishibashiri", "Interlude1", "Fuchimatoi", "Interlude2", "Minedaki", "Interlude3", "Magatsune", "Ending", "Completed"]
+    states = ["Title", "Prologue", "IshibashiriApproach", "Ishibashiri", "Interlude1", "Fuchimatoi", "Interlude2", "Minedaki", "Interlude3", "Magatsune", "Ending", "Completed"]
     positions = [header.index(state) for state in states]
     assert positions == sorted(positions)
     assert "SaveGame" not in header
@@ -26,7 +26,7 @@ def test_travel_resets_sense_and_uses_existing_game_modes():
     source = read("Source/IshibashiriPrototype/Private/CampaignGameInstance.cpp")
     assert "ResetSense" in source
     assert "OpenLevel" in source
-    for mode in ("PrototypeGameMode", "FuchimatoiGameMode", "MinedakiGameMode", "MagatsuneGameMode"):
+    for mode in ("IshibashiriApproachGameMode", "PrototypeGameMode", "FuchimatoiGameMode", "MinedakiGameMode", "MagatsuneGameMode"):
         assert mode in source
 
 
