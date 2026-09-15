@@ -1,0 +1,18 @@
+{
+  "asset_name": "Ishibashiri",
+  "decision": "BLOCKED",
+  "reason": "BLOCKED — TRIPO SOURCE REQUIRED",
+  "scores": {
+    "silhouette": null,
+    "material_quality": null,
+    "texture_quality": null,
+    "animation_deformation": null,
+    "game_readability": null,
+    "gameplay_compatibility": null,
+    "performance": null,
+    "overall_production_readiness": null
+  },
+  "source_fingerprint": null,
+  "evidence": {},
+  "adopted": false
+}

@@ -1,0 +1,27 @@
+{
+  "asset_name": "Ishibashiri",
+  "source": "Tripo AI",
+  "source_file": null,
+  "generated_by": null,
+  "generation_date": null,
+  "reference_files": [
+    "Art/References/Tripo/Ishibashiri_TripoReference.svg"
+  ],
+  "original_format": null,
+  "original_dimensions": null,
+  "original_vertex_count": null,
+  "original_triangle_count": null,
+  "texture_count": null,
+  "has_rig": null,
+  "has_animation": null,
+  "processing_status": "missing_source",
+  "ue_import_status": "blocked_missing_source",
+  "gameplay_validation_status": "blocked_missing_source",
+  "visual_validation_status": "blocked_missing_source",
+  "adopted": false,
+  "notes": [
+    "BLOCKED — TRIPO SOURCE REQUIRED",
+    "Existing procedural baseline/CharacterModels.zip are not Tripo sources."
+  ],
+  "ue_candidate_path": "/Game/Characters/Production/Ishibashiri/SK_Ishibashiri"
+}

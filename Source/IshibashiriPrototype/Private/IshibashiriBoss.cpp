@@ -1,4 +1,5 @@
 #include "IshibashiriBoss.h"
+#include "ProductionVisuals.h"
 #include "KakonActor.h"
 #include "NushiProgressComponent.h"
 #include "Components/ChildActorComponent.h"
@@ -134,6 +135,7 @@ AIshibashiriBoss::AIshibashiriBoss()
 void AIshibashiriBoss::BeginPlay()
 {
     Super::BeginPlay();
+    ProductionVisuals::ApplyAtBeginPlay(Creature, TEXT("Ishibashiri"));
     EncounterSpawn = GetActorTransform();
     GetNushiStateComponent()->OnNushiStateChanged.AddUniqueDynamic(this, &AIshibashiriBoss::HandleNushiStateChanged);
     for (int32 I = 0; I < CoreKakons.Num(); ++I)

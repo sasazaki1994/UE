@@ -11,6 +11,8 @@
 /Content/Maps/*_BuiltData.uasset
 /Content/Maps/L_Prototype_01.umap
 /Tools/__pycache__/
+/Tests/__pycache__/
+/.pytest_cache/
 /Artifacts/
 /Art/*.zip
 /compile_commands.json

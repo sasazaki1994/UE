@@ -122,16 +122,16 @@ void UCampaignGameInstance::ResetSenseState(UPlayerSenseComponent* Sense)
     if(Sense) Sense->ResetSense();
 }
 
-void UCampaignGameInstance::ResetChapterRuntime(UObject* WorldContext)
+void UCampaignGameInstance::ResetChapterRuntime(UObject* ChapterWorldContext)
 {
-    if(!WorldContext || !WorldContext->GetWorld()) return;
-    for(TActorIterator<APawn> It(WorldContext->GetWorld());It;++It)
+    if(!ChapterWorldContext || !ChapterWorldContext->GetWorld()) return;
+    for(TActorIterator<APawn> It(ChapterWorldContext->GetWorld());It;++It)
         ResetSenseState(It->FindComponentByClass<UPlayerSenseComponent>());
 }
 
-void UCampaignGameInstance::TravelToCurrentChapter(UObject* WorldContext)
+void UCampaignGameInstance::TravelToCurrentChapter(UObject* ChapterWorldContext)
 {
-    ResetChapterRuntime(WorldContext);
+    ResetChapterRuntime(ChapterWorldContext);
     const FString Options=FString::Printf(TEXT("game=%s"),GameModeFor(State));
-    UGameplayStatics::OpenLevel(WorldContext,CampaignMap,true,Options);
+    UGameplayStatics::OpenLevel(ChapterWorldContext,CampaignMap,true,Options);
 }

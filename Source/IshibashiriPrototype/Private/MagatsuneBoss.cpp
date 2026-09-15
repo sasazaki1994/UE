@@ -42,7 +42,7 @@ void AMagatsuneBoss::BeginPlay()
     TArray<UStaticMeshComponent*> Parts; GetComponents(Parts); for(auto* P:Parts) { const bool Route=P->GetName().StartsWith(TEXT("Route")); SetPrimitiveColor(P->CreateDynamicMaterialInstance(0),Route?FLinearColor(.08,.75,.5):FLinearColor(.025,.018,.03)); }
     ResetNushi();
 }
-void AMagatsuneBoss::EndPlay(const EEndPlayReason::Type R) { if(IsValid(GrabFrame)) GrabFrame->Destroy(); for(auto* K:Kakons) if(IsValid(K)) K->Destroy(); Super::EndPlay(R); }
+void AMagatsuneBoss::EndPlay(const EEndPlayReason::Type R) { if(IsValid(GrabFrame)) GrabFrame->Destroy(); for(AKakonActor* K:Kakons) if(IsValid(K)) K->Destroy(); Super::EndPlay(R); }
 AKakonActor* AMagatsuneBoss::GetKakon(int32 I) const { return Kakons.IsValidIndex(I)?Kakons[I].Get():nullptr; }
 FString AMagatsuneBoss::GetPhaseLabel() const { return StaticEnum<EMagatsunePhase>()->GetNameStringByValue(static_cast<int64>(Phase)); }
 bool AMagatsuneBoss::IsRouteNodeEnabled(int32 N) const { const int32 C=GetNushiProgressComponent()->GetPurifiedCount(); return N>=0&&N<RouteNodeCount&&N<=(C==0?3:C==1?7:11)&&!(Phase==EMagatsunePhase::RootRockRoute&&PhaseTime<TransitionSeconds)&&!(Phase==EMagatsunePhase::FinalRise&&PhaseTime<TransitionSeconds); }

@@ -130,7 +130,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMinedakiBodyRoute,"IshibashiriPrototype.Nushi.
 bool FMinedakiBodyRoute::RunTest(const FString& Parameters)
 {
     FMinedakiWorld F; auto* B=F.Boss(); B->StartEncounter(); B->NotifyRouteNode(4); B->AdvanceWallClimb(1000); TestFalse(TEXT("Arm route initially closed"),B->IsRouteNodeEnabled(8));
-    auto* P=F.World->SpawnActor<ACharacter>(); auto* G=NewObject<UGrabComponent>(P); G->RegisterComponent(); P->SetActorLocation(B->GetRouteWorld(6)); TestTrue(TEXT("Shared grab"),G->TryGrab(B->GetGrabFrame(),1000)); const FTransform Relative=G->GetRelativeGrabTransform();
+    // This isolates transform following after attach, not ground grab reach. High route
+    // points are more than 1000cm from the actor origin used by the shared Grab component.
+    auto* P=F.World->SpawnActor<ACharacter>(); auto* G=NewObject<UGrabComponent>(P); G->RegisterComponent(); P->SetActorLocation(B->GetRouteWorld(6)); TestTrue(TEXT("Shared grab"),G->TryGrab(B->GetGrabFrame(),FVector::Dist(P->GetActorLocation(),B->GetGrabFrame()->GetActorLocation())+1.f)); const FTransform Relative=G->GetRelativeGrabTransform();
     B->GetKakon(0)->Purify(); for(int32 N=0;N<200;++N) { B->Tick(.02f); G->TickComponent(.02f,LEVELTICK_All,nullptr); }
     TestTrue(TEXT("Body posture opens arm route"),B->IsRouteNodeEnabled(8)); TestTrue(TEXT("Relative transform survives body transition"),P->GetActorTransform().GetRelativeTransform(B->GetGrabFrame()->GetActorTransform()).Equals(Relative,.01f)); return true;
 }
@@ -138,7 +140,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMinedakiFallRecovery,"IshibashiriPrototype.Nus
 bool FMinedakiFallRecovery::RunTest(const FString& Parameters)
 {
     FMinedakiWorld F; auto* B=F.Boss(); auto* P=F.World->SpawnActor<AMinedakiPlayer>(); P->ConfigureBoss(B); B->ConfigurePlayer(P); B->StartEncounter(); B->NotifyRouteNode(4); B->AdvanceWallClimb(1000);
-    for(int32 Progress=1;Progress<=2;++Progress) { if(Progress==1) B->GetKakon(0)->Purify(); else B->GetKakon(1)->Purify(); for(int32 N=0;N<200;++N) B->Tick(.02f); P->SetActorLocation(B->GetRouteWorld(B->GetRecoveryNode())); P->GetGrab()->TryGrab(B->GetGrabFrame(),1000); P->Fall(); TestEqual(TEXT("Fall preserves progress"),B->GetNushiProgressComponent()->GetPurifiedCount(),Progress); P->GetCharacterMovement()->SetMovementMode(MOVE_Walking); P->Tick(.02f); TestTrue(TEXT("Recovery anchor becomes active"),P->IsRecovering()); }
+    for(int32 Progress=1;Progress<=2;++Progress) { if(Progress==1) B->GetKakon(0)->Purify(); else B->GetKakon(1)->Purify(); for(int32 N=0;N<200;++N) B->Tick(.02f); P->SetActorLocation(B->GetRouteWorld(B->GetRecoveryNode())); TestTrue(TEXT("Recovery fixture attaches before fall"),P->GetGrab()->TryGrab(B->GetGrabFrame(),FVector::Dist(P->GetActorLocation(),B->GetGrabFrame()->GetActorLocation())+1.f)); P->Fall(); TestEqual(TEXT("Fall preserves progress"),B->GetNushiProgressComponent()->GetPurifiedCount(),Progress); P->GetCharacterMovement()->SetMovementMode(MOVE_Walking); P->Tick(.02f); TestTrue(TEXT("Recovery anchor becomes active"),P->IsRecovering()); }
     return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMinedakiRetryReset,"IshibashiriPrototype.Nushi.Minedaki.RetryReset",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)

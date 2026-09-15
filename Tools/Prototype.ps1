@@ -15,6 +15,7 @@ param(
     [switch]$Realtime,
     [switch]$Onscreen,
     [switch]$HighQuality,
+    [ValidateSet(0, 1)][int]$ProductionVisuals = 0,
     [switch]$BasinScenario,
     [switch]$Playthrough,
     [switch]$Camera,
@@ -156,6 +157,7 @@ try {
         'Play' {
             # This is the visible game explicitly requested by the Play action.
             $PlayArguments = @($ProjectFile, $LaunchMap, '-game', '-windowed', '-ResX=1280', '-ResY=800', '-NoSplash')
+            $PlayArguments += "-ProductionVisuals=$ProductionVisuals"
             if ($Basin) { $PlayArguments += '-BasinPrototype' }
             if ($Campaign) { $PlayArguments += '-Campaign' }
             if ($Approach) { $PlayArguments += '-Approach' }
@@ -164,6 +166,7 @@ try {
         }
         'Editor' {
             $EditorArguments = @($ProjectFile, $LaunchMap)
+            $EditorArguments += "-ProductionVisuals=$ProductionVisuals"
             if ($Basin) { $EditorArguments += '-BasinPrototype' }
             if ($HighQuality) { $EditorArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             & $EditorExe @EditorArguments
@@ -188,6 +191,7 @@ try {
             if ($Campaign) { $TestFlag = '-CampaignE2E' }
             if ($Approach) { $TestFlag = '-ApproachTest' }
             $TestArguments = @($ProjectFile, $LaunchMap, '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
+            $TestArguments += "-ProductionVisuals=$ProductionVisuals"
             if ($Fuchimatoi -and $Gamepad) { $TestArguments += '-FuchimatoiGamepad' }
             if ($Minedaki -and $Gamepad) { $TestArguments += '-MinedakiGamepad' }
             if ($Magatsune -and $Gamepad) { $TestArguments += '-MagatsuneGamepad' }

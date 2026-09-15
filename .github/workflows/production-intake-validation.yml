@@ -1,0 +1,36 @@
+name: Production intake contracts
+on:
+  push:
+    paths: ['Tools/**', 'Tests/**', 'Source/**', 'Art/Characters/Production/**', '.github/workflows/production-intake-validation.yml']
+  pull_request:
+    paths: ['Tools/**', 'Tests/**', 'Source/**', 'Art/Characters/Production/**', '.github/workflows/production-intake-validation.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pytest
+      - run: python -m pytest Tests -q
+      - name: Blender geometry fixture tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y blender
+          blender --background --factory-startup --disable-autoexec --python-exit-code 2 --python Tests/production_blender_smoke.py
+      - name: Missing is optional, invalid source fails CI
+        run: |
+          python Tools/ValidateProductionCharacter.py --character Shirotsura --blender blender --allow-missing
+          python Tools/ValidateProductionCharacter.py --character Ishibashiri --blender blender --allow-missing
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-intake-validation
+          path: |
+            Art/Characters/Production/*/Validation/preflight.json
+            Saved/ProductionIntake/blender-smoke.json

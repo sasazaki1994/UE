@@ -1,0 +1,163 @@
+{
+  "reviewer": null,
+  "export_sha256": null,
+  "capture_conditions": {
+    "camera_transform": null,
+    "fov": null,
+    "lighting": null,
+    "resolution": null,
+    "hardware": null,
+    "driver": null,
+    "fixed_scenario": null,
+    "render_profile": null
+  },
+  "captures": {
+    "front34": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    },
+    "side": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    },
+    "back": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    },
+    "Charge": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    },
+    "Grab": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    },
+    "Climb": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    },
+    "Kakon": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    },
+    "Calm": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    }
+  },
+  "regression": {
+    "Spawn": "not_run",
+    "Charge": "not_run",
+    "Recovery": "not_run",
+    "Grab": "not_run",
+    "Climb": "not_run",
+    "11Route": "not_run",
+    "branch": "not_run",
+    "rest": "not_run",
+    "stamina": "not_run",
+    "shake_buck": "not_run",
+    "cling": "not_run",
+    "fall": "not_run",
+    "3Kakon": "not_run",
+    "Covered": "not_run",
+    "Exposed": "not_run",
+    "Purified": "not_run",
+    "3of3": "not_run",
+    "Calm": "not_run",
+    "Victory": "not_run",
+    "Retry": "not_run",
+    "Campaign_Ishibashiri": "not_run",
+    "Campaign_Fuchimatoi": "not_run",
+    "Campaign_Minedaki": "not_run",
+    "Campaign_Magatsune": "not_run"
+  },
+  "no_missing_or_pink_materials": false,
+  "no_deformation_breaks": false,
+  "scores": {
+    "silhouette": null,
+    "material_quality": null,
+    "texture_quality": null,
+    "animation_deformation": null,
+    "game_readability": null,
+    "gameplay_compatibility": null,
+    "performance": null,
+    "overall_production_readiness": null
+  },
+  "performance": {
+    "fallback": {
+      "vertices": null,
+      "triangles": null,
+      "materials": null,
+      "texture_bytes": null,
+      "draw_calls": null,
+      "fps": null,
+      "frame_ms_p50": null,
+      "frame_ms_p95": null,
+      "trials": null,
+      "successes": null
+    },
+    "candidate": {
+      "vertices": null,
+      "triangles": null,
+      "materials": null,
+      "texture_bytes": null,
+      "draw_calls": null,
+      "fps": null,
+      "frame_ms_p50": null,
+      "frame_ms_p95": null,
+      "trials": null,
+      "successes": null
+    }
+  },
+  "notes": [
+    "Do not mark Covered gameplay-reachable; use separate presentation-only inspection."
+  ]
+}

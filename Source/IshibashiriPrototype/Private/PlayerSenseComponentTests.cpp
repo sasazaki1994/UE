@@ -1,7 +1,8 @@
-#if WITH_DEV_AUTOMATION_TESTS
+#if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
 #include "Misc/AutomationTest.h"
 #include "PlayerSenseComponent.h"
 #include "Engine/World.h"
+#include "Components/SceneComponent.h"
 #include "Tests/AutomationEditorCommon.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBoundarySenseDirection,"IshibashiriPrototype.Sense.BoundarySenseDirection",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
@@ -9,6 +10,8 @@ bool FBoundarySenseDirection::RunTest(const FString&)
 {
     UWorld* W=FAutomationEditorCommonUtils::CreateNewMap(); AActor* Player=W->SpawnActor<AActor>(); auto* Sense=NewObject<UPlayerSenseComponent>(Player); Sense->RegisterComponent();
     AActor* Target=W->SpawnActor<AActor>(); Sense->RegisterBoundaryTarget(Target); Sense->BeginBoundarySense();
+    // A bare AActor has no transform-bearing root; otherwise all test positions stay zero.
+    auto* TargetRoot=NewObject<USceneComponent>(Target); Target->SetRootComponent(TargetRoot); TargetRoot->RegisterComponent();
     auto Read=[&](FVector P){Target->SetActorLocation(P);Sense->TickComponent(.1f,LEVELTICK_All,nullptr);return Sense->GetBoundaryReading().Strength;};
     const float Front=Read({100,0,0}),Right=Read({0,100,0}),Back=Read({-100,0,0});
     TestTrue(TEXT("front > right > back"),Front>Right&&Right>Back); TestTrue(TEXT("direction points right"),Read({0,100,0})>0&&Sense->GetBoundaryReading().Direction.Equals(FVector::RightVector,.01f)); return true;

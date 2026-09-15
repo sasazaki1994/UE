@@ -1,0 +1,15 @@
+{
+  "reviewer": null,
+  "rigged_sha256": null,
+  "checks": {
+    "orientation": false,
+    "topology_uv_materials": false,
+    "silhouette": false,
+    "weights_and_joints": false,
+    "socket_alignment": false,
+    "route_clearance": false,
+    "no_integrated_kakon": false,
+    "no_duplicate_sense_geometry": false
+  },
+  "notes": "Copy to rig-review.json after inspecting actual model and actions."
+}
