@@ -67,9 +67,9 @@ void AIshibashiriApproachArena::SetStage(int32 NewStage)
 {
     if(NewStage<=Stage)return;Stage=NewStage;
     if(Stage==1){Subtitle=TEXT("ここから先へ入るな");SubtitleRemaining=4.f;UE_LOG(LogTemp,Display,TEXT("APPROACH_STAGE1 distant_rumble boundary_stone NOT_IMPLEMENTED — AUDIO ASSET REQUIRED"));}
-    else if(Stage==2)UE_LOG(LogTemp,Display,TEXT("APPROACH_STAGE2 giant_footprints damage_trail"));
+    else if(Stage==2){UE_LOG(LogTemp,Display,TEXT("APPROACH_STAGE2 giant_footprints damage_trail"));}
     else if(Stage==3){bRevealVisible=true;RevealElapsed=0;RevealCount++;for(UPrimitiveComponent* C:RevealParts)C->SetVisibility(true);UE_LOG(LogTemp,Display,TEXT("APPROACH_REVEAL count=%d duration=3.0 combat=false NOT_IMPLEMENTED — AUDIO ASSET REQUIRED"),RevealCount);}
-    else if(Stage==4)UE_LOG(LogTemp,Display,TEXT("APPROACH_STAGE4 close_rumble camera_reaction_hook NOT_IMPLEMENTED — AUDIO ASSET REQUIRED"));
+    else if(Stage==4){UE_LOG(LogTemp,Display,TEXT("APPROACH_STAGE4 close_rumble camera_reaction_hook NOT_IMPLEMENTED — AUDIO ASSET REQUIRED"));}
 }
 
 void AIshibashiriApproachArena::ObservePlayer(const FVector& P)

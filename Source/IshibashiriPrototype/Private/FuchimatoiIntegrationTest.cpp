@@ -27,7 +27,7 @@
 #include "HAL/PlatformMisc.h"
 #include "UnrealClient.h"
 
-namespace { int32 CountActors(UWorld* World) { int32 Count=0; for(TActorIterator<AActor> It(World);It;++It) ++Count; return Count; } }
+namespace { int32 FuchimatoiIntegrationTestCountActors(UWorld* World) { int32 Count=0; for(TActorIterator<AActor> It(World);It;++It) ++Count; return Count; } }
 AFuchimatoiIntegrationTest::AFuchimatoiIntegrationTest()
 {
     PrimaryActorTick.bCanEverTick=true; PrimaryActorTick.TickGroup=TG_PostUpdateWork;
@@ -50,7 +50,7 @@ void AFuchimatoiIntegrationTest::BeginPlay()
     if (!Check(Mode && Mode->GetPlayer() && Mode->GetBoss() && Mode->GetEncounterManager(),TEXT("Playable encounter spawned"))) return;
     if (!Check(Mode->IsEncounterActive() && Mode->GetBoss()->GetActionState()==EFuchimatoiActionState::Submerged
         && Mode->GetBoss()->GetNushiProgressComponent()->GetRegisteredKakonCount()==3,TEXT("Start: Submerged, Active, Running, three Kakon"))) return;
-    InitialActors=CountActors(GetWorld());
+    InitialActors=FuchimatoiIntegrationTestCountActors(GetWorld());
     UE_LOG(LogTemp,Display,TEXT("FUCHIMATOI_LENGTH initial_cm=%.2f"),Mode->GetBoss()->GetBodyLength());
     if (!Check(!Mode->GetBoss()->CanRecover(),TEXT("Recovery cannot skip the initial Bite phase"))) return;
     if (bRecovery) Next(30);
@@ -289,7 +289,7 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
                 && !B->HasBiteTarget() && B->GetHeadProxyLocalLocation().IsZero() && B->GetCoilingProgress()==0
                 && B->GetNushiProgressComponent()->GetPurifiedCount()==0 && B->GetNushiState()==ENushiState::Active
                 && !P->IsMounted() && P->GetHealth()==3 && P->GetStamina()->GetCurrentStamina()==100
-                && CountActors(GetWorld())==InitialActors && !B->CanRecover() && B->GetTelemetry().RecoveryGrabs==0,
+                && FuchimatoiIntegrationTestCountActors(GetWorld())==InitialActors && !B->CanRecover() && B->GetTelemetry().RecoveryGrabs==0,
                 TEXT("Input Retry resets player, boss, target, coil, progress, lifecycle without actor growth"))) return;
             for(int32 I=0;I<3;++I) if(!Check(B->GetKakon(I)->GetState()==EKakonState::Exposed,TEXT("Retry restores each Kakon"))) return;
             bSawDodge=false; bSawCoilFollow=false; Next(0);

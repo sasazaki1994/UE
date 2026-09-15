@@ -1,0 +1,53 @@
+name: Production intake contracts
+on:
+  push:
+    paths: ['Tools/**', 'Tests/**', 'Source/**', 'Art/Characters/Production/**', '.github/workflows/production-intake-validation.yml']
+  pull_request:
+    paths: ['Tools/**', 'Tests/**', 'Source/**', 'Art/Characters/Production/**', '.github/workflows/production-intake-validation.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      BLENDER_VERSION: 3.6.23
+      BLENDER_ARCHIVE: blender-3.6.23-linux-x64.tar.xz
+      BLENDER_RELEASE_URL: https://download.blender.org/release/Blender3.6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pytest
+      - run: python -m pytest Tests -q
+      - name: Install the validated Blender version
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y ca-certificates curl xz-utils libegl1 libgl1 libsm6 libx11-6 libxext6 libxi6 libxrender1 libxkbcommon0
+          mkdir -p "$RUNNER_TEMP/blender-download"
+          cd "$RUNNER_TEMP/blender-download"
+          curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --output "$BLENDER_ARCHIVE" "$BLENDER_RELEASE_URL/$BLENDER_ARCHIVE"
+          curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --output blender.sha256 "$BLENDER_RELEASE_URL/blender-$BLENDER_VERSION.sha256"
+          awk -v archive="$BLENDER_ARCHIVE" '$2 == archive || $2 == "*" archive { print }' blender.sha256 > archive.sha256
+          test "$(wc -l < archive.sha256)" -eq 1
+          sha256sum --check archive.sha256
+          tar -xJf "$BLENDER_ARCHIVE" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/blender-$BLENDER_VERSION-linux-x64" >> "$GITHUB_PATH"
+      - name: Blender geometry fixture tests
+        run: |
+          blender --background --factory-startup --disable-autoexec --python-exit-code 2 --python Tests/production_blender_smoke.py
+      - name: Missing is optional, invalid source fails CI
+        run: |
+          python Tools/ValidateProductionCharacter.py --character Shirotsura --blender blender --allow-missing
+          python Tools/ValidateProductionCharacter.py --character Ishibashiri --blender blender --allow-missing
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-intake-validation
+          path: |
+            Art/Characters/Production/*/Validation/preflight.json
+            Saved/ProductionIntake/blender-smoke.json

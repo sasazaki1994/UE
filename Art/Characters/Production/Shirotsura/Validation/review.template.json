@@ -1,0 +1,134 @@
+{
+  "reviewer": null,
+  "export_sha256": null,
+  "capture_conditions": {
+    "camera_transform": null,
+    "fov": null,
+    "lighting": null,
+    "resolution": null,
+    "hardware": null,
+    "driver": null,
+    "fixed_scenario": null,
+    "render_profile": null
+  },
+  "captures": {
+    "Idle": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    },
+    "Back": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    },
+    "Run": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    },
+    "Slash": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    },
+    "Sense": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    },
+    "Climb": {
+      "fallback": {
+        "file": null,
+        "sha256": null
+      },
+      "candidate": {
+        "file": null,
+        "sha256": null
+      }
+    }
+  },
+  "regression": {
+    "Idle": "not_run",
+    "Walk": "not_run",
+    "Run": "not_run",
+    "Jump": "not_run",
+    "Slash": "not_run",
+    "Dodge": "not_run",
+    "Grab": "not_run",
+    "Climb": "not_run",
+    "HangCling": "not_run",
+    "BoundarySense": "not_run",
+    "CorruptionSense": "not_run",
+    "Campaign_Ishibashiri": "not_run",
+    "Campaign_Fuchimatoi": "not_run",
+    "Campaign_Minedaki": "not_run",
+    "Campaign_Magatsune": "not_run"
+  },
+  "no_missing_or_pink_materials": false,
+  "no_deformation_breaks": false,
+  "scores": {
+    "silhouette": null,
+    "material_quality": null,
+    "texture_quality": null,
+    "animation_deformation": null,
+    "game_readability": null,
+    "gameplay_compatibility": null,
+    "performance": null,
+    "overall_production_readiness": null
+  },
+  "performance": {
+    "fallback": {
+      "vertices": null,
+      "triangles": null,
+      "materials": null,
+      "texture_bytes": null,
+      "draw_calls": null,
+      "fps": null,
+      "frame_ms_p50": null,
+      "frame_ms_p95": null,
+      "trials": null,
+      "successes": null
+    },
+    "candidate": {
+      "vertices": null,
+      "triangles": null,
+      "materials": null,
+      "texture_bytes": null,
+      "draw_calls": null,
+      "fps": null,
+      "frame_ms_p50": null,
+      "frame_ms_p95": null,
+      "trials": null,
+      "successes": null
+    }
+  },
+  "notes": [
+    "Do not mark Covered gameplay-reachable; use separate presentation-only inspection."
+  ]
+}

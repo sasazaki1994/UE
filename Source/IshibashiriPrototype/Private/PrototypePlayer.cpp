@@ -1,10 +1,12 @@
 #include "PrototypePlayer.h"
+#include "ProductionVisuals.h"
 #include "IshibashiriBoss.h"
 #include "PrototypeGameMode.h"
 #include "PrimitiveAppearance.h"
 #include "ColossusClimbingComponent.h"
 #include "GrabComponent.h"
 #include "PlayerSenseComponent.h"
+#include "KakonActor.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -25,6 +27,7 @@
 #include "ControlRigComponent.h"
 #include "ControlRig.h"
 #include "Misc/Parse.h"
+#include "Misc/PackageName.h"
 #include "MotionWarpingComponent.h"
 
 APrototypePlayer::APrototypePlayer()
@@ -85,8 +88,12 @@ APrototypePlayer::APrototypePlayer()
     Climbing = CreateDefaultSubobject<UColossusClimbingComponent>(TEXT("ColossusClimbing"));
     ClimbingControlRig = CreateDefaultSubobject<UControlRigComponent>(TEXT("ClimbingFBIK"));
     MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("GrabMotionWarping"));
-    static ConstructorHelpers::FClassFinder<UControlRig> ClimbingRig(TEXT("/Game/Characters/Rigged/Shirotsura/CR_Shirotsura_Climbing"));
-    if (ClimbingRig.Succeeded()) ClimbingControlRig->SetControlRigClass(ClimbingRig.Class);
+    // This optional asset is not supplied by main; preserve the authored base pose without a CDO load error.
+    if (FPackageName::DoesPackageExist(TEXT("/Game/Characters/Rigged/Shirotsura/CR_Shirotsura_Climbing")))
+    {
+        static ConstructorHelpers::FClassFinder<UControlRig> ClimbingRig(TEXT("/Game/Characters/Rigged/Shirotsura/CR_Shirotsura_Climbing"));
+        if (ClimbingRig.Succeeded()) ClimbingControlRig->SetControlRigClass(ClimbingRig.Class);
+    }
     static ConstructorHelpers::FObjectFinder<USkeletalMesh> Rigged(TEXT("/Game/Characters/Rigged/Shirotsura/SK_Shirotsura"));
     GetMesh()->SetSkeletalMesh(Rigged.Object);
     GetMesh()->SetRelativeLocation(FVector(0,0,-88));
@@ -104,6 +111,7 @@ APrototypePlayer::APrototypePlayer()
 void APrototypePlayer::BeginPlay()
 {
     Super::BeginPlay();
+    ProductionVisuals::ApplyAtBeginPlay(GetMesh(), TEXT("Shirotsura"));
     Health = MaxHealth;
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
     BodyMaterial = Body->CreateDynamicMaterialInstance(0);

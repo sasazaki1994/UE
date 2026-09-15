@@ -296,11 +296,12 @@ def make_atlas_export_uv0(mesh):
         for coords,item in zip(saved[name],layer.data): item.uv=coords
     mesh.uv_layers.get('AtlasUV').active_render=True
 
-def bake_surface(body,out,name,manifest_path=PBR.MANIFEST,asset_root=PBR.ROOT):
+def bake_surface(body,out,name,manifest_path=PBR.MANIFEST,asset_root=PBR.ROOT,apply_external=True):
     # Never rename an authored UV. Source sampling and bake destination are explicit.
     detail,atlas=ensure_bake_uvs(body)
     pbr_result=PBR.apply_external_pbr(body.data.materials,bpy,character=name,mode=PBR_MODE,
-                                      manifest_path=manifest_path,root=asset_root)
+                                      manifest_path=manifest_path,root=asset_root) if apply_external else {
+        'status':'not_applied','reason':'Preserve source materials','role_counts':{}}
     print('EXTERNAL_PBR_'+pbr_result['status'].upper(),name,pbr_result['reason'] or '',pbr_result['role_counts'])
     bpy.ops.object.select_all(action='DESELECT');body.select_set(True)
     bpy.context.view_layer.objects.active=body

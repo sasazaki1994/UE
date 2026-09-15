@@ -31,14 +31,12 @@ def surface_values(label):
     if any(k in label for k in ['hide','skin','hand','bristle','hair','root']): return .78,0.0
     if any(k in label for k in ['blade','sharpened']): return .28,.85
     return .86,0.0
-for name in characters:
-    dest='/Game/Characters/Rigged/'+name
-    folder=root/'Art/Characters'/name/'Rigged'
+def apply_character_materials(name, dest, folder, replace_existing=True):
     textures={}
     for kind in ['BaseColor','Normal','Roughness']:
         t=unreal.AssetImportTask();t.filename=str(folder/('T_'+name+'_'+kind+'.png'))
         t.destination_path=dest;t.destination_name='T_'+name+'_'+kind
-        t.automated=True;t.replace_existing=True;t.save=True
+        t.automated=True;t.replace_existing=replace_existing;t.save=True
         asset_tools.import_asset_tasks([t])
         tex=unreal.load_asset(dest+'/T_'+name+'_'+kind)
         if not tex:raise RuntimeError('Missing atlas '+kind)
@@ -80,4 +78,11 @@ for name in characters:
     mesh.set_editor_property('materials',slots)
     assert all('M_Baked_' in s.material_interface.get_name() for s in mesh.get_editor_property('materials'))
     unreal.EditorAssetLibrary.save_directory(dest,only_if_is_dirty=False,recursive=True)
-unreal.log('BAKED_MATERIALS_APPLIED')
+def main():
+    for name in characters:
+        apply_character_materials(name, '/Game/Characters/Rigged/'+name, root/'Art/Characters'/name/'Rigged')
+    unreal.log('BAKED_MATERIALS_APPLIED')
+
+
+if __name__ == '__main__':
+    main()

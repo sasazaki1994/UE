@@ -26,7 +26,7 @@ namespace
     const FVector MovementDirections[] = { -FVector::RightVector, FVector::ForwardVector,
         -FVector::ForwardVector, FVector::RightVector };
 
-    int32 CountActors(UWorld* World)
+    int32 PrototypeSmokeTestCountActors(UWorld* World)
     {
         int32 Count = 0;
         for (TActorIterator<AActor> It(World); It; ++It) ++Count;
@@ -368,7 +368,7 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
             Player->Attack();
             Player->Dodge();
             if (!Require(!Player->IsDodging() && Boss->GetHealth() == 0, TEXT("Combat input stops after victory"))) return;
-            ActorsBeforeRetry = CountActors(GetWorld());
+            ActorsBeforeRetry = PrototypeSmokeTestCountActors(GetWorld());
             if (bCaptureScreenshots)
             {
                 Capture(TEXT("04-Victory"));
@@ -393,7 +393,7 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
 
     case EPhase::VictoryRetry:
         if (!Require(Player->GetHealth() == 3 && Boss->GetHealth() == 3 && Mode->IsEncounterActive() && Player->GetDodgeCooldown() == 0.f, TEXT("R key after victory clears HP and cooldowns"))) return;
-        if (!Require(CountActors(GetWorld()) == ActorsBeforeRetry, TEXT("Retry does not accumulate arena actors"))) return;
+        if (!Require(PrototypeSmokeTestCountActors(GetWorld()) == ActorsBeforeRetry, TEXT("Retry does not accumulate arena actors"))) return;
         LastHealth = 3;
         Next(EPhase::Lose);
         break;
@@ -444,7 +444,7 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
             && !Player->IsInvulnerable(), TEXT("R key after defeat restores a playable encounter"))) return;
         for (int32 Index = 0; Index < 10; ++Index) Mode->RetryEncounter();
         if (!Require(Player->GetHealth() == 3 && Boss->GetHealth() == 3 && Mode->IsEncounterActive()
-            && !Player->IsInvulnerable() && CountActors(GetWorld()) == ActorsBeforeRetry, TEXT("Repeated retry after defeat leaves a clean playable encounter"))) return;
+            && !Player->IsInvulnerable() && PrototypeSmokeTestCountActors(GetWorld()) == ActorsBeforeRetry, TEXT("Repeated retry after defeat leaves a clean playable encounter"))) return;
         UE_LOG(LogTemp, Display, TEXT("PROTOTYPE_INPUT_PASS %s: WASD, mouse XY, Shift/RMB, LMB, Space, R"), *RunId);
         Boss->SetActorTickEnabled(false);
         PlaceAtWall();
