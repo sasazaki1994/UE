@@ -11,6 +11,7 @@ enum class ECampaignState : uint8
 {
     Title,
     Prologue,
+    IshibashiriApproach,
     Ishibashiri,
     Interlude1,
     Fuchimatoi,
@@ -32,6 +33,7 @@ public:
     void StartCampaign();
     bool AdvanceCardChapter();
     bool CompleteEncounter(ECampaignState Encounter);
+    bool CompleteApproach();
     void RestartCampaign();
     bool IsCampaignActive() const { return bCampaignActive; }
     ECampaignState GetCampaignState() const { return State; }

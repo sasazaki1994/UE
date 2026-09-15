@@ -16,6 +16,7 @@ const TCHAR* GameModeFor(ECampaignState State)
 {
     switch(State)
     {
+    case ECampaignState::IshibashiriApproach: return TEXT("/Script/IshibashiriPrototype.IshibashiriApproachGameMode");
     case ECampaignState::Ishibashiri: return TEXT("/Script/IshibashiriPrototype.PrototypeGameMode");
     case ECampaignState::Fuchimatoi: return TEXT("/Script/IshibashiriPrototype.FuchimatoiGameMode");
     case ECampaignState::Minedaki: return TEXT("/Script/IshibashiriPrototype.MinedakiGameMode");
@@ -29,6 +30,7 @@ const TCHAR* CampaignStateName(ECampaignState State)
     switch(State)
     {
     case ECampaignState::Title:return TEXT("Title"); case ECampaignState::Prologue:return TEXT("Prologue");
+    case ECampaignState::IshibashiriApproach:return TEXT("IshibashiriApproach");
     case ECampaignState::Ishibashiri:return TEXT("Ishibashiri Started"); case ECampaignState::Interlude1:return TEXT("Interlude1");
     case ECampaignState::Fuchimatoi:return TEXT("Fuchimatoi Started"); case ECampaignState::Interlude2:return TEXT("Interlude2");
     case ECampaignState::Minedaki:return TEXT("Minedaki Started"); case ECampaignState::Interlude3:return TEXT("Interlude3");
@@ -58,7 +60,7 @@ bool UCampaignGameInstance::AdvanceCardChapter()
     switch(State)
     {
     case ECampaignState::Title: StartCampaign(); break;
-    case ECampaignState::Prologue: State=ECampaignState::Ishibashiri; break;
+    case ECampaignState::Prologue: State=ECampaignState::IshibashiriApproach; break;
     case ECampaignState::Interlude1: State=ECampaignState::Fuchimatoi; break;
     case ECampaignState::Interlude2: State=ECampaignState::Minedaki; break;
     case ECampaignState::Interlude3: State=ECampaignState::Magatsune; break;
@@ -68,6 +70,16 @@ bool UCampaignGameInstance::AdvanceCardChapter()
     }
     ChapterStartSeconds=FPlatformTime::Seconds();
     UE_LOG(LogTemp,Display,TEXT("CAMPAIGN_E2E %s chapter_start_time=%.3f"),CampaignStateName(State),GetCampaignElapsedSeconds());
+    return true;
+}
+
+bool UCampaignGameInstance::CompleteApproach()
+{
+    if(!bCampaignActive || State!=ECampaignState::IshibashiriApproach) return false;
+    State=ECampaignState::Ishibashiri;
+    ChapterStartSeconds=FPlatformTime::Seconds();
+    UE_LOG(LogTemp,Display,TEXT("CAMPAIGN_E2E IshibashiriApproach Completed approach_clear_time=%.3f"),GetCampaignElapsedSeconds());
+    UE_LOG(LogTemp,Display,TEXT("CAMPAIGN_E2E Ishibashiri Started chapter_start_time=%.3f"),GetCampaignElapsedSeconds());
     return true;
 }
 

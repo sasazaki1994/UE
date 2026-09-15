@@ -9,11 +9,11 @@
 
 ## Acceptance and driver contract
 
-`Specs/CampaignFlow.feature` now contains the input-only full-campaign acceptance scenario. `-CampaignE2E` is a thin coordinator: card screens are advanced through simulated `APlayerController::InputKey`, while each encounter GameMode starts its existing input playthrough driver. Encounter-specific route logic is not copied into the Campaign card controller.
+`Specs/CampaignFlow.feature` now contains the input-only full-campaign acceptance scenario. `-CampaignE2E` is a thin coordinator: card screens are advanced through simulated `APlayerController::InputKey`, Ishibashiri Approach is walked by its controller-input driver, and each encounter GameMode starts its existing input playthrough driver. Encounter-specific route logic is not copied into the Campaign card controller.
 
 The campaign run emits one `CAMPAIGN_E2E` timeline for chapter start and encounter clear times and ends with `CAMPAIGN_E2E_PASS total_campaign_time=...`. Existing encounter logs retain Kakon, retry, fall/recovery, transform-follow, stamina, Calm, Completed, Victory, and gamepad details.
 
-The Ishibashiri campaign path deliberately uses movement/turn/dodge/grab/purify/retry/Sense input instead of the standalone climbing fixture's position setup. It holds Corruption Sense at the final transition so `TravelToCurrentChapter` exercises `ResetSense` while tearing down the old world. Fuchimatoi's campaign recovery path omits its standalone fixture-only direct stamina depletion.
+The opening order is now `Title → Prologue → IshibashiriApproach → Ishibashiri`. The Ishibashiri campaign path deliberately uses movement/turn/dodge/grab/purify/retry/Sense input instead of the standalone climbing fixture's position setup. It holds Corruption Sense at the final transition so `TravelToCurrentChapter` exercises `ResetSense` while tearing down the old world. Fuchimatoi's campaign recovery path omits its standalone fixture-only direct stamina depletion.
 
 ## Windows UE 5.6.1 commands
 

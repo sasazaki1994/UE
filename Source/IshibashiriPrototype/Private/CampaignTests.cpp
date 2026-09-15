@@ -8,7 +8,9 @@ bool FCampaignOrder::RunTest(const FString&)
 {
     auto* C=NewObject<UCampaignGameInstance>(); C->RestartCampaign(); C->AdvanceCardChapter();
     TestEqual(TEXT("Prologue first"),C->GetCampaignState(),ECampaignState::Prologue);
-    C->AdvanceCardChapter(); TestEqual(TEXT("Ishibashiri"),C->GetCampaignState(),ECampaignState::Ishibashiri);
+    C->AdvanceCardChapter(); TestEqual(TEXT("Approach"),C->GetCampaignState(),ECampaignState::IshibashiriApproach);
+    TestTrue(TEXT("Approach gate advances"),C->CompleteApproach());
+    TestEqual(TEXT("Ishibashiri"),C->GetCampaignState(),ECampaignState::Ishibashiri);
     for(ECampaignState E:{ECampaignState::Ishibashiri,ECampaignState::Fuchimatoi,ECampaignState::Minedaki,ECampaignState::Magatsune})
     {
         TestTrue(TEXT("matching completion advances"),C->CompleteEncounter(E));
@@ -30,7 +32,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCampaignLifecycle,"IshibashiriPrototype.Campai
 bool FCampaignLifecycle::RunTest(const FString&)
 {
     auto* C=NewObject<UCampaignGameInstance>(); C->RestartCampaign();
-    C->AdvanceCardChapter(); C->AdvanceCardChapter();
+    C->AdvanceCardChapter(); C->AdvanceCardChapter(); C->CompleteApproach();
     C->CompleteEncounter(ECampaignState::Ishibashiri); C->AdvanceCardChapter();
     C->CompleteEncounter(ECampaignState::Fuchimatoi); C->AdvanceCardChapter();
     C->CompleteEncounter(ECampaignState::Minedaki); C->AdvanceCardChapter();

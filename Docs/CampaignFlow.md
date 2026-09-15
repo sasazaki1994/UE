@@ -4,7 +4,7 @@
 
 基準は `31c95dd1c8e0e5a48b3d77eec12d31994fddb33f`。既存4戦の内部Gameplayを変更せず、プロセス内だけ保持する薄い `UCampaignGameInstance` で接続する。
 
-`Title → Prologue → Ishibashiri → Interlude1 → Fuchimatoi → Interlude2 → Minedaki → Interlude3 → Magatsune → Ending → Completed`
+`Title → Prologue → IshibashiriApproach → Ishibashiri → Interlude1 → Fuchimatoi → Interlude2 → Minedaki → Interlude3 → Magatsune → Ending → Completed`
 
 状態は上記11個だけで、Kakon数、Boss phase、Recovery、Retry、SaveGameをCampaignへ複製しない。
 
