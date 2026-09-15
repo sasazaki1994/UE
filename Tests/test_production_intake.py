@@ -169,6 +169,9 @@ class AdoptionGate(unittest.TestCase):
                                             for variant in ('fallback', 'candidate')}
             with patch.object(R, 'require_report', return_value=report):
                 self.assertEqual(R.evaluate('Shirotsura', review)['decision'], 'ADOPT')
+                review['performance']['candidate'].update(trials=1, successes=1)
+                self.assertEqual(R.evaluate('Shirotsura', review)['decision'], 'BLOCKED')
+                review['performance']['candidate'].update(trials=3, successes=3)
                 review['performance']['candidate']['frame_ms_p95'] = 40
                 self.assertEqual(R.evaluate('Shirotsura', review)['decision'], 'REJECT')
                 review['performance']['candidate']['frame_ms_p95'] = float('nan')

@@ -1,6 +1,6 @@
 # Tripo Production Intake — 白面・石走り
 
-基準: `dac60cb41979254388955b75b97c939c90695701`（2026-09-14に取得した `origin/main`）。
+基準: `a7d69870914b8dbdb048aa7713f624946e79df35`（2026-09-15に取得した `origin/main`）。探索区間とCampaign E2Eの既存変更を含む。
 現在の両者の状態は **BLOCKED — TRIPO SOURCE REQUIRED**。既存Blenderモデル、Primitive、`CharacterModels.zip` は比較用Fallbackであり、Tripo生成物として登録していない。
 
 ## 入力と成果物
@@ -162,11 +162,11 @@ python -X utf8 -m pytest Tests -q
 .\Tools\Prototype.ps1 -Action Test -Climbing -Capture -HighQuality -SkipBuild -ProductionVisuals 1
 ```
 
-Automation結果は終了コードだけでなく `index.json` のfailed/notRunと実行件数を検査する。UEはテスト失敗でも終了コード0の場合がある。`-Campaign` の既存launcherはEditorContextテストをgameモードで呼ぶ制限があるため、Campaign unit回帰は上記Editor Automationコマンドを使う。
+Automation結果は終了コードだけでなく `index.json` のfailed/notRunと実行件数を検査する。UEはテスト失敗でも終了コード0の場合がある。Campaign unit回帰は上記Editor Automationコマンド、入力経由の全章回帰は `-Action Test -Campaign -SkipBuild -ProductionVisuals 0/1` をそれぞれ使う。ゲームパッド経路はさらに `-Gamepad` を指定する。
 
 白面: Idle/Walk/Run/Jump/Slash/Dodge/Grab/Climb/Hang/Cling/Boundary Sense/Corruption Sense。石走り: Spawn/Charge/Recovery/Grab/11 Route/branch/rest/stamina/shake/buck/cling/fall/3 Kakon/Covered検査/Exposed/Purified/3of3/Calm/Victory/Retry。既存テストは内部APIで状態を進める検査と入力模擬を含むため、人間の操作や全経路の攻略と区別する。
 
-Campaignは `-Action Play -Campaign` で石走り→淵纏い→峰抱き→禍津根を通し、各戦終了とRetryを確認。Automationの状態機械テストだけで全マップ遷移・実操作のCampaignが成功したとみなさない。後半3戦のVisualはそのまま。候補で成功率が下がれば失敗とする。
+Campaignは `-Action Play -Campaign` で探索区間→石走り→淵纏い→峰抱き→禍津根を通し、各戦終了とRetryを確認。Automationの状態機械テストだけで全マップ遷移・実操作のCampaignが成功したとみなさない。後半3戦のVisualはそのまま。候補で成功率が下がれば失敗とする。
 
 High QualityはWindows UE5.6 DX12/SM6/Lumen/VSM。両variantで同じMap、カメラTransform、FOV、光源、時刻、露出設定、解像度、固定動作時刻、GPU/Driverを記録する。白面6視点（Idle/Back/Run/Slash/Sense/Climb）、石走り8視点（front 3/4/side/back/Charge/Grab/Climb/Kakon/Calm）を `Validation/Captures/` 以下に対で保存。自動Climbing撮影で不足する視点は同じ固定Cameraで追加する。
 

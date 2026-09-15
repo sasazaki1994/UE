@@ -62,7 +62,9 @@ def evaluate(name, review):
             for key in ('vertices', 'triangles', 'materials', 'texture_bytes', 'draw_calls', 'fps', 'frame_ms_p50', 'frame_ms_p95', 'trials'):
                 if not isinstance(metrics.get(key), (int, float)) or not math.isfinite(metrics[key]) or metrics[key] <= 0:
                     raise ValueError('Missing positive measured performance metric: ' + key)
-            if not 0 <= metrics['successes'] <= metrics['trials']:
+            if type(metrics['trials']) is not int or metrics['trials'] < 3:
+                raise ValueError('Record at least three complete trials for each variant')
+            if type(metrics['successes']) is not int or not 0 <= metrics['successes'] <= metrics['trials']:
                 raise ValueError('Invalid success/trial measurement')
         if after['successes'] / after['trials'] < before['successes'] / before['trials']:
             result.update(decision='REJECT', reasons=['Gameplay success rate decreased'])

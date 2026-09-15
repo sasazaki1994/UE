@@ -39,7 +39,7 @@ void AMagatsuneBoss::BeginPlay()
     Super::BeginPlay(); SpawnTransform=GetActorTransform();
     GrabFrame=GetWorld()->SpawnActor<AActor>(); auto* Frame=NewObject<USceneComponent>(GrabFrame,TEXT("RootGrabFrame")); GrabFrame->SetRootComponent(Frame); Frame->RegisterComponent(); GrabFrame->AttachToComponent(MovingRoot,FAttachmentTransformRules::SnapToTargetNotIncludingScale); GrabFrame->SetOwner(this);
     for(int32 I=0;I<3;++I) { auto* K=GetWorld()->SpawnActor<AKakonActor>(); K->SetOwner(this); K->AttachToComponent(MovingRoot,FAttachmentTransformRules::SnapToTargetNotIncludingScale); K->SetActorRelativeLocation(GetRouteLocal(KakonNodes[I])); K->SetActorEnableCollision(false); K->OnPurified.AddUniqueDynamic(this,&AMagatsuneBoss::HandlePurified); Kakons.Add(K); RegisterKakon(K); }
-    TArray<UStaticMeshComponent*> Parts; GetComponents(Parts); for(auto* P:Parts) { const bool Route=P->GetName().StartsWith(TEXT("Route")); SetPrimitiveColor(P->CreateDynamicMaterialInstance(0),Route?FLinearColor(.08,.75,.5):FLinearColor(.025,.018,.03)); }
+    TArray<UStaticMeshComponent*> Parts; GetComponents(Parts); for(auto* P:Parts) { const bool bRoutePart=P->GetName().StartsWith(TEXT("Route")); SetPrimitiveColor(P->CreateDynamicMaterialInstance(0),bRoutePart?FLinearColor(.08,.75,.5):FLinearColor(.025,.018,.03)); }
     ResetNushi();
 }
 void AMagatsuneBoss::EndPlay(const EEndPlayReason::Type R) { if(IsValid(GrabFrame)) GrabFrame->Destroy(); for(AKakonActor* K:Kakons) if(IsValid(K)) K->Destroy(); Super::EndPlay(R); }
