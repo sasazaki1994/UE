@@ -106,6 +106,8 @@ Generic Gamepadの移動・カメラ・各アクションを、白面の操作�
 
 ## 検証とパッケージ化
 
+Windows UE 5.6.1実機での最終Reviewは `.\Tools\RunIshibashiriReviewGate.ps1` の1コマンドでEvidence bundleまで収集できます。
+
 ```powershell
 .\Tools\Prototype.ps1 -Action Build
 .\Tools\Prototype.ps1 -Action Test -Camera -Capture -SkipBuild -TestFPS 60
