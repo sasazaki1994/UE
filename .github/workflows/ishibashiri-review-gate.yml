@@ -1,0 +1,37 @@
+name: Ishibashiri review gate evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      engine_root:
+        description: Optional UE 5.6.1 root; otherwise the runner uses UE_ROOT or discovery
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: [self-hosted, Windows, UE5.6]
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run STEP 4C evidence pipeline
+        shell: powershell
+        env:
+          INPUT_ENGINE_ROOT: ${{ inputs.engine_root }}
+        run: |
+          $arguments = @{}
+          if ($env:INPUT_ENGINE_ROOT) { $arguments.EngineRoot = $env:INPUT_ENGINE_ROOT }
+          .\Tools\RunIshibashiriReviewGate.ps1 @arguments
+
+      - name: Upload evidence bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ishibashiri-review-gate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: Artifacts/IshibashiriReviewGate/
+          if-no-files-found: warn
+          retention-days: 30
