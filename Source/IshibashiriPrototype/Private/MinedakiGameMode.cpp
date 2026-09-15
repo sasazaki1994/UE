@@ -25,7 +25,7 @@ void AMinedakiGameMode::StartPlay()
     Player->ConfigureBoss(Boss); Boss->ConfigurePlayer(Player); Manager->SetNushi(Boss);
     Manager->OnEncounterCompleted.AddUniqueDynamic(this,&AMinedakiGameMode::HandleCompleted); RetryEncounter();
 #if !UE_BUILD_SHIPPING
-    if(FParse::Param(FCommandLine::Get(),TEXT("MinedakiTest"))) GetWorld()->SpawnActor<AMinedakiIntegrationTest>();
+    if(FParse::Param(FCommandLine::Get(),TEXT("MinedakiTest")) || FParse::Param(FCommandLine::Get(),TEXT("CampaignE2E"))) GetWorld()->SpawnActor<AMinedakiIntegrationTest>();
 #endif
 }
 void AMinedakiGameMode::RetryEncounter() { if(Player && Manager && Boss) { GetWorldTimerManager().ClearTimer(CampaignAdvanceTimer); Boss->LogTelemetry(TEXT("Retry")); Player->ResetForEncounter(); Manager->ResetEncounter(); Manager->StartEncounter(); } }

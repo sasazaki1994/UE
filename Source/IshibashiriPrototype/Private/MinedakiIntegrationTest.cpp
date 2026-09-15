@@ -26,7 +26,7 @@ void AMinedakiIntegrationTest::BeginPlay()
 {
     Super::BeginPlay(); int32 FPS=60;
     FParse::Value(FCommandLine::Get(),TEXT("PrototypeTestRun="),RunId); FParse::Value(FCommandLine::Get(),TEXT("PrototypeTestFPS="),FPS);
-    bGamepad=FParse::Param(FCommandLine::Get(),TEXT("MinedakiGamepad")); bCapture=FParse::Param(FCommandLine::Get(),TEXT("PrototypeCapture"));
+    bGamepad=FParse::Param(FCommandLine::Get(),TEXT("MinedakiGamepad"))||FParse::Param(FCommandLine::Get(),TEXT("CampaignGamepad")); bCapture=FParse::Param(FCommandLine::Get(),TEXT("PrototypeCapture"));
     FApp::SetUseFixedTimeStep(true); FApp::SetFixedDeltaTime(1.0/FPS);
     Mode=GetWorld()->GetAuthGameMode<AMinedakiGameMode>();
     if(!Check(Mode && Mode->GetBoss() && Mode->GetPlayer() && Mode->GetManager(),TEXT("Encounter spawned"))) return;
@@ -113,7 +113,7 @@ void AMinedakiIntegrationTest::Tick(float Dt)
     case 12:
         if(P->IsRecovering()) { MoveToward(B->GetRecoveryAnchorWorld()); if(FVector::Dist(P->GetActorLocation(),B->GetRecoveryAnchorWorld())<P->GrabRange-30) { Move(0); Tap(EKeys::E); ++RecoveryRuns; Next(9); } }
         break;
-    case 13: Shot(TEXT("13-Victory")); if(Time>.2f) { ++Rounds; Tap(EKeys::R); Next(11); } break;
+    case 13: Shot(TEXT("13-Victory")); if(Time>.2f) { ++Rounds; if(FParse::Param(FCommandLine::Get(),TEXT("CampaignE2E"))&&Rounds>=2){UE_LOG(LogTemp,Display,TEXT("MINEDAKI_TEST_PASS %s rounds=2 recovery=%d seconds=%.3f"),*RunId,RecoveryRuns,Total);bDone=true;FApp::SetUseFixedTimeStep(false);}else{Tap(EKeys::R);Next(11);} } break;
     case 14: if(Time>.2f) { if(Rounds==0&&RecoveryRuns==1) { Tap(EKeys::SpaceBar); Next(12); } else { Move(1); Next(9); } } break;
     case 11:
         if(Time>.25f)

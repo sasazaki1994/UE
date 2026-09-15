@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
+#include "HAL/PlatformTime.h"
 
 namespace
 {
@@ -22,6 +23,19 @@ const TCHAR* GameModeFor(ECampaignState State)
     default: return TEXT("/Script/IshibashiriPrototype.CampaignGameMode");
     }
 }
+
+const TCHAR* CampaignStateName(ECampaignState State)
+{
+    switch(State)
+    {
+    case ECampaignState::Title:return TEXT("Title"); case ECampaignState::Prologue:return TEXT("Prologue");
+    case ECampaignState::Ishibashiri:return TEXT("Ishibashiri Started"); case ECampaignState::Interlude1:return TEXT("Interlude1");
+    case ECampaignState::Fuchimatoi:return TEXT("Fuchimatoi Started"); case ECampaignState::Interlude2:return TEXT("Interlude2");
+    case ECampaignState::Minedaki:return TEXT("Minedaki Started"); case ECampaignState::Interlude3:return TEXT("Interlude3");
+    case ECampaignState::Magatsune:return TEXT("Magatsune Started"); case ECampaignState::Ending:return TEXT("Ending");
+    case ECampaignState::Completed:return TEXT("Completed"); default:return TEXT("Unknown");
+    }
+}
 }
 
 void UCampaignGameInstance::Init()
@@ -29,6 +43,8 @@ void UCampaignGameInstance::Init()
     Super::Init();
     bCampaignActive=FParse::Param(FCommandLine::Get(),TEXT("Campaign"));
     State=ECampaignState::Title;
+    CampaignStartSeconds=ChapterStartSeconds=FPlatformTime::Seconds();
+    UE_LOG(LogTemp,Display,TEXT("CAMPAIGN_E2E Title chapter_start_time=0.000"));
 }
 
 void UCampaignGameInstance::StartCampaign()
@@ -50,6 +66,8 @@ bool UCampaignGameInstance::AdvanceCardChapter()
     case ECampaignState::Completed: State=ECampaignState::Title; break;
     default: return false;
     }
+    ChapterStartSeconds=FPlatformTime::Seconds();
+    UE_LOG(LogTemp,Display,TEXT("CAMPAIGN_E2E %s chapter_start_time=%.3f"),CampaignStateName(State),GetCampaignElapsedSeconds());
     return true;
 }
 
@@ -64,6 +82,10 @@ bool UCampaignGameInstance::CompleteEncounter(ECampaignState Encounter)
     case ECampaignState::Magatsune: State=ECampaignState::Ending; break;
     default: return false;
     }
+    const double Now=FPlatformTime::Seconds();
+    UE_LOG(LogTemp,Display,TEXT("CAMPAIGN_E2E %s Completed encounter_clear_time=%.3f"),CampaignStateName(Encounter),Now-ChapterStartSeconds);
+    ChapterStartSeconds=Now;
+    UE_LOG(LogTemp,Display,TEXT("CAMPAIGN_E2E %s chapter_start_time=%.3f"),CampaignStateName(State),GetCampaignElapsedSeconds());
     return true;
 }
 
@@ -71,7 +93,11 @@ void UCampaignGameInstance::RestartCampaign()
 {
     bCampaignActive=true;
     State=ECampaignState::Title;
+    CampaignStartSeconds=ChapterStartSeconds=FPlatformTime::Seconds();
+    UE_LOG(LogTemp,Display,TEXT("CAMPAIGN_E2E Title chapter_start_time=0.000"));
 }
+
+double UCampaignGameInstance::GetCampaignElapsedSeconds() const{return FPlatformTime::Seconds()-CampaignStartSeconds;}
 
 bool UCampaignGameInstance::IsEncounterState(ECampaignState Value)
 {

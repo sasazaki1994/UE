@@ -34,5 +34,6 @@ def test_campaign_launcher_and_documentation_are_present():
     script = read("Tools/Prototype.ps1")
     assert "[switch]$Campaign" in script
     assert "CampaignGameMode" in script
-    assert "Automation RunTests IshibashiriPrototype.Campaign" in script
+    assert "-CampaignE2E" in script
+    assert "CAMPAIGN_E2E_PASS" in script
     assert "-Action Play -Campaign" in read("README.md")

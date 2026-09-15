@@ -1,10 +1,12 @@
 # 禍祓い — 石走り・登攀プロトタイプ
 
-4つのEncounterをタイトルからエンディングまで順に通す最小Campaign（STEP 3B）は、次の専用起動で確認できます。単体起動は従来どおりです。構造と検証状況は [Campaign Flow](Docs/CampaignFlow.md) を参照してください。
+4つのEncounterをタイトルからエンディングまで順に通すCampaignは、次の専用起動で確認できます。`Test -Campaign`はSTEP 3Cの入力駆動E2Eで、状態fixture Automationではありません。単体起動は従来どおりです。構造は [Campaign Flow](Docs/CampaignFlow.md)、検証状況は [Campaign E2E Validation](Docs/CampaignE2EValidation.md) を参照してください。
 
 ```powershell
 .\Tools\Prototype.ps1 -Action Play -Campaign
 .\Tools\Prototype.ps1 -Action Test -Campaign -SkipBuild -TestFPS 60
+.\Tools\Prototype.ps1 -Action Test -Campaign -SkipBuild -TestFPS 30
+.\Tools\Prototype.ps1 -Action Test -Campaign -SkipBuild -Gamepad -TestFPS 60
 ```
 
 最終局面「禍津根」のPrimitive Vertical Sliceは **`.\Tools\Prototype.ps1 -Action Play -Magatsune`** で起動します。禍津根は第四の主ではなく、地表へ噴出した禍をRoot A → Root/岩柱 → 中央核の順に鎮める「生きて動く地形」です。既存Grab / Cling / Staminaと共通Kakon / Nushi Lifecycleを再利用し、3/3後は破壊せず静止してVictoryへ進みます。詳細と未実行のUE検証は [禍津根Vertical Slice](Docs/MagatsuneVerticalSlice.md) を参照してください。

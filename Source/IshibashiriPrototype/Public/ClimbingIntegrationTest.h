@@ -36,6 +36,9 @@ private:
     bool bGamepad = false;
     bool bClimbingIK = false;
     bool bGrabMotionWarp = false;
+    bool bCampaignE2E = false;
+    bool bSawCampaignCharge = false;
+    bool bSawCampaignDodge = false;
     int32 GrabWarpPhase = 0;
     int32 IKContactShot = 0;
     bool bIKShakeShot = false;

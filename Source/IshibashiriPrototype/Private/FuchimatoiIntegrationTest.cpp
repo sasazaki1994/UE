@@ -45,6 +45,7 @@ void AFuchimatoiIntegrationTest::BeginPlay()
     bCapture=FParse::Param(FCommandLine::Get(),TEXT("PrototypeCapture"));
     bGamepad=FParse::Param(FCommandLine::Get(),TEXT("FuchimatoiGamepad"));
     bRecovery=FParse::Param(FCommandLine::Get(),TEXT("FuchimatoiRecovery"));
+    if(FParse::Param(FCommandLine::Get(),TEXT("CampaignE2E"))){bRecovery=true;bGamepad|=FParse::Param(FCommandLine::Get(),TEXT("CampaignGamepad"));}
     Mode=GetWorld()->GetAuthGameMode<AFuchimatoiGameMode>();
     if (!Check(Mode && Mode->GetPlayer() && Mode->GetBoss() && Mode->GetEncounterManager(),TEXT("Playable encounter spawned"))) return;
     if (!Check(Mode->IsEncounterActive() && Mode->GetBoss()->GetActionState()==EFuchimatoiActionState::Submerged
@@ -268,7 +269,7 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
                 TEXT("Two recoveries and miss/hit/timeout retries complete in one encounter"))) return;
             Shot(TEXT("10-Victory"));
         }
-        if(Time>.6f) { ++Rounds; Tap(EKeys::R); Next(19); }
+        if(Time>.6f) { ++Rounds; if(FParse::Param(FCommandLine::Get(),TEXT("CampaignE2E"))&&Rounds>=2)Finish();else{Tap(EKeys::R);Next(19);} }
         break;
     case 17:
         // After two complete rounds, deliberately take a bite through normal play.
@@ -328,9 +329,8 @@ void AFuchimatoiIntegrationTest::Tick(float Dt)
         if(FVector::Dist2D(P->GetActorLocation(),B->GetRecoveryAnchor()->GetActorLocation())<100)
         {
             SetMove(0,0);
-            // Test fixture only: exercise the stamina boundary without waiting
-            // for an accidental depletion. All mounting and travel use inputs.
-            P->GetStamina()->ConsumeStamina(100); Tap(EKeys::E); Next(23);
+            if(FParse::Param(FCommandLine::Get(),TEXT("CampaignE2E"))){Tap(EKeys::E);Next(25);}
+            else { P->GetStamina()->ConsumeStamina(100); Tap(EKeys::E); Next(23); }
         }
         break;
     case 23:
@@ -400,7 +400,7 @@ void AFuchimatoiIntegrationTest::Finish()
     if (bDone) return;
     bDone=true; FApp::SetUseFixedTimeStep(false);
     UE_LOG(LogTemp,Display,TEXT("FUCHIMATOI_TEST_PASS %s rounds=%d seconds=%.2f"),*RunId,Rounds,Total);
-    FPlatformMisc::RequestExitWithStatus(false,0);
+    if(!FParse::Param(FCommandLine::Get(),TEXT("CampaignE2E")))FPlatformMisc::RequestExitWithStatus(false,0);
 }
 
 void AFuchimatoiIntegrationTest::RecordPerformance()

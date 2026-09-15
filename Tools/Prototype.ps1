@@ -86,7 +86,7 @@ function Ensure-Map {
 
 try {
     if (@(@($Campaign,$Minedaki,$Magatsune,$Fuchimatoi) | Where-Object { $_ }).Count -gt 1) { throw 'Choose -Campaign or one encounter.' }
-    if ($Campaign -and ($Basin -or $Recovery -or $Realtime -or $Onscreen -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad -or $Gamepad)) { throw '-Campaign cannot be combined with encounter/test scenario switches.' }
+    if ($Campaign -and ($Basin -or $Recovery -or $Realtime -or $Onscreen -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Campaign cannot be combined with encounter/test scenario switches other than -Gamepad.' }
     if ($Magatsune -and ($Basin -or $Recovery -or $Realtime -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Magatsune is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
     if ($Minedaki -and ($Fuchimatoi -or $Basin -or $Recovery -or $Realtime -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Minedaki is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
     if ($Onscreen -and !$Realtime) { throw '-Onscreen requires -Realtime.' }
@@ -182,13 +182,13 @@ try {
             if ($Fuchimatoi) { $TestFlag = '-FuchimatoiTest' }
             if ($Minedaki) { $TestFlag = '-MinedakiTest' }
             if ($Magatsune) { $TestFlag = '-MagatsuneTest' }
-            if ($Campaign) { $TestFlag = '-ExecCmds=Automation RunTests IshibashiriPrototype.Campaign;Automation Quit' }
+            if ($Campaign) { $TestFlag = '-CampaignE2E' }
             $TestArguments = @($ProjectFile, $LaunchMap, '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
             if ($Fuchimatoi -and $Gamepad) { $TestArguments += '-FuchimatoiGamepad' }
             if ($Minedaki -and $Gamepad) { $TestArguments += '-MinedakiGamepad' }
             if ($Magatsune -and $Gamepad) { $TestArguments += '-MagatsuneGamepad' }
             if ($Recovery) { $TestArguments += '-FuchimatoiRecovery' }
-            if ($Campaign) { $TestArguments += '-Campaign' }
+            if ($Campaign) { $TestArguments += '-Campaign'; if ($Gamepad) { $TestArguments += '-CampaignGamepad' } }
             if ($Realtime) { $TestArguments += '-FuchimatoiRealtime' }
             if ($Basin) { $TestArguments += '-BasinPrototype' }
             if ($HighQuality) { $TestArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
@@ -209,14 +209,32 @@ try {
             if ($Fuchimatoi) { $PassMarker = "FUCHIMATOI_TEST_PASS $RunId" }
             if ($Minedaki) { $PassMarker = "MINEDAKI_TEST_PASS $RunId" }
             if ($Magatsune) { $PassMarker = "MAGATSUNE_TEST_PASS $RunId" }
-            if ($Campaign) { $PassMarker = 'Automation Test Queue Empty' }
+            if ($Campaign) { $PassMarker = 'CAMPAIGN_E2E_PASS' }
             if (!(Select-String -LiteralPath $LogFile -SimpleMatch $PassMarker -Quiet)) {
                 throw "Smoke test did not report success for this run. Read $LogFile"
             }
-            if ($Campaign -and (Select-String -LiteralPath $LogFile -Pattern 'Result=\{Fail\}|Test Failed' -Quiet)) { throw "Campaign automation reported a failure. Read $LogFile" }
+            if ($Campaign -and (Select-String -LiteralPath $LogFile -Pattern 'CAMPAIGN_E2E_FAIL|_TEST_FAIL|Result=\{Fail\}|Test Failed' -Quiet)) { throw "Campaign E2E reported a failure. Read $LogFile" }
             Write-Host "Test passed: $LogFile"
             if ($Realtime -and !(Select-String -LiteralPath $LogFile -SimpleMatch "FUCHIMATOI_PERF $RunId" -Quiet)) { throw "Realtime test did not record performance. Read $LogFile" }
             if ($Capture) {
+                if ($Campaign) {
+                    $RequiredCampaignShots = @(
+                        "Campaign\$RunId\01-Title.png", "Campaign\$RunId\02-Prologue.png",
+                        "Climbing\$RunId\01-Ground.png", "Climbing\$RunId\05-Victory.png",
+                        "Campaign\$RunId\05-Interlude1.png", "Fuchimatoi\$RunId\01-BiteWindup.png",
+                        "Fuchimatoi\$RunId\10-Victory.png", "Campaign\$RunId\08-Interlude2.png",
+                        "Minedaki\$RunId\01-GroundGrab.png", "Minedaki\$RunId\12-Calm.png",
+                        "Campaign\$RunId\11-Interlude3.png", "Magatsune\$RunId\01-Arrival.png",
+                        "Magatsune\$RunId\11-Calm.png", "Campaign\$RunId\14-Ending.png",
+                        "Campaign\$RunId\15-Completed.png"
+                    )
+                    foreach ($Relative in $RequiredCampaignShots) {
+                        $Shot = Get-Item -LiteralPath (Join-Path $ProjectRoot "Saved\Screenshots\$Relative") -ErrorAction Stop
+                        if ($Shot.Length -lt 100) { throw "Screenshot is empty: $($Shot.FullName)" }
+                    }
+                    Write-Host "Rendered campaign captures: Saved\Screenshots\Campaign\$RunId and encounter directories"
+                    exit 0
+                }
                 $CaptureDir = if ($GrabMotionWarp) { Join-Path $ProjectRoot "Saved\Screenshots\GrabMotionWarp\$RunId" } elseif ($BasinScenario) { Join-Path $ProjectRoot "Saved\Screenshots\Basin\$RunId" } elseif ($ClimbingIK) { Join-Path $ProjectRoot "Saved\Screenshots\ClimbingIK\$RunId\After" } elseif ($Climbing -or $ClimbingGamepad) { Join-Path $ProjectRoot "Saved\Screenshots\Climbing\$RunId" } else { Join-Path $ProjectRoot "Saved\Screenshots\Prototype\$RunId" }
                 $ShotNames = if ($GrabMotionWarp) { @('01-BeforeGrab','02-WarpStart','03-Approach','04-BeforeContact','05-Attached','06-ClimbStart') } elseif ($BasinScenario) { @('01-Start','02-BeforeMount','03-FirstLedge','04-Landed','05-Retry') } elseif ($ClimbingIK) { @('01-Grab','02-ForelegClimb','03-HandsContact','04-FeetContact','05-FirstShoulder','06-BossMoving','07-ShakeCling') } elseif ($Camera) { @('06-WallCamera', '07-BossCamera', '09-CameraReturn') } elseif ($Climbing -or $ClimbingGamepad) { @('01-Ground','02-FirstLedge','03-ShoulderCore','04-Summit','05-Victory','06-ThrownOff') } elseif ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera', '09-CameraReturn') }
                 if ($Fuchimatoi) {
