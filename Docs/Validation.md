@@ -20,6 +20,9 @@ Linux コンテナ上での静的レビューに基づく修正です。Unreal E
 - `UColossusClimbingComponent` のスタミナ定数（最低 Grab 値、回復・消費レート、揺れ非把持の許容秒）を `EditAnywhere` に昇格。
 - `RunIshibashiriReviewGate.ps1` の `retry` / `senseReset` ゲートが Campaign 経路の `ClimbingIntegrationTest` しか出さない `retry=1` / `sense=boundary,corruption` に依存し、`-Climbing` 単体では常に `NOT_RUN`（判定 `PARTIAL`）になっていた。通常経路でも Q / F を実入力で操作して検査し、`CLIMB_TEST_PASS <RunId> <秒> routes=N retry=N sense=boundary,corruption` を出力。ゲート側は `retry=[1-9]` で回数非依存に。
 - Fuchimatoi / Minedaki / Magatsune の Boss に `GetKakonCount()` を追加し、Player 側の `3` 直書きを置換。Integration Test の `-PrototypeTestFPS` を他ドライバーと同じく 15〜240 にクランプ（0 除算防止）。
+- `.github/workflows/blender-pbr-bake-validation.yml` の Python テストが `unittest discover` で `import pytest` に失敗し（run 34957744917、22 件のみ実行）常に赤だったのを、他ワークフローと同じ pytest 実行に統一。修正後の run 35226090628 は成功。
+- `Tools/GameplayContract.py` を追加し、`production-gameplay-contract.json` の正規化ロジックをテストと共有。再ベースラインは `python Tools/GameplayContract.py --update`。
+- `AIshibashiriBoss` の追跡停止距離・ライダー搭載時の歩行速度・揺れ周期（12 s 周期 / 2 s 予告 / 2 s 揺れ）を `EditAnywhere` に昇格（既定値は従来どおり）。
 - `PrototypeHUD` の Campaign 時の操作ヒントを英語化（戦闘 HUD は CJK フォント非依存を維持）。`.vscode/tasks.json` に Climbing / Camera / Approach / Campaign / Review Gate / pytest のタスクを追加。
 
 以下は旧戦闘プロトタイプと各開発段階の検証履歴です。現行の大型モデル・登攀の検証は [登攀検証](ClimbingValidation.md)、PR #17のmain統合後の検証は [カメラ統合記録](CameraIntegrationValidation.md) を参照してください。以下の旧配置でのPASSと、当時の環境制約は現在の統合構成の合否を示しません。
