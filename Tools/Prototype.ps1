@@ -161,7 +161,6 @@ try {
             $PlayArguments += "-ProductionVisuals=$ProductionVisuals"
             if ($Basin) { $PlayArguments += '-BasinPrototype' }
             if ($Campaign) { $PlayArguments += '-Campaign' }
-            if ($Approach) { $PlayArguments += '-Approach' }
             if ($HighQuality) { $PlayArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             & $EditorExe @PlayArguments
         }
