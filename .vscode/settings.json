@@ -22,6 +22,6 @@
   },
   "clangd.arguments": ["--background-index", "--completion-style=detailed", "--header-insertion=never"],
   "cmake.configureOnOpen": false,
-  "[cpp]": { "editor.tabSize": 4, "editor.insertSpaces": true },
+  "[cpp]": { "editor.tabSize": 4, "editor.insertSpaces": true, "editor.formatOnSave": false },
   "[csharp]": { "editor.tabSize": 4, "editor.insertSpaces": true }
 }
