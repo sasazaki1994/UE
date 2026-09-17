@@ -164,6 +164,10 @@ void AClimbingIntegrationTest::Tick(float Dt)
     }
     auto P=Mode->GetPlayer();auto B=Mode->GetBoss();auto C=P->GetClimbing();
     if(bCampaignE2E){bSawCampaignCharge|=B->GetState()==EIshibashiriState::Charge;bSawCampaignDodge|=P->IsDodging();}
+    // Both Sense holds must pass through the real input bindings at least once
+    // so the review gate's senseReset evidence exists in every climbing run.
+    bSawBoundarySense|=P->GetSense()->IsBoundarySenseActive();
+    bSawCorruptionSense|=P->GetSense()->IsCorruptionSenseActive();
     if (bClimbingIK && !bIKShakeShot && B->IsBucking() && C->IsClimbing() && C->IsGripping())
     {
         bIKShakeShot=true; Shot(TEXT("07-ShakeCling"));
@@ -189,7 +193,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
             if (!Check(P->GetMesh()->GetNumBones()>=19 && B->GetVisualMesh()->GetNumBones()>=20,TEXT("Both deformation skeletons loaded"))) return;
             if (bClimbingIK && !Check(P->GetClimbingControlRig()->GetControlRig()!=nullptr,TEXT("Climbing Control Rig asset is instantiated"))) return;
             if (!Check(P->GetMesh()->GetSingleNodeInstance() && P->GetMesh()->GetSingleNodeInstance()->GetCurrentAsset(),TEXT("Player animation is playing"))) return;
-            Shot(TEXT("01-Ground"));Hold(EKeys::W,true);Next(1);
+            Shot(TEXT("01-Ground"));Tap(EKeys::Q);Tap(EKeys::F);Hold(EKeys::W,true);Next(1);
         } break;
     case 1:
         if (Time>.35f)
@@ -290,7 +294,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
             ++CompletedRoutes;
             Shot(TEXT("05-Victory"));
             if(bCampaignE2E&&CompletedRoutes>=2){if(!Check(bSawCampaignCharge&&bSawCampaignDodge,TEXT("Campaign ground approach includes Charge and Dodge input")))return;Hold(EKeys::F,true);UE_LOG(LogTemp,Display,TEXT("CLIMB_TEST_PASS %s routes=2 retry=1 sense=boundary,corruption"),*RunId);bFinished=true;FApp::SetUseFixedTimeStep(false);}
-            else {Tap(EKeys::R);Next(19);}
+            else {Tap(EKeys::R);++Retries;Next(19);}
         } break;
     case 19:
         if (Time>.3f)
@@ -351,8 +355,10 @@ void AClimbingIntegrationTest::Tick(float Dt)
     case 27:
         if (Time>.3f)
         {
-            UE_LOG(LogTemp,Display,TEXT("%s %s %.2fs"),bClimbingIK ? TEXT("CLIMBING_IK_TEST_PASS") : TEXT("CLIMB_TEST_PASS"),*RunId,Total);
-            bFinished=true;FPlatformMisc::RequestExitWithStatus(false,0);
+            if (!Check(bSawBoundarySense && bSawCorruptionSense,TEXT("Q and F Sense holds were exercised through input bindings"))) return;
+            UE_LOG(LogTemp,Display,TEXT("%s %s %.2fs routes=%d retry=%d sense=boundary,corruption"),
+                bClimbingIK ? TEXT("CLIMBING_IK_TEST_PASS") : TEXT("CLIMB_TEST_PASS"),*RunId,Total,CompletedRoutes,Retries);
+            bFinished=true;FApp::SetUseFixedTimeStep(false);FPlatformMisc::RequestExitWithStatus(false,0);
         } break;
     }
 }

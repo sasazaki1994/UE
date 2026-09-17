@@ -46,6 +46,15 @@ public:
     FString GetHint() const;
     UPROPERTY(EditAnywhere, Category="Climbing") float ClimbSpeed = 190.f;
     UPROPERTY(EditAnywhere, Category="Climbing") float GrabRange = 240.f;
+    // Stamina is 0-100. Rates are per second; positive drains, negative restores.
+    UPROPERTY(EditAnywhere, Category="Climbing|Stamina", meta=(ClampMin="0", ClampMax="100")) float MinimumGrabStamina = 25.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Stamina", meta=(ClampMin="0")) float GroundRecoveryPerSecond = 18.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Stamina", meta=(ClampMin="0")) float LedgeRecoveryPerSecond = 22.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Stamina", meta=(ClampMin="0")) float HangDrainPerSecond = 5.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Stamina", meta=(ClampMin="0")) float BracedBuckDrainPerSecond = 18.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Stamina", meta=(ClampMin="0")) float UnbracedBuckDrainPerSecond = 50.f;
+    // Seconds of shaking without holding Grab before the rider is thrown off.
+    UPROPERTY(EditAnywhere, Category="Climbing|Stamina", meta=(ClampMin="0")) float UnbracedBuckTolerance = .70f;
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1")) float MaximumWarpDistance = 240.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1", ClampMax="179")) float MaximumWarpAngle = 100.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1")) float CompletionDistanceTolerance = 35.f;

@@ -32,8 +32,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Python unit tests
-        run: python3 -m unittest discover -s Tests -p 'test_*.py' -v
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # unittest discover skipped the pytest-style function tests and failed on
+      # `import pytest`; run the same collector as production-intake-validation.
+      - name: Run Python source-contract tests
+        run: |
+          python -m pip install pytest
+          python -m pytest Tests -q
 
       - name: Install headless runtime libraries
         run: |

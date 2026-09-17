@@ -25,6 +25,7 @@ private:
     TArray<FKey> Release;
     int32 Phase = 0;
     int32 CompletedRoutes = 0;
+    int32 Retries = 0;
     float Time = 0.f;
     float Total = 0.f;
     float BeforeStamina = 0.f;
@@ -39,6 +40,8 @@ private:
     bool bCampaignE2E = false;
     bool bSawCampaignCharge = false;
     bool bSawCampaignDodge = false;
+    bool bSawBoundarySense = false;
+    bool bSawCorruptionSense = false;
     int32 GrabWarpPhase = 0;
     int32 IKContactShot = 0;
     bool bIKShakeShot = false;

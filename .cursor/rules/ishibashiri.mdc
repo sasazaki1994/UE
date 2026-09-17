@@ -1,17 +1,21 @@
 ---
-description: Scope and validation requirements for the Ishibashiri Unreal C++ prototype
+description: Scope and validation requirements for the Magaharai Unreal C++ prototype
 alwaysApply: true
 ---
 
-This repository is the Windows UE 5.4-5.6 C++ prototype of Magaharai / Ishibashiri.
+This repository is the Windows UE 5.4-5.6 C++ prototype of Magaharai (禍祓い). It began as the Ishibashiri charge/dodge/counter loop and now covers a four-encounter campaign.
 
-- Read README.md and Docs/Validation.md before continuing implementation. They distinguish implemented source from verified results.
-- The goal is a playable charge -> sideways dodge -> recovery -> sword counter -> retry loop with one boar boss.
-- Keep gameplay in PrototypePlayer, IshibashiriBoss, PrototypeGameMode and PrototypeHUD. The arena is generated from an empty map; no manual Blueprint setup is required.
-- Player and boss start at 3 HP. Boss damage is allowed only during recovery, once per recovery. Dodge and post-hit immunity must prevent multi-hit deaths. Three counters win; three charges lose. R resets the entire encounter.
-- Avoid adding climbing, grab, stamina, story, NPCs, gear, inventory, saves, other bosses, multiplayer, GAS, paid assets, or speculative abstractions.
-- Use Tools/Prototype.ps1 for Check, Build, Setup, Play, Test, Package and CodeDatabase. Cursor tasks invoke these same commands.
+- Read README.md before continuing implementation. Docs/Validation.md is the historical record of the original combat prototype; per-feature validation lives in Docs/*Validation*.md and Docs/*Validation.json. All of them distinguish implemented source from runtime-verified results.
+- Current scope: Title/Prologue/Interlude cards (Campaign*), the IshibashiriApproach walk, the Ishibashiri boar (ground counter loop plus route climbing over its back), Fuchimatoi (serpent), Minedaki (colossus), Magatsune (living terrain), the shared Nushi/Kakon lifecycle (NushiBase, NushiStateComponent, NushiProgressComponent, NushiEncounterManager, KakonActor), route climbing (ColossusClimbingComponent), local-space grab (GrabComponent), Stamina, and the player Sense holds (PlayerSenseComponent).
+- Ishibashiri ground combat invariants: player and boss start at 3 HP, boss damage is allowed only during recovery and once per recovery, dodge and post-hit immunity must prevent multi-hit deaths, three counters win, three charges lose, R / Y resets the entire encounter. Keep that logic in PrototypePlayer, IshibashiriBoss, PrototypeGameMode and PrototypeHUD.
+- Every encounter reaches Victory only through NushiStateComponent::CalmNushi (all Kakon purified or an explicit alternate objective). Do not fabricate Kakon progress from combat and do not bypass NushiEncounterManager.
+- Arenas and characters are generated from the empty L_Prototype_01 map; no manual Blueprint setup is required. Standard primitives, the generated Shirotsura/Ishibashiri rigs and standard materials only.
+- Do not add NPCs, gear, inventory, saves, multiplayer, GAS, paid assets, or speculative abstractions. New encounters or systems need an explicit request.
+- APrototypePlayer is also spawned under AIshibashiriApproachGameMode (a plain AGameModeBase). Any gate on APrototypeGameMode in the pawn must tolerate a null cast.
+- Command-line flags (FParse::Param) and map URL options (UGameplayStatics::HasOption) are different channels. Accept both where a chapter transition passes options through OpenLevel.
+- Use Tools/Prototype.ps1 for Check, Build, Setup, Play, Test, Package and CodeDatabase; Tools/RunIshibashiriReviewGate.ps1 collects the review evidence bundle. Cursor tasks invoke these same commands. Run `python -m pytest Tests` for the source-contract tests; Tests/production-gameplay-contract.json pins SHA256 digests of gameplay sources. After an intentional gameplay change re-baseline with `python Tools/GameplayContract.py --update` (never by hand-editing the JSON) and commit the JSON together with the source change.
+- Formatting follows the repository `.clang-format` (4-space, Allman, short statements on one line, `BreakStringLiterals: false` so `TEXT("...")` stays intact). Do not compress multiple statements onto one line. When reformatting, verify tokens are unchanged (strip whitespace and compare) because a compiler may not be available.
 - Unreal Engine plus MSVC and Windows SDK are required even when editing in Cursor. Do not replace the requested UE C++ game with a browser or Unity implementation.
-- Build and run the smoke test after meaningful combat changes when the engine is available. Stop and fix compiler failures before proceeding.
-- A headless test does not establish that rendering, camera, hardware input or the gameplay feel works. Verify the actual game window and the acceptance checklist in Docs/Validation.md.
-- Do not mark the prototype complete or report a successful build/playtest unless it was actually performed. Record environmental blockers precisely.
+- Build and run the relevant tests (`-Action Test`, `-Playthrough`, `-Climbing`, `-Approach`, `-Campaign`, encounter switches) after meaningful gameplay changes when the engine is available. Stop and fix compiler failures before proceeding.
+- A headless test does not establish that rendering, camera, hardware input or the gameplay feel works. Verify the actual game window and the acceptance checklists in Docs and Specs.
+- Do not mark a feature complete or report a successful build/playtest unless it was actually performed. Record environmental blockers precisely.

@@ -1,7 +1,5 @@
 """No production models are needed. Missing source is optional; invalid isn't."""
 import copy
-import hashlib
-import json
 from pathlib import Path
 import sys
 import tempfile
@@ -13,6 +11,7 @@ sys.path.insert(0, str(ROOT / 'Tools'))
 import ProductionCharacter as P
 import ValidateProductionCharacter as V
 import ReviewProductionCharacter as R
+import GameplayContract as G
 
 
 def healthy(name='Shirotsura'):
@@ -100,26 +99,13 @@ class PreflightRules(unittest.TestCase):
 
 class GameplayContract(unittest.TestCase):
     def test_existing_gameplay_authority_matches_main(self):
-        contract = P.read(ROOT / 'Tests/production-gameplay-contract.json')
+        # Re-baseline deliberately with: python Tools/GameplayContract.py --update
+        contract = G.load()
         for filename, digest in contract['sha256'].items():
-            source = (ROOT / filename).read_text(encoding='utf-8')
-            source = source.replace('#include "ProductionVisuals.h"\n', '')
-            if filename.endswith('PrototypePlayer.cpp'):
-                source = source.replace('#include "KakonActor.h"\n', '')
-                source = source.replace('#include "Misc/PackageName.h"\n', '')
-                source = source.replace('    // This optional asset is not supplied by main; preserve the authored base pose without a CDO load error.\n'
-                    '    if (FPackageName::DoesPackageExist(TEXT("/Game/Characters/Rigged/Shirotsura/CR_Shirotsura_Climbing")))\n'
-                    '    {\n', '')
-                source = source.replace('        static ConstructorHelpers::FClassFinder<UControlRig>',
-                                        '    static ConstructorHelpers::FClassFinder<UControlRig>')
-                source = source.replace('        if (ClimbingRig.Succeeded()) ClimbingControlRig->SetControlRigClass(ClimbingRig.Class);\n    }',
-                                        '    if (ClimbingRig.Succeeded()) ClimbingControlRig->SetControlRigClass(ClimbingRig.Class);')
-                source = source.replace('    ProductionVisuals::ApplyAtBeginPlay(GetMesh(), TEXT("Shirotsura"));\n', '')
-            if filename.endswith('IshibashiriBoss.cpp'):
-                source = source.replace('    ProductionVisuals::ApplyAtBeginPlay(Creature, TEXT("Ishibashiri"));\n', '')
-            if filename.endswith('CampaignGameInstance.cpp'):
-                source = source.replace('ChapterWorldContext', 'WorldContext')
-            self.assertEqual(hashlib.sha256(source.encode()).hexdigest(), digest, filename)
+            self.assertEqual(G.digest(filename), digest, filename)
+
+    def test_contract_tool_reports_no_drift(self):
+        self.assertEqual(G.changed_files(G.load()), [])
 
     def test_eleven_routes_three_cores(self):
         source = (ROOT / 'Source/IshibashiriPrototype/Private/IshibashiriBoss.cpp').read_text(encoding='utf-8')

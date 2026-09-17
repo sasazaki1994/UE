@@ -52,9 +52,17 @@ FTransform APrototypeGameMode::BossSpawn() const
     return FTransform(FRotator(0.f, 180.f, 0.f), FVector(650.f, 0.f, 352.f));
 }
 
+void APrototypeGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+    Super::InitGame(MapName, Options, ErrorMessage);
+    // Accept both the launcher flag and the ?BasinPrototype URL option used by
+    // IshibashiriApproachGameMode::EnterBasin, which never reaches the command line.
+    bBasinPrototype = FParse::Param(FCommandLine::Get(), TEXT("BasinPrototype"))
+        || UGameplayStatics::HasOption(Options, TEXT("BasinPrototype"));
+}
+
 void APrototypeGameMode::StartPlay()
 {
-    bBasinPrototype = FParse::Param(FCommandLine::Get(), TEXT("BasinPrototype"));
     if (bBasinPrototype)
     {
         BasinArena = GetWorld()->SpawnActor<ABasinPrototypeArena>();

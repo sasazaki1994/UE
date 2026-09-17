@@ -56,7 +56,7 @@ void AFuchimatoiPlayer::ConfigureBoss(AFuchimatoiBoss* InBoss)
     Grab->AddTickPrerequisiteActor(this);
     TArray<UStaticMeshComponent*> Parts; GetComponents(Parts);
     for (UStaticMeshComponent* Part:Parts) SetPrimitiveColor(Part->CreateDynamicMaterialInstance(0),FLinearColor(.93,.76,.34));
-    Sense->ClearBoundaryTargets(); for(int32 I=0;I<3;++I) Sense->RegisterBoundaryTarget(Boss->GetKakon(I),I==0);
+    Sense->ClearBoundaryTargets(); for(int32 I=0;I<Boss->GetKakonCount();++I) Sense->RegisterBoundaryTarget(Boss->GetKakon(I),I==0);
 }
 bool AFuchimatoiPlayer::CanAct() const
 {
@@ -179,7 +179,7 @@ bool AFuchimatoiPlayer::ReceiveBite()
 {
     if (!CanAct() || IsDodging() || HitImmunity>0) return false;
     Health=FMath::Max(0,Health-1); HitImmunity=1.f;
-    if (Health==0) GetWorld()->GetAuthGameMode<AFuchimatoiGameMode>()->Defeat();
+    if (Health==0) { if (AFuchimatoiGameMode* Mode=GetWorld()->GetAuthGameMode<AFuchimatoiGameMode>()) Mode->Defeat(); }
     else LaunchCharacter(FVector(0,-300,180),true,true);
     return true;
 }
@@ -230,7 +230,8 @@ void AFuchimatoiPlayer::AdvanceRoute(float Dt)
 }
 void AFuchimatoiPlayer::Tick(float Dt)
 {
-    Super::Tick(Dt); for(int32 I=0;Boss&&I<3;++I) Sense->SetBoundaryTargetAvailable(Boss->GetKakon(I), I==Boss->GetNushiProgressComponent()->GetPurifiedCount()); if(Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(Boss && (Boss->GetActionState()==EFuchimatoiActionState::BiteWindup||Boss->GetActionState()==EFuchimatoiActionState::BiteLunge) ? ECorruptionWarning::Danger : Boss && Boss->GetActionState()==EFuchimatoiActionState::Coiling ? ECorruptionWarning::Transition : Boss && Boss->GetActionState()==EFuchimatoiActionState::Snagged ? ECorruptionWarning::Safe : ECorruptionWarning::None);
+    Super::Tick(Dt);
+    UpdateSenseFromBoss();
     if (!CanAct()) return;
     HitImmunity=FMath::Max(0.f,HitImmunity-Dt); DodgeCooldown=FMath::Max(0.f,DodgeCooldown-Dt);
     if (IsDodging())
@@ -241,7 +242,7 @@ void AFuchimatoiPlayer::Tick(float Dt)
     }
     if (IsMounted()) AdvanceRoute(Dt); else Stamina->RestoreStamina((18.f*Dt)*Sense->GetRecoveryMultiplier());
     Arm->TargetArmLength=FMath::FInterpTo(Arm->TargetArmLength,IsMounted()?1400.f:1050.f,Dt,3.f);
-    if (GetActorLocation().Z < -400) GetWorld()->GetAuthGameMode<AFuchimatoiGameMode>()->Defeat();
+    if (GetActorLocation().Z < -400) { if (AFuchimatoiGameMode* Mode=GetWorld()->GetAuthGameMode<AFuchimatoiGameMode>()) Mode->Defeat(); }
 }
 void AFuchimatoiPlayer::StopEncounter()
 {
@@ -265,5 +266,29 @@ void AFuchimatoiPlayer::ResetForEncounter(const FTransform& Spawn)
     Arm->TargetArmLength=1050;
 }
 
+ECorruptionWarning AFuchimatoiPlayer::ComputeCorruptionWarning() const
+{
+    if (!Boss) return ECorruptionWarning::None;
+    switch (Boss->GetActionState())
+    {
+    case EFuchimatoiActionState::BiteWindup:
+    case EFuchimatoiActionState::BiteLunge: return ECorruptionWarning::Danger;
+    case EFuchimatoiActionState::Coiling: return ECorruptionWarning::Transition;
+    case EFuchimatoiActionState::Snagged: return ECorruptionWarning::Safe;
+    case EFuchimatoiActionState::Submerged: return ECorruptionWarning::None;
+    }
+    return ECorruptionWarning::None;
+}
+
+void AFuchimatoiPlayer::UpdateSenseFromBoss()
+{
+    if (Boss)
+    {
+        const int32 Current=Boss->GetNushiProgressComponent()->GetPurifiedCount();
+        for (int32 I=0; I<Boss->GetKakonCount(); ++I) Sense->SetBoundaryTargetAvailable(Boss->GetKakon(I), I==Current);
+    }
+    if (Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(ComputeCorruptionWarning());
+}
+
 void AFuchimatoiPlayer::BoundarySensePressed(){Sense->BeginBoundarySense();} void AFuchimatoiPlayer::BoundarySenseReleased(){Sense->EndBoundarySense();}
-void AFuchimatoiPlayer::ArmSensePressed(){Sense->BeginCorruptionSense(); Sense->SetCorruptionWarning(Boss && (Boss->GetActionState()==EFuchimatoiActionState::BiteWindup||Boss->GetActionState()==EFuchimatoiActionState::BiteLunge) ? ECorruptionWarning::Danger : Boss && Boss->GetActionState()==EFuchimatoiActionState::Coiling ? ECorruptionWarning::Transition : Boss && Boss->GetActionState()==EFuchimatoiActionState::Snagged ? ECorruptionWarning::Safe : ECorruptionWarning::None);} void AFuchimatoiPlayer::ArmSenseReleased(){Sense->EndCorruptionSense();}
+void AFuchimatoiPlayer::ArmSensePressed(){Sense->BeginCorruptionSense(); Sense->SetCorruptionWarning(ComputeCorruptionWarning());} void AFuchimatoiPlayer::ArmSenseReleased(){Sense->EndCorruptionSense();}

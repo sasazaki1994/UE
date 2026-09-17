@@ -42,7 +42,8 @@ The gate opens the existing `PrototypeGameMode`; campaign entry first changes st
 - Gherkin acceptance coverage specifies ordered traversal, one-shot reveal, non-combat behavior, gate transition and cleanup.
 - Python contracts verify primitive construction, landmarks, one three-second reveal, absence of boss reuse, Sense wiring and missing-audio markers.
 - UE campaign lifecycle automation now requires `CompleteApproach()` before Ishibashiri.
-- `Tools/Prototype.ps1 -Action Test -Approach -TestFPS 60` (and 30) uses a controller-input path driver and expects `APPROACH_TEST_PASS`.
+- `Tools/Prototype.ps1 -Action Test -Approach -TestFPS 60` (and 30) uses a controller-input path driver and expects `APPROACH_TEST_PASS <RunId>`. The driver runs on the same fixed time step as the encounter tests and exits with code 1 and `APPROACH_TEST_FAIL` if the walk has not reached the gate within three times the nominal path time.
+- Before the 2026-09-17 fix, `APrototypePlayer::CanAct()` rejected every input under this game mode (it required `APrototypeGameMode`), so the driver could never move; see `Docs/Validation.md`.
 - `-CampaignE2E` uses the same input driver; it does not mutate position, Kakon, Phase, Stamina, Progress, Completed, or Campaign State.
 
 ## Screenshots

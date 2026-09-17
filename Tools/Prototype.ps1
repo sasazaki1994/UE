@@ -106,6 +106,7 @@ try {
     if ($BasinScenario -and !$Basin) { throw '-BasinScenario requires -Basin.' }
     if ($TestSeconds -gt 0 -and !$Playthrough) { throw '-TestSeconds requires -Playthrough.' }
     if ($Capture -and (($Gamepad -and !$Fuchimatoi -and !$Minedaki -and !$Magatsune) -or $Grab -or $LocalClimbing)) { throw '-Capture requires route climbing, smoke or playthrough tests.' }
+    if ($Capture -and $Approach) { throw '-Approach has no screenshot set yet (see Docs/IshibashiriApproachSlice.md); run it without -Capture.' }
     $ResolvedEngine = Find-Engine
     $BuildTool = Join-Path $ResolvedEngine 'Engine\Build\BatchFiles\Build.bat'
     $EditorExe = Join-Path $ResolvedEngine 'Engine\Binaries\Win64\UnrealEditor.exe'
@@ -160,7 +161,6 @@ try {
             $PlayArguments += "-ProductionVisuals=$ProductionVisuals"
             if ($Basin) { $PlayArguments += '-BasinPrototype' }
             if ($Campaign) { $PlayArguments += '-Campaign' }
-            if ($Approach) { $PlayArguments += '-Approach' }
             if ($HighQuality) { $PlayArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             & $EditorExe @PlayArguments
         }
@@ -217,8 +217,8 @@ try {
             if ($Fuchimatoi) { $PassMarker = "FUCHIMATOI_TEST_PASS $RunId" }
             if ($Minedaki) { $PassMarker = "MINEDAKI_TEST_PASS $RunId" }
             if ($Magatsune) { $PassMarker = "MAGATSUNE_TEST_PASS $RunId" }
-            if ($Campaign) { $PassMarker = 'CAMPAIGN_E2E_PASS' }
-            if ($Approach) { $PassMarker = 'APPROACH_TEST_PASS' }
+            if ($Campaign) { $PassMarker = "CAMPAIGN_E2E_PASS $RunId" }
+            if ($Approach) { $PassMarker = "APPROACH_TEST_PASS $RunId" }
             if (!(Select-String -LiteralPath $LogFile -SimpleMatch $PassMarker -Quiet)) {
                 throw "Smoke test did not report success for this run. Read $LogFile"
             }

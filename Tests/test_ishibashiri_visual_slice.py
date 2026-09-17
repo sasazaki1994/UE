@@ -26,7 +26,7 @@ def test_sense_visual_roles_are_separate_and_read_only():
 
 def test_kakon_debug_and_normal_presentations_are_split():
     boss = source("Source/IshibashiriPrototype/Private/IshibashiriBoss.cpp")
-    assert 'FParse::Param(FCommandLine::Get(),TEXT("DebugGuidance"))' in boss
+    assert "IsDebugGuidanceEnabled()" in boss
     assert "KakonState!=EKakonState::Purified" in boss
     assert "SenseStrength" in boss
     assert "EKakonState::Covered" in boss

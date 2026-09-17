@@ -64,7 +64,9 @@ bool UColossusClimbingComponent::IsResting() const
 void UColossusClimbingComponent::GrabPressed()
 {
     bGripHeld = true;
-    if (!Player || Boss || Stamina < 25.f || Player->IsDodging() || Player->IsAttacking()) return;
+    // A second press during the warp must not fall through StartGrabWarp's
+    // "already warping" refusal into the legacy snap below.
+    if (!Player || Boss || bGrabWarping || Stamina < MinimumGrabStamina || Player->IsDodging() || Player->IsAttacking()) return;
     APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     AIshibashiriBoss* Candidate = Mode ? Mode->GetBoss() : nullptr;
     if (!Mode || !Mode->IsEncounterActive() || !Candidate) return;
@@ -250,16 +252,16 @@ void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActor
     if (!IsValid(Boss))
     {
         if (Boss) Reset();
-        if (!Player->GetCharacterMovement()->IsFalling()) Stamina = FMath::Min(100.f, Stamina+18.f*Dt);
+        if (!Player->GetCharacterMovement()->IsFalling()) Stamina = FMath::Min(100.f, Stamina+GroundRecoveryPerSecond*Dt);
         return;
     }
     const bool Buck = Boss->IsBucking();
     const bool Rest = IsResting();
-    float Drain = Rest ? -22.f : 5.f;
-    if (Buck) Drain = bGripHeld ? 18.f : 50.f;
+    float Drain = Rest ? -LedgeRecoveryPerSecond : HangDrainPerSecond;
+    if (Buck) Drain = bGripHeld ? BracedBuckDrainPerSecond : UnbracedBuckDrainPerSecond;
     Stamina = FMath::Clamp(Stamina-Drain*Dt, 0.f, 100.f);
     UnsafeBuckTime = Buck && !bGripHeld ? UnsafeBuckTime+Dt : 0.f;
-    if (Stamina <= 0.f || UnsafeBuckTime > .70f) { Detach(); return; }
+    if (Stamina <= 0.f || UnsafeBuckTime > UnbracedBuckTolerance) { Detach(); return; }
     InputDelay = FMath::Max(0.f, InputDelay-Dt);
     if (Destination == INDEX_NONE && InputDelay <= 0.f && !Buck && !Player->IsAttacking())
     {

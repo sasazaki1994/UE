@@ -1,11 +1,11 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "PlayerSenseComponent.h"
 #include "FuchimatoiPlayer.generated.h"
 class AFuchimatoiBoss;
 class UGrabComponent;
 class UStaminaComponent;
-class UPlayerSenseComponent;
 class USpringArmComponent;
 class UCameraComponent;
 
@@ -53,6 +53,8 @@ private:
     void AttackPressed();
     void RetryPressed();
     void BoundarySensePressed(); void BoundarySenseReleased(); void ArmSensePressed(); void ArmSenseReleased();
+    ECorruptionWarning ComputeCorruptionWarning() const;
+    void UpdateSenseFromBoss();
     void AdvanceRoute(float Dt);
     void DetachFromRoute();
     UPROPERTY() TObjectPtr<AFuchimatoiBoss> Boss;

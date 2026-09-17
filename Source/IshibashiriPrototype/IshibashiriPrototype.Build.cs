@@ -6,7 +6,5 @@ public class IshibashiriPrototype : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "InputCore", "ControlRig", "MotionWarping" });
-        if (Target.bBuildEditor)
-            PrivateDependencyModuleNames.Add("UnrealEd");
     }
 }

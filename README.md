@@ -131,7 +131,7 @@ Windows UE 5.6.1実機での最終Reviewは `.\Tools\RunIshibashiriReviewGate.ps
 
 `-Camera` は現行モデルとArenaで4方向の壁際、猪の遮蔽、攻撃方向の固定、段階的な復帰、再遮蔽、Retryを検証します。`-Capture` 併用時は `Saved/Screenshots/Prototype/<RunId>/` に3場面を保存します。統合後の検証は [カメラ統合記録](Docs/CameraIntegrationValidation.md) にまとめています。
 
-Cursorでは `IshibashiriPrototype-Cursor.code-workspace` を開き、Ctrl+Shift+Bでビルドできます。TasksメニューのPlay / Open Unreal Editor / Generate C++ completion databaseも利用できます。従来の戦闘テストタスクには上記の旧配置の制限があります。
+Cursorでは `IshibashiriPrototype-Cursor.code-workspace` を開き、Ctrl+Shift+Bでビルドできます。TasksメニューにPlay / Play campaign / Open Unreal Editor / Test route climbing（既定のテスト） / Test camera / Test approach chapter / Test campaign E2E / Run review gate / Python source-contract tests / Generate C++ completion databaseがあります。従来の「Test combat」「Test full playthrough」タスクには上記の旧配置の制限があります。
 
 ## 実装の範囲
 

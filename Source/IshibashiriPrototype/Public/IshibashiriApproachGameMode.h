@@ -24,5 +24,9 @@ private:
     UPROPERTY() TObjectPtr<AActor> SenseTarget;
     bool bTransitioning=false;
     bool bAutomationDriving=false;
+    bool bStandaloneApproachTest=false;
     int32 AutomationPoint=1;
+    float AutomationElapsed=0.f;
+    float AutomationTimeout=0.f;
+    FString RunId;
 };

@@ -42,6 +42,7 @@ public:
     void AdvanceEncounter(float Dt);
     AFuchimatoiRouteAnchor* GetRouteAnchor(int32 Node) const;
     AKakonActor* GetKakon(int32 Index) const;
+    int32 GetKakonCount() const { return KakonActors.Num(); }
     FVector GetHeadWorldLocation() const;
     bool CanMount() const;
     bool CanRecover() const;

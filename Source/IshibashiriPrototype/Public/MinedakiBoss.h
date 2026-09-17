@@ -49,6 +49,7 @@ public:
     AActor* GetGrabFrame() const { return GrabFrame; }
     USceneComponent* GetBodyRoot() const { return BodyRoot; }
     AKakonActor* GetKakon(int32 Index) const;
+    int32 GetKakonCount() const { return Kakons.Num(); }
     FVector GetRouteLocal(int32 Node) const;
     FVector GetRouteWorld(int32 Node) const;
     float GetClimbTime() const { return ClimbTime; }

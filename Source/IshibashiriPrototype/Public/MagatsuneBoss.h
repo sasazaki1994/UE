@@ -40,6 +40,7 @@ public:
     AActor* GetGrabFrame() const { return GrabFrame; }
     USceneComponent* GetMovingRoot() const { return MovingRoot; }
     AKakonActor* GetKakon(int32 Index) const;
+    int32 GetKakonCount() const { return Kakons.Num(); }
     EMagatsunePhase GetPhase() const { return Phase; }
     FString GetPhaseLabel() const;
     FMagatsuneTelemetry Telemetry;
@@ -52,7 +53,8 @@ public:
     UPROPERTY(EditAnywhere,Category="Magatsune") float CalmSeconds=2.f;
 private:
     UFUNCTION() void HandlePurified(AKakonActor* Kakon);
-    void BuildPrimitive(UStaticMesh* Mesh,UMaterialInterface* Material,const TCHAR* Name,USceneComponent* Parent,FVector At,FVector Scale,FLinearColor Color);
+    // Colors are applied together in BeginPlay once dynamic material instances exist.
+    void BuildPrimitive(UStaticMesh* Mesh,UMaterialInterface* Material,const TCHAR* Name,USceneComponent* Parent,FVector At,FVector Scale);
     void RefreshRoutes();
     UPROPERTY() TObjectPtr<USceneComponent> MovingRoot;
     UPROPERTY() TObjectPtr<AActor> GrabFrame;

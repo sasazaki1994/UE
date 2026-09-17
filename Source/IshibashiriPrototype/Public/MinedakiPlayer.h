@@ -1,11 +1,11 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "PlayerSenseComponent.h"
 #include "MinedakiPlayer.generated.h"
 class AMinedakiBoss;
 class UGrabComponent;
 class UStaminaComponent;
-class UPlayerSenseComponent;
 UCLASS()
 class ISHIBASHIRIPROTOTYPE_API AMinedakiPlayer : public ACharacter
 {
@@ -52,6 +52,8 @@ private:
     void AttackPressed();
     void RetryPressed();
     void BoundarySensePressed(); void BoundarySenseReleased(); void ArmSensePressed(); void ArmSenseReleased();
+    ECorruptionWarning ComputeCorruptionWarning() const;
+    void UpdateSenseFromBoss();
     UPROPERTY() TObjectPtr<AMinedakiBoss> Boss;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> Grab;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaminaComponent> Stamina;

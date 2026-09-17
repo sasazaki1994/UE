@@ -3,7 +3,6 @@
 Set CHARACTER_ASSET_FILTER to Shirotsura or Ishibashiri to update only that model.
 """
 import unreal
-import json
 import os
 from pathlib import Path
 
