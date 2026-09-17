@@ -106,6 +106,7 @@ try {
     if ($BasinScenario -and !$Basin) { throw '-BasinScenario requires -Basin.' }
     if ($TestSeconds -gt 0 -and !$Playthrough) { throw '-TestSeconds requires -Playthrough.' }
     if ($Capture -and (($Gamepad -and !$Fuchimatoi -and !$Minedaki -and !$Magatsune) -or $Grab -or $LocalClimbing)) { throw '-Capture requires route climbing, smoke or playthrough tests.' }
+    if ($Capture -and $Approach) { throw '-Approach has no screenshot set yet (see Docs/IshibashiriApproachSlice.md); run it without -Capture.' }
     $ResolvedEngine = Find-Engine
     $BuildTool = Join-Path $ResolvedEngine 'Engine\Build\BatchFiles\Build.bat'
     $EditorExe = Join-Path $ResolvedEngine 'Engine\Binaries\Win64\UnrealEditor.exe'
