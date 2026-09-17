@@ -54,6 +54,14 @@ public:
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) float ChargeSpeed = 1500.f;
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="0.01")) float MaxChargeDuration = 1.35f;
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="0.01")) float RecoveryDuration = 1.65f;
+    // Ground AI stops closing in at this distance so the boar does not stand inside the player.
+    UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="0")) float ChaseStopDistance = 440.f;
+    // While a rider is on the back the creature keeps wandering at this speed.
+    UPROPERTY(EditAnywhere, Category="Climbing", meta=(ClampMin="0")) float RiderWalkSpeed = 85.f;
+    // Shake cycle in seconds: [Period - Duration - Warning, Period - Duration) warns, the last Duration seconds shake.
+    UPROPERTY(EditAnywhere, Category="Climbing", meta=(ClampMin="1")) float BuckPeriod = 12.f;
+    UPROPERTY(EditAnywhere, Category="Climbing", meta=(ClampMin="0")) float BuckWarningDuration = 2.f;
+    UPROPERTY(EditAnywhere, Category="Climbing", meta=(ClampMin="0.1")) float BuckDuration = 2.f;
 
 protected:
     virtual void BeginPlay() override;

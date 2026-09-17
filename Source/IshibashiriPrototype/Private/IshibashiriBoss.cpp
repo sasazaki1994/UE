@@ -236,7 +236,7 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
         if (GetActorLocation().Size2D() > Mode->ArenaHalfExtent-900.f)
             SetActorRotation((-GetActorLocation()).GetSafeNormal2D().Rotation());
         FHitResult Hit;
-        SetActorLocation(GetActorLocation()+GetActorForwardVector()*85.f*DeltaSeconds,true,&Hit);
+        SetActorLocation(GetActorLocation()+GetActorForwardVector()*RiderWalkSpeed*DeltaSeconds,true,&Hit);
         if (Hit.bBlockingHit) AddActorWorldRotation(FRotator(0,90,0));
         Creature->SetRelativeRotation(FRotator(IsBucking() ? FMath::Sin(RiderTime*19.f)*4.f : 0.f,90,0));
         // Sense/Kakon presentation must continue while the player is on the
