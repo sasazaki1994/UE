@@ -95,10 +95,15 @@ void APrototypeHUD::DrawHUD()
         const float BoxWidth = FMath::Min(640.f * Scale, Canvas->ClipX - 40.f);
         const float Left = (Canvas->ClipX - BoxWidth) * 0.5f;
         const float Top = Canvas->ClipY * 0.43f;
-        DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.9f), Left, Top, BoxWidth, 145.f * Scale);
+        DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.9f), Left, Top, BoxWidth, 170.f * Scale);
         DrawText(bVictory ? TEXT("VICTORY - Ishibashiri is calmed") : TEXT("DEFEAT"), bVictory ? FLinearColor::Green : FLinearColor::Red,
             Left + 24.f * Scale, Top + 24.f * Scale, GEngine->GetMediumFont(), 1.4f * Scale, false);
+        // Calm can come from counters, purified cores, or a mix (both reduce boss
+        // HP); show both tallies so a partial KAKON count is not read as a bug.
+        DrawText(FString::Printf(TEXT("BOSS HP %d / %d   KAKON %d / %d"),
+                Boss->GetHealth(), Boss->MaxHealth, Boss->GetPurifiedCount(), Boss->GetCoreKakonCount()),
+            FLinearColor(.82f, .78f, .57f), Left + 24.f * Scale, Top + 70.f * Scale, GEngine->GetMediumFont(), 0.9f * Scale, false);
         DrawText(TEXT("R / Y - Retry encounter"), FLinearColor::White,
-            Left + 24.f * Scale, Top + 83.f * Scale, GEngine->GetMediumFont(), 1.2f * Scale, false);
+            Left + 24.f * Scale, Top + 108.f * Scale, GEngine->GetMediumFont(), 1.2f * Scale, false);
     }
 }
