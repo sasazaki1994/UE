@@ -31,14 +31,14 @@ void ACampaignPlayerController::PlayerTick(float DeltaTime)
     static const bool bCapture = FParse::Param(FCommandLine::Get(), TEXT("PrototypeCapture"));
     static const bool bGamepad = FParse::Param(FCommandLine::Get(), TEXT("CampaignGamepad"));
     if (!bCampaignE2E) return;
+    FString RunId;
+    FParse::Value(FCommandLine::Get(), TEXT("PrototypeTestRun="), RunId);
     AutoConfirmSeconds += DeltaTime;
     const auto* Campaign = GetGameInstance<UCampaignGameInstance>();
     if (Campaign && Campaign->GetCampaignState() == ECampaignState::Completed)
     {
         if (!bCompleted && bCapture)
         {
-            FString RunId;
-            FParse::Value(FCommandLine::Get(), TEXT("PrototypeTestRun="), RunId);
             const FString Dir = FPaths::ProjectSavedDir() / TEXT("Screenshots/Campaign") / RunId;
             IFileManager::Get().MakeDirectory(*Dir, true);
             FScreenshotRequest::RequestScreenshot(Dir / TEXT("15-Completed.png"), false, false);
@@ -47,7 +47,7 @@ void ACampaignPlayerController::PlayerTick(float DeltaTime)
             return;
         }
         if (bCompleted && AutoConfirmSeconds < .5f) return;
-        UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_E2E_PASS total_campaign_time=%.3f"), Campaign->GetCampaignElapsedSeconds());
+        UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_E2E_PASS %s total_campaign_time=%.3f"), *RunId, Campaign->GetCampaignElapsedSeconds());
         FPlatformMisc::RequestExitWithStatus(false, 0);
         return;
     }
@@ -68,8 +68,6 @@ void ACampaignPlayerController::PlayerTick(float DeltaTime)
         }
         if (Name)
         {
-            FString RunId;
-            FParse::Value(FCommandLine::Get(), TEXT("PrototypeTestRun="), RunId);
             const FString Dir = FPaths::ProjectSavedDir() / TEXT("Screenshots/Campaign") / RunId;
             IFileManager::Get().MakeDirectory(*Dir, true);
             FScreenshotRequest::RequestScreenshot(Dir / Name, false, false);

@@ -55,14 +55,18 @@ void AFuchimatoiArena::BeginPlay()
         Anchor->SetActorLocation(I==0 ? FVector(-450,400,950) : FVector(220,430,1350));
         Anchor->Configure(true,I==0?4:6); RockAnchors.Add(Anchor);
     }
-    ADirectionalLight* Sun=GetWorld()->SpawnActor<ADirectionalLight>(FVector(0,0,2500),FRotator(-45,-40,0));
-    Sun->GetLightComponent()->SetIntensity(3.f);
-    ADirectionalLight* Ambient=GetWorld()->SpawnActor<ADirectionalLight>(FVector(0,0,2500),FRotator(-25,140,0));
-    Ambient->GetLightComponent()->SetIntensity(2.f);
-    Ambient->GetLightComponent()->SetCastShadows(false);
-    APointLight* Fill=GetWorld()->SpawnActor<APointLight>(FVector(-300,-1500,2300),FRotator::ZeroRotator);
-    Fill->PointLightComponent->SetIntensity(1800000.f);
-    Fill->PointLightComponent->SetAttenuationRadius(6500.f);
+    if (ADirectionalLight* Sun=GetWorld()->SpawnActor<ADirectionalLight>(FVector(0,0,2500),FRotator(-45,-40,0)))
+        Sun->GetLightComponent()->SetIntensity(3.f);
+    if (ADirectionalLight* Ambient=GetWorld()->SpawnActor<ADirectionalLight>(FVector(0,0,2500),FRotator(-25,140,0)))
+    {
+        Ambient->GetLightComponent()->SetIntensity(2.f);
+        Ambient->GetLightComponent()->SetCastShadows(false);
+    }
+    if (APointLight* Fill=GetWorld()->SpawnActor<APointLight>(FVector(-300,-1500,2300),FRotator::ZeroRotator))
+    {
+        Fill->PointLightComponent->SetIntensity(1800000.f);
+        Fill->PointLightComponent->SetAttenuationRadius(6500.f);
+    }
 }
 AFuchimatoiRouteAnchor* AFuchimatoiArena::GetRockAnchor(int32 Node) const
 {

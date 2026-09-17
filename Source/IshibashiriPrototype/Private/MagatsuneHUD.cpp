@@ -14,7 +14,7 @@ void AMagatsuneHUD::DrawHUD()
 {
     Super::DrawHUD();
     auto* M = GetWorld()->GetAuthGameMode<AMagatsuneGameMode>();
-    if (!Canvas || !GEngine || !M || !M->GetBoss()) return;
+    if (!Canvas || !GEngine || !M || !M->GetBoss() || !M->GetPlayer() || !M->GetManager()) return;
     auto* B = M->GetBoss();
     auto* P = M->GetPlayer();
     const bool Victory = M->GetManager()->GetEncounterState() == ENushiEncounterState::Completed && B->GetPhase() == EMagatsunePhase::Calm;

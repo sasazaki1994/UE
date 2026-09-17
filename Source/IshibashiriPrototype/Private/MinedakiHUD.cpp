@@ -14,7 +14,7 @@ void AMinedakiHUD::DrawHUD()
 {
     Super::DrawHUD();
     auto* Mode = GetWorld()->GetAuthGameMode<AMinedakiGameMode>();
-    if (!Canvas || !GEngine || !Mode || !Mode->GetBoss() || !Mode->GetPlayer()) return;
+    if (!Canvas || !GEngine || !Mode || !Mode->GetBoss() || !Mode->GetPlayer() || !Mode->GetManager()) return;
     auto* B = Mode->GetBoss();
     auto* P = Mode->GetPlayer();
     DrawRect(FLinearColor(0, 0, 0, .8), 12, 12, 1050, 175);

@@ -217,8 +217,8 @@ try {
             if ($Fuchimatoi) { $PassMarker = "FUCHIMATOI_TEST_PASS $RunId" }
             if ($Minedaki) { $PassMarker = "MINEDAKI_TEST_PASS $RunId" }
             if ($Magatsune) { $PassMarker = "MAGATSUNE_TEST_PASS $RunId" }
-            if ($Campaign) { $PassMarker = 'CAMPAIGN_E2E_PASS' }
-            if ($Approach) { $PassMarker = 'APPROACH_TEST_PASS' }
+            if ($Campaign) { $PassMarker = "CAMPAIGN_E2E_PASS $RunId" }
+            if ($Approach) { $PassMarker = "APPROACH_TEST_PASS $RunId" }
             if (!(Select-String -LiteralPath $LogFile -SimpleMatch $PassMarker -Quiet)) {
                 throw "Smoke test did not report success for this run. Read $LogFile"
             }
