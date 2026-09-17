@@ -43,12 +43,56 @@
       "problemMatcher": ["$msCompile"]
     },
     {
+      "label": "Ishibashiri: Play campaign",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/Tools/Prototype.ps1", "-Action", "Play", "-Campaign"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "Ishibashiri: Test route climbing",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/Tools/Prototype.ps1", "-Action", "Test", "-Climbing", "-TestFPS", "60"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "Ishibashiri: Test camera (current arena)",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/Tools/Prototype.ps1", "-Action", "Test", "-Camera", "-Capture", "-SkipBuild", "-TestFPS", "60"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "Ishibashiri: Test approach chapter",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/Tools/Prototype.ps1", "-Action", "Test", "-Approach", "-SkipBuild", "-TestFPS", "60"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "Ishibashiri: Test campaign E2E",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/Tools/Prototype.ps1", "-Action", "Test", "-Campaign", "-SkipBuild", "-TestFPS", "60"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "problemMatcher": ["$msCompile"]
+    },
+    {
       "label": "Ishibashiri: Test combat",
       "type": "process",
       "command": "powershell.exe",
       "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/Tools/Prototype.ps1", "-Action", "Test"],
       "options": { "cwd": "${workspaceFolder}" },
-      "group": { "kind": "test", "isDefault": true },
+      "group": "test",
       "problemMatcher": ["$msCompile"]
     },
     {
@@ -59,6 +103,22 @@
       "options": { "cwd": "${workspaceFolder}" },
       "group": "test",
       "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "Ishibashiri: Run review gate (evidence bundle)",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/Tools/RunIshibashiriReviewGate.ps1"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "Ishibashiri: Python source-contract tests",
+      "type": "shell",
+      "command": "python -m pytest -q Tests",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "problemMatcher": []
     },
     {
       "label": "Ishibashiri: Generate C++ completion database",
