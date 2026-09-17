@@ -1,6 +1,20 @@
 # 検証記録 — 2026-09-10
 
-この文書は旧戦闘プロトタイプと各開発段階の検証履歴です。現行の大型モデル・登攀の検証は [登攀検証](ClimbingValidation.md)、PR #17のmain統合後の検証は [カメラ統合記録](CameraIntegrationValidation.md) を参照してください。以下の旧配置でのPASSと、当時の環境制約は現在の統合構成の合否を示しません。
+## 2026-09-17 ソースレビュー修正（UE Runtime 未検証）
+
+Linux コンテナ上での静的レビューに基づく修正です。Unreal Engine / MSVC がないため C++ のビルドと実行は行っておらず、`python -m pytest Tests`（68 passed）のみ確認しています。Windows UE 5.6.1 での `-Action Build`、`-Action Test -Approach`、`-Action Test -Campaign`、`-Action Test -Playthrough` の再実行が完了条件です。
+
+- `APrototypePlayer::CanAct()` が `APrototypeGameMode` 以外（`AIshibashiriApproachGameMode`）で常に false になり、Approach 章で主人公が移動できなかった問題を修正。
+- `IshibashiriApproachGameMode::EnterBasin` が渡す `?BasinPrototype` URL オプションを `APrototypeGameMode::InitGame` で受理するように修正（従来はコマンドラインのみ）。
+- `AFuchimatoiPlayer` の `GetAuthGameMode<AFuchimatoiGameMode>()->Defeat()` に null チェックを追加。
+- 4 つの Player クラスで重複していた腐敗警告の三項演算子を `ComputeCorruptionWarning()` / `UpdateSenseFromBoss()` に集約。
+- `-DebugGuidance` の `FParse::Param` 毎フレーム評価を `IsDebugGuidanceEnabled()`（`Private/DebugGuidance.h`）で一度だけ解析。`CampaignPlayerController::PlayerTick` のフラグも同様にキャッシュ。
+- Victory / Defeat 後に Feedback 文字列と刀の振り角が凍結していた `APrototypePlayer::Tick` の順序を修正。`CalcCamera` の重複した Boss 包含判定を削除。
+- アニメーションクリップの整数インデックスを `EShirotsuraClip` / `EIshibashiriClip` に置き換え。`3` の直書きを `CoreKakons.Num()` 等に置き換え。
+- 未使用の `ModelAppearance.h`、`Build.cs` の `UnrealEd` 依存、`AMagatsuneBoss::BuildPrimitive` の未使用引数、`constexpr` の冗長な再宣言を削除。
+- `.cursor/rules/ishibashiri.mdc` と `.uproject` の Description を現行スコープへ更新。`Tests/production-gameplay-contract.json` の SHA256 を再ベースライン。
+
+以下は旧戦闘プロトタイプと各開発段階の検証履歴です。現行の大型モデル・登攀の検証は [登攀検証](ClimbingValidation.md)、PR #17のmain統合後の検証は [カメラ統合記録](CameraIntegrationValidation.md) を参照してください。以下の旧配置でのPASSと、当時の環境制約は現在の統合構成の合否を示しません。
 
 キーボード・マウスを使った手動の操作感評価と、10分間の連続手動プレイは未実施です。以下の自動検証結果と区別します。
 

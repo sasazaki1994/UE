@@ -2,7 +2,7 @@
   "FileVersion": 3,
   "EngineAssociation": "5.6",
   "Category": "Games",
-  "Description": "Magaharai: a minimal Ishibashiri charge, dodge and counter prototype.",
+  "Description": "Magaharai: Ishibashiri charge/dodge/counter and route-climbing prototype with a four-encounter primitive campaign.",
   "Modules": [
     { "Name": "IshibashiriPrototype", "Type": "Runtime", "LoadingPhase": "Default" }
   ],
