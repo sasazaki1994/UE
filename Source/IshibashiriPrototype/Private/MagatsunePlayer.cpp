@@ -36,10 +36,30 @@ void AMagatsunePlayer::ResolveLargePulse(){if(!IsMounted())return;if(!IsClinging
 void AMagatsunePlayer::Fall(bool Exhausted){if(!IsMounted())return;Grab->Release();Node=Destination=INDEX_NONE;bGripHeld=false;bFalling=true;++Boss->Telemetry.Falls;if(Exhausted)++Boss->Telemetry.Exhaustions;LaunchCharacter({-250,100,100},true,true);Boss->LogTelemetry(Exhausted?TEXT("StaminaExhaustion_Fall"):TEXT("Fall"));}
 void AMagatsunePlayer::Tick(float Dt)
 {
-    Super::Tick(Dt); for(int32 I=0;Boss&&I<3;++I) Sense->SetBoundaryTargetAvailable(Boss->GetKakon(I), I==Boss->GetNushiProgressComponent()->GetPurifiedCount()); if(Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(Boss && Boss->IsLargePulse() ? ECorruptionWarning::Danger : Boss && (Boss->GetPhase()==EMagatsunePhase::RootRockRoute||Boss->GetPhase()==EMagatsunePhase::FinalRise) ? ECorruptionWarning::Transition : Boss && Boss->IsSafeNode(Node) ? ECorruptionWarning::Safe : ECorruptionWarning::None);if(!Boss||!FMath::IsFinite(Dt)||Dt<=0)return;if(bFalling){if(GetCharacterMovement()->IsMovingOnGround()||GetActorLocation().Z<-100){bFalling=false;bRecovering=true;SetActorLocation(Boss->GetRecoveryWorld());GetCharacterMovement()->StopMovementImmediately();Boss->LogTelemetry(TEXT("Recovery"));}return;}if(!IsMounted()){Stamina->RestoreStamina((24*Dt)*Sense->GetRecoveryMultiplier());return;}if(IsClinging())Boss->Telemetry.ClingSeconds+=Dt;RecoveryGrace=FMath::Max(0.f,RecoveryGrace-Dt);if(Boss->IsSafeNode(Node)&&!IsRouteMoving())Stamina->RestoreStamina((24*Dt)*Sense->GetRecoveryMultiplier());else if(RecoveryGrace<=0)Stamina->ConsumeStamina(((IsRouteMoving()?5.f:2.f)+(IsClinging()?1.f:0.f))*Dt);if(Stamina->IsDepleted()){Fall(true);return;}if(Boss->IsLargePulse()||!Boss->IsRouteNodeEnabled(Node))return;RouteDelay=FMath::Max(0.f,RouteDelay-Dt);if(!IsRouteMoving()&&RouteDelay<=0&&FMath::Abs(ForwardInput)>.4f){int32 Next=Node+(ForwardInput>0?1:-1);if(Boss->IsRouteNodeEnabled(Next)){Destination=Next;MoveProgress=0;}}if(!IsRouteMoving())return;const FVector A=Boss->GetRouteLocal(Node),B=Boss->GetRouteLocal(Destination);MoveProgress=FMath::Min(1.f,MoveProgress+RouteSpeed*Dt/FMath::Max(1.f,FVector::Dist(A,B)));Grab->SetRelativeGrabTransform(FTransform(FRotator::ZeroRotator,FMath::Lerp(A,B,MoveProgress)));if(MoveProgress>=1){Node=Destination;Destination=INDEX_NONE;RouteDelay=.2f;}
+    Super::Tick(Dt);
+    UpdateSenseFromBoss();
+    if(!Boss||!FMath::IsFinite(Dt)||Dt<=0)return;if(bFalling){if(GetCharacterMovement()->IsMovingOnGround()||GetActorLocation().Z<-100){bFalling=false;bRecovering=true;SetActorLocation(Boss->GetRecoveryWorld());GetCharacterMovement()->StopMovementImmediately();Boss->LogTelemetry(TEXT("Recovery"));}return;}if(!IsMounted()){Stamina->RestoreStamina((24*Dt)*Sense->GetRecoveryMultiplier());return;}if(IsClinging())Boss->Telemetry.ClingSeconds+=Dt;RecoveryGrace=FMath::Max(0.f,RecoveryGrace-Dt);if(Boss->IsSafeNode(Node)&&!IsRouteMoving())Stamina->RestoreStamina((24*Dt)*Sense->GetRecoveryMultiplier());else if(RecoveryGrace<=0)Stamina->ConsumeStamina(((IsRouteMoving()?5.f:2.f)+(IsClinging()?1.f:0.f))*Dt);if(Stamina->IsDepleted()){Fall(true);return;}if(Boss->IsLargePulse()||!Boss->IsRouteNodeEnabled(Node))return;RouteDelay=FMath::Max(0.f,RouteDelay-Dt);if(!IsRouteMoving()&&RouteDelay<=0&&FMath::Abs(ForwardInput)>.4f){int32 Next=Node+(ForwardInput>0?1:-1);if(Boss->IsRouteNodeEnabled(Next)){Destination=Next;MoveProgress=0;}}if(!IsRouteMoving())return;const FVector A=Boss->GetRouteLocal(Node),B=Boss->GetRouteLocal(Destination);MoveProgress=FMath::Min(1.f,MoveProgress+RouteSpeed*Dt/FMath::Max(1.f,FVector::Dist(A,B)));Grab->SetRelativeGrabTransform(FTransform(FRotator::ZeroRotator,FMath::Lerp(A,B,MoveProgress)));if(MoveProgress>=1){Node=Destination;Destination=INDEX_NONE;RouteDelay=.2f;}
 }
 void AMagatsunePlayer::ResetForEncounter(){Grab->Release();Node=Destination=INDEX_NONE; Sense->ResetSense();ForwardInput=MoveProgress=RouteDelay=RecoveryGrace=0;bGripHeld=bFalling=bRecovering=false;Stamina->ResetStamina();GetCharacterMovement()->StopMovementImmediately();GetCharacterMovement()->SetMovementMode(MOVE_Walking);SetActorTransform(SpawnTransform(),false,nullptr,ETeleportType::TeleportPhysics);if(Controller)Controller->SetControlRotation(FRotator(-12,0,0));}
 void AMagatsunePlayer::CalcCamera(float,FMinimalViewInfo& V){const FVector Focus=IsMounted()?GetActorLocation():FVector(300,0,700);const FRotator Orbit(FMath::Clamp(GetControlRotation().Pitch,-55.f,-5.f),GetControlRotation().Yaw,0);V.Location=Focus-Orbit.Vector()*(IsMounted()?1600:2300);V.Rotation=(Focus-V.Location).Rotation();V.FOV=82;}
 
 void AMagatsunePlayer::BoundarySensePressed(){Sense->BeginBoundarySense();if(Boss)Boss->RefreshSenseGuidance();} void AMagatsunePlayer::BoundarySenseReleased(){Sense->EndBoundarySense();if(Boss)Boss->RefreshSenseGuidance();}
-void AMagatsunePlayer::ArmSensePressed(){Sense->BeginCorruptionSense(); Sense->SetCorruptionWarning(Boss && Boss->IsLargePulse() ? ECorruptionWarning::Danger : Boss && (Boss->GetPhase()==EMagatsunePhase::RootRockRoute||Boss->GetPhase()==EMagatsunePhase::FinalRise) ? ECorruptionWarning::Transition : Boss && Boss->IsSafeNode(Node) ? ECorruptionWarning::Safe : ECorruptionWarning::None);} void AMagatsunePlayer::ArmSenseReleased(){Sense->EndCorruptionSense();}
+ECorruptionWarning AMagatsunePlayer::ComputeCorruptionWarning() const
+{
+    if(!Boss) return ECorruptionWarning::None;
+    if(Boss->IsLargePulse()) return ECorruptionWarning::Danger;
+    if(Boss->GetPhase()==EMagatsunePhase::RootRockRoute||Boss->GetPhase()==EMagatsunePhase::FinalRise) return ECorruptionWarning::Transition;
+    return Boss->IsSafeNode(Node) ? ECorruptionWarning::Safe : ECorruptionWarning::None;
+}
+
+void AMagatsunePlayer::UpdateSenseFromBoss()
+{
+    if(Boss)
+    {
+        const int32 Current=Boss->GetNushiProgressComponent()->GetPurifiedCount();
+        for(int32 I=0;I<3;++I) Sense->SetBoundaryTargetAvailable(Boss->GetKakon(I), I==Current);
+    }
+    if(Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(ComputeCorruptionWarning());
+}
+
+void AMagatsunePlayer::ArmSensePressed(){Sense->BeginCorruptionSense(); Sense->SetCorruptionWarning(ComputeCorruptionWarning());} void AMagatsunePlayer::ArmSenseReleased(){Sense->EndCorruptionSense();}

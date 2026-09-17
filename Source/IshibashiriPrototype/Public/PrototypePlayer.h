@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "PlayerSenseComponent.h"
 #include "PrototypePlayer.generated.h"
 
 class UCameraComponent;
@@ -15,7 +16,6 @@ class UControlRigComponent;
 class UMotionWarpingComponent;
 class UAnimMontage;
 class UAnimInstance;
-class UPlayerSenseComponent;
 class AIshibashiriBoss;
 
 UCLASS()
@@ -99,6 +99,8 @@ private:
     void TurnRate(float Value);
     void LookUpRate(float Value);
     void BoundarySensePressed(); void BoundarySenseReleased(); void ArmSensePressed(); void ArmSenseReleased();
+    ECorruptionWarning ComputeCorruptionWarning() const;
+    void UpdateSenseFromBoss();
 
     UPROPERTY(VisibleAnywhere) TObjectPtr<USpringArmComponent> SpringArm;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UCameraComponent> Camera;

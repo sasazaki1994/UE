@@ -21,6 +21,7 @@ class ISHIBASHIRIPROTOTYPE_API APrototypeGameMode : public AGameModeBase
 
 public:
     APrototypeGameMode();
+    virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
     virtual void StartPlay() override;
     virtual void Tick(float DeltaSeconds) override;
     void RetryEncounter();

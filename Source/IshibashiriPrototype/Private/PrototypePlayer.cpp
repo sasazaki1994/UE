@@ -30,6 +30,16 @@
 #include "Misc/PackageName.h"
 #include "MotionWarpingComponent.h"
 
+namespace
+{
+    // Index order must match ClipNames below and the AN_Shirotsura_* assets.
+    enum class EShirotsuraClip : int32 { Idle, Walk, Run, Slash, Dodge, Climb, Hang, Grip, Jump, Death, Count };
+    const TCHAR* const ClipNames[] = {TEXT("Idle"),TEXT("Walk"),TEXT("Run"),TEXT("Slash"),TEXT("Dodge"),
+        TEXT("Climb"),TEXT("Hang"),TEXT("Grip"),TEXT("Jump"),TEXT("Death")};
+    static_assert(UE_ARRAY_COUNT(ClipNames) == static_cast<int32>(EShirotsuraClip::Count), "Clip names must match EShirotsuraClip");
+    constexpr int32 ClipIndex(EShirotsuraClip Clip) { return static_cast<int32>(Clip); }
+}
+
 APrototypePlayer::APrototypePlayer()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -102,9 +112,7 @@ APrototypePlayer::APrototypePlayer()
     GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
     GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
     if (Rigged.Succeeded()) { Body->SetVisibility(false); Sword->SetVisibility(false); }
-    const TCHAR* Clips[] = {TEXT("Idle"),TEXT("Walk"),TEXT("Run"),TEXT("Slash"),TEXT("Dodge"),
-        TEXT("Climb"),TEXT("Hang"),TEXT("Grip"),TEXT("Jump"),TEXT("Death")};
-    for (const TCHAR* Clip : Clips)
+    for (const TCHAR* Clip : ClipNames)
         Animations.Add(LoadObject<UAnimSequence>(nullptr,*FString::Printf(TEXT("/Game/Characters/Rigged/Shirotsura/AN_Shirotsura_%s"),Clip)));
 }
 
@@ -174,8 +182,7 @@ void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
     const float BossMargin = bUsingRaisedCamera ? 120.f : 70.f;
     bBossObstructsView |= Boss && Boss->GetComponentsBoundingBox(true).ExpandBy(BossMargin).IsInside(OutResult.Location);
     const bool bNeedsRaisedCamera = FVector::Dist(PlayerLocation, OutResult.Location) < SafeDistance
-        || bBossObstructsView
-        || (Boss && Boss->GetComponentsBoundingBox(true).ExpandBy(BossMargin).IsInside(OutResult.Location));
+        || bBossObstructsView;
     if (!bUsingRaisedCamera && !bNeedsRaisedCamera) return;
 
     FCollisionQueryParams Params(SCENE_QUERY_STAT(RaisedCombatCamera), false, this);
@@ -278,14 +285,47 @@ void APrototypePlayer::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("ArmSense"),IE_Released,this,&APrototypePlayer::ArmSenseReleased);
 }
 
-void APrototypePlayer::ConfigureSenseTargets(AIshibashiriBoss* Boss){SenseBoss=Boss;Sense->ClearBoundaryTargets();for(int32 I=0;Boss&&I<3;++I)Sense->RegisterBoundaryTarget(Boss->GetCoreKakon(I),I==0);}
-void APrototypePlayer::BoundarySensePressed(){Sense->BeginBoundarySense();} void APrototypePlayer::BoundarySenseReleased(){Sense->EndBoundarySense();}
-void APrototypePlayer::ArmSensePressed(){Sense->BeginCorruptionSense();Sense->SetCorruptionWarning(SenseBoss&&(SenseBoss->IsBuckWarning()||SenseBoss->GetState()==EIshibashiriState::Telegraph||SenseBoss->GetState()==EIshibashiriState::Charge)?ECorruptionWarning::Danger:SenseBoss&&SenseBoss->GetState()==EIshibashiriState::Recover?ECorruptionWarning::Safe:ECorruptionWarning::None);} void APrototypePlayer::ArmSenseReleased(){Sense->EndCorruptionSense();}
+void APrototypePlayer::ConfigureSenseTargets(AIshibashiriBoss* Boss)
+{
+    SenseBoss = Boss;
+    Sense->ClearBoundaryTargets();
+    for (int32 I = 0; Boss && I < Boss->GetCoreKakonCount(); ++I)
+        Sense->RegisterBoundaryTarget(Boss->GetCoreKakon(I), I == 0);
+}
+
+ECorruptionWarning APrototypePlayer::ComputeCorruptionWarning() const
+{
+    if (!SenseBoss) return ECorruptionWarning::None;
+    const EIshibashiriState State = SenseBoss->GetState();
+    if (SenseBoss->IsBuckWarning() || State == EIshibashiriState::Telegraph || State == EIshibashiriState::Charge)
+        return ECorruptionWarning::Danger;
+    return State == EIshibashiriState::Recover ? ECorruptionWarning::Safe : ECorruptionWarning::None;
+}
+
+void APrototypePlayer::UpdateSenseFromBoss()
+{
+    if (SenseBoss)
+    {
+        const int32 Current = SenseBoss->GetPurifiedCount();
+        for (int32 I = 0; I < SenseBoss->GetCoreKakonCount(); ++I)
+            Sense->SetBoundaryTargetAvailable(SenseBoss->GetCoreKakon(I), I == Current);
+    }
+    if (Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(ComputeCorruptionWarning());
+}
+
+void APrototypePlayer::BoundarySensePressed() { Sense->BeginBoundarySense(); }
+void APrototypePlayer::BoundarySenseReleased() { Sense->EndBoundarySense(); }
+void APrototypePlayer::ArmSensePressed() { Sense->BeginCorruptionSense(); Sense->SetCorruptionWarning(ComputeCorruptionWarning()); }
+void APrototypePlayer::ArmSenseReleased() { Sense->EndCorruptionSense(); }
 
 bool APrototypePlayer::CanAct() const
 {
-    const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
-    return Health > 0 && Mode && Mode->IsEncounterActive();
+    if (Health <= 0) return false;
+    const AGameModeBase* BaseMode = GetWorld()->GetAuthGameMode();
+    // Non-combat chapters (IshibashiriApproach) reuse this pawn under a plain
+    // AGameModeBase. Without an encounter to gate on, the pawn is free to move.
+    const APrototypeGameMode* Mode = Cast<APrototypeGameMode>(BaseMode);
+    return Mode ? Mode->IsEncounterActive() : BaseMode != nullptr;
 }
 
 void APrototypePlayer::MoveForward(float Value)
@@ -443,15 +483,19 @@ void APrototypePlayer::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     PresentationTime += FMath::Max(0.f, DeltaSeconds);
-    for(int32 I=0;SenseBoss&&I<3;++I) Sense->SetBoundaryTargetAvailable(SenseBoss->GetCoreKakon(I),I==SenseBoss->GetPurifiedCount()); if(Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(SenseBoss&&(SenseBoss->IsBuckWarning()||SenseBoss->GetState()==EIshibashiriState::Telegraph||SenseBoss->GetState()==EIshibashiriState::Charge)?ECorruptionWarning::Danger:SenseBoss&&SenseBoss->GetState()==EIshibashiriState::Recover?ECorruptionWarning::Safe:ECorruptionWarning::None);
+    UpdateSenseFromBoss();
     UpdateAnimation();
     UpdateClimbingIK();
+    // Presentation keeps decaying after Victory/Defeat so the last feedback line
+    // and the sword swing do not freeze on screen.
+    FeedbackRemaining = FMath::Max(0.f, FeedbackRemaining - DeltaSeconds);
+    if (FeedbackRemaining == 0.f) Feedback.Empty();
+    const float Swing = IsAttacking() ? FMath::Lerp(-65.f, 65.f, 1.f - AttackRemaining / AttackDuration) : 0.f;
+    Sword->SetRelativeRotation(FRotator(0.f, Swing, 0.f));
     if (!CanAct()) return;
     DodgeCooldownRemaining = FMath::Max(0.f, DodgeCooldownRemaining - DeltaSeconds);
     AttackCooldownRemaining = FMath::Max(0.f, AttackCooldownRemaining - DeltaSeconds);
     HurtInvulnerabilityRemaining = FMath::Max(0.f, HurtInvulnerabilityRemaining - DeltaSeconds);
-    FeedbackRemaining = FMath::Max(0.f, FeedbackRemaining - DeltaSeconds);
-    if (FeedbackRemaining == 0.f) Feedback.Empty();
     if (GrabComponent->IsGrabbing()) GrabComponent->Climb(ForwardInput, RightInput, DeltaSeconds);
 
     if (IsDodging())
@@ -468,8 +512,6 @@ void APrototypePlayer::Tick(float DeltaSeconds)
         if (!Climbing->IsClimbing()) TraceAttack();
         AttackRemaining = FMath::Max(0.f, AttackRemaining - DeltaSeconds);
     }
-    const float Swing = IsAttacking() ? FMath::Lerp(-65.f, 65.f, 1.f - AttackRemaining / AttackDuration) : 0.f;
-    Sword->SetRelativeRotation(FRotator(0.f, Swing, 0.f));
     GetCharacterMovement()->bOrientRotationToMovement = !IsAttacking() && !IsDodging() && !IsGrabbing();
     if (BodyMaterial)
     {
@@ -582,15 +624,28 @@ void APrototypePlayer::UpdateAnimation()
         if (HideWeapon) GetMesh()->HideBoneByName(TEXT("weapon"),EPhysBodyOp::PBO_None);
         else GetMesh()->UnHideBoneByName(TEXT("weapon"));
     }
-    int32 Next = Health <= 0 ? 9 : IsDodging() ? 4 : IsAttacking() ? 3
-        : Climb ? (Climbing->GetBoss()->IsBucking() ? 7 : Climbing->IsMoving() ? 5 : Climbing->IsResting() ? 0 : 6)
-        : GrabComponent->IsGrabbing() ? (FMath::Abs(ForwardInput)+FMath::Abs(RightInput) > .01f ? 5 : 6)
-        : GetCharacterMovement()->IsFalling() ? 8 : GetVelocity().Size2D()>300.f ? 2 : GetVelocity().Size2D()>5.f ? 1 : 0;
+    EShirotsuraClip Clip = EShirotsuraClip::Idle;
+    if (Health <= 0) Clip = EShirotsuraClip::Death;
+    else if (IsDodging()) Clip = EShirotsuraClip::Dodge;
+    else if (IsAttacking()) Clip = EShirotsuraClip::Slash;
+    else if (Climb)
+    {
+        if (Climbing->GetBoss()->IsBucking()) Clip = EShirotsuraClip::Grip;
+        else if (Climbing->IsMoving()) Clip = EShirotsuraClip::Climb;
+        else Clip = Climbing->IsResting() ? EShirotsuraClip::Idle : EShirotsuraClip::Hang;
+    }
+    else if (GrabComponent->IsGrabbing())
+        Clip = FMath::Abs(ForwardInput)+FMath::Abs(RightInput) > .01f ? EShirotsuraClip::Climb : EShirotsuraClip::Hang;
+    else if (GetCharacterMovement()->IsFalling()) Clip = EShirotsuraClip::Jump;
+    else if (GetVelocity().Size2D() > 300.f) Clip = EShirotsuraClip::Run;
+    else if (GetVelocity().Size2D() > 5.f) Clip = EShirotsuraClip::Walk;
+    const int32 Next = ClipIndex(Clip);
     if (Next != CurrentAnimation && Animations.IsValidIndex(Next) && Animations[Next])
     {
         CurrentAnimation = Next;
-        GetMesh()->PlayAnimation(Animations[Next],Next != 3 && Next != 4 && Next != 9);
-        GetMesh()->SetPlayRate(Next == 4 ? .6f/DodgeDuration : 1.f);
+        const bool bLoop = Clip != EShirotsuraClip::Slash && Clip != EShirotsuraClip::Dodge && Clip != EShirotsuraClip::Death;
+        GetMesh()->PlayAnimation(Animations[Next], bLoop);
+        GetMesh()->SetPlayRate(Clip == EShirotsuraClip::Dodge ? .6f/DodgeDuration : 1.f);
     }
 }
 
@@ -601,7 +656,7 @@ void APrototypePlayer::Retry()
 
 bool APrototypePlayer::HasImportedVisuals() const
 {
-    if (!GetMesh()->GetSkeletalMeshAsset() || Body->IsVisible() || Sword->IsVisible() || Animations.Num() != 10) return false;
+    if (!GetMesh()->GetSkeletalMeshAsset() || Body->IsVisible() || Sword->IsVisible() || Animations.Num() != ClipIndex(EShirotsuraClip::Count)) return false;
     for (const UAnimSequence* Clip : Animations) if (!Clip) return false;
     return GetMesh()->GetMaterial(0) != nullptr;
 }

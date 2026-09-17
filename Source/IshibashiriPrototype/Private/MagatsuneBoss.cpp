@@ -1,8 +1,7 @@
 #include "MagatsuneBoss.h"
 #include "MagatsunePlayer.h"
 #include "PlayerSenseComponent.h"
-#include "Misc/CommandLine.h"
-#include "Misc/Parse.h"
+#include "DebugGuidance.h"
 #include "KakonActor.h"
 #include "NushiProgressComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -11,7 +10,6 @@
 #include "UObject/ConstructorHelpers.h"
 #include "PrimitiveAppearance.h"
 
-constexpr int32 AMagatsuneBoss::KakonNodes[3];
 AMagatsuneBoss::AMagatsuneBoss()
 {
     PrimaryActorTick.bCanEverTick=true; SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("MagatsuneRoot")));
@@ -19,13 +17,12 @@ AMagatsuneBoss::AMagatsuneBoss()
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Cube(TEXT("/Engine/BasicShapes/Cube.Cube"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
     static ConstructorHelpers::FObjectFinder<UMaterialInterface> Material(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
-    BuildPrimitive(Sphere.Object,Material.Object,TEXT("CentralCore"),MovingRoot,{500,0,720},{5.5,5.5,7},FLinearColor(.035,.02,.055));
-    for(int32 I=0;I<9;++I) { const float A=I*.72f; BuildPrimitive(Cube.Object,Material.Object,*FString::Printf(TEXT("CorruptedRoot%d"),I),MovingRoot,{I*170.f-350,FMath::Sin(A)*330.f,110+I*65.f},{2.4,1.25,3.1},FLinearColor(.025,.018,.03)); }
-    for(int32 I=0;I<RouteNodeCount;++I) { BuildPrimitive(Sphere.Object,Material.Object,*FString::Printf(TEXT("Route%d"),I),MovingRoot,GetRouteLocal(I),{.32,.32,.32},FLinearColor(.08,.75,.5)); RouteMarkers.Add(Cast<UStaticMeshComponent>(GetDefaultSubobjectByName(*FString::Printf(TEXT("Route%d"),I)))); }
+    BuildPrimitive(Sphere.Object,Material.Object,TEXT("CentralCore"),MovingRoot,{500,0,720},{5.5,5.5,7});
+    for(int32 I=0;I<9;++I) { const float A=I*.72f; BuildPrimitive(Cube.Object,Material.Object,*FString::Printf(TEXT("CorruptedRoot%d"),I),MovingRoot,{I*170.f-350,FMath::Sin(A)*330.f,110+I*65.f},{2.4,1.25,3.1}); }
+    for(int32 I=0;I<RouteNodeCount;++I) { BuildPrimitive(Sphere.Object,Material.Object,*FString::Printf(TEXT("Route%d"),I),MovingRoot,GetRouteLocal(I),{.32,.32,.32}); RouteMarkers.Add(Cast<UStaticMeshComponent>(GetDefaultSubobjectByName(*FString::Printf(TEXT("Route%d"),I)))); }
 }
-void AMagatsuneBoss::BuildPrimitive(UStaticMesh* Mesh,UMaterialInterface* Material,const TCHAR* Name,USceneComponent* Parent,FVector At,FVector Scale,FLinearColor Color)
+void AMagatsuneBoss::BuildPrimitive(UStaticMesh* Mesh,UMaterialInterface* Material,const TCHAR* Name,USceneComponent* Parent,FVector At,FVector Scale)
 {
-    (void)Color; // Runtime dynamic colors are applied together in BeginPlay.
     auto* Part=CreateDefaultSubobject<UStaticMeshComponent>(Name); Part->SetupAttachment(Parent); Part->SetStaticMesh(Mesh); Part->SetMaterial(0,Material); Part->SetRelativeLocation(At); Part->SetRelativeScale3D(Scale); Part->SetCollisionEnabled(ECollisionEnabled::NoCollision); Part->SetCanEverAffectNavigation(false);
 }
 FVector AMagatsuneBoss::GetRouteLocal(int32 N) const
@@ -81,5 +78,9 @@ void AMagatsuneBoss::HandlePurified(AKakonActor* K)
     if(I<2) { Phase=I==0?EMagatsunePhase::RootRockRoute:EMagatsunePhase::FinalRise; PhaseTime=0; bPulseResolved=false; ++Telemetry.PhaseTransitions; GetKakon(I+1)->SetActorHiddenInGame(false); GetKakon(I+1)->ApplyShellDamage(GetKakon(I+1)->MaxShellHealth); RefreshRoutes(); }
     else { Telemetry.ClearSeconds=Telemetry.Elapsed; Phase=EMagatsunePhase::Calming; CalmTime=0; }
 }
-void AMagatsuneBoss::RefreshRoutes() { const bool Reveal=FParse::Param(FCommandLine::Get(),TEXT("DebugGuidance"))||(Player&&Player->GetSense()->IsBoundarySenseActive());for(int32 I=0;I<RouteMarkers.Num();++I) RouteMarkers[I]->SetVisibility(Reveal&&IsRouteNodeEnabled(I)); }
+void AMagatsuneBoss::RefreshRoutes()
+{
+    const bool Reveal=IsDebugGuidanceEnabled()||(Player&&Player->GetSense()->IsBoundarySenseActive());
+    for(int32 I=0;I<RouteMarkers.Num();++I) RouteMarkers[I]->SetVisibility(Reveal&&IsRouteNodeEnabled(I));
+}
 void AMagatsuneBoss::LogTelemetry(const TCHAR* E) const { UE_LOG(LogTemp,Display,TEXT("MAGATSUNE_TELEMETRY %s grab=%d/%d transitions=%d kakon=%d cling=%.2f pulses=%d falls=%d recovery=%d exhaustion=%d retry=%d elapsed=%.2f clear=%.2f"),E,Telemetry.GrabSuccesses,Telemetry.GrabAttempts,Telemetry.PhaseTransitions,Telemetry.KakonPurified,Telemetry.ClingSeconds,Telemetry.LargePulses,Telemetry.Falls,Telemetry.Recoveries,Telemetry.Exhaustions,Telemetry.Retries,Telemetry.Elapsed,Telemetry.ClearSeconds); }

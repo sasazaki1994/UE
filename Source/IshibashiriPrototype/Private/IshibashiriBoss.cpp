@@ -6,8 +6,7 @@
 #include "PrototypeGameMode.h"
 #include "PrototypePlayer.h"
 #include "PlayerSenseComponent.h"
-#include "Misc/CommandLine.h"
-#include "Misc/Parse.h"
+#include "DebugGuidance.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "PrimitiveAppearance.h"
 #include "ColossusClimbingComponent.h"
@@ -39,6 +38,10 @@ namespace
         {-1,7,-1,-1}, {-1,10,-1,-1}, {9,5,9,5}
     };
     const FVector Cores[] = {{218,-155,611}, {0,60,784}, {-122,305,688}};
+
+    // Index order must match the AN_Ishibashiri_* clip list loaded in the constructor.
+    enum class EIshibashiriClip : int32 { Idle, Walk, Charge, Buck, Calmed, Count };
+    constexpr int32 ClipIndex(EIshibashiriClip Clip) { return static_cast<int32>(Clip); }
 }
 
 AIshibashiriBoss::AIshibashiriBoss()
@@ -181,7 +184,7 @@ void AIshibashiriBoss::ResetNushi()
     VisualTime = 0.f;
     PurifyPresentationRemaining.Init(0.f, CoreMarkers.Num());
     RiderTime = 0.f; AnimationIndex = INDEX_NONE;
-    for (int32 I=0; I<3; ++I)
+    for (int32 I=0; I<CoreMarkers.Num(); ++I)
     {
         CoreMarkers[I]->SetVisibility(true);
         Creature->UnHideBoneByName(*FString::Printf(TEXT("core_%d"),I));
@@ -343,7 +346,7 @@ void AIshibashiriBoss::UpdateVisuals()
     else if (DisplayState == EIshibashiriState::Recover) Color = FLinearColor(0.8f, 0.5f, 0.08f);
     else if (DisplayState == EIshibashiriState::Calmed) Color = FLinearColor(0.3f, 0.6f, 0.9f);
     SetPrimitiveColor(BodyMaterial, Color);
-    const bool Debug=FParse::Param(FCommandLine::Get(),TEXT("DebugGuidance"));
+    const bool Debug=IsDebugGuidanceEnabled();
     const bool SenseActive=Target&&Target->GetSense()->IsBoundarySenseActive();
     for(int32 I=0;I<CoreMarkers.Num();++I)
     {
@@ -441,7 +444,7 @@ bool AIshibashiriBoss::TryPurifyCore(const FVector& Position)
 {
     APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Mode || !Mode->IsEncounterActive() || !Target || !Target->GetClimbing()->IsResting() || IsBucking()) return false;
-    for (int32 I=0; I<3; ++I)
+    for (int32 I=0; I<CoreKakons.Num(); ++I)
     {
         AKakonActor* Kakon = GetCoreKakon(I);
         if (Kakon && FVector::Dist(Position,Kakon->GetActorLocation()) < 170.f && Kakon->Purify())
@@ -458,17 +461,22 @@ bool AIshibashiriBoss::TryPurifyCore(const FVector& Position)
 void AIshibashiriBoss::UpdateCreatureAnimation()
 {
     const bool Rider = Target && Target->IsGrabbing();
-    int32 Next = GetState() == EIshibashiriState::Calmed ? 4 : IsBucking() ? 3
-        : Rider ? 1 : State == EIshibashiriState::Charge ? 2 : State == EIshibashiriState::Chase ? 1 : 0;
+    EIshibashiriClip Clip = EIshibashiriClip::Idle;
+    if (GetState() == EIshibashiriState::Calmed) Clip = EIshibashiriClip::Calmed;
+    else if (IsBucking()) Clip = EIshibashiriClip::Buck;
+    else if (Rider || State == EIshibashiriState::Chase) Clip = EIshibashiriClip::Walk;
+    else if (State == EIshibashiriState::Charge) Clip = EIshibashiriClip::Charge;
+    const int32 Next = ClipIndex(Clip);
     if (Next != AnimationIndex && CreatureAnimations.IsValidIndex(Next) && CreatureAnimations[Next])
     {
-        AnimationIndex = Next; Creature->PlayAnimation(CreatureAnimations[Next],Next != 4);
+        AnimationIndex = Next;
+        Creature->PlayAnimation(CreatureAnimations[Next], Clip != EIshibashiriClip::Calmed);
     }
 }
 
 bool AIshibashiriBoss::HasImportedVisuals() const
 {
-    if (!Creature->GetSkeletalMeshAsset() || Body->IsVisible() || CreatureAnimations.Num() != 5) return false;
+    if (!Creature->GetSkeletalMeshAsset() || Body->IsVisible() || CreatureAnimations.Num() != ClipIndex(EIshibashiriClip::Count)) return false;
     for (const UAnimSequence* Clip : CreatureAnimations) if (!Clip) return false;
     return Creature->GetMaterial(0) != nullptr;
 }

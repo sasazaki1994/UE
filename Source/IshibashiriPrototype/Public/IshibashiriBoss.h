@@ -42,6 +42,7 @@ public:
     bool IsBucking() const;
     bool IsBuckWarning() const;
     int32 GetPurifiedCount() const;
+    int32 GetCoreKakonCount() const { return CoreKakons.Num(); }
     AKakonActor* GetCoreKakon(int32 Index) const;
     USkeletalMeshComponent* GetVisualMesh() const { return Creature; }
 

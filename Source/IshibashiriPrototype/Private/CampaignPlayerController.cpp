@@ -20,12 +20,15 @@ void ACampaignPlayerController::Confirm(){if(auto* Mode=GetWorld()->GetAuthGameM
 void ACampaignPlayerController::PlayerTick(float DeltaTime)
 {
     Super::PlayerTick(DeltaTime);
-    if(!FParse::Param(FCommandLine::Get(),TEXT("CampaignE2E")))return;
+    static const bool bCampaignE2E=FParse::Param(FCommandLine::Get(),TEXT("CampaignE2E"));
+    static const bool bCapture=FParse::Param(FCommandLine::Get(),TEXT("PrototypeCapture"));
+    static const bool bGamepad=FParse::Param(FCommandLine::Get(),TEXT("CampaignGamepad"));
+    if(!bCampaignE2E)return;
     AutoConfirmSeconds+=DeltaTime;
     const auto* Campaign=GetGameInstance<UCampaignGameInstance>();
     if(Campaign&&Campaign->GetCampaignState()==ECampaignState::Completed)
     {
-        if(!bCompleted&&FParse::Param(FCommandLine::Get(),TEXT("PrototypeCapture")))
+        if(!bCompleted&&bCapture)
         {
             FString RunId;FParse::Value(FCommandLine::Get(),TEXT("PrototypeTestRun="),RunId);
             const FString Dir=FPaths::ProjectSavedDir()/TEXT("Screenshots/Campaign")/RunId;IFileManager::Get().MakeDirectory(*Dir,true);
@@ -39,7 +42,7 @@ void ACampaignPlayerController::PlayerTick(float DeltaTime)
     }
     if(AutoConfirmSeconds<.35f)return;
     AutoConfirmSeconds=0.f;
-    if(Campaign&&FParse::Param(FCommandLine::Get(),TEXT("PrototypeCapture")))
+    if(Campaign&&bCapture)
     {
         const TCHAR* Name=nullptr;
         switch(Campaign->GetCampaignState())
@@ -50,7 +53,7 @@ void ACampaignPlayerController::PlayerTick(float DeltaTime)
         }
         if(Name){FString RunId;FParse::Value(FCommandLine::Get(),TEXT("PrototypeTestRun="),RunId);const FString Dir=FPaths::ProjectSavedDir()/TEXT("Screenshots/Campaign")/RunId;IFileManager::Get().MakeDirectory(*Dir,true);FScreenshotRequest::RequestScreenshot(Dir/Name,false,false);}
     }
-    const FKey Key=FParse::Param(FCommandLine::Get(),TEXT("CampaignGamepad"))?EKeys::Gamepad_FaceButton_Left:EKeys::LeftMouseButton;
+    const FKey Key=bGamepad?EKeys::Gamepad_FaceButton_Left:EKeys::LeftMouseButton;
     InputKey(FInputKeyEventArgs::CreateSimulated(Key,IE_Pressed,1.f));
     InputKey(FInputKeyEventArgs::CreateSimulated(Key,IE_Released,0.f));
 }

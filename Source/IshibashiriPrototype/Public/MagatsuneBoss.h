@@ -52,7 +52,8 @@ public:
     UPROPERTY(EditAnywhere,Category="Magatsune") float CalmSeconds=2.f;
 private:
     UFUNCTION() void HandlePurified(AKakonActor* Kakon);
-    void BuildPrimitive(UStaticMesh* Mesh,UMaterialInterface* Material,const TCHAR* Name,USceneComponent* Parent,FVector At,FVector Scale,FLinearColor Color);
+    // Colors are applied together in BeginPlay once dynamic material instances exist.
+    void BuildPrimitive(UStaticMesh* Mesh,UMaterialInterface* Material,const TCHAR* Name,USceneComponent* Parent,FVector At,FVector Scale);
     void RefreshRoutes();
     UPROPERTY() TObjectPtr<USceneComponent> MovingRoot;
     UPROPERTY() TObjectPtr<AActor> GrabFrame;

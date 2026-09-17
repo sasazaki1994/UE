@@ -2,8 +2,7 @@
 #include "FuchimatoiArena.h"
 #include "FuchimatoiPlayer.h"
 #include "PlayerSenseComponent.h"
-#include "Misc/CommandLine.h"
-#include "Misc/Parse.h"
+#include "DebugGuidance.h"
 #include "FuchimatoiRouteAnchor.h"
 #include "FuchimatoiSimulationComponent.h"
 #include "KakonActor.h"
@@ -261,14 +260,14 @@ void AFuchimatoiBoss::UpdateBody()
             Segment->SetRelativeScale3D(FVector(Width,Width,Along.Size()/100.f));
         }
     }
+    const bool SenseReveal=IsDebugGuidanceEnabled()||(Player&&Player->GetSense()->IsBoundarySenseActive());
+    const int32 Current=Player?Player->GetRouteNode():INDEX_NONE;
+    const int32 Next=Player?Player->GetGuidanceNode():INDEX_NONE;
+    const bool bMounted=Player && Player->IsMounted();
     for (int32 Node=0; Node<RouteNodeCount; ++Node)
     {
         if (BodyForNode[Node]>=0) RouteAnchors[Node]->SetActorRelativeLocation(Points[BodyForNode[Node]]+FVector(0,0,178));
-        const int32 Current=Player?Player->GetRouteNode():INDEX_NONE;
-        const bool bMounted=Player && Player->IsMounted();
         const bool bHeadGrab=Node==0 && CanMount() && !bMounted;
-        const int32 Next=Player?Player->GetGuidanceNode():INDEX_NONE;
-        const bool SenseReveal=FParse::Param(FCommandLine::Get(),TEXT("DebugGuidance"))||(Player&&Player->GetSense()->IsBoundarySenseActive());
         RouteAnchors[Node]->SetGuidance(bHeadGrab || (SenseReveal && bMounted && (Node==Current || Node==Next)
             && (Node<=3 || IsCoilingComplete())),bHeadGrab || Node==Next,bHeadGrab);
     }
@@ -278,7 +277,6 @@ void AFuchimatoiBoss::UpdateBody()
         const bool bPurified=KakonActors[I]->GetState()==EKakonState::Purified;
         const bool bActive=!bPurified && (I==0 || (IsCoilingComplete()
             && KakonActors[I-1]->GetState()==EKakonState::Purified));
-        const bool SenseReveal=FParse::Param(FCommandLine::Get(),TEXT("DebugGuidance"))||(Player&&Player->GetSense()->IsBoundarySenseActive());
         KakonMarkers[I]->SetVisibility(SenseReveal&&!bPurified);
         KakonMarkers[I]->SetRelativeScale3D(FVector(bActive?.85f:.4f));
         SetPrimitiveColor(Cast<UMaterialInstanceDynamic>(KakonMarkers[I]->GetMaterial(0)),

@@ -1,9 +1,9 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "PlayerSenseComponent.h"
 #include "MagatsunePlayer.generated.h"
 class AMagatsuneBoss; class UGrabComponent; class UStaminaComponent;
-class UPlayerSenseComponent;
 UCLASS()
 class ISHIBASHIRIPROTOTYPE_API AMagatsunePlayer : public ACharacter
 {
@@ -21,6 +21,8 @@ public:
 private:
     void Forward(float V); void Right(float V); void Turn(float V); void Look(float V); void GrabPressed(); void GrabReleased(){bGripHeld=false;} void JumpPressed(); void PurifyPressed(); void RetryPressed();
     void BoundarySensePressed(); void BoundarySenseReleased(); void ArmSensePressed(); void ArmSenseReleased();
+    ECorruptionWarning ComputeCorruptionWarning() const;
+    void UpdateSenseFromBoss();
     UPROPERTY() TObjectPtr<AMagatsuneBoss> Boss; UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> Grab; UPROPERTY(VisibleAnywhere) TObjectPtr<UStaminaComponent> Stamina;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UPlayerSenseComponent> Sense;
     int32 Node=INDEX_NONE,Destination=INDEX_NONE; float ForwardInput=0,MoveProgress=0,RouteDelay=0,RecoveryGrace=0; bool bGripHeld=false,bFalling=false,bRecovering=false;

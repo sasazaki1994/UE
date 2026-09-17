@@ -96,7 +96,8 @@ void AMinedakiPlayer::Fall(bool bExhausted)
 }
 void AMinedakiPlayer::Tick(float Dt)
 {
-    Super::Tick(Dt); for(int32 I=0;Boss&&I<3;++I) Sense->SetBoundaryTargetAvailable(Boss->GetKakon(I), I==Boss->GetNushiProgressComponent()->GetPurifiedCount()); if(Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(Boss && Boss->GetActionState()==EMinedakiActionState::Shaking ? ECorruptionWarning::Danger : Boss && Boss->IsBodyTransitioning() ? ECorruptionWarning::Transition : ECorruptionWarning::None);
+    Super::Tick(Dt);
+    UpdateSenseFromBoss();
     if(!Boss || !FMath::IsFinite(Dt) || Dt<=0) return;
     if(bFallen)
     {
@@ -151,5 +152,22 @@ void AMinedakiPlayer::CalcCamera(float Dt,FMinimalViewInfo& View)
     View.Rotation=(Focus-View.Location).Rotation(); View.FOV=80;
 }
 
+ECorruptionWarning AMinedakiPlayer::ComputeCorruptionWarning() const
+{
+    if(!Boss) return ECorruptionWarning::None;
+    if(Boss->GetActionState()==EMinedakiActionState::Shaking) return ECorruptionWarning::Danger;
+    return Boss->IsBodyTransitioning() ? ECorruptionWarning::Transition : ECorruptionWarning::None;
+}
+
+void AMinedakiPlayer::UpdateSenseFromBoss()
+{
+    if(Boss)
+    {
+        const int32 Current=Boss->GetNushiProgressComponent()->GetPurifiedCount();
+        for(int32 I=0;I<3;++I) Sense->SetBoundaryTargetAvailable(Boss->GetKakon(I), I==Current);
+    }
+    if(Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(ComputeCorruptionWarning());
+}
+
 void AMinedakiPlayer::BoundarySensePressed(){Sense->BeginBoundarySense();if(Boss)Boss->RefreshSenseGuidance();} void AMinedakiPlayer::BoundarySenseReleased(){Sense->EndBoundarySense();if(Boss)Boss->RefreshSenseGuidance();}
-void AMinedakiPlayer::ArmSensePressed(){Sense->BeginCorruptionSense(); Sense->SetCorruptionWarning(Boss && (Boss->GetActionState()==EMinedakiActionState::Shaking) ? ECorruptionWarning::Danger : Boss && Boss->IsBodyTransitioning() ? ECorruptionWarning::Transition : ECorruptionWarning::None);} void AMinedakiPlayer::ArmSenseReleased(){Sense->EndCorruptionSense();}
+void AMinedakiPlayer::ArmSensePressed(){Sense->BeginCorruptionSense(); Sense->SetCorruptionWarning(ComputeCorruptionWarning());} void AMinedakiPlayer::ArmSenseReleased(){Sense->EndCorruptionSense();}

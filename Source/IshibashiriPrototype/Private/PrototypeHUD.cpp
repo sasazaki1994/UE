@@ -5,12 +5,11 @@
 #include "PlayerSenseComponent.h"
 #include "IshibashiriBoss.h"
 #include "ColossusClimbingComponent.h"
+#include "DebugGuidance.h"
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
-#include "Misc/CommandLine.h"
-#include "Misc/Parse.h"
 
 void APrototypeHUD::DrawHUD()
 {
@@ -20,7 +19,7 @@ void APrototypeHUD::DrawHUD()
     if (!Mode) return;
     const APrototypePlayer* Player = Mode->GetPlayer();
     const AIshibashiriBoss* Boss = Mode->GetBoss();
-    const bool bDebugGuidance = FParse::Param(FCommandLine::Get(), TEXT("DebugGuidance"));
+    const bool bDebugGuidance = IsDebugGuidanceEnabled();
     const float Scale = FMath::Clamp(Canvas->ClipY / 900.f, 0.65f, 1.4f);
     if (Player && Mode->IsEncounterActive() && PlayerOwner && !Player->IsGrabbing())
     {
