@@ -418,7 +418,9 @@ void APrototypePlayer::Dodge()
 
 void APrototypePlayer::Attack()
 {
-    if (!CanAct() || IsDodging() || GrabComponent->IsGrabbing() || AttackCooldownRemaining > 0.f) return;
+    // Route climbing handles its own purify swing below; the local-space grab and
+    // the grab Motion Warp must not be interrupted by a ground slash rotation.
+    if (!CanAct() || IsDodging() || GrabComponent->IsGrabbing() || Climbing->IsGrabWarping() || AttackCooldownRemaining > 0.f) return;
     if (Climbing->IsClimbing())
     {
         if (!Climbing->IsResting()) return;
