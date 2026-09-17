@@ -30,12 +30,15 @@ void AIshibashiriApproachGameMode::StartPlay()
     Player = GetWorld()->SpawnActor<APrototypePlayer>(
         APrototypePlayer::StaticClass(), FTransform(FRotator::ZeroRotator, Arena->GetPlayerStart()), P);
     SenseTarget = GetWorld()->SpawnActor<AActor>(AActor::StaticClass(), Arena->GetBasinGate(), FRotator::ZeroRotator);
-    if (auto* Controller = UGameplayStatics::GetPlayerController(this, 0); Controller && Player)
+    APlayerController* Controller = UGameplayStatics::GetPlayerController(this, 0);
+    if (!Player || !Controller)
     {
-        Controller->Possess(Player);
-        Controller->SetInputMode(FInputModeGameOnly());
+        UE_LOG(LogTemp, Error, TEXT("APPROACH_SPAWN_FAILED player=%d controller=%d. Use Play, not Simulate."), Player != nullptr, Controller != nullptr);
+        return;
     }
-    if (Player && SenseTarget) Player->GetSense()->RegisterBoundaryTarget(SenseTarget, true);
+    Controller->Possess(Player);
+    Controller->SetInputMode(FInputModeGameOnly());
+    if (SenseTarget) Player->GetSense()->RegisterBoundaryTarget(SenseTarget, true);
     const bool bCampaignE2E = FParse::Param(FCommandLine::Get(), TEXT("CampaignE2E"));
     bStandaloneApproachTest = FParse::Param(FCommandLine::Get(), TEXT("ApproachTest")) && !bCampaignE2E;
     bAutomationDriving = bStandaloneApproachTest || bCampaignE2E;
@@ -51,8 +54,7 @@ void AIshibashiriApproachGameMode::StartPlay()
         // The path is ~1.3 km at 6 m/s. Three times that budget marks a stuck walk
         // instead of letting the process (and Prototype.ps1) wait forever.
         AutomationTimeout = FMath::Max(120.f, Arena->GetPathLengthMeters() / 6.f * 3.f);
-        if (auto* C = UGameplayStatics::GetPlayerController(this, 0))
-            C->InputKey(FInputKeyEventArgs::CreateSimulated(EKeys::W, IE_Pressed, 1.f));
+        Controller->InputKey(FInputKeyEventArgs::CreateSimulated(EKeys::W, IE_Pressed, 1.f));
     }
     UE_LOG(LogTemp, Display, TEXT("APPROACH_READY path_m=%.1f expected_minutes=3-5 combat=false"), Arena->GetPathLengthMeters());
 }

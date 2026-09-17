@@ -36,7 +36,7 @@ namespace
     enum class EShirotsuraClip : int32 { Idle, Walk, Run, Slash, Dodge, Climb, Hang, Grip, Jump, Death, Count };
     const TCHAR* const ClipNames[] = {TEXT("Idle"),TEXT("Walk"),TEXT("Run"),TEXT("Slash"),TEXT("Dodge"),
         TEXT("Climb"),TEXT("Hang"),TEXT("Grip"),TEXT("Jump"),TEXT("Death")};
-    static_assert(UE_ARRAY_COUNT(ClipNames) == static_cast<int32>(EShirotsuraClip::Count), "Clip names must match EShirotsuraClip");
+    static_assert(static_cast<int32>(UE_ARRAY_COUNT(ClipNames)) == static_cast<int32>(EShirotsuraClip::Count), "Clip names must match EShirotsuraClip");
     constexpr int32 ClipIndex(EShirotsuraClip Clip) { return static_cast<int32>(Clip); }
 }
 
