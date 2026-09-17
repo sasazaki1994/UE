@@ -262,10 +262,10 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
         {
             if (!ToPlayer.IsNearlyZero()) SetActorRotation(ToPlayer.Rotation());
             const float Distance = FVector::Dist2D(Target->GetActorLocation(), GetActorLocation());
-            if (Distance > 440.f)
+            if (Distance > ChaseStopDistance)
             {
                 FHitResult Hit;
-                SetActorLocation(GetActorLocation() + ToPlayer * FMath::Min(ChaseSpeed * Step, Distance - 440.f), true, &Hit);
+                SetActorLocation(GetActorLocation() + ToPlayer * FMath::Min(ChaseSpeed * Step, Distance - ChaseStopDistance), true, &Hit);
             }
             // The arena bounds distance; the timeout also avoids an endless chase at an obstruction.
             if (StateTimeRemaining <= 0.f && (Distance <= ChargeTriggerDistance || VisualTime >= ChaseDuration + 4.f))
@@ -403,10 +403,17 @@ int32 AIshibashiriBoss::GetClimbNeighbor(int32 Node, int32 Direction) const
 {
     return Node >= 0 && Node < UE_ARRAY_COUNT(Route) && Direction >= 0 && Direction < 4 ? Neighbors[Node][Direction] : INDEX_NONE;
 }
-bool AIshibashiriBoss::IsBucking() const { return RiderTime > 0.f && FMath::Fmod(RiderTime,12.f) >= 10.f; }
+bool AIshibashiriBoss::IsBucking() const
+{
+    const float Period = FMath::Max(1.f, BuckPeriod);
+    return RiderTime > 0.f && FMath::Fmod(RiderTime, Period) >= Period - FMath::Min(BuckDuration, Period);
+}
 bool AIshibashiriBoss::IsBuckWarning() const
 {
-    const float Phase = FMath::Fmod(RiderTime,12.f); return RiderTime > 0.f && Phase >= 8.f && Phase < 10.f;
+    const float Period = FMath::Max(1.f, BuckPeriod);
+    const float BuckStart = Period - FMath::Min(BuckDuration, Period);
+    const float Phase = FMath::Fmod(RiderTime, Period);
+    return RiderTime > 0.f && Phase >= FMath::Max(0.f, BuckStart - BuckWarningDuration) && Phase < BuckStart;
 }
 int32 AIshibashiriBoss::GetPurifiedCount() const
 {

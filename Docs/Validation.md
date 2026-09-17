@@ -18,6 +18,8 @@ Linux コンテナ上での静的レビューに基づく修正です。Unreal E
 - Approach 自動走行に固定タイムステップ（`-PrototypeTestFPS`）と、経路所要時間の 3 倍を超えたら `APPROACH_TEST_FAIL` を出して終了コード 1 で抜けるタイムアウトを追加。`APPROACH_TEST_PASS` / `CAMPAIGN_E2E_PASS` に RunId を付与し、`Prototype.ps1` も実行固有マーカーで判定。
 - `MinedakiHUD` / `MagatsuneHUD` の Player / EncounterManager、`FuchimatoiArena` のライト生成結果に null チェックを追加。
 - `UColossusClimbingComponent` のスタミナ定数（最低 Grab 値、回復・消費レート、揺れ非把持の許容秒）を `EditAnywhere` に昇格。
+- `RunIshibashiriReviewGate.ps1` の `retry` / `senseReset` ゲートが Campaign 経路の `ClimbingIntegrationTest` しか出さない `retry=1` / `sense=boundary,corruption` に依存し、`-Climbing` 単体では常に `NOT_RUN`（判定 `PARTIAL`）になっていた。通常経路でも Q / F を実入力で操作して検査し、`CLIMB_TEST_PASS <RunId> <秒> routes=N retry=N sense=boundary,corruption` を出力。ゲート側は `retry=[1-9]` で回数非依存に。
+- Fuchimatoi / Minedaki / Magatsune の Boss に `GetKakonCount()` を追加し、Player 側の `3` 直書きを置換。Integration Test の `-PrototypeTestFPS` を他ドライバーと同じく 15〜240 にクランプ（0 除算防止）。
 - `PrototypeHUD` の Campaign 時の操作ヒントを英語化（戦闘 HUD は CJK フォント非依存を維持）。`.vscode/tasks.json` に Climbing / Camera / Approach / Campaign / Review Gate / pytest のタスクを追加。
 
 以下は旧戦闘プロトタイプと各開発段階の検証履歴です。現行の大型モデル・登攀の検証は [登攀検証](ClimbingValidation.md)、PR #17のmain統合後の検証は [カメラ統合記録](CameraIntegrationValidation.md) を参照してください。以下の旧配置でのPASSと、当時の環境制約は現在の統合構成の合否を示しません。
