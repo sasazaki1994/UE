@@ -1,0 +1,40 @@
+---
+# Matches the hand-written style of the Prototype* / Nushi* sources: 4-space
+# indent, Allman braces, short statements allowed on one line, left pointers.
+Language: Cpp
+BasedOnStyle: LLVM
+Standard: c++20
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 140
+ContinuationIndentWidth: 4
+AccessModifierOffset: -4
+NamespaceIndentation: All
+IndentCaseLabels: false
+BreakBeforeBraces: Allman
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Always
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortLambdasOnASingleLine: All
+AllowShortEnumsOnASingleLine: true
+PointerAlignment: Left
+ReferenceAlignment: Left
+AlignAfterOpenBracket: DontAlign
+AlignOperands: DontAlign
+AlignTrailingComments: false
+BinPackArguments: true
+BinPackParameters: true
+# Never split literals: TEXT("...") must stay a single token.
+BreakStringLiterals: false
+BreakConstructorInitializers: BeforeComma
+Cpp11BracedListStyle: true
+FixNamespaceComments: false
+MaxEmptyLinesToKeep: 1
+SeparateDefinitionBlocks: Always
+ReflowComments: false
+SortIncludes: Never
+SpaceBeforeParens: ControlStatements
+SpacesInContainerLiterals: false
