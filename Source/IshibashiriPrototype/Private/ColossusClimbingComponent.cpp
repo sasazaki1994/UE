@@ -64,7 +64,9 @@ bool UColossusClimbingComponent::IsResting() const
 void UColossusClimbingComponent::GrabPressed()
 {
     bGripHeld = true;
-    if (!Player || Boss || Stamina < MinimumGrabStamina || Player->IsDodging() || Player->IsAttacking()) return;
+    // A second press during the warp must not fall through StartGrabWarp's
+    // "already warping" refusal into the legacy snap below.
+    if (!Player || Boss || bGrabWarping || Stamina < MinimumGrabStamina || Player->IsDodging() || Player->IsAttacking()) return;
     APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     AIshibashiriBoss* Candidate = Mode ? Mode->GetBoss() : nullptr;
     if (!Mode || !Mode->IsEncounterActive() || !Candidate) return;
