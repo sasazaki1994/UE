@@ -46,7 +46,7 @@ void AMinedakiIntegrationTest::BeginPlay()
     bGamepad = FParse::Param(FCommandLine::Get(), TEXT("MinedakiGamepad")) || FParse::Param(FCommandLine::Get(), TEXT("CampaignGamepad"));
     bCapture = FParse::Param(FCommandLine::Get(), TEXT("PrototypeCapture"));
     FApp::SetUseFixedTimeStep(true);
-    FApp::SetFixedDeltaTime(1.0 / FPS);
+    FApp::SetFixedDeltaTime(1.0 / FMath::Clamp(FPS, 15, 240));
     Mode = GetWorld()->GetAuthGameMode<AMinedakiGameMode>();
     if (!Check(Mode && Mode->GetBoss() && Mode->GetPlayer() && Mode->GetManager(), TEXT("Encounter spawned"))) return;
     InitialActors = ActorCount(GetWorld());

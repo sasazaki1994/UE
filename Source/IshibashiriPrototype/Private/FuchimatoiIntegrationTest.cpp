@@ -40,7 +40,7 @@ void AFuchimatoiIntegrationTest::BeginPlay()
     bRealtime=FParse::Param(FCommandLine::Get(),TEXT("FuchimatoiRealtime"));
     FApp::SetUseFixedTimeStep(!bRealtime);
     if (bRealtime) GEngine->SetMaxFPS(TargetFPS);
-    else FApp::SetFixedDeltaTime(1.0/TargetFPS);
+    else FApp::SetFixedDeltaTime(1.0/FMath::Clamp(TargetFPS,15,240));
     PreviousFrameTime=PerformanceStart=FPlatformTime::Seconds();
     bCapture=FParse::Param(FCommandLine::Get(),TEXT("PrototypeCapture"));
     bGamepad=FParse::Param(FCommandLine::Get(),TEXT("FuchimatoiGamepad"));

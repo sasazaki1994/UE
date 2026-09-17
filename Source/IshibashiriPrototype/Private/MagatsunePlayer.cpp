@@ -40,7 +40,7 @@ void AMagatsunePlayer::ConfigureBoss(AMagatsuneBoss* V)
     Grab->AddTickPrerequisiteActor(this);
     SetPrimitiveColor(FindComponentByClass<UStaticMeshComponent>()->CreateDynamicMaterialInstance(0), FLinearColor(1, .66, .12));
     Sense->ClearBoundaryTargets();
-    for (int32 I = 0; I < 3; ++I) Sense->RegisterBoundaryTarget(Boss->GetKakon(I), I == 0);
+    for (int32 I = 0; I < Boss->GetKakonCount(); ++I) Sense->RegisterBoundaryTarget(Boss->GetKakon(I), I == 0);
 }
 
 bool AMagatsunePlayer::IsMounted() const { return Grab->IsGrabbing(); }
@@ -244,7 +244,7 @@ void AMagatsunePlayer::UpdateSenseFromBoss()
     if (Boss)
     {
         const int32 Current = Boss->GetNushiProgressComponent()->GetPurifiedCount();
-        for (int32 I = 0; I < 3; ++I) Sense->SetBoundaryTargetAvailable(Boss->GetKakon(I), I == Current);
+        for (int32 I = 0; I < Boss->GetKakonCount(); ++I) Sense->SetBoundaryTargetAvailable(Boss->GetKakon(I), I == Current);
     }
     if (Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(ComputeCorruptionWarning());
 }

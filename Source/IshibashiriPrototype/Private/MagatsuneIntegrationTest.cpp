@@ -41,7 +41,7 @@ void AMagatsuneIntegrationTest::BeginPlay()
     bGamepad = FParse::Param(FCommandLine::Get(), TEXT("MagatsuneGamepad")) || FParse::Param(FCommandLine::Get(), TEXT("CampaignGamepad"));
     bCapture = FParse::Param(FCommandLine::Get(), TEXT("PrototypeCapture"));
     FApp::SetUseFixedTimeStep(true);
-    FApp::SetFixedDeltaTime(1.0 / FPS);
+    FApp::SetFixedDeltaTime(1.0 / FMath::Clamp(FPS, 15, 240));
     Mode = GetWorld()->GetAuthGameMode<AMagatsuneGameMode>();
     if (!Mode || !Mode->GetBoss() || !Mode->GetPlayer()) Fail(TEXT("spawn"));
     else InitialActors = CountMagatsuneActors(GetWorld());

@@ -130,7 +130,7 @@ try {
     $Results.ishibashiri30 = Invoke-Gate 'ishibashiri30' 'climbing' @('-Action','Test','-Climbing','-Basin','-SkipBuild','-TestFPS','30')
     $Results.gamepad = Invoke-Gate 'gamepad' 'climbing' @('-Action','Test','-ClimbingGamepad','-Basin','-SkipBuild','-TestFPS','60')
     $GameplayLogs = (Get-ChildItem -LiteralPath (Join-Path $EvidenceRoot 'logs') -File -Recurse | Get-Content -ErrorAction SilentlyContinue) -join "`n"
-    if ($Results.ishibashiri60 -eq 'PASS' -and $GameplayLogs -match 'retry=1|BASIN_RETRY_RESET|GAMEPAD_RETRY') { $Results.retry='PASS' } elseif ($Results.ishibashiri60 -eq 'FAIL') { $Results.retry='FAIL' }
+    if ($Results.ishibashiri60 -eq 'PASS' -and $GameplayLogs -match 'retry=[1-9]|BASIN_RETRY_RESET|GAMEPAD_RETRY') { $Results.retry='PASS' } elseif ($Results.ishibashiri60 -eq 'FAIL') { $Results.retry='FAIL' }
     if ($Results.approach60 -eq 'PASS' -and $GameplayLogs -match 'PLAYER_SENSE reset' -and $GameplayLogs -match 'sense=boundary,corruption') { $Results.senseReset='PASS' } elseif ($Results.approach60 -eq 'FAIL') { $Results.senseReset='FAIL' }
     if (Test-Path -LiteralPath $ControlRigFile) { $Results.controlRig = Invoke-Gate 'climbingIK' 'ik' @('-Action','Test','-ClimbingIK','-Capture','-Basin','-SkipBuild','-TestFPS','60') } else { $Results.controlRig='BLOCKED'; $Reasons.controlRig='BLOCKED — CONTROL RIG ASSET ABSENT' }
     $Results.legacy = Invoke-Gate 'legacy' 'climbing' @('-Action','Test','-Climbing','-Capture','-Basin','-SkipBuild','-TestFPS','60')

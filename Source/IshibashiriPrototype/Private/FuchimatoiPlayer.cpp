@@ -56,7 +56,7 @@ void AFuchimatoiPlayer::ConfigureBoss(AFuchimatoiBoss* InBoss)
     Grab->AddTickPrerequisiteActor(this);
     TArray<UStaticMeshComponent*> Parts; GetComponents(Parts);
     for (UStaticMeshComponent* Part:Parts) SetPrimitiveColor(Part->CreateDynamicMaterialInstance(0),FLinearColor(.93,.76,.34));
-    Sense->ClearBoundaryTargets(); for(int32 I=0;I<3;++I) Sense->RegisterBoundaryTarget(Boss->GetKakon(I),I==0);
+    Sense->ClearBoundaryTargets(); for(int32 I=0;I<Boss->GetKakonCount();++I) Sense->RegisterBoundaryTarget(Boss->GetKakon(I),I==0);
 }
 bool AFuchimatoiPlayer::CanAct() const
 {
@@ -285,7 +285,7 @@ void AFuchimatoiPlayer::UpdateSenseFromBoss()
     if (Boss)
     {
         const int32 Current=Boss->GetNushiProgressComponent()->GetPurifiedCount();
-        for (int32 I=0; I<3; ++I) Sense->SetBoundaryTargetAvailable(Boss->GetKakon(I), I==Current);
+        for (int32 I=0; I<Boss->GetKakonCount(); ++I) Sense->SetBoundaryTargetAvailable(Boss->GetKakon(I), I==Current);
     }
     if (Sense->IsCorruptionSenseActive()) Sense->SetCorruptionWarning(ComputeCorruptionWarning());
 }

@@ -40,6 +40,7 @@ public:
     AActor* GetGrabFrame() const { return GrabFrame; }
     USceneComponent* GetMovingRoot() const { return MovingRoot; }
     AKakonActor* GetKakon(int32 Index) const;
+    int32 GetKakonCount() const { return Kakons.Num(); }
     EMagatsunePhase GetPhase() const { return Phase; }
     FString GetPhaseLabel() const;
     FMagatsuneTelemetry Telemetry;
