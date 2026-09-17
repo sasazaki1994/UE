@@ -4,7 +4,6 @@ import math
 import random
 import importlib.util
 from pathlib import Path
-from mathutils import Vector
 
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('maker',ROOT/'Tools/CreateCharacterModels.py')

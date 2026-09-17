@@ -1,7 +1,6 @@
 """No production models are needed. Missing source is optional; invalid isn't."""
 import copy
 import hashlib
-import json
 from pathlib import Path
 import sys
 import tempfile

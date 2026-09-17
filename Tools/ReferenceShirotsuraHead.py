@@ -6,7 +6,6 @@ scene/file setup. Every authored object declares its existing skeleton region.
 import math
 import random
 
-import bpy
 from mathutils import Vector
 
 
