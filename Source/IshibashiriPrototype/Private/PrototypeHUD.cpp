@@ -62,7 +62,8 @@ void APrototypeHUD::DrawHUD()
     };
     Line(TEXT("MAGAHARAI / ISHIBASHIRI"), FLinearColor(0.85f, 0.88f, 0.78f), 1.2f);
     if (const auto* Campaign=GetGameInstance<UCampaignGameInstance>(); Campaign && Campaign->IsCampaignActive())
-        Line(TEXT("Q / LT: 境断ち    F / LB: 左腕"),FLinearColor(.3f,.9f,1.f),.8f);
+        // The combat HUD stays English so it never depends on a CJK-capable UFont.
+        Line(TEXT("Q / LT: Boundary Sense    F / LB: Corrupted Arm"),FLinearColor(.3f,.9f,1.f),.8f);
     if (!Player || !Boss)
     {
         Line(TEXT("Spawn failed. Use Play, not Simulate. See Output Log."), FLinearColor::Red);

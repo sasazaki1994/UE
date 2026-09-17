@@ -15,6 +15,10 @@ Linux コンテナ上での静的レビューに基づく修正です。Unreal E
 - `.cursor/rules/ishibashiri.mdc` と `.uproject` の Description を現行スコープへ更新。`Tests/production-gameplay-contract.json` の SHA256 を再ベースライン。
 - 1 行に圧縮されていた Minedaki / Magatsune / IshibashiriApproach / Campaign / PlayerSense 系の `.cpp` 24 件と Magatsune 系ヘッダー 3 件を、新規追加した `.clang-format`（`BreakStringLiterals: false`）で整形。各ファイルについて空白を除いたトークン列が整形前と一致することを確認済み（意味変更なし）。空白依存だった `Tests/test_minedaki_source_contract.py` と `test_ishibashiri_approach_source_contract.py` の照合を空白非依存に変更。
 - Victory / Defeat 表示に `BOSS HP n / 3   KAKON n / 3` を追加し、反撃と浄化の混合勝利で KAKON が 3 未満でも意図どおりであることを示す。
+- Approach 自動走行に固定タイムステップ（`-PrototypeTestFPS`）と、経路所要時間の 3 倍を超えたら `APPROACH_TEST_FAIL` を出して終了コード 1 で抜けるタイムアウトを追加。`APPROACH_TEST_PASS` / `CAMPAIGN_E2E_PASS` に RunId を付与し、`Prototype.ps1` も実行固有マーカーで判定。
+- `MinedakiHUD` / `MagatsuneHUD` の Player / EncounterManager、`FuchimatoiArena` のライト生成結果に null チェックを追加。
+- `UColossusClimbingComponent` のスタミナ定数（最低 Grab 値、回復・消費レート、揺れ非把持の許容秒）を `EditAnywhere` に昇格。
+- `PrototypeHUD` の Campaign 時の操作ヒントを英語化（戦闘 HUD は CJK フォント非依存を維持）。`.vscode/tasks.json` に Climbing / Camera / Approach / Campaign / Review Gate / pytest のタスクを追加。
 
 以下は旧戦闘プロトタイプと各開発段階の検証履歴です。現行の大型モデル・登攀の検証は [登攀検証](ClimbingValidation.md)、PR #17のmain統合後の検証は [カメラ統合記録](CameraIntegrationValidation.md) を参照してください。以下の旧配置でのPASSと、当時の環境制約は現在の統合構成の合否を示しません。
 
