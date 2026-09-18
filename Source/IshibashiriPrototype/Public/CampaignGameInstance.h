@@ -23,8 +23,18 @@ enum class ECampaignState : uint8
     Completed
 };
 
+// Exactly two appearance stages are supported. Title/Completed return no stage
+// rather than introducing a third appearance value.
+UENUM(BlueprintType)
+enum class EShirotsuraCorruptionStage : uint8
+{
+    Early,
+    Advanced
+};
+
 // Process-local chapter state only. Encounter progress remains owned by each Nushi.
 UCLASS()
+
 class ISHIBASHIRIPROTOTYPE_API UCampaignGameInstance : public UGameInstance
 {
     GENERATED_BODY()
@@ -35,22 +45,34 @@ public:
     bool CompleteEncounter(ECampaignState Encounter);
     bool CompleteApproach();
     void RestartCampaign();
+
     bool IsCampaignActive() const { return bCampaignActive; }
+
     ECampaignState GetCampaignState() const { return State; }
+
+    static bool TryGetCorruptionStageForChapter(ECampaignState Chapter, EShirotsuraCorruptionStage& OutStage);
+    bool GetCorruptionStageForEncounter(ECampaignState StandaloneEncounter, EShirotsuraCorruptionStage& OutStage) const;
+    bool NotifyEncounterRetry(ECampaignState Encounter) const;
+
     bool IsCurrentEncounter(ECampaignState Encounter) const { return bCampaignActive && State == Encounter; }
+
     static bool IsEncounterState(ECampaignState Value);
     static void ResetSenseState(UPlayerSenseComponent* Sense);
     void TravelToCurrentChapter(UObject* WorldContext);
     double GetCampaignElapsedSeconds() const;
 
 #if WITH_DEV_AUTOMATION_TESTS
-    void SetCampaignStateForTest(ECampaignState Value) { bCampaignActive=true; State=Value; }
+    void SetCampaignStateForTest(ECampaignState Value)
+    {
+        bCampaignActive = true;
+        State = Value;
+    }
 #endif
 
 private:
     void ResetChapterRuntime(UObject* WorldContext);
-    UPROPERTY() ECampaignState State=ECampaignState::Title;
-    bool bCampaignActive=false;
-    double CampaignStartSeconds=0.0;
-    double ChapterStartSeconds=0.0;
+    UPROPERTY() ECampaignState State = ECampaignState::Title;
+    bool bCampaignActive = false;
+    double CampaignStartSeconds = 0.0;
+    double ChapterStartSeconds = 0.0;
 };

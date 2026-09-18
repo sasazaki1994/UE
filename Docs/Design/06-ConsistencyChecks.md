@@ -18,6 +18,8 @@ python -m unittest discover -s Tests -p 'test_narrative_contracts.py' -v
 | 外見2パターン | Early / Advanced、Interlude2切替、各章の対応、共通資産、性能不変を契約JSONで確認 |
 | 設定の禁止事項 | 仮面の封印機能、祓った主からの穢れ吸収、禍津根の第四主化が契約JSONで有効になっていないこと |
 | Campaign | 現行enumの12状態と対応表が一致、淵纏い→Interlude2→峰抱きの接続が残っていること |
+| 物語カード | C++の全16本文が契約JSONと一致すること |
+| 穢れ段階API | 全章の導出、非Campaign時のEncounter既定値、4つの実Retry経路から共通通知を通ること |
 | 直接鎮静の再混入 | 本番 `.cpp/.h` の明示的な `CalmNushi()` 呼び出しを列挙し、共通の全浄化ハンドラ以外を拒否 |
 | 完了通知の所有者 | 明示的な `OnEncounterCompleted.Broadcast()` と `FinishEncounter(true)` の位置を限定 |
 | 石走りの旧HP経路 | TryReceiveCounterに体勢操作があること、同関数にHealth参照や直接完了がないこと |
@@ -38,7 +40,7 @@ python -m unittest discover -s Tests -p 'test_narrative_contracts.py' -v
 - 実際に各主へ3個のKakonが生成され、全て祓えること。契約上の数と実行時の登録数は別物。
 - 3/3以外に未知の勝利経路が絶対に存在しないこと。
 - RetryでActor数が増えない、Delegateが重複しないこと。
-- 外見切替とRetry保持がゲーム内で動作すること。外見機能自体が未実装。
+- 穢れ段階APIとRetry通知がゲーム内で意図どおり呼ばれること。管理処理は実装済みだがマテリアル接続は未実装。
 - Senseリスクが全Encounterで正しく適用されること。石走りの既存回復処理を含め別途確認が必要。
 - 膝つきの視認性、Grab距離、反撃部位、カメラ、字幕の読みやすさ、音の聞こえ方。
 - 主が生存して見えること、素顔と穢れの差分の品質、マテリアルやリグの成立。
@@ -51,7 +53,7 @@ python -m unittest discover -s Tests -p 'test_narrative_contracts.py' -v
 2. 地上反撃だけでは石走りが鎮まらず、体勢崩しから登攀できること。
 3. 4戦で1/3・2/3はRunning、3/3はCalm→Completed、Retry後は未浄化へ戻ること。
 4. TitleからEndingまでの入力通し、再START、落下復帰、物理ゲームパッド。
-5. 二段階外見の実装後にInterlude2切替、Retry保持、New GameでEarlyへ戻ること。
+5. 管理APIのInterlude2切替、Retry保持、New CampaignのEarly、単体起動既定値をAutomationで確認すること。マテリアル接続後は実際の外見も確認すること。
 6. マーカーを減らしても攻略でき、主の鎮静と白面の変化が読み取れること。
 
 未実行は `NOT_RUN`、資産なしは `NOT_IMPLEMENTED` と記録する。古い主戦のPASSを最新mainの検証結果として流用しない。

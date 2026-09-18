@@ -107,6 +107,19 @@ class NarrativeContractsTests(unittest.TestCase):
         mutated = self.sources[path].replace("case ECampaignState::Fuchimatoi: State = ECampaignState::Interlude2;", "case ECampaignState::Fuchimatoi: State = ECampaignState::Ending;")
         self.assertTrue(any("CAMPAIGN:" in issue for issue in self.changed("CampaignGameInstance.cpp", mutated)))
 
+    def test_corruption_stage_mapping_regression_fails(self):
+        path = "Source/IshibashiriPrototype/Private/CampaignGameInstance.cpp"
+        mutated = self.sources[path].replace("case ECampaignState::Interlude2:", "case ECampaignState::Title:")
+        self.assertTrue(any("APPEARANCE:" in issue for issue in self.changed("CampaignGameInstance.cpp", mutated)))
+
+    def test_story_card_and_retry_route_regressions_fail(self):
+        path = "Source/IshibashiriPrototype/Private/CampaignHUD.cpp"
+        mutated = self.sources[path].replace("白い面は、禍祓いのしるし。", "白面の祓い手。")
+        self.assertTrue(any("STORY_CARD:" in issue for issue in self.changed("CampaignHUD.cpp", mutated)))
+        path = "Source/IshibashiriPrototype/Private/MinedakiGameMode.cpp"
+        mutated = self.sources[path].replace("Campaign->NotifyEncounterRetry(ECampaignState::Minedaki);", "")
+        self.assertTrue(any("APPEARANCE:" in issue for issue in self.changed("MinedakiGameMode.cpp", mutated)))
+
     def test_display_scope_does_not_ban_player_death_or_dead_trees(self):
         self.assertEqual(self.changed("ExtraPlayer.cpp", 'void AExtraPlayer::Text() { TEXT("Player dead"); TEXT("DeadTree"); }'), [])
         self.assertTrue(any("DISPLAY:" in issue for issue in self.changed("ExtraHUD.cpp", 'void AExtraHUD::Text() { TEXT("Boss HP -1"); }')))

@@ -124,6 +124,42 @@ bool UCampaignGameInstance::IsEncounterState(ECampaignState Value)
         Value == ECampaignState::Magatsune;
 }
 
+bool UCampaignGameInstance::TryGetCorruptionStageForChapter(ECampaignState Chapter, EShirotsuraCorruptionStage& OutStage)
+{
+    switch (Chapter)
+    {
+    case ECampaignState::Prologue:
+    case ECampaignState::IshibashiriApproach:
+    case ECampaignState::Ishibashiri:
+    case ECampaignState::Interlude1:
+    case ECampaignState::Fuchimatoi: OutStage = EShirotsuraCorruptionStage::Early; return true;
+    case ECampaignState::Interlude2:
+    case ECampaignState::Minedaki:
+    case ECampaignState::Interlude3:
+    case ECampaignState::Magatsune:
+    case ECampaignState::Ending: OutStage = EShirotsuraCorruptionStage::Advanced; return true;
+    case ECampaignState::Title:
+    case ECampaignState::Completed:
+    default: return false;
+    }
+}
+
+bool UCampaignGameInstance::GetCorruptionStageForEncounter(ECampaignState StandaloneEncounter, EShirotsuraCorruptionStage& OutStage) const
+{
+    // A standalone launch also begins with State == Title, so campaign activity,
+    // not that initial state, selects the fallback encounter default.
+    return TryGetCorruptionStageForChapter(bCampaignActive ? State : StandaloneEncounter, OutStage);
+}
+
+bool UCampaignGameInstance::NotifyEncounterRetry(ECampaignState Encounter) const
+{
+    EShirotsuraCorruptionStage Stage;
+    if (!GetCorruptionStageForEncounter(Encounter, Stage)) return false;
+    UE_LOG(LogTemp, Verbose, TEXT("Shirotsura corruption stage retained on retry: %s"),
+        Stage == EShirotsuraCorruptionStage::Early ? TEXT("Early") : TEXT("Advanced"));
+    return true;
+}
+
 void UCampaignGameInstance::ResetSenseState(UPlayerSenseComponent* Sense)
 {
     if (Sense) Sense->ResetSense();

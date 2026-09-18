@@ -1,8 +1,8 @@
 {
   "date": "2026-09-18",
-  "source_baseline": "7dc8b3ace9e38d4aa86d6dffd45d44a1428b4a7b",
-  "scope": "Design documentation, conceptual SVG map and narrow source-contract lint; no gameplay or production asset modifications",
-  "environment": "Linux, Python 3.12.14 standard library; pinned GitHub source snapshot",
+  "source_baseline": "48dae5e1369a301ecc6f403f6e1c644fd8d059f4",
+  "scope": "Story cards, two-stage corruption management API, retry hooks, contracts, documentation and source-level tests; no material or production asset modifications",
+  "environment": "Linux, Python 3.12.14; Unreal Editor/Build Tool unavailable",
   "checks": {
     "narrative_source_contract": {
       "status": "PASS",
@@ -11,22 +11,52 @@
     "narrative_regression_tests": {
       "status": "PASS",
       "command": "python3 -m unittest discover -s Tests -p 'test_narrative_contracts.py' -v",
-      "tests": 16,
-      "mutation_tests": "In-memory negative cases for extra appearance stage, direct calm/completion/victory, HP counter, Sense purification, missing source/reset, changed progress and chapter transitions"
+      "tests": 18,
+      "mutation_tests": "In-memory negative cases include story-card drift, stage mapping, Retry hook, extra appearance stage, direct calm/completion/victory, HP counter, Sense purification, missing source/reset, changed progress and chapter transitions"
     },
-    "document_structure": {"status": "PASS", "scope": "JSON parsing, SVG XML parsing, workflow YAML parsing and internal links"},
-    "map_layout_review": {"status": "PARTIAL", "scope": "SVG rasterization and geometry reviewed; Japanese glyph rendering unverified because the local renderer has no Japanese font. Deliverable remains UTF-8 SVG with browser font fallbacks."},
-    "ue_build": {"status": "NOT_RUN"},
-    "ue_automation": {"status": "NOT_RUN"},
-    "input_campaign_e2e": {"status": "NOT_RUN"},
-    "appearance_runtime": {"status": "NOT_IMPLEMENTED"},
-    "production_map_audio_ui": {"status": "NOT_IMPLEMENTED"},
-    "all_existing_python_tests": {"status": "NOT_RUN", "reason": "Focused stdlib suite only; pytest and full asset/tool fixture set were not provisioned"}
+    "document_structure": {
+      "status": "PASS",
+      "scope": "JSON parsing, SVG XML parsing, workflow YAML parsing and internal links"
+    },
+    "map_layout_review": {
+      "status": "PARTIAL",
+      "scope": "SVG rasterization and geometry reviewed; Japanese glyph rendering unverified because the local renderer has no Japanese font. Deliverable remains UTF-8 SVG with browser font fallbacks."
+    },
+    "ue_build": {
+      "status": "NOT_RUN"
+    },
+    "ue_automation": {
+      "status": "NOT_RUN"
+    },
+    "input_campaign_e2e": {
+      "status": "NOT_RUN"
+    },
+    "appearance_runtime": {
+      "status": "NOT_IMPLEMENTED",
+      "reason": "No material connection was added"
+    },
+    "production_map_audio_ui": {
+      "status": "NOT_IMPLEMENTED"
+    },
+    "all_existing_python_tests": {
+      "status": "PASS",
+      "command": "python3 -m pytest -q",
+      "result": "93 passed, 16 subtests passed"
+    },
+    "appearance_stage_management": {
+      "status": "IMPLEMENTED_SOURCE_ONLY",
+      "scope": "Chapter-derived Early/Advanced API, standalone defaults and Retry hooks; C++ Automation added but not run"
+    },
+    "story_cards": {
+      "status": "IMPLEMENTED_SOURCE_ONLY",
+      "scope": "16 requested cards and width-aware wrapping; UE rendering not run"
+    }
   },
   "limitations": [
     "Text-based source contracts are not C++ compilation or runtime proof.",
-    "Human review remains necessary for story prose, source semantics, binary assets, actor counts, delegates, visuals, sound and accessibility.",
-    "The Early/Advanced contract is design data, not a newly implemented material-switch system."
+    "UE build, C++ Automation, card rendering and encounter execution were not run because Unreal tooling is unavailable.",
+    "The Early/Advanced management API is implemented, but no face or arm material is connected.",
+    "Fuchimatoi, Minedaki and Magatsune player replacement with the shared Shirotsura model remains a next-step check where they still use primitive geometry."
   ],
-  "verdict": "DESIGN_PACKAGE_AND_FOCUSED_STATIC_CHECKS_READY; UE_RUNTIME_NOT_RUN"
+  "verdict": "STORY_AND_STAGE_MANAGEMENT_SOURCE_READY; MATERIAL_CONNECTION_NOT_IMPLEMENTED; UE_RUNTIME_NOT_RUN"
 }

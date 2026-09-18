@@ -35,3 +35,21 @@
     ならば Revealは1回だけ2〜4秒表示されCombatを開始しない
     かつ Basin gate到達後にIshibashiriへ遷移する
     かつ ApproachのTimerとSenseは次Chapterへ漏れない
+
+  シナリオ: 章から白面の穢れ段階を一意に導出する
+    前提 新しいCampaignはPrologueにいる
+    ならば 穢れ段階はEarlyである
+    もし 淵纏いを鎮めFuchimatoiからInterlude2へ遷移する
+    ならば カード送りを待たず穢れ段階はAdvancedになる
+    かつ EndingまでAdvancedを保持する
+    かつ TitleとCompletedには外見段階を適用しない
+
+  シナリオ: EncounterのRetryで穢れ段階を保持する
+    前提 CampaignがEarlyまたはAdvancedのEncounter中である
+    もし 各GameModeのRetryEncounterが共通Retry通知を通ってEncounterをリセットする
+    ならば Campaign Chapterと穢れ段階は変わらない
+
+  シナリオ: 単体起動はEncounterから穢れ段階を決める
+    前提 Campaignが無効でGameInstanceの章初期値がTitleである
+    ならば 石走りと淵纏いはEarlyになる
+    かつ 峰抱きと禍津根はAdvancedになる

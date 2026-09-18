@@ -1,12 +1,21 @@
 {
   "schema_version": 1,
-  "status": "DESIGN_ONLY",
-  "source_baseline": "7dc8b3ace9e38d4aa86d6dffd45d44a1428b4a7b",
+  "status": "PARTIALLY_IMPLEMENTED",
+  "source_baseline": "48dae5e1369a301ecc6f403f6e1c644fd8d059f4",
   "mask_is_sealing_device": false,
   "corruption_is_absorbed_from_purified_nushi": false,
   "corruption_stage_changes_gameplay_stats": false,
-  "appearance_variants": ["Early", "Advanced"],
-  "shared_assets": ["mesh", "rig", "costume", "mask", "animations"],
+  "appearance_variants": [
+    "Early",
+    "Advanced"
+  ],
+  "shared_assets": [
+    "mesh",
+    "rig",
+    "costume",
+    "mask",
+    "animations"
+  ],
   "switch_on_chapter_entry": "Interlude2",
   "retry_preserves_appearance": true,
   "new_campaign_appearance": "Early",
@@ -31,10 +40,26 @@
     "Magatsune": "Advanced"
   },
   "encounters": [
-    {"id": "Ishibashiri", "kind": "nushi", "kakon_count": 3},
-    {"id": "Fuchimatoi", "kind": "nushi", "kakon_count": 3},
-    {"id": "Minedaki", "kind": "nushi", "kakon_count": 3},
-    {"id": "Magatsune", "kind": "living_terrain", "kakon_count": 3}
+    {
+      "id": "Ishibashiri",
+      "kind": "nushi",
+      "kakon_count": 3
+    },
+    {
+      "id": "Fuchimatoi",
+      "kind": "nushi",
+      "kakon_count": 3
+    },
+    {
+      "id": "Minedaki",
+      "kind": "nushi",
+      "kakon_count": 3
+    },
+    {
+      "id": "Magatsune",
+      "kind": "living_terrain",
+      "kakon_count": 3
+    }
   ],
   "normal_victory_condition": "all_registered_kakon_purified",
   "ending": {
@@ -49,7 +74,38 @@
     "island_map": "CONCEPT_ONLY",
     "reduced_hud": "DESIGN_ONLY",
     "audio_and_calming": "DESIGN_ONLY",
-    "appearance_runtime": "NOT_IMPLEMENTED",
-    "ue_runtime_validation": "NOT_RUN"
+    "appearance_runtime": "MANAGEMENT_ONLY_NOT_VISUAL",
+    "ue_runtime_validation": "NOT_RUN",
+    "story_cards": "IMPLEMENTED_IN_CPP",
+    "appearance_stage_management": "IMPLEMENTED_IN_CPP",
+    "appearance_material_connection": "NOT_IMPLEMENTED"
+  },
+  "story_cards": {
+    "Prologue": [
+      "白い面は、禍祓いのしるし。",
+      "境界石が砕け、白面の手と顔にも禍が残った。",
+      "自らの穢れを祓う手掛かりを求め、主のもとへ。",
+      "主を討つな。宿った禍だけを祓え。"
+    ],
+    "Interlude1": [
+      "石走りの息が、ゆっくりと戻る。",
+      "水の底で、同じ脈動が続いている。",
+      "第二の主　淵纏い"
+    ],
+    "Interlude2": [
+      "腕の痕が広がり、顔の痕も深くなっていた。",
+      "第三の主　峰抱き"
+    ],
+    "Interlude3": [
+      "三柱は鎮まった。顔と腕の痕は消えない。",
+      "禍の流れは、島の奥へ続いている。",
+      "禍津根"
+    ],
+    "Ending": [
+      "地の脈動が静まり、主たちの息が戻る。",
+      "面を外す。顔と腕の痕は、まだそこにある。",
+      "白面は、再び面を着けた。",
+      "禍がまた生じても、ここで向き合う。"
+    ]
   }
 }

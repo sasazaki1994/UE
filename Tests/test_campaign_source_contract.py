@@ -30,6 +30,18 @@ def test_travel_resets_sense_and_uses_existing_game_modes():
         assert mode in source
 
 
+def test_corruption_stage_is_derived_and_retry_routes_use_it():
+    header = read("Source/IshibashiriPrototype/Public/CampaignGameInstance.h")
+    source = read("Source/IshibashiriPrototype/Private/CampaignGameInstance.cpp")
+    assert "EShirotsuraCorruptionStage" in header
+    assert "TryGetCorruptionStageForChapter" in header
+    assert "bCampaignActive ? State : StandaloneEncounter" in source
+    for mode, encounter in (("Prototype", "Ishibashiri"), ("Fuchimatoi", "Fuchimatoi"),
+                            ("Minedaki", "Minedaki"), ("Magatsune", "Magatsune")):
+        retry = read(f"Source/IshibashiriPrototype/Private/{mode}GameMode.cpp")
+        assert f"NotifyEncounterRetry(ECampaignState::{encounter})" in retry
+
+
 def test_campaign_launcher_and_documentation_are_present():
     script = read("Tools/Prototype.ps1")
     assert "[switch]$Campaign" in script

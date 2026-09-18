@@ -49,6 +49,7 @@ void AMagatsuneGameMode::RetryEncounter()
 {
     if (Boss && Player && Manager)
     {
+        if (auto* Campaign=GetGameInstance<UCampaignGameInstance>()) Campaign->NotifyEncounterRetry(ECampaignState::Magatsune);
         GetWorldTimerManager().ClearTimer(CampaignAdvanceTimer);
         ++Boss->Telemetry.Retries;
         Boss->LogTelemetry(TEXT("Retry"));

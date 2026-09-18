@@ -39,6 +39,7 @@ void AFuchimatoiGameMode::StartPlay()
 void AFuchimatoiGameMode::RetryEncounter()
 {
     if (!Player || !Manager) return;
+    if(auto* Campaign=GetGameInstance<UCampaignGameInstance>()) Campaign->NotifyEncounterRetry(ECampaignState::Fuchimatoi);
     GetWorldTimerManager().ClearTimer(CampaignAdvanceTimer);
     Player->ResetForEncounter(Arena->GetPlayerSpawn());
     Manager->ResetEncounter(); bDefeated=false; Manager->StartEncounter();

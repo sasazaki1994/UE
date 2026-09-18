@@ -51,6 +51,7 @@ void AMinedakiGameMode::RetryEncounter()
 {
     if (Player && Manager && Boss)
     {
+        if (auto* Campaign=GetGameInstance<UCampaignGameInstance>()) Campaign->NotifyEncounterRetry(ECampaignState::Minedaki);
         GetWorldTimerManager().ClearTimer(CampaignAdvanceTimer);
         Boss->LogTelemetry(TEXT("Retry"));
         Player->ResetForEncounter();
