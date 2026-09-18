@@ -55,7 +55,7 @@ void APrototypeSmokeTest::BeginPlay()
     if (!Require(Player->HasImportedVisuals() && Mode->GetBoss()->HasImportedVisuals(), TEXT("Imported warrior/boar meshes and all combat clips are loaded"))) return;
     APlayerController* Controller = Cast<APlayerController>(Player->GetController());
     if (!Require(Controller && Controller->GetPawn() == Player && Controller->GetHUD(), TEXT("Local player possesses character and has a HUD"))) return;
-    if (!Require(Player->GetHealth() == 3 && Mode->GetBoss()->GetHealth() == 3, TEXT("Initial HP is 3/3"))) return;
+    if (!Require(Player->GetHealth() == 3 && Mode->GetBoss()->GetPosture() == 3, TEXT("Initial HP is 3/3"))) return;
     Mode->GetBoss()->SetActorTickEnabled(false);
     StartPosition = Player->GetActorLocation();
     AddTickPrerequisiteActor(Mode->GetBoss());
@@ -290,12 +290,12 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
     case EPhase::Guard:
         if (!bInputSent)
         {
-            if (!Require(Player->IsAttacking() && Boss->GetHealth() == 3, TEXT("Left mouse button swings the sword, but normal boss armor rejects damage"))) return;
+            if (!Require(Player->IsAttacking() && Boss->GetPosture() == 3, TEXT("Left mouse button swings the sword, but normal boss armor rejects damage"))) return;
             bInputSent = true;
         }
         if (Elapsed > 0.6f)
         {
-            if (!Require(Boss->GetHealth() == 3, TEXT("Normal armor survives the entire swing"))) return;
+            if (!Require(Boss->GetPosture() == 3, TEXT("Normal armor survives the entire swing"))) return;
             if (!Require(Player->ReceiveChargeHit(Boss->GetActorLocation()), TEXT("A charge can damage a vulnerable player"))) return;
             if (!Require(!Player->ReceiveChargeHit(Boss->GetActorLocation()) && Player->GetHealth() == 2, TEXT("Post-hit immunity rejects repeated contact"))) return;
             Mode->RetryEncounter();
@@ -341,12 +341,12 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
         {
             if (LastBossState != static_cast<int32>(State))
             {
-                const int32 Before = Boss->GetHealth();
+                const int32 Before = Boss->GetPosture();
                 AimAtBoss();
                 Player->Attack();
-                if (!Require(Boss->GetHealth() == Before - 1, TEXT("Real sword sweep damages the recovering boss"))) return;
+                if (!Require(Boss->GetPosture() == Before - 1, TEXT("Real sword sweep damages the recovering boss"))) return;
                 ++Counters;
-                LastHealth = Boss->GetHealth();
+                LastHealth = Boss->GetPosture();
                 bTestedExtraCounter = false;
                 if (Counters == 1) Capture(TEXT("03-Counter"));
             }
@@ -354,24 +354,22 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
             {
                 // Attack cooldown has elapsed, but this recovery has already been consumed.
                 Player->Attack();
-                if (!Require(Boss->GetHealth() == LastHealth && !Boss->CanBeCountered(), TEXT("Only one counter per recovery even after attack cooldown"))) return;
+                if (!Require(Boss->GetPosture() == LastHealth && !Boss->CanBeCountered(), TEXT("Only one counter per recovery even after attack cooldown"))) return;
                 bTestedExtraCounter = true;
             }
         }
         LastBossState = static_cast<int32>(State);
-        if (!Mode->IsEncounterActive())
+        if (State == EIshibashiriState::Kneel)
         {
-            if (!Require(Mode->GetResult() == EEncounterResult::Victory && Counters == 3 && Boss->GetHealth() == 0 && bSawLockedCharge, TEXT("Three counters reach victory after fixed-direction charges"))) return;
-            if (!Require(Boss->GetPurifiedCount() == 0 && Boss->GetNushiState() == ENushiState::Calm
-                && Mode->GetEncounterManager()->GetEncounterState() == ENushiEncounterState::Completed,
-                TEXT("Counter victory completes shared lifecycle without fabricating purification"))) return;
-            Player->Attack();
-            Player->Dodge();
-            if (!Require(!Player->IsDodging() && Boss->GetHealth() == 0, TEXT("Combat input stops after victory"))) return;
+            if (!Require(Mode->IsEncounterActive() && Counters == 3 && Boss->GetPosture() == 0 && bSawLockedCharge,
+                TEXT("Three recovery strikes break posture without ending the encounter"))) return;
+            if (!Require(Boss->GetPurifiedCount() == 0 && Boss->GetNushiState() == ENushiState::Active
+                && Mode->GetEncounterManager()->GetEncounterState() == ENushiEncounterState::Running,
+                TEXT("Posture break does not fabricate purification, Calm, or Completed"))) return;
             ActorsBeforeRetry = PrototypeSmokeTestCountActors(GetWorld());
             if (bCaptureScreenshots)
             {
-                Capture(TEXT("04-Victory"));
+                Capture(TEXT("04-PostureBroken"));
                 Next(EPhase::VictoryCapture);
             }
             else
@@ -392,7 +390,7 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
         break;
 
     case EPhase::VictoryRetry:
-        if (!Require(Player->GetHealth() == 3 && Boss->GetHealth() == 3 && Mode->IsEncounterActive() && Player->GetDodgeCooldown() == 0.f, TEXT("R key after victory clears HP and cooldowns"))) return;
+        if (!Require(Player->GetHealth() == 3 && Boss->GetPosture() == 3 && Mode->IsEncounterActive() && Player->GetDodgeCooldown() == 0.f, TEXT("R key after posture break resets player and posture"))) return;
         if (!Require(PrototypeSmokeTestCountActors(GetWorld()) == ActorsBeforeRetry, TEXT("Retry does not accumulate arena actors"))) return;
         LastHealth = 3;
         Next(EPhase::Lose);
@@ -440,10 +438,10 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
         break;
 
     case EPhase::DefeatRetry:
-        if (!Require(Player->GetHealth() == 3 && Boss->GetHealth() == 3 && Mode->IsEncounterActive()
+        if (!Require(Player->GetHealth() == 3 && Boss->GetPosture() == 3 && Mode->IsEncounterActive()
             && !Player->IsInvulnerable(), TEXT("R key after defeat restores a playable encounter"))) return;
         for (int32 Index = 0; Index < 10; ++Index) Mode->RetryEncounter();
-        if (!Require(Player->GetHealth() == 3 && Boss->GetHealth() == 3 && Mode->IsEncounterActive()
+        if (!Require(Player->GetHealth() == 3 && Boss->GetPosture() == 3 && Mode->IsEncounterActive()
             && !Player->IsInvulnerable() && PrototypeSmokeTestCountActors(GetWorld()) == ActorsBeforeRetry, TEXT("Repeated retry after defeat leaves a clean playable encounter"))) return;
         UE_LOG(LogTemp, Display, TEXT("PROTOTYPE_INPUT_PASS %s: WASD, mouse XY, Shift/RMB, LMB, Space, R"), *RunId);
         Boss->SetActorTickEnabled(false);
@@ -499,7 +497,7 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
         if (!bInputSent)
         {
             if (!Require(Player->IsAttacking() && Player->GetActorForwardVector().Equals(LockedDirection, 0.001f)
-                && Boss->GetHealth() == 3, TEXT("Raised-view LMB swings along the displayed direction"))) return;
+                && Boss->GetPosture() == 3, TEXT("Raised-view LMB swings along the displayed direction"))) return;
             SendKey(EKeys::MouseX, IE_Axis, 20.f);
             bInputSent = true;
         }

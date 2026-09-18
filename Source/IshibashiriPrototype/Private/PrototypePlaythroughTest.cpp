@@ -127,7 +127,7 @@ void APrototypePlaythroughTest::Tick(float DeltaSeconds)
 
     if (bRestarting)
     {
-        if (!Require(Mode->IsEncounterActive() && Boss->GetHealth() == 3
+        if (!Require(Mode->IsEncounterActive() && Boss->GetPosture() == 3
             && Player->GetDodgeCooldown() == 0.f && CountPlaythroughActors(GetWorld()) == InitialActorCount,
             TEXT("R starts a clean encounter without accumulating actors"))) return;
         ++CompletedEncounters;
@@ -141,10 +141,10 @@ void APrototypePlaythroughTest::Tick(float DeltaSeconds)
         bRestarting = false;
     }
 
-    if (Boss->GetHealth() < LastBossHealth)
+    if (Boss->GetPosture() < LastBossHealth)
     {
         ++RoundCounters;
-        LastBossHealth = Boss->GetHealth();
+        LastBossHealth = Boss->GetPosture();
         UE_LOG(LogTemp, Display, TEXT("PROTOTYPE_PLAYTHROUGH_COUNTER %s counter=%d distance=%.1f inputRecoveryRemaining=%.2f"),
             *RunId, RoundCounters, FVector::Dist2D(Player->GetActorLocation(), Boss->GetActorLocation()), LastAttackWindow);
     }
@@ -166,6 +166,15 @@ void APrototypePlaythroughTest::Tick(float DeltaSeconds)
     }
 
     const EIshibashiriState State = Boss->GetState();
+    if (State == EIshibashiriState::Kneel)
+    {
+        ReleaseMovement();
+        if (!Require(RoundCounters == 3 && RoundDodges >= 3 && Boss->GetPurifiedCount() == 0
+            && Mode->IsEncounterActive(), TEXT("Three input-driven recovery strikes only open the mount window"))) return;
+        TapKey(EKeys::R);
+        bRestarting = true;
+        return;
+    }
     if (LastState != static_cast<int32>(State))
     {
         if (LastState == static_cast<int32>(EIshibashiriState::Recover)

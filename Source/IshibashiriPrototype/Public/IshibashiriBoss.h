@@ -14,7 +14,7 @@ class UBoxComponent;
 class UChildActorComponent;
 
 UENUM()
-enum class EIshibashiriState : uint8 { Chase, Telegraph, Charge, Recover, Calmed };
+enum class EIshibashiriState : uint8 { Chase, Telegraph, Charge, Recover, Kneel, Calmed };
 
 UCLASS()
 class ISHIBASHIRIPROTOTYPE_API AIshibashiriBoss : public ANushiBase
@@ -27,10 +27,13 @@ public:
     void ConfigureEncounter(const FTransform& Spawn, APrototypePlayer* Player);
     virtual void ResetNushi() override;
     bool TryReceiveCounter();
-    int32 GetHealth() const { return Health; }
+    int32 GetPosture() const { return Posture; }
     EIshibashiriState GetState() const { return GetNushiState() == ENushiState::Calm ? EIshibashiriState::Calmed : State; }
     float GetStateTimeRemaining() const { return StateTimeRemaining; }
-    bool CanBeCountered() const { return GetState() == EIshibashiriState::Recover && !bCounterUsed && Health > 0; }
+    bool CanBeCountered() const { return GetState() == EIshibashiriState::Recover && !bChargeHitPlayer && !bCounterUsed && Posture > 0; }
+    bool CanMount() const { return GetState() == EIshibashiriState::Kneel; }
+    bool IsMountCommitted() const { return bMountCommitted; }
+    void NotifyMounted();
     FString GetStateLabel() const;
     FVector GetChargeDirection() const { return ChargeDirection; }
     bool HasImportedVisuals() const;
@@ -46,7 +49,8 @@ public:
     AKakonActor* GetCoreKakon(int32 Index) const;
     USkeletalMeshComponent* GetVisualMesh() const { return Creature; }
 
-    UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) int32 MaxHealth = 3;
+    UPROPERTY(EditAnywhere, Category="Combat|Posture", meta=(ClampMin="1")) int32 MaxPosture = 3;
+    UPROPERTY(EditAnywhere, Category="Combat|Posture", meta=(ClampMin="0.1")) float MountWindowDuration = 5.f;
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) float ChaseSpeed = 260.f;
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="0.1")) float ChaseDuration = 1.2f;
     UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) float ChargeTriggerDistance = 1400.f;
@@ -86,6 +90,7 @@ private:
     UPROPERTY(VisibleAnywhere) TObjectPtr<USkeletalMeshComponent> Creature;
     UPROPERTY() TArray<TObjectPtr<UAnimSequence>> CreatureAnimations;
     UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> CoreMarkers;
+    UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> CorruptionBulges;
     UPROPERTY() TArray<TObjectPtr<UMaterialInstanceDynamic>> CoreMarkerMaterials;
     UPROPERTY() TArray<TObjectPtr<UBoxComponent>> LedgeCollision;
     UPROPERTY() TObjectPtr<UStaticMeshComponent> GrabMarker;
@@ -94,7 +99,7 @@ private:
     float RiderTime = 0.f;
     int32 AnimationIndex = INDEX_NONE;
     EIshibashiriState State = EIshibashiriState::Chase;
-    int32 Health = 3;
+    int32 Posture = 3;
     float StateTimeRemaining = 0.f;
     float VisualTime = 0.f;
     // A short, presentation-only tail after the gameplay Kakon has already
@@ -102,5 +107,6 @@ private:
     TArray<float> PurifyPresentationRemaining;
     bool bCounterUsed = false;
     bool bChargeHitPlayer = false;
+    bool bMountCommitted = false;
     FVector ChargeDirection = FVector::ForwardVector;
 };

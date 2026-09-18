@@ -151,14 +151,14 @@ bool ABasinPlaythroughTest::ValidateRetryReset(FString& Detail) const
         && B->GetActorTransform().Equals(BossStartTransform, .1f);
     const bool bPlayer = P->GetHealth() == P->MaxHealth && !P->IsDodging() && !P->IsAttacking()
         && !P->IsGrabbing() && P->GetCharacterMovement()->IsWalking();
-    const bool bBoss = B->GetHealth() == B->MaxHealth && B->GetPurifiedCount() == 0
+    const bool bBoss = B->GetPosture() == B->MaxPosture && B->GetPurifiedCount() == 0
         && B->GetState() == EIshibashiriState::Chase;
     const bool bInput = !C->IsClimbing() && !C->IsGripping() && !C->HasMovementInput();
     const bool bArena = Meshes.Num() == InitialStaticMeshes && Lights.Num() == InitialLights && Fogs.Num() == InitialFogs
         && Arena->GetVisualRockCount() == InitialRocks && Arena->GetBoundaryCount() == InitialBoundaries
         && Arena->GetAccentCount() == InitialAccents;
     Detail = FString::Printf(TEXT("transforms=%d player=%d boss=%d input=%d arena=%d hp=%d/%d bossHp=%d/%d purified=%d state=%s components(mesh/light/fog)=%d/%d/%d"),
-        bTransforms,bPlayer,bBoss,bInput,bArena,P->GetHealth(),P->MaxHealth,B->GetHealth(),B->MaxHealth,
+        bTransforms,bPlayer,bBoss,bInput,bArena,P->GetHealth(),P->MaxHealth,B->GetPosture(),B->MaxPosture,
         B->GetPurifiedCount(),*B->GetStateLabel(),Meshes.Num(),Lights.Num(),Fogs.Num());
     return bTransforms && bPlayer && bBoss && bInput && bArena;
 }

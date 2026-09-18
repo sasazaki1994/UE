@@ -121,6 +121,10 @@ Status: Adopted Design / implementation staged
 
 コア: **突進誘導 + 環境破壊 + 背中登攀**
 
+現行の第一主戦では、最小の石走り専用体勢値（初期値3）を使う。攻略順は `突進を観察 → 横回避 → Recover → 脚・角周辺の禍の隆起を斬る → 体勢を崩す → 膝をつく → 5秒以内に前脚または角から取り付く → 11地点Routeを登る → 3禍根だけを祓う → 鎮静` とする。通常時の斬撃は硬質部位に弾かれ、Recoverごとの有効斬撃だけが体勢値を1減らす。体勢値はHealthではなく、0は登攀開始機会を作るだけでCalmやCompletedへ接続しない。
+
+取り付かなければ通常状態へ戻して体勢値を3へ戻す。取り付き成功後はMount Windowを無効化し、既存Grab Motion Warp、11地点Route、分岐、休息、Shake、Cling、Stamina、落下をそのまま使う。落下後は地上から同じ体勢崩しを再実行する。勝利条件は登録された3つの `AKakonActor` の全浄化のみで、`AKakonActor::Purify → UNushiProgressComponent::OnAllPurified → UNushiStateComponent::CalmNushi → ANushiEncounterManager::Completed → Victory` を唯一の通常攻略経路とする。
+
 - 突進を岩壁・石柱などへ誘導し、Grab開始点または分岐を作る。
 - 境断ちで禍の強い方向を探す。
 - 左腕でShake前兆や禍の流れを短時間読む。
