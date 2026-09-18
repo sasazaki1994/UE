@@ -1,5 +1,7 @@
 # 禍祓い — 石走り・登攀プロトタイプ
 
+物語・体験設計は [制作資料パッケージ](Docs/Design/README.md) に集約しています。白面の穢れは前半／後半の2パターンを基準にし、4戦の感情設計、島の概念地図、情報提示、音響・鎮静演出、静的な整合性検査を収録しています。資料の提案と実装済み機能は区別しており、この資料追加でゲーム本体やアセットは変更していません。
+
 4つのEncounterをタイトルからエンディングまで順に通すCampaignは、次の専用起動で確認できます。`Test -Campaign`はSTEP 3Cの入力駆動E2Eで、状態fixture Automationではありません。単体起動は従来どおりです。構造は [Campaign Flow](Docs/CampaignFlow.md)、検証状況は [Campaign E2E Validation](Docs/CampaignE2EValidation.md) を参照してください。
 
 ```powershell

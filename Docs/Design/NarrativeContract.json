@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "status": "DESIGN_ONLY",
+  "source_baseline": "7dc8b3ace9e38d4aa86d6dffd45d44a1428b4a7b",
+  "mask_is_sealing_device": false,
+  "corruption_is_absorbed_from_purified_nushi": false,
+  "corruption_stage_changes_gameplay_stats": false,
+  "appearance_variants": ["Early", "Advanced"],
+  "shared_assets": ["mesh", "rig", "costume", "mask", "animations"],
+  "switch_on_chapter_entry": "Interlude2",
+  "retry_preserves_appearance": true,
+  "new_campaign_appearance": "Early",
+  "chapter_appearance": {
+    "Title": null,
+    "Prologue": "Early",
+    "IshibashiriApproach": "Early",
+    "Ishibashiri": "Early",
+    "Interlude1": "Early",
+    "Fuchimatoi": "Early",
+    "Interlude2": "Advanced",
+    "Minedaki": "Advanced",
+    "Interlude3": "Advanced",
+    "Magatsune": "Advanced",
+    "Ending": "Advanced",
+    "Completed": null
+  },
+  "standalone_appearance": {
+    "Ishibashiri": "Early",
+    "Fuchimatoi": "Early",
+    "Minedaki": "Advanced",
+    "Magatsune": "Advanced"
+  },
+  "encounters": [
+    {"id": "Ishibashiri", "kind": "nushi", "kakon_count": 3},
+    {"id": "Fuchimatoi", "kind": "nushi", "kakon_count": 3},
+    {"id": "Minedaki", "kind": "nushi", "kakon_count": 3},
+    {"id": "Magatsune", "kind": "living_terrain", "kakon_count": 3}
+  ],
+  "normal_victory_condition": "all_registered_kakon_purified",
+  "ending": {
+    "nushi_survive": true,
+    "magatsune_destroyed": false,
+    "corruption_remains": true,
+    "appearance": "Advanced"
+  },
+  "delivery": {
+    "story_and_ending": "DRAFT",
+    "emotional_beats": "DESIGN_ONLY",
+    "island_map": "CONCEPT_ONLY",
+    "reduced_hud": "DESIGN_ONLY",
+    "audio_and_calming": "DESIGN_ONLY",
+    "appearance_runtime": "NOT_IMPLEMENTED",
+    "ue_runtime_validation": "NOT_RUN"
+  }
+}
