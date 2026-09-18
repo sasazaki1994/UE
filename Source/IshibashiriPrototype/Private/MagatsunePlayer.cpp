@@ -13,6 +13,7 @@
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"
 #include "PrimitiveAppearance.h"
+#include "ShirotsuraVisualComponent.h"
 
 AMagatsunePlayer::AMagatsunePlayer()
 {
@@ -25,12 +26,14 @@ AMagatsunePlayer::AMagatsunePlayer()
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
     static ConstructorHelpers::FObjectFinder<UMaterialInterface> Material(
         TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
-    auto* Body = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Climber"));
-    Body->SetupAttachment(RootComponent);
-    Body->SetStaticMesh(Sphere.Object);
-    Body->SetMaterial(0, Material.Object);
-    Body->SetRelativeScale3D({.7, .7, 1.65});
-    Body->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    PrimitiveBody = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Climber"));
+    PrimitiveBody->SetupAttachment(RootComponent);
+    PrimitiveBody->SetStaticMesh(Sphere.Object);
+    PrimitiveBody->SetMaterial(0, Material.Object);
+    PrimitiveBody->SetRelativeScale3D({.7, .7, 1.65});
+    PrimitiveBody->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    ShirotsuraVisual = CreateDefaultSubobject<UShirotsuraVisualComponent>(TEXT("ShirotsuraVisual"));
+    ShirotsuraVisual->Configure(GetMesh(), PrimitiveBody);
 }
 
 void AMagatsunePlayer::ConfigureBoss(AMagatsuneBoss* V)
@@ -109,7 +112,11 @@ void AMagatsunePlayer::JumpPressed()
 
 void AMagatsunePlayer::PurifyPressed()
 {
-    if (Boss && Boss->TryPurify()) Sense->NotifyPurifyAfterSense();
+    if (Boss && Boss->TryPurify())
+    {
+        Sense->NotifyPurifyAfterSense();
+        ShirotsuraVisual->PlayOneShot(EShirotsuraVisualState::Slash);
+    }
 }
 
 void AMagatsunePlayer::RetryPressed()
@@ -144,6 +151,14 @@ void AMagatsunePlayer::Fall(bool Exhausted)
 void AMagatsunePlayer::Tick(float Dt)
 {
     Super::Tick(Dt);
+    const EShirotsuraVisualState VisualState = IsMounted() ? (IsRouteMoving()       ? EShirotsuraVisualState::Climb
+                                                                     : IsClinging() ? EShirotsuraVisualState::Grip
+                                                                                    : EShirotsuraVisualState::Hang)
+        : GetCharacterMovement()->IsFalling()              ? EShirotsuraVisualState::Jump
+        : GetVelocity().Size2D() > 5                       ? EShirotsuraVisualState::Run
+                                                           : EShirotsuraVisualState::Idle;
+    ShirotsuraVisual->SetState(VisualState);
+    ShirotsuraVisual->SetWeaponHidden(IsMounted());
     UpdateSenseFromBoss();
     if (!Boss || !FMath::IsFinite(Dt) || Dt <= 0) return;
     if (bFalling)
@@ -200,6 +215,7 @@ void AMagatsunePlayer::ResetForEncounter()
     Grab->Release();
     Node = Destination = INDEX_NONE;
     Sense->ResetSense();
+    ShirotsuraVisual->ResetPresentation();
     ForwardInput = MoveProgress = RouteDelay = RecoveryGrace = 0;
     bGripHeld = bFalling = bRecovering = false;
     Stamina->ResetStamina();

@@ -14,6 +14,7 @@
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"
 #include "PrimitiveAppearance.h"
+#include "ShirotsuraVisualComponent.h"
 
 AMinedakiPlayer::AMinedakiPlayer()
 {
@@ -29,12 +30,14 @@ AMinedakiPlayer::AMinedakiPlayer()
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
     static ConstructorHelpers::FObjectFinder<UMaterialInterface> Material(
         TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
-    auto* Body = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Climber"));
-    Body->SetupAttachment(RootComponent);
-    Body->SetStaticMesh(Sphere.Object);
-    Body->SetMaterial(0, Material.Object);
-    Body->SetRelativeScale3D(FVector(.7, .7, 1.65));
-    Body->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    PrimitiveBody = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Climber"));
+    PrimitiveBody->SetupAttachment(RootComponent);
+    PrimitiveBody->SetStaticMesh(Sphere.Object);
+    PrimitiveBody->SetMaterial(0, Material.Object);
+    PrimitiveBody->SetRelativeScale3D(FVector(.7, .7, 1.65));
+    PrimitiveBody->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    ShirotsuraVisual = CreateDefaultSubobject<UShirotsuraVisualComponent>(TEXT("ShirotsuraVisual"));
+    ShirotsuraVisual->Configure(GetMesh(), PrimitiveBody);
 }
 
 void AMinedakiPlayer::ConfigureBoss(AMinedakiBoss* InBoss)
@@ -42,8 +45,7 @@ void AMinedakiPlayer::ConfigureBoss(AMinedakiBoss* InBoss)
     Boss = InBoss;
     AddTickPrerequisiteActor(Boss);
     Grab->AddTickPrerequisiteActor(this);
-    auto* Primitive = FindComponentByClass<UStaticMeshComponent>();
-    SetPrimitiveColor(Primitive->CreateDynamicMaterialInstance(0), FLinearColor(1, .72, .08));
+    SetPrimitiveColor(PrimitiveBody->CreateDynamicMaterialInstance(0), FLinearColor(1, .72, .08));
     Sense->ClearBoundaryTargets();
     for (int32 I = 0; I < Boss->GetKakonCount(); ++I) Sense->RegisterBoundaryTarget(Boss->GetKakon(I), I == 0);
 }
@@ -133,7 +135,11 @@ void AMinedakiPlayer::JumpPressed()
 
 void AMinedakiPlayer::AttackPressed()
 {
-    if (CanAct() && Boss->TryPurifyKakon()) Sense->NotifyPurifyAfterSense();
+    if (CanAct() && Boss->TryPurifyKakon())
+    {
+        Sense->NotifyPurifyAfterSense();
+        ShirotsuraVisual->PlayOneShot(EShirotsuraVisualState::Slash);
+    }
 }
 
 void AMinedakiPlayer::RetryPressed()
@@ -172,6 +178,14 @@ void AMinedakiPlayer::Fall(bool bExhausted)
 void AMinedakiPlayer::Tick(float Dt)
 {
     Super::Tick(Dt);
+    const EShirotsuraVisualState VisualState = IsMounted() ? (IsRouteMoving()       ? EShirotsuraVisualState::Climb
+                                                                     : IsClinging() ? EShirotsuraVisualState::Grip
+                                                                                    : EShirotsuraVisualState::Hang)
+        : GetCharacterMovement()->IsFalling()              ? EShirotsuraVisualState::Jump
+        : GetVelocity().Size2D() > 5                       ? EShirotsuraVisualState::Run
+                                                           : EShirotsuraVisualState::Idle;
+    ShirotsuraVisual->SetState(VisualState);
+    ShirotsuraVisual->SetWeaponHidden(IsMounted());
     UpdateSenseFromBoss();
     if (!Boss || !FMath::IsFinite(Dt) || Dt <= 0) return;
     if (bFallen)
@@ -236,6 +250,7 @@ void AMinedakiPlayer::ResetForEncounter()
     StopJumping();
     ConsumeMovementInputVector();
     Sense->ResetSense();
+    ShirotsuraVisual->ResetPresentation();
     Node = Destination = INDEX_NONE;
     ForwardInput = Progress = RouteDelay = RecoveryGrace = 0;
     bGripHeld = bFallen = bRecovering = false;

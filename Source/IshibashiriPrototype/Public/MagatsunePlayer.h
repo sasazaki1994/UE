@@ -6,7 +6,10 @@
 class AMagatsuneBoss;
 class UGrabComponent;
 class UStaminaComponent;
+class UStaticMeshComponent;
+class UShirotsuraVisualComponent;
 UCLASS()
+
 class ISHIBASHIRIPROTOTYPE_API AMagatsunePlayer : public ACharacter
 {
     GENERATED_BODY()
@@ -61,6 +64,8 @@ private:
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> Grab;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaminaComponent> Stamina;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UPlayerSenseComponent> Sense;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> PrimitiveBody;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UShirotsuraVisualComponent> ShirotsuraVisual;
     int32 Node = INDEX_NONE, Destination = INDEX_NONE;
     float ForwardInput = 0, MoveProgress = 0, RouteDelay = 0, RecoveryGrace = 0;
     bool bGripHeld = false, bFalling = false, bRecovering = false;

@@ -8,9 +8,12 @@ class UGrabComponent;
 class UStaminaComponent;
 class USpringArmComponent;
 class UCameraComponent;
+class UStaticMeshComponent;
+class UShirotsuraVisualComponent;
 
 // Primitive test pawn. Attachment and stamina use the existing shared components.
 UCLASS()
+
 class ISHIBASHIRIPROTOTYPE_API AFuchimatoiPlayer : public ACharacter
 {
     GENERATED_BODY()
@@ -26,20 +29,32 @@ public:
     bool ReceiveBite();
     bool IsMounted() const;
     bool IsOnRecoveryGround() const;
+
     bool IsRecovering() const { return bRecoveryApproach; }
-    bool IsDodging() const { return DodgeRemaining>0; }
-    bool IsRouteMoving() const { return Destination!=INDEX_NONE; }
+
+    bool IsDodging() const { return DodgeRemaining > 0; }
+
+    bool IsRouteMoving() const { return Destination != INDEX_NONE; }
+
     int32 GetRouteNode() const { return Node; }
+
     int32 GetGuidanceNode() const;
+
     int32 GetHealth() const { return Health; }
+
     UStaminaComponent* GetStamina() const { return Stamina; }
+
     UPlayerSenseComponent* GetSense() const { return Sense; }
+
     UGrabComponent* GetGrab() const { return Grab; }
+
     UCameraComponent* GetCamera() const { return Camera; }
-    UPROPERTY(EditAnywhere, Category="Fuchimatoi") float GrabRange = 440.f;
-    UPROPERTY(EditAnywhere, Category="Fuchimatoi") float RouteSpeed = 300.f;
+
+    UPROPERTY(EditAnywhere, Category = "Fuchimatoi") float GrabRange = 440.f;
+    UPROPERTY(EditAnywhere, Category = "Fuchimatoi") float RouteSpeed = 300.f;
     static constexpr float MinimumGrabStamina = 25.f;
     static constexpr float RecoveryGrabRange = 240.f;
+
 private:
     void MoveForward(float Value);
     void MoveRight(float Value);
@@ -52,7 +67,10 @@ private:
     void DodgePressed();
     void AttackPressed();
     void RetryPressed();
-    void BoundarySensePressed(); void BoundarySenseReleased(); void ArmSensePressed(); void ArmSenseReleased();
+    void BoundarySensePressed();
+    void BoundarySenseReleased();
+    void ArmSensePressed();
+    void ArmSenseReleased();
     ECorruptionWarning ComputeCorruptionWarning() const;
     void UpdateSenseFromBoss();
     void AdvanceRoute(float Dt);
@@ -61,14 +79,16 @@ private:
     UPROPERTY(VisibleAnywhere) TObjectPtr<UGrabComponent> Grab;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UStaminaComponent> Stamina;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UPlayerSenseComponent> Sense;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UStaticMeshComponent> PrimitiveBody;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UShirotsuraVisualComponent> ShirotsuraVisual;
     UPROPERTY(VisibleAnywhere) TObjectPtr<USpringArmComponent> Arm;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UCameraComponent> Camera;
-    float ForwardInput=0, RightInput=0;
-    float DodgeRemaining=0, DodgeCooldown=0, HitImmunity=0;
-    FVector DodgeDirection=FVector::ZeroVector;
-    int32 Health=3;
-    int32 Node=INDEX_NONE, Destination=INDEX_NONE;
-    float RouteProgress=0, RouteDelay=0;
-    bool bRecoveryApproach=false;
-    float RecoveryStaminaGrace=0;
+    float ForwardInput = 0, RightInput = 0;
+    float DodgeRemaining = 0, DodgeCooldown = 0, HitImmunity = 0;
+    FVector DodgeDirection = FVector::ZeroVector;
+    int32 Health = 3;
+    int32 Node = INDEX_NONE, Destination = INDEX_NONE;
+    float RouteProgress = 0, RouteDelay = 0;
+    bool bRecoveryApproach = false;
+    float RecoveryStaminaGrace = 0;
 };

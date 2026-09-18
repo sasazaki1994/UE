@@ -9,10 +9,11 @@ def source(path):
 
 def test_runtime_assets_remain_rigged_baseline():
     player = source("Source/IshibashiriPrototype/Private/PrototypePlayer.cpp")
+    shared_visual = source("Source/IshibashiriPrototype/Private/ShirotsuraVisualComponent.cpp")
     boss = source("Source/IshibashiriPrototype/Private/IshibashiriBoss.cpp")
-    assert "/Game/Characters/Rigged/Shirotsura/SK_Shirotsura" in player
+    assert "/Game/Characters/Rigged/Shirotsura/SK_Shirotsura" in shared_visual
     assert "/Game/Characters/Rigged/Ishibashiri/SK_Ishibashiri" in boss
-    assert "/Reference/" not in player
+    assert "/Reference/" not in shared_visual
 
 
 def test_sense_visual_roles_are_separate_and_read_only():
@@ -48,7 +49,8 @@ def test_basin_scale_and_calm_hooks_are_presentation_only():
 def test_sense_and_kakon_presentation_continue_without_normal_play_primitives():
     player = source("Source/IshibashiriPrototype/Private/PrototypePlayer.cpp")
     boss = source("Source/IshibashiriPrototype/Private/IshibashiriBoss.cpp")
-    assert "SetVisibility(Sense->IsBoundarySenseActive() && !bWeaponHidden)" in player
+    assert "SetVisibility(Sense->IsBoundarySenseActive()" in player
+    assert "IsGrabbing() && !IsAttacking()" in player
     assert "SetVisibility(Sense->IsCorruptionSenseActive())" in player
     rider_branch = boss.split("if (Target->IsGrabbing()", 1)[1].split("return;", 1)[0]
     assert "UpdateVisuals();" in rider_branch

@@ -5,16 +5,17 @@
 #include "Components/SceneComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "PlayerSenseComponent.h"
+#include "ShirotsuraVisualComponent.h"
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProductionVisualIsolation,
-    "IshibashiriPrototype.ProductionVisuals.AssetOnlyContract",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProductionVisualIsolation, "IshibashiriPrototype.ProductionVisuals.AssetOnlyContract",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
 bool FProductionVisualIsolation::RunTest(const FString&)
 {
     for (const TCHAR* Name : {TEXT("Shirotsura"), TEXT("Ishibashiri")})
     {
-        USkeletalMesh* Baseline = LoadObject<USkeletalMesh>(nullptr,
-            *FString::Printf(TEXT("/Game/Characters/Rigged/%s/SK_%s"), Name, Name));
+        USkeletalMesh* Baseline =
+            LoadObject<USkeletalMesh>(nullptr, *FString::Printf(TEXT("/Game/Characters/Rigged/%s/SK_%s"), Name, Name));
         if (!TestNotNull(TEXT("Baseline fixture"), Baseline)) return false;
         auto* Component = NewObject<USkeletalMeshComponent>();
         Component->SetSkeletalMesh(Baseline);
@@ -45,6 +46,28 @@ bool FProductionVisualIsolation::RunTest(const FString&)
         TestTrue(TEXT("Arm state preserved"), Sense->IsCorruptionSenseActive());
         TestEqual(TEXT("Warning preserved"), Sense->GetCorruptionWarning(), ECorruptionWarning::Danger);
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FShirotsuraVisualFallback, "IshibashiriPrototype.ProductionVisuals.ShirotsuraSharedFallback",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FShirotsuraVisualFallback::RunTest(const FString&)
+{
+    auto* Rig = NewObject<USkeletalMeshComponent>();
+    auto* Primitive = NewObject<USkeletalMeshComponent>();
+    auto* Visual = NewObject<UShirotsuraVisualComponent>();
+    // A null mesh simulates a missing baseline package and must never hide the
+    // only remaining representation of the player.
+    Visual->Configure(nullptr, Primitive);
+    TestFalse(TEXT("Missing rig selects fallback"), Visual->IsUsingRig());
+    TestTrue(TEXT("Missing rig keeps fallback visible"), Primitive->IsVisible());
+
+    auto* Fallback = NewObject<USkeletalMeshComponent>();
+    Visual->Configure(Rig, Fallback);
+    TestEqual(TEXT("Rig and fallback are mutually exclusive"), Rig->IsVisible(), !Fallback->IsVisible());
+    Visual->ResetPresentation();
+    TestEqual(TEXT("Retry preserves a visible representation"), Rig->IsVisible(), !Fallback->IsVisible());
     return true;
 }
 #endif
