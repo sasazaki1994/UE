@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="760" viewBox="0 0 960 760" role="img" aria-labelledby="title desc">
+  <title id="title">禍祓い 島の概念地図</title>
+  <desc id="desc">縮尺とUE座標は未確定。南岸、人里跡、西の石走りの盆地、東の淵纏いの渓谷、北の峰抱きの霊峰、中央の禍津根へ順に進む。人里跡から中央への破線は眺望のみ。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#b07c3d"/></marker>
+    <style>text{font-family:"Noto Sans CJK JP","Yu Gothic",sans-serif;fill:#253d3a} .label{font-size:22px;font-weight:700}.small{font-size:16px}.route{fill:none;stroke:#b07c3d;stroke-width:4;marker-end:url(#arrow)}.zone{fill:#faf8ee;stroke:#516e60;stroke-width:2}</style>
+  </defs>
+  <rect width="960" height="760" fill="#e6efef"/>
+  <text x="48" y="48" class="label">禍祓い — 島と主の配置案</text>
+  <text x="48" y="78" class="small">概念図・非縮尺 / 本番地形・UE座標ではない</text>
+  <path d="M479 109 C572 94 622 158 651 207 C724 205 808 278 833 367 C842 442 786 529 700 536 C642 589 599 660 493 681 C397 690 339 610 291 569 C182 552 109 486 126 397 C114 314 179 252 260 234 C332 212 350 129 479 109Z" fill="#cfd8bc" stroke="#9da98c" stroke-width="3"/>
+  <rect x="365" y="139" width="230" height="86" rx="14" class="zone"/>
+  <text x="390" y="174" class="label">3　峰抱きの霊峰</text><text x="390" y="203" class="small">崖登り・腕橋・安全棚</text>
+  <rect x="135" y="316" width="238" height="95" rx="14" class="zone"/>
+  <text x="155" y="352" class="label">1　石走りの盆地</text><text x="155" y="382" class="small">横回避・体勢崩し・登攀</text>
+  <rect x="600" y="316" width="245" height="95" rx="14" class="zone"/>
+  <text x="620" y="352" class="label">2　淵纏いの渓谷</text><text x="620" y="382" class="small">岩への誘導・蛇と岩の往復</text>
+  <rect x="386" y="297" width="193" height="116" rx="14" fill="#ded7c8" stroke="#615c56" stroke-width="2"/>
+  <text x="412" y="333" class="label">終　禍津根</text><text x="408" y="363" class="small">中央・境界石跡</text><text x="408" y="389" class="small">動く土地を鎮める</text>
+  <rect x="365" y="484" width="230" height="84" rx="14" class="zone"/>
+  <text x="399" y="519" class="label">人里跡・祠</text><text x="388" y="547" class="small">背景案 / 拠点機能なし</text>
+  <rect x="365" y="603" width="230" height="66" rx="14" class="zone"/>
+  <text x="394" y="642" class="label">南岸・導入背景</text>
+  <path d="M480 603 L480 570" class="route"/>
+  <path d="M365 520 Q255 505 253 414" class="route"/>
+  <text x="170" y="471" class="small">既存Approach</text>
+  <path d="M350 316 Q480 250 610 316" class="route"/>
+  <text x="385" y="262" class="small">主戦間は幕間で接続可</text>
+  <path d="M724 316 Q743 205 600 181" class="route"/>
+  <path d="M483 225 L483 294" class="route"/>
+  <path d="M483 484 L483 414" fill="none" stroke="#64706d" stroke-width="2" stroke-dasharray="7 6"/>
+  <text x="499" y="459" class="small">眺望のみ・近道ではない</text>
+  <text x="877" y="149" class="label">北 ↑</text>
+  <text x="48" y="721" class="small">実線: 攻略順の接続案　破線: 見通し　　オープンワールド・自由往復は必須にしない</text>
+</svg>
