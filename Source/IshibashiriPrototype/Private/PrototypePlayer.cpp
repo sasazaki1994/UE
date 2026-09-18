@@ -297,9 +297,11 @@ ECorruptionWarning APrototypePlayer::ComputeCorruptionWarning() const
 {
     if (!SenseBoss) return ECorruptionWarning::None;
     const EIshibashiriState State = SenseBoss->GetState();
-    if (SenseBoss->IsBuckWarning() || State == EIshibashiriState::Telegraph || State == EIshibashiriState::Charge)
+    if (SenseBoss->IsBuckWarning() || SenseBoss->IsBucking()
+        || State == EIshibashiriState::Telegraph || State == EIshibashiriState::Charge)
         return ECorruptionWarning::Danger;
-    return State == EIshibashiriState::Recover ? ECorruptionWarning::Safe : ECorruptionWarning::None;
+    return State == EIshibashiriState::Recover || State == EIshibashiriState::Kneel
+        ? ECorruptionWarning::Safe : ECorruptionWarning::None;
 }
 
 void APrototypePlayer::UpdateSenseFromBoss()
@@ -455,7 +457,12 @@ void APrototypePlayer::TraceAttack()
         if (AIshibashiriBoss* Boss = Cast<AIshibashiriBoss>(Hit.GetActor()))
         {
             bAttackConnected = true;
-            ShowFeedback(Boss->TryReceiveCounter() ? TEXT("COUNTER! Boss HP -1") : TEXT("DEFLECTED - wait for a new recovery"));
+            if (!Boss->TryReceiveCounter())
+                ShowFeedback(TEXT("DEFLECTED - evade the charge first"));
+            else if (Boss->GetPosture() == 0)
+                ShowFeedback(TEXT("POSTURE BROKEN - GRAB NOW"));
+            else
+                ShowFeedback(FString::Printf(TEXT("POSTURE BREAK %d/%d"), Boss->MaxPosture - Boss->GetPosture(), Boss->MaxPosture));
         }
     }
 }

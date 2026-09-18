@@ -64,7 +64,7 @@ bool FIshibashiriNushiIntegrationTest::RunTest(const FString& Parameters)
             TestFalse(TEXT("Purification cannot fire twice"), Kakon->Purify());
             TestEqual(TEXT("Progress advances once per core"), Progress->GetPurifiedCount(), I + 1);
             TestEqual(TEXT("HUD progress reads the shared source"), Boss->GetPurifiedCount(), I + 1);
-            TestEqual(TEXT("Existing combat health reduction is preserved"), Boss->GetHealth(), 2 - I);
+            TestEqual(TEXT("Purification does not alter posture"), Boss->GetPosture(), Boss->MaxPosture);
             TestEqual(TEXT("Lifecycle follows shared progress"), Manager->GetEncounterState(),
                 I == 2 ? ENushiEncounterState::Completed : ENushiEncounterState::Running);
         }
@@ -82,35 +82,21 @@ bool FIshibashiriNushiIntegrationTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("Reset returns progress to zero of three"), Progress->GetPurifiedCount(), 0);
         TestFalse(TEXT("Reset clears all-purified flag"), Progress->IsAllPurified());
         TestEqual(TEXT("Reset keeps three registrations"), Progress->GetRegisteredKakonCount(), 3);
-        TestEqual(TEXT("Virtual reset restores boss health"), Boss->GetHealth(), Boss->MaxHealth);
+        TestEqual(TEXT("Virtual reset restores posture"), Boss->GetPosture(), Boss->MaxPosture);
         TestEqual(TEXT("Virtual reset restores Chase"), Boss->GetState(), EIshibashiriState::Chase);
         TestTrue(TEXT("Virtual reset restores the configured spawn"), Boss->GetActorTransform().Equals(Spawn));
         TestEqual(TEXT("One lifecycle reset notification per cycle"), Reset->AllPurifiedEventCount, Cycle + 1);
     }
 
-    // Combat victory uses the same lifecycle without claiming any Kakon was purified.
-    Manager->StartEncounter();
-    Boss->GetNushiStateComponent()->CalmNushi();
-    Boss->GetNushiStateComponent()->CalmNushi();
-    TestEqual(TEXT("Alternate combat completion reaches the manager"), Manager->GetEncounterState(), ENushiEncounterState::Completed);
-    TestEqual(TEXT("Alternate completion does not fabricate progress"), Boss->GetPurifiedCount(), 0);
-    TestEqual(TEXT("Alternate completion fires once"), Completed->AllPurifiedEventCount, 3);
-    TestEqual(TEXT("Alternate completion emits no all-purified event"), Purified->AllPurifiedEventCount, 2);
+    // Partial purification is never completion; only the third registered Kakon
+    // drives the shared OnAllPurified -> Calm -> Completed chain.
     Manager->ResetEncounter();
     Manager->StartEncounter();
-    TestEqual(TEXT("Can start again after combat completion"), Boss->GetNushiState(), ENushiState::Active);
-
     Boss->GetCoreKakon(0)->Purify();
-    Boss->GetNushiStateComponent()->CalmNushi();
-    TestEqual(TEXT("Alternate completion retains partial purification truth"), Boss->GetPurifiedCount(), 1);
-    TestFalse(TEXT("Partial progress is not all purified on alternate completion"), Progress->IsAllPurified());
-
-    // Purification completion must not depend on the legacy combat health reaching zero.
-    Boss->MaxHealth = 5;
-    Manager->ResetEncounter();
-    Manager->StartEncounter();
-    for (int32 I = 0; I < 3; ++I) Boss->GetCoreKakon(I)->Purify();
-    TestEqual(TEXT("All purification completes even with combat health remaining"), Boss->GetHealth(), 2);
+    Boss->GetCoreKakon(1)->Purify();
+    TestEqual(TEXT("Two Kakon do not complete encounter"), Manager->GetEncounterState(), ENushiEncounterState::Running);
+    TestNotEqual(TEXT("Two Kakon do not calm Ishibashiri"), Boss->GetNushiState(), ENushiState::Calm);
+    Boss->GetCoreKakon(2)->Purify();
     TestEqual(TEXT("Shared progress owns full purification completion"), Manager->GetEncounterState(), ENushiEncounterState::Completed);
 
     World->DestroyWorld(false);

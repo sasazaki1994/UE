@@ -70,6 +70,7 @@ void UColossusClimbingComponent::GrabPressed()
     APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     AIshibashiriBoss* Candidate = Mode ? Mode->GetBoss() : nullptr;
     if (!Mode || !Mode->IsEncounterActive() || !Candidate) return;
+    if (!Candidate->CanMount()) return;
     if (FVector::Dist(Player->GetActorLocation(), Candidate->GetClimbPosition(0)) > GrabRange) return;
     if (Candidate->GetState() == EIshibashiriState::Charge) return;
     const FTransform WarpTarget = MakeGrabWarpTarget(Candidate);
@@ -80,6 +81,7 @@ void UColossusClimbingComponent::GrabPressed()
     // Missing editor-authored assets retain the pre-warp gameplay path. This is
     // intentionally a visible legacy snap, not a claim that warping succeeded.
     Boss = Candidate;
+    Boss->NotifyMounted();
     Node = 0; Destination = INDEX_NONE; Progress = 0.f; UnsafeBuckTime = 0.f;
     InputDelay = .15f;
     Player->GetCharacterMovement()->StopMovementImmediately();
@@ -108,7 +110,7 @@ FTransform UColossusClimbingComponent::MakeGrabWarpTarget(const AIshibashiriBoss
 
 bool UColossusClimbingComponent::StartGrabWarp(AIshibashiriBoss* Candidate)
 {
-    if (!Player || !IsValid(Candidate) || bGrabWarping) return false;
+    if (!Player || !IsValid(Candidate) || !Candidate->CanMount() || bGrabWarping) return false;
     const FTransform Target = MakeGrabWarpTarget(Candidate);
     GrabWarpStartDistance = FVector::Dist(Player->GetActorLocation(), Target.GetLocation());
     GrabWarpStartAngle = FacingAngle(Player, Target);
@@ -167,7 +169,8 @@ void UColossusClimbingComponent::CompleteGrabWarp()
     const FTransform Target = IsValid(Candidate) ? MakeGrabWarpTarget(Candidate) : FTransform::Identity;
     const float DistanceError = Player ? FVector::Dist(Player->GetActorLocation(), Target.GetLocation()) : MAX_flt;
     const float AngleError = Player ? FacingAngle(Player, Target) : 180.f;
-    if (!IsValid(Candidate) || DistanceError > CompletionDistanceTolerance || AngleError > CompletionAngleTolerance)
+    if (!IsValid(Candidate) || !Candidate->CanMount()
+        || DistanceError > CompletionDistanceTolerance || AngleError > CompletionAngleTolerance)
     {
         CancelGrabWarp(TEXT("CompletionTolerance"));
         return;
@@ -177,6 +180,7 @@ void UColossusClimbingComponent::CompleteGrabWarp()
     if (UMotionWarpingComponent* Warping = Player->GetMotionWarping()) Warping->RemoveWarpTarget(GrabWarpTargetName);
     Player->EndGrabWarpAnimation();
     Boss = Candidate;
+    Boss->NotifyMounted();
     Node = 0; Destination = INDEX_NONE; Progress = 0.f; UnsafeBuckTime = 0.f;
     InputDelay = .15f;
     Player->GetCharacterMovement()->StopMovementImmediately();
@@ -195,7 +199,7 @@ void UColossusClimbingComponent::UpdateGrabWarp(float Dt)
     {
         CancelGrabWarp(TEXT("InvalidParticipant")); return;
     }
-    if (GrabWarpBoss->GetState() == EIshibashiriState::Charge || Player->GetCharacterMovement()->IsFalling())
+    if (!GrabWarpBoss->CanMount() || Player->GetCharacterMovement()->IsFalling())
     {
         CancelGrabWarp(TEXT("UnsafeState")); return;
     }
@@ -291,7 +295,7 @@ void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActor
 }
 FString UColossusClimbingComponent::GetHint() const
 {
-    if (!Boss) return TEXT("E / RB near the gold foreleg hold: grab (wait until the charge stops)");
+    if (!Boss) return TEXT("Break posture, then E / RB near the gold foreleg or horn hold during KNEEL");
     if (Boss->IsBucking() || Boss->IsBuckWarning()) return TEXT("HOLD E / RB - brace for the shake! Movement pauses during the shake.");
     if (Node == 5) return TEXT("W / LS up: summit | D / LS right: right-shoulder core | S: descend | Space / A: detach");
     if (Node == 10) return TEXT("W: shoulder core | A / S: main route");

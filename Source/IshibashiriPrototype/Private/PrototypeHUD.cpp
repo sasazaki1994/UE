@@ -75,8 +75,8 @@ void APrototypeHUD::DrawHUD()
     if(Player->GetSense()->IsCorruptionSenseActive()) Line(FString::Printf(TEXT("CORRUPTION SENSE: %s"),*Player->GetSense()->GetCorruptionWarningLabel()),FLinearColor(1,.35f,.55f));
     if (bDebugGuidance)
     {
-        Line(FString::Printf(TEXT("PLAYER HP %d/%d | BOSS HP %d/%d | %s (%.2fs)"),Player->GetHealth(),Player->MaxHealth,
-            Boss->GetHealth(),Boss->MaxHealth,*Boss->GetStateLabel(),Boss->GetStateTimeRemaining()));
+        Line(FString::Printf(TEXT("PLAYER HP %d/%d | POSTURE %d/%d | %s (%.2fs)"),Player->GetHealth(),Player->MaxHealth,
+            Boss->GetPosture(),Boss->MaxPosture,*Boss->GetStateLabel(),Boss->GetStateTimeRemaining()));
         Line(TEXT("Move WASD/LS | Camera Mouse/RS | Attack LMB/X | Dodge Shift/B"),FLinearColor(.7f,.8f,.85f),.75f);
     }
     if (!Player->GetFeedback().IsEmpty()) Line(Player->GetFeedback(), FLinearColor(.88f,.76f,.42f),.85f);
@@ -99,10 +99,8 @@ void APrototypeHUD::DrawHUD()
         DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.9f), Left, Top, BoxWidth, 170.f * Scale);
         DrawText(bVictory ? TEXT("VICTORY - Ishibashiri is calmed") : TEXT("DEFEAT"), bVictory ? FLinearColor::Green : FLinearColor::Red,
             Left + 24.f * Scale, Top + 24.f * Scale, GEngine->GetMediumFont(), 1.4f * Scale, false);
-        // Calm can come from counters, purified cores, or a mix (both reduce boss
-        // HP); show both tallies so a partial KAKON count is not read as a bug.
-        DrawText(FString::Printf(TEXT("BOSS HP %d / %d   KAKON %d / %d"),
-                Boss->GetHealth(), Boss->MaxHealth, Boss->GetPurifiedCount(), Boss->GetCoreKakonCount()),
+        DrawText(FString::Printf(TEXT("KAKON PURIFIED %d / %d"),
+                Boss->GetPurifiedCount(), Boss->GetCoreKakonCount()),
             FLinearColor(.82f, .78f, .57f), Left + 24.f * Scale, Top + 70.f * Scale, GEngine->GetMediumFont(), 0.9f * Scale, false);
         DrawText(TEXT("R / Y - Retry encounter"), FLinearColor::White,
             Left + 24.f * Scale, Top + 108.f * Scale, GEngine->GetMediumFont(), 1.2f * Scale, false);

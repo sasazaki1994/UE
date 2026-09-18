@@ -1,0 +1,27 @@
+{
+  "feature": "Ishibashiri posture-to-mount flow",
+  "date": "2026-09-18",
+  "source_revision_basis": "b71acde (origin/main fetch attempted; network proxy returned HTTP 403)",
+  "static_validation": {
+    "python_source_contract": "PASS (python -m pytest -q: 74 passed, 10 subtests)",
+    "forbidden_ground_body_health_path": "PASS (source-contract)"
+  },
+  "ue_5_6_1_windows": {
+    "build": "NOT_RUN",
+    "automation": "NOT_RUN",
+    "keyboard_60_fps": "NOT_RUN",
+    "keyboard_30_fps": "NOT_RUN",
+    "simulated_gamepad_60_fps": "NOT_RUN",
+    "climbing": "NOT_RUN",
+    "climbing_gamepad": "NOT_RUN",
+    "grab_motion_warp": "NOT_RUN",
+    "camera": "NOT_RUN",
+    "basin": "NOT_RUN",
+    "player_sense": "NOT_RUN",
+    "campaign_e2e": "NOT_RUN",
+    "fuchimatoi": "NOT_RUN",
+    "minedaki": "NOT_RUN",
+    "magatsune": "NOT_RUN",
+    "reason": "Windows Unreal Engine 5.6.1 is not installed in the execution environment. No UE runtime result is claimed."
+  }
+}
