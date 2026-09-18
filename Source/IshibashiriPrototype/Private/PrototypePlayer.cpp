@@ -1,5 +1,5 @@
 #include "PrototypePlayer.h"
-#include "ProductionVisuals.h"
+#include "ShirotsuraVisualComponent.h"
 #include "IshibashiriBoss.h"
 #include "PrototypeGameMode.h"
 #include "PrimitiveAppearance.h"
@@ -30,16 +30,6 @@
 #include "Misc/PackageName.h"
 #include "MotionWarpingComponent.h"
 
-namespace
-{
-    // Index order must match ClipNames below and the AN_Shirotsura_* assets.
-    enum class EShirotsuraClip : int32 { Idle, Walk, Run, Slash, Dodge, Climb, Hang, Grip, Jump, Death, Count };
-    const TCHAR* const ClipNames[] = {TEXT("Idle"),TEXT("Walk"),TEXT("Run"),TEXT("Slash"),TEXT("Dodge"),
-        TEXT("Climb"),TEXT("Hang"),TEXT("Grip"),TEXT("Jump"),TEXT("Death")};
-    static_assert(static_cast<int32>(UE_ARRAY_COUNT(ClipNames)) == static_cast<int32>(EShirotsuraClip::Count), "Clip names must match EShirotsuraClip");
-    constexpr int32 ClipIndex(EShirotsuraClip Clip) { return static_cast<int32>(Clip); }
-}
-
 APrototypePlayer::APrototypePlayer()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -64,7 +54,8 @@ APrototypePlayer::APrototypePlayer()
 
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Cube(TEXT("/Engine/BasicShapes/Cube.Cube"));
-    static ConstructorHelpers::FObjectFinder<UMaterialInterface> Material(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> Material(
+        TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
     Body = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body"));
     Body->SetupAttachment(RootComponent);
     Body->SetStaticMesh(Sphere.Object);
@@ -104,22 +95,13 @@ APrototypePlayer::APrototypePlayer()
         static ConstructorHelpers::FClassFinder<UControlRig> ClimbingRig(TEXT("/Game/Characters/Rigged/Shirotsura/CR_Shirotsura_Climbing"));
         if (ClimbingRig.Succeeded()) ClimbingControlRig->SetControlRigClass(ClimbingRig.Class);
     }
-    static ConstructorHelpers::FObjectFinder<USkeletalMesh> Rigged(TEXT("/Game/Characters/Rigged/Shirotsura/SK_Shirotsura"));
-    GetMesh()->SetSkeletalMesh(Rigged.Object);
-    GetMesh()->SetRelativeLocation(FVector(0,0,-88));
-    GetMesh()->SetRelativeRotation(FRotator(0,90,0));
-    GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
-    GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
-    if (Rigged.Succeeded()) { Body->SetVisibility(false); Sword->SetVisibility(false); }
-    for (const TCHAR* Clip : ClipNames)
-        Animations.Add(LoadObject<UAnimSequence>(nullptr,*FString::Printf(TEXT("/Game/Characters/Rigged/Shirotsura/AN_Shirotsura_%s"),Clip)));
+    ShirotsuraVisual = CreateDefaultSubobject<UShirotsuraVisualComponent>(TEXT("ShirotsuraVisual"));
+    ShirotsuraVisual->Configure(GetMesh(), Body, Sword);
 }
 
 void APrototypePlayer::BeginPlay()
 {
     Super::BeginPlay();
-    ProductionVisuals::ApplyAtBeginPlay(GetMesh(), TEXT("Shirotsura"));
     Health = MaxHealth;
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
     BodyMaterial = Body->CreateDynamicMaterialInstance(0);
@@ -143,19 +125,20 @@ void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
     if (Climbing->IsClimbing())
     {
         const FRotator View = Controller ? Controller->GetControlRotation() : GetActorRotation();
-        FVector Location = PlayerLocation - View.Vector()*560.f + FVector(0,0,160);
+        FVector Location = PlayerLocation - View.Vector() * 560.f + FVector(0, 0, 160);
         if (Boss && Boss->GetComponentsBoundingBox(true).ExpandBy(60).IsInside(Location))
         {
-            const FVector Outward = (PlayerLocation-Boss->GetActorLocation()).GetSafeNormal2D();
-            Location = PlayerLocation+Outward*650.f+FVector(0,0,340);
+            const FVector Outward = (PlayerLocation - Boss->GetActorLocation()).GetSafeNormal2D();
+            Location = PlayerLocation + Outward * 650.f + FVector(0, 0, 340);
         }
-        FCollisionQueryParams ClimbParams(SCENE_QUERY_STAT(ClimbCamera),false,this);
+        FCollisionQueryParams ClimbParams(SCENE_QUERY_STAT(ClimbCamera), false, this);
         if (Boss) ClimbParams.AddIgnoredActor(Boss);
         FHitResult CameraHit;
-        if (GetWorld()->SweepSingleByChannel(CameraHit,PlayerLocation,Location,FQuat::Identity,ECC_Camera,
-            FCollisionShape::MakeSphere(15),ClimbParams)) Location = CameraHit.Location;
+        if (GetWorld()->SweepSingleByChannel(
+                CameraHit, PlayerLocation, Location, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(15), ClimbParams))
+            Location = CameraHit.Location;
         OutResult.Location = Location;
-        OutResult.Rotation = (PlayerLocation+FVector(0,0,40)-Location).Rotation();
+        OutResult.Rotation = (PlayerLocation + FVector(0, 0, 40) - Location).Rotation();
         bUsingRaisedCamera = false;
         bFrameBossWithCamera = false;
         CameraClearElapsed = 0.f;
@@ -171,9 +154,8 @@ void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
     {
         FHitResult SightHit;
         FCollisionQueryParams SightParams(SCENE_QUERY_STAT(CombatCameraSight), false, this);
-        bBossObstructsView = World->LineTraceSingleByChannel(
-            SightHit, Pivot, OutResult.Location, ECC_Visibility, SightParams)
-            && SightHit.GetActor() == Boss;
+        bBossObstructsView = World->LineTraceSingleByChannel(SightHit, Pivot, OutResult.Location, ECC_Visibility, SightParams) &&
+            SightHit.GetActor() == Boss;
     }
 
     // Check the regular spring-arm view, even while using the raised view. A small
@@ -181,8 +163,7 @@ void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
     const float SafeDistance = MinimumCameraDistance + (bUsingRaisedCamera ? 60.f : 0.f);
     const float BossMargin = bUsingRaisedCamera ? 120.f : 70.f;
     bBossObstructsView |= Boss && Boss->GetComponentsBoundingBox(true).ExpandBy(BossMargin).IsInside(OutResult.Location);
-    const bool bNeedsRaisedCamera = FVector::Dist(PlayerLocation, OutResult.Location) < SafeDistance
-        || bBossObstructsView;
+    const bool bNeedsRaisedCamera = FVector::Dist(PlayerLocation, OutResult.Location) < SafeDistance || bBossObstructsView;
     if (!bUsingRaisedCamera && !bNeedsRaisedCamera) return;
 
     FCollisionQueryParams Params(SCENE_QUERY_STAT(RaisedCombatCamera), false, this);
@@ -190,24 +171,22 @@ void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
     if (!bNeedsRaisedCamera)
     {
         CameraClearElapsed += FMath::Max(0.f, DeltaTime);
-        const float Progress = FMath::Clamp((CameraClearElapsed - CameraClearDelay)
-            / FMath::Max(0.01f, CameraReturnDuration), 0.f, 1.f);
+        const float Progress = FMath::Clamp((CameraClearElapsed - CameraClearDelay) / FMath::Max(0.01f, CameraReturnDuration), 0.f, 1.f);
         const float Blend = Progress * Progress * (3.f - 2.f * Progress);
         const FVector Candidate = FMath::Lerp(PlayerLocation + RaisedCameraOffset, OutResult.Location, Blend);
         FHitResult ReturnHit;
-        const bool bWallBlocksReturn = World->SweepSingleByChannel(ReturnHit, Pivot, Candidate,
-            FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(12.f), Params);
+        const bool bWallBlocksReturn = World->SweepSingleByChannel(
+            ReturnHit, Pivot, Candidate, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(12.f), Params);
         FCollisionQueryParams SightParams(SCENE_QUERY_STAT(ReturnCameraSight), false, this);
-        const bool bBossBlocksReturn = Boss && (
-            Boss->GetComponentsBoundingBox(true).ExpandBy(12.f).IsInside(Candidate)
-            || (World->LineTraceSingleByChannel(ReturnHit, Pivot, Candidate, ECC_Visibility, SightParams)
-                && ReturnHit.GetActor() == Boss));
+        const bool bBossBlocksReturn = Boss &&
+            (Boss->GetComponentsBoundingBox(true).ExpandBy(12.f).IsInside(Candidate) ||
+                (World->LineTraceSingleByChannel(ReturnHit, Pivot, Candidate, ECC_Visibility, SightParams) &&
+                    ReturnHit.GetActor() == Boss));
         if (!bWallBlocksReturn && !bBossBlocksReturn)
         {
             // Blend look-at points near the character along with position. A
             // quaternion-only blend can look away from the player halfway back.
-            const FVector NormalFocus = OutResult.Location + OutResult.Rotation.Vector()
-                * FVector::Dist(OutResult.Location, Pivot);
+            const FVector NormalFocus = OutResult.Location + OutResult.Rotation.Vector() * FVector::Dist(OutResult.Location, Pivot);
             const FVector Focus = FMath::Lerp(PlayerLocation + RaisedCameraFocusOffset, NormalFocus, Blend);
             OutResult.Location = Candidate;
             OutResult.Rotation = (Focus - Candidate).Rotation();
@@ -233,9 +212,7 @@ void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
     // CalcCamera also runs after victory/defeat, when combat ticking has stopped.
     const float Yaw = Controller ? Controller->GetControlRotation().Yaw : GetActorRotation().Yaw;
     const FVector Forward = FRotator(0.f, Yaw, 0.f).Vector();
-    FVector Focus = bFrameBossWithCamera && Boss
-        ? (PlayerLocation + Boss->GetActorLocation()) * 0.5f
-        : PlayerLocation + Forward * 100.f;
+    FVector Focus = bFrameBossWithCamera && Boss ? (PlayerLocation + Boss->GetActorLocation()) * 0.5f : PlayerLocation + Forward * 100.f;
     const float Height = bFrameBossWithCamera ? FMath::Max(RaisedCameraHeight, BossCameraHeight) : RaisedCameraHeight;
     FVector RaisedLocation = FVector(Focus.X, Focus.Y, PlayerLocation.Z + Height) - Forward * 160.f;
     if (bFrameBossWithCamera && Boss && Boss->HasImportedVisuals())
@@ -248,8 +225,8 @@ void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
         Focus = PlayerLocation + FVector(0.f, 0.f, 40.f);
     }
     FHitResult Hit;
-    const bool bBlocked = World->SweepSingleByChannel(Hit, Pivot, RaisedLocation,
-        FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(12.f), Params);
+    const bool bBlocked =
+        World->SweepSingleByChannel(Hit, Pivot, RaisedLocation, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(12.f), Params);
     OutResult.Location = bBlocked ? Hit.Location : RaisedLocation;
     OutResult.Rotation = (Focus - OutResult.Location).Rotation();
     RaisedCameraOffset = OutResult.Location - PlayerLocation;
@@ -260,7 +237,7 @@ FVector APrototypePlayer::GetAttackIndicatorDirection() const
 {
     // Turning the camera during a swing must not turn its already committed trace.
     return IsAttacking() ? AttackDirection
-        : FRotator(0.f, Controller ? Controller->GetControlRotation().Yaw : GetActorRotation().Yaw, 0.f).Vector();
+                         : FRotator(0.f, Controller ? Controller->GetControlRotation().Yaw : GetActorRotation().Yaw, 0.f).Vector();
 }
 
 void APrototypePlayer::SetupPlayerInputComponent(UInputComponent* Input)
@@ -279,29 +256,26 @@ void APrototypePlayer::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Retry"), IE_Pressed, this, &APrototypePlayer::Retry);
     Input->BindAction(TEXT("Grab"), IE_Pressed, this, &APrototypePlayer::BeginGrab);
     Input->BindAction(TEXT("Grab"), IE_Released, this, &APrototypePlayer::ReleaseGrab);
-    Input->BindAction(TEXT("BoundarySense"),IE_Pressed,this,&APrototypePlayer::BoundarySensePressed);
-    Input->BindAction(TEXT("BoundarySense"),IE_Released,this,&APrototypePlayer::BoundarySenseReleased);
-    Input->BindAction(TEXT("ArmSense"),IE_Pressed,this,&APrototypePlayer::ArmSensePressed);
-    Input->BindAction(TEXT("ArmSense"),IE_Released,this,&APrototypePlayer::ArmSenseReleased);
+    Input->BindAction(TEXT("BoundarySense"), IE_Pressed, this, &APrototypePlayer::BoundarySensePressed);
+    Input->BindAction(TEXT("BoundarySense"), IE_Released, this, &APrototypePlayer::BoundarySenseReleased);
+    Input->BindAction(TEXT("ArmSense"), IE_Pressed, this, &APrototypePlayer::ArmSensePressed);
+    Input->BindAction(TEXT("ArmSense"), IE_Released, this, &APrototypePlayer::ArmSenseReleased);
 }
 
 void APrototypePlayer::ConfigureSenseTargets(AIshibashiriBoss* Boss)
 {
     SenseBoss = Boss;
     Sense->ClearBoundaryTargets();
-    for (int32 I = 0; Boss && I < Boss->GetCoreKakonCount(); ++I)
-        Sense->RegisterBoundaryTarget(Boss->GetCoreKakon(I), I == 0);
+    for (int32 I = 0; Boss && I < Boss->GetCoreKakonCount(); ++I) Sense->RegisterBoundaryTarget(Boss->GetCoreKakon(I), I == 0);
 }
 
 ECorruptionWarning APrototypePlayer::ComputeCorruptionWarning() const
 {
     if (!SenseBoss) return ECorruptionWarning::None;
     const EIshibashiriState State = SenseBoss->GetState();
-    if (SenseBoss->IsBuckWarning() || SenseBoss->IsBucking()
-        || State == EIshibashiriState::Telegraph || State == EIshibashiriState::Charge)
+    if (SenseBoss->IsBuckWarning() || SenseBoss->IsBucking() || State == EIshibashiriState::Telegraph || State == EIshibashiriState::Charge)
         return ECorruptionWarning::Danger;
-    return State == EIshibashiriState::Recover || State == EIshibashiriState::Kneel
-        ? ECorruptionWarning::Safe : ECorruptionWarning::None;
+    return State == EIshibashiriState::Recover || State == EIshibashiriState::Kneel ? ECorruptionWarning::Safe : ECorruptionWarning::None;
 }
 
 void APrototypePlayer::UpdateSenseFromBoss()
@@ -316,8 +290,15 @@ void APrototypePlayer::UpdateSenseFromBoss()
 }
 
 void APrototypePlayer::BoundarySensePressed() { Sense->BeginBoundarySense(); }
+
 void APrototypePlayer::BoundarySenseReleased() { Sense->EndBoundarySense(); }
-void APrototypePlayer::ArmSensePressed() { Sense->BeginCorruptionSense(); Sense->SetCorruptionWarning(ComputeCorruptionWarning()); }
+
+void APrototypePlayer::ArmSensePressed()
+{
+    Sense->BeginCorruptionSense();
+    Sense->SetCorruptionWarning(ComputeCorruptionWarning());
+}
+
 void APrototypePlayer::ArmSenseReleased() { Sense->EndCorruptionSense(); }
 
 bool APrototypePlayer::CanAct() const
@@ -333,7 +314,7 @@ bool APrototypePlayer::CanAct() const
 void APrototypePlayer::MoveForward(float Value)
 {
     ForwardInput = Value;
-    Climbing->SetInput(ForwardInput,RightInput);
+    Climbing->SetInput(ForwardInput, RightInput);
     if (CanAct() && Controller && !IsDodging() && !IsGrabbing())
         AddMovementInput(FRotationMatrix(FRotator(0.f, Controller->GetControlRotation().Yaw, 0.f)).GetUnitAxis(EAxis::X), Value);
 }
@@ -341,28 +322,46 @@ void APrototypePlayer::MoveForward(float Value)
 void APrototypePlayer::MoveRight(float Value)
 {
     RightInput = Value;
-    Climbing->SetInput(ForwardInput,RightInput);
+    Climbing->SetInput(ForwardInput, RightInput);
     if (CanAct() && Controller && !IsDodging() && !IsGrabbing())
         AddMovementInput(FRotationMatrix(FRotator(0.f, Controller->GetControlRotation().Yaw, 0.f)).GetUnitAxis(EAxis::Y), Value);
 }
 
 void APrototypePlayer::Turn(float Value) { AddControllerYawInput(Value); }
+
 void APrototypePlayer::LookUp(float Value) { AddControllerPitchInput(Value); }
+
 void APrototypePlayer::TryJump()
 {
     if (!CanAct()) return;
-    if (Climbing->IsClimbing()) { Climbing->Detach(); return; }
+    if (Climbing->IsClimbing())
+    {
+        Climbing->Detach();
+        return;
+    }
     if (!IsDodging() && !IsAttacking() && !IsGrabbing()) Jump();
 }
+
 void APrototypePlayer::TurnRate(float Value) { AddControllerYawInput(Value * GamepadCameraYawSpeed * GetWorld()->GetDeltaSeconds()); }
+
 void APrototypePlayer::LookUpRate(float Value) { AddControllerPitchInput(Value * GamepadCameraPitchSpeed * GetWorld()->GetDeltaSeconds()); }
+
 bool APrototypePlayer::IsGrabbing() const { return Climbing->IsClimbing() || Climbing->IsGrabWarping() || GrabComponent->IsGrabbing(); }
+
 void APrototypePlayer::BeginGrab()
 {
     if (!CanAct()) return;
-    if (Climbing->IsClimbing()) { Climbing->GrabPressed(); return; }
+    if (Climbing->IsClimbing())
+    {
+        Climbing->GrabPressed();
+        return;
+    }
     if (GrabComponent->IsGrabbing() || IsDodging()) return;
-    if (bUseRouteClimbing) { Climbing->GrabPressed(); return; }
+    if (bUseRouteClimbing)
+    {
+        Climbing->GrabPressed();
+        return;
+    }
     const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (Mode && GrabComponent->TryGrab(Mode->GetBoss(), GrabDistance)) ShowFeedback(TEXT("GRABBING"));
 }
@@ -378,7 +377,6 @@ bool APrototypePlayer::BeginGrabWarpAnimation()
         EndGrabWarpAnimation();
         return false;
     }
-    CurrentAnimation = INDEX_NONE;
     return true;
 }
 
@@ -387,25 +385,27 @@ void APrototypePlayer::EndGrabWarpAnimation()
     if (UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
         if (GrabMotionWarpMontage) AnimInstance->Montage_Stop(.08f, GrabMotionWarpMontage);
     if (GetMesh()) GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
-    CurrentAnimation = INDEX_NONE;
+    ShirotsuraVisual->ResetPresentation();
 }
 
-float APrototypePlayer::GetGrabWarpAnimationLength() const
-{
-    return GrabMotionWarpMontage ? GrabMotionWarpMontage->GetPlayLength() : 0.f;
-}
+float APrototypePlayer::GetGrabWarpAnimationLength() const { return GrabMotionWarpMontage ? GrabMotionWarpMontage->GetPlayLength() : 0.f; }
+
 void APrototypePlayer::ReleaseGrab()
 {
     Climbing->GrabReleased();
-    if (GrabComponent->IsGrabbing()) { GrabComponent->Release(); ShowFeedback(TEXT("RELEASED")); }
+    if (GrabComponent->IsGrabbing())
+    {
+        GrabComponent->Release();
+        ShowFeedback(TEXT("RELEASED"));
+    }
 }
 
 void APrototypePlayer::Dodge()
 {
     if (!CanAct() || IsGrabbing() || IsDodging() || DodgeCooldownRemaining > 0.f || GetCharacterMovement()->IsFalling()) return;
     const FRotator Yaw(0.f, Controller ? Controller->GetControlRotation().Yaw : GetActorRotation().Yaw, 0.f);
-    DodgeDirection = (FRotationMatrix(Yaw).GetUnitAxis(EAxis::X) * ForwardInput
-        + FRotationMatrix(Yaw).GetUnitAxis(EAxis::Y) * RightInput).GetSafeNormal();
+    DodgeDirection = (FRotationMatrix(Yaw).GetUnitAxis(EAxis::X) * ForwardInput + FRotationMatrix(Yaw).GetUnitAxis(EAxis::Y) * RightInput)
+                         .GetSafeNormal();
     if (DodgeDirection.IsNearlyZero()) DodgeDirection = GetActorForwardVector();
     // A dodge can cancel a swing, but keeps its attack cooldown.
     AttackRemaining = 0.f;
@@ -426,9 +426,10 @@ void APrototypePlayer::Attack()
     if (Climbing->IsClimbing())
     {
         if (!Climbing->IsResting()) return;
-        AttackRemaining = AttackDuration; AttackCooldownRemaining = AttackCooldown;
+        AttackRemaining = AttackDuration;
+        AttackCooldownRemaining = AttackCooldown;
         ShowFeedback(Climbing->TryPurify() ? TEXT("PURIFIED - corruption removed") : TEXT("No unpurified core in reach"));
-        CurrentAnimation = INDEX_NONE;
+        ShirotsuraVisual->PlayOneShot(EShirotsuraVisualState::Slash, AttackDuration);
         return;
     }
     AttackDirection = FRotator(0.f, Controller ? Controller->GetControlRotation().Yaw : GetActorRotation().Yaw, 0.f).Vector();
@@ -445,24 +446,21 @@ void APrototypePlayer::TraceAttack()
     const FVector Start = GetActorLocation();
     const FVector End = Start + AttackDirection * AttackReach;
     const FColor Color = bAttackConnected ? FColor::Green : FColor::Cyan;
-    DrawDebugCapsule(GetWorld(), (Start + End) * 0.5f, AttackReach * 0.5f + AttackRadius,
-        AttackRadius, FQuat::FindBetweenNormals(FVector::UpVector, AttackDirection), Color, false, -1.f, 0, 2.f);
+    DrawDebugCapsule(GetWorld(), (Start + End) * 0.5f, AttackReach * 0.5f + AttackRadius, AttackRadius,
+        FQuat::FindBetweenNormals(FVector::UpVector, AttackDirection), Color, false, -1.f, 0, 2.f);
     if (bAttackConnected) return;
 
     FHitResult Hit;
     FCollisionQueryParams Params(SCENE_QUERY_STAT(PlayerSword), false, this);
-    if (GetWorld()->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, ECC_Visibility,
-        FCollisionShape::MakeSphere(AttackRadius), Params))
+    if (GetWorld()->SweepSingleByChannel(
+            Hit, Start, End, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(AttackRadius), Params))
     {
         if (AIshibashiriBoss* Boss = Cast<AIshibashiriBoss>(Hit.GetActor()))
         {
             bAttackConnected = true;
-            if (!Boss->TryReceiveCounter())
-                ShowFeedback(TEXT("DEFLECTED - evade the charge first"));
-            else if (Boss->GetPosture() == 0)
-                ShowFeedback(TEXT("POSTURE BROKEN - GRAB NOW"));
-            else
-                ShowFeedback(FString::Printf(TEXT("POSTURE BREAK %d/%d"), Boss->MaxPosture - Boss->GetPosture(), Boss->MaxPosture));
+            if (!Boss->TryReceiveCounter()) ShowFeedback(TEXT("DEFLECTED - evade the charge first"));
+            else if (Boss->GetPosture() == 0) ShowFeedback(TEXT("POSTURE BROKEN - GRAB NOW"));
+            else ShowFeedback(FString::Printf(TEXT("POSTURE BREAK %d/%d"), Boss->MaxPosture - Boss->GetPosture(), Boss->MaxPosture));
         }
     }
 }
@@ -525,31 +523,31 @@ void APrototypePlayer::Tick(float DeltaSeconds)
     if (BodyMaterial)
     {
         const bool bFlash = HurtInvulnerabilityRemaining > 0.f && FMath::Sin(GetWorld()->GetTimeSeconds() * 35.f) > 0.f;
-        SetPrimitiveColor(BodyMaterial, IsDodging() ? FLinearColor::White
-            : (bFlash ? FLinearColor(1.f, 0.15f, 0.1f) : FLinearColor(0.08f, 0.5f, 0.8f)));
+        SetPrimitiveColor(
+            BodyMaterial, IsDodging() ? FLinearColor::White : (bFlash ? FLinearColor(1.f, 0.15f, 0.1f) : FLinearColor(0.08f, 0.5f, 0.8f)));
     }
     const float Boundary = Sense->IsBoundarySenseActive() ? Sense->GetBoundaryReading().Strength : 0.f;
     const float BladePulse = Boundary * (.72f + .12f * FMath::Sin(PresentationTime * 5.f));
-    SetPrimitiveColor(BoundaryBladeMaterial, FLinearColor(.18f + BladePulse*.48f, .22f + BladePulse*.46f, .20f + BladePulse*.32f));
+    SetPrimitiveColor(BoundaryBladeMaterial, FLinearColor(.18f + BladePulse * .48f, .22f + BladePulse * .46f, .20f + BladePulse * .32f));
     // The imported boundary blade is the normal silhouette. Show the tiny
     // response proxy only while Sense is held, avoiding duplicate primitive
     // geometry in ordinary play.
-    BoundaryBladeReaction->SetVisibility(Sense->IsBoundarySenseActive() && !bWeaponHidden);
-    BoundaryBladeReaction->SetRelativeScale3D(FVector(.025f + BladePulse*.008f, .035f + BladePulse*.008f, 1.05f));
+    BoundaryBladeReaction->SetVisibility(Sense->IsBoundarySenseActive() && !(IsGrabbing() && !IsAttacking()));
+    BoundaryBladeReaction->SetRelativeScale3D(FVector(.025f + BladePulse * .008f, .035f + BladePulse * .008f, 1.05f));
     float ArmStrength = 0.f;
     if (Sense->IsCorruptionSenseActive())
     {
         switch (Sense->GetCorruptionWarning())
         {
-        case ECorruptionWarning::Danger: ArmStrength = .72f + .22f * FMath::Abs(FMath::Sin(PresentationTime*8.f)); break;
-        case ECorruptionWarning::Transition: ArmStrength = .45f + .18f * (.5f + .5f*FMath::Sin(PresentationTime*3.f)); break;
+        case ECorruptionWarning::Danger: ArmStrength = .72f + .22f * FMath::Abs(FMath::Sin(PresentationTime * 8.f)); break;
+        case ECorruptionWarning::Transition: ArmStrength = .45f + .18f * (.5f + .5f * FMath::Sin(PresentationTime * 3.f)); break;
         case ECorruptionWarning::Safe: ArmStrength = .18f; break;
         default: ArmStrength = .28f; break;
         }
     }
     CorruptedArmReaction->SetVisibility(Sense->IsCorruptionSenseActive());
-    SetPrimitiveColor(CorruptedArmMaterial, FLinearColor(.055f + ArmStrength*.25f, .008f, .012f + ArmStrength*.025f));
-    CorruptedArmReaction->SetRelativeScale3D(FVector(.13f, .09f, .32f) * (1.f + ArmStrength*.08f));
+    SetPrimitiveColor(CorruptedArmMaterial, FLinearColor(.055f + ArmStrength * .25f, .008f, .012f + ArmStrength * .025f));
+    CorruptedArmReaction->SetRelativeScale3D(FVector(.13f, .09f, .32f) * (1.f + ArmStrength * .08f));
 }
 
 void APrototypePlayer::UpdateClimbingIK()
@@ -563,16 +561,16 @@ void APrototypePlayer::UpdateClimbingIK()
     ClimbingControlRig->SetControlFloat(TEXT("IK_Weight"), Climbing->GetIKWeight());
 #if !UE_BUILD_SHIPPING
     if (!FParse::Param(FCommandLine::Get(), TEXT("ClimbingIKDebug"))) return;
-    const FName Bones[] = {TEXT("hand_L"),TEXT("hand_R"),TEXT("foot_L"),TEXT("foot_R")};
-    const FTransform Targets[] = {T.LeftHand,T.RightHand,T.LeftFoot,T.RightFoot};
-    for (int32 I=0; I<4; ++I)
+    const FName Bones[] = {TEXT("hand_L"), TEXT("hand_R"), TEXT("foot_L"), TEXT("foot_R")};
+    const FTransform Targets[] = {T.LeftHand, T.RightHand, T.LeftFoot, T.RightFoot};
+    for (int32 I = 0; I < 4; ++I)
     {
         const FVector Bone = GetMesh()->GetBoneLocation(Bones[I]);
         const FVector Target = Targets[I].GetLocation();
-        const float Error = FVector::Distance(Bone,Target);
+        const float Error = FVector::Distance(Bone, Target);
         const FColor Color = Error <= 8.f ? FColor::Green : Error <= 20.f ? FColor::Yellow : FColor::Red;
-        DrawDebugSphere(GetWorld(),Target,5,8,Color,false,-1,0,1.5f);
-        DrawDebugLine(GetWorld(),Bone,Target,Color,false,-1,0,1.5f);
+        DrawDebugSphere(GetWorld(), Target, 5, 8, Color, false, -1, 0, 1.5f);
+        DrawDebugLine(GetWorld(), Bone, Target, Color, false, -1, 0, 1.5f);
     }
 #endif
 }
@@ -600,7 +598,8 @@ void APrototypePlayer::ResetForEncounter(const FTransform& Spawn)
 {
     StopCombat();
     Sense->ResetSense();
-    Climbing->Reset(); CurrentAnimation = INDEX_NONE;
+    Climbing->Reset();
+    ShirotsuraVisual->ResetPresentation();
     Health = MaxHealth;
     DodgeCooldownRemaining = AttackCooldownRemaining = HurtInvulnerabilityRemaining = 0.f;
     ForwardInput = RightInput = FeedbackRemaining = 0.f;
@@ -626,36 +625,23 @@ void APrototypePlayer::UpdateAnimation()
 {
     if (Climbing && Climbing->IsGrabWarping()) return;
     const bool Climb = Climbing && Climbing->IsClimbing();
-    const bool HideWeapon = IsGrabbing() && !IsAttacking();
-    if (HideWeapon != bWeaponHidden)
-    {
-        bWeaponHidden = HideWeapon;
-        if (HideWeapon) GetMesh()->HideBoneByName(TEXT("weapon"),EPhysBodyOp::PBO_None);
-        else GetMesh()->UnHideBoneByName(TEXT("weapon"));
-    }
-    EShirotsuraClip Clip = EShirotsuraClip::Idle;
-    if (Health <= 0) Clip = EShirotsuraClip::Death;
-    else if (IsDodging()) Clip = EShirotsuraClip::Dodge;
-    else if (IsAttacking()) Clip = EShirotsuraClip::Slash;
+    ShirotsuraVisual->SetWeaponHidden(IsGrabbing() && !IsAttacking());
+    EShirotsuraVisualState Clip = EShirotsuraVisualState::Idle;
+    if (Health <= 0) Clip = EShirotsuraVisualState::Death;
+    else if (IsDodging()) Clip = EShirotsuraVisualState::Dodge;
+    else if (IsAttacking()) Clip = EShirotsuraVisualState::Slash;
     else if (Climb)
     {
-        if (Climbing->GetBoss()->IsBucking()) Clip = EShirotsuraClip::Grip;
-        else if (Climbing->IsMoving()) Clip = EShirotsuraClip::Climb;
-        else Clip = Climbing->IsResting() ? EShirotsuraClip::Idle : EShirotsuraClip::Hang;
+        if (Climbing->GetBoss()->IsBucking()) Clip = EShirotsuraVisualState::Grip;
+        else if (Climbing->IsMoving()) Clip = EShirotsuraVisualState::Climb;
+        else Clip = Climbing->IsResting() ? EShirotsuraVisualState::Idle : EShirotsuraVisualState::Hang;
     }
     else if (GrabComponent->IsGrabbing())
-        Clip = FMath::Abs(ForwardInput)+FMath::Abs(RightInput) > .01f ? EShirotsuraClip::Climb : EShirotsuraClip::Hang;
-    else if (GetCharacterMovement()->IsFalling()) Clip = EShirotsuraClip::Jump;
-    else if (GetVelocity().Size2D() > 300.f) Clip = EShirotsuraClip::Run;
-    else if (GetVelocity().Size2D() > 5.f) Clip = EShirotsuraClip::Walk;
-    const int32 Next = ClipIndex(Clip);
-    if (Next != CurrentAnimation && Animations.IsValidIndex(Next) && Animations[Next])
-    {
-        CurrentAnimation = Next;
-        const bool bLoop = Clip != EShirotsuraClip::Slash && Clip != EShirotsuraClip::Dodge && Clip != EShirotsuraClip::Death;
-        GetMesh()->PlayAnimation(Animations[Next], bLoop);
-        GetMesh()->SetPlayRate(Clip == EShirotsuraClip::Dodge ? .6f/DodgeDuration : 1.f);
-    }
+        Clip = FMath::Abs(ForwardInput) + FMath::Abs(RightInput) > .01f ? EShirotsuraVisualState::Climb : EShirotsuraVisualState::Hang;
+    else if (GetCharacterMovement()->IsFalling()) Clip = EShirotsuraVisualState::Jump;
+    else if (GetVelocity().Size2D() > 300.f) Clip = EShirotsuraVisualState::Run;
+    else if (GetVelocity().Size2D() > 5.f) Clip = EShirotsuraVisualState::Walk;
+    ShirotsuraVisual->SetState(Clip, Clip == EShirotsuraVisualState::Dodge ? .6f / DodgeDuration : 1.f);
 }
 
 void APrototypePlayer::Retry()
@@ -665,7 +651,5 @@ void APrototypePlayer::Retry()
 
 bool APrototypePlayer::HasImportedVisuals() const
 {
-    if (!GetMesh()->GetSkeletalMeshAsset() || Body->IsVisible() || Sword->IsVisible() || Animations.Num() != ClipIndex(EShirotsuraClip::Count)) return false;
-    for (const UAnimSequence* Clip : Animations) if (!Clip) return false;
-    return GetMesh()->GetMaterial(0) != nullptr;
+    return ShirotsuraVisual->IsUsingRig() && !Body->IsVisible() && !Sword->IsVisible() && GetMesh()->GetMaterial(0) != nullptr;
 }

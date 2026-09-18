@@ -1,30 +1,30 @@
 #include "CampaignHUD.h"
 #include "CampaignGameInstance.h"
 #include "CampaignGameMode.h"
+#include "CampaignTextLayout.h"
 #include "Engine/Canvas.h"
 
 namespace
 {
     void DrawWrappedCardText(UCanvas* Canvas, const FString& Text, UFont* Font, float X, float Y, float MaxWidth, float Scale)
     {
-        FString Line;
+        if (!Canvas || !Font || Text.IsEmpty()) return;
+        const float DisplayWidth = FMath::Max(1.f, MaxWidth);
+        float SampleWidth = 0.f;
         float LineHeight = 0.f;
-        Canvas->StrLen(Font, TEXT("白面"), MaxWidth, LineHeight);
-        for (const TCHAR Character : Text)
-        {
-            const FString Candidate = Line + Character;
-            float Width = 0.f;
-            float Height = 0.f;
-            Canvas->StrLen(Font, *Candidate, Width, Height);
-            if (!Line.IsEmpty() && Width * Scale > MaxWidth)
+        Canvas->StrLen(Font, TEXT("白面"), SampleWidth, LineHeight);
+        const TArray<FString> Lines = CampaignTextLayout::Wrap(Text, DisplayWidth, Scale,
+            [Canvas, Font](const FString& Candidate)
             {
-                Canvas->DrawText(Font, Line, X, Y, Scale, Scale);
-                Y += LineHeight * Scale * 1.35f;
-                Line.Reset();
-            }
-            Line.AppendChar(Character);
+                float MeasuredWidth = 0.f, MeasuredHeight = 0.f;
+                Canvas->StrLen(Font, Candidate, MeasuredWidth, MeasuredHeight);
+                return MeasuredWidth;
+            });
+        for (const FString& Line : Lines)
+        {
+            Canvas->DrawText(Font, Line, X, Y, Scale, Scale);
+            Y += LineHeight * Scale * 1.35f;
         }
-        if (!Line.IsEmpty()) Canvas->DrawText(Font, Line, X, Y, Scale, Scale);
     }
 }
 
@@ -88,7 +88,12 @@ void ACampaignHUD::DrawHUD()
     }
     DrawRect(FLinearColor::Black, 0, 0, Canvas->ClipX, Canvas->ClipY);
     DrawText(Heading, FLinearColor::White, Canvas->ClipX * .42f, Canvas->ClipY * .34f, GEngine->GetLargeFont(), 1.4f);
-    DrawWrappedCardText(Canvas, Body, GEngine->GetMediumFont(), Canvas->ClipX * .20f, Canvas->ClipY * .50f, Canvas->ClipX * .60f, 1.05f);
+    const float BodyTop = Canvas->ClipY * .50f;
+    const float ContinueTop = Canvas->ClipY * .78f;
+    // The width remains viewport-relative; the vertical budget reserves the
+    // continue prompt even on narrow screens.
+    DrawWrappedCardText(Canvas, Body, GEngine->GetMediumFont(), Canvas->ClipX * .20f, BodyTop, Canvas->ClipX * .60f,
+        FMath::Min(1.05f, FMath::Max(.65f, (ContinueTop - BodyTop) / 180.f)));
     DrawText(
         TEXT("SPACE / X : CONTINUE"), FLinearColor(.55f, .65f, .7f), Canvas->ClipX * .39f, Canvas->ClipY * .78f, GEngine->GetSmallFont());
 }

@@ -16,9 +16,11 @@ class UControlRigComponent;
 class UMotionWarpingComponent;
 class UAnimMontage;
 class UAnimInstance;
+class UShirotsuraVisualComponent;
 class AIshibashiriBoss;
 
 UCLASS()
+
 class ISHIBASHIRIPROTOTYPE_API APrototypePlayer : public ACharacter
 {
     GENERATED_BODY()
@@ -36,50 +38,65 @@ public:
     void ReleaseGrab();
     bool IsGrabbing() const;
     bool HasImportedVisuals() const;
+
     UGrabComponent* GetGrabComponent() const { return GrabComponent; }
+
     void Dodge();
+
     UColossusClimbingComponent* GetClimbing() const { return Climbing; }
+
     UControlRigComponent* GetClimbingControlRig() const { return ClimbingControlRig; }
+
     UMotionWarpingComponent* GetMotionWarping() const { return MotionWarping; }
+
     bool BeginGrabWarpAnimation();
     void EndGrabWarpAnimation();
     float GetGrabWarpAnimationLength() const;
 
     int32 GetHealth() const { return Health; }
+
     bool IsDodging() const { return DodgeRemaining > 0.f; }
+
     bool IsInvulnerable() const { return IsDodging() || HurtInvulnerabilityRemaining > 0.f; }
+
     bool IsAttacking() const { return AttackRemaining > 0.f; }
+
     float GetDodgeCooldown() const { return DodgeCooldownRemaining; }
+
     bool IsUsingRaisedCamera() const { return bUsingRaisedCamera; }
+
     FVector GetAttackIndicatorDirection() const;
+
     const FString& GetFeedback() const { return Feedback; }
+
     UPlayerSenseComponent* GetSense() const { return Sense; }
+
     void ConfigureSenseTargets(AIshibashiriBoss* Boss);
 
     // Default encounter uses authored holds; disable for the original local-space Grab prototype.
-    UPROPERTY(EditAnywhere, Category="Grab") bool bUseRouteClimbing = true;
-    UPROPERTY(EditAnywhere, Category="Grab", meta=(ClampMin="1")) float GrabDistance = 360.f;
+    UPROPERTY(EditAnywhere, Category = "Grab") bool bUseRouteClimbing = true;
+    UPROPERTY(EditAnywhere, Category = "Grab", meta = (ClampMin = "1")) float GrabDistance = 360.f;
     // See Docs/GrabMotionWarpValidation.md. Both assets are deliberately optional
     // so a source-only checkout fails the grab safely rather than pretending they exist.
-    UPROPERTY(EditDefaultsOnly, Category="Grab|Motion Warp") TObjectPtr<UAnimMontage> GrabMotionWarpMontage;
-    UPROPERTY(EditDefaultsOnly, Category="Grab|Motion Warp") TSubclassOf<UAnimInstance> GrabMotionWarpAnimClass;
-    UPROPERTY(EditAnywhere, Category="Camera|Gamepad", meta=(ClampMin="0")) float GamepadCameraYawSpeed = 120.f;
-    UPROPERTY(EditAnywhere, Category="Camera|Gamepad", meta=(ClampMin="0")) float GamepadCameraPitchSpeed = 90.f;
-    UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="1")) int32 MaxHealth = 3;
-    UPROPERTY(EditAnywhere, Category="Movement", meta=(ClampMin="1")) float WalkSpeed = 600.f;
-    UPROPERTY(EditAnywhere, Category="Combat|Dodge", meta=(ClampMin="1")) float DodgeSpeed = 1500.f;
-    UPROPERTY(EditAnywhere, Category="Combat|Dodge", meta=(ClampMin="0.01")) float DodgeDuration = 0.28f;
-    UPROPERTY(EditAnywhere, Category="Combat|Dodge", meta=(ClampMin="0")) float DodgeCooldown = 0.55f;
-    UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="0")) float HurtInvulnerabilityDuration = 0.85f;
-    UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="0.01")) float AttackDuration = 0.53f;
-    UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="0")) float AttackCooldown = 0.48f;
-    UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="1")) float AttackReach = 210.f;
-    UPROPERTY(EditAnywhere, Category="Combat|Attack", meta=(ClampMin="1")) float AttackRadius = 85.f;
-    UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="100")) float MinimumCameraDistance = 300.f;
-    UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="500")) float RaisedCameraHeight = 720.f;
-    UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="500")) float BossCameraHeight = 1000.f;
-    UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="0")) float CameraClearDelay = 0.15f;
-    UPROPERTY(EditAnywhere, Category="Camera", meta=(ClampMin="0.01")) float CameraReturnDuration = 0.35f;
+    UPROPERTY(EditDefaultsOnly, Category = "Grab|Motion Warp") TObjectPtr<UAnimMontage> GrabMotionWarpMontage;
+    UPROPERTY(EditDefaultsOnly, Category = "Grab|Motion Warp") TSubclassOf<UAnimInstance> GrabMotionWarpAnimClass;
+    UPROPERTY(EditAnywhere, Category = "Camera|Gamepad", meta = (ClampMin = "0")) float GamepadCameraYawSpeed = 120.f;
+    UPROPERTY(EditAnywhere, Category = "Camera|Gamepad", meta = (ClampMin = "0")) float GamepadCameraPitchSpeed = 90.f;
+    UPROPERTY(EditAnywhere, Category = "Combat", meta = (ClampMin = "1")) int32 MaxHealth = 3;
+    UPROPERTY(EditAnywhere, Category = "Movement", meta = (ClampMin = "1")) float WalkSpeed = 600.f;
+    UPROPERTY(EditAnywhere, Category = "Combat|Dodge", meta = (ClampMin = "1")) float DodgeSpeed = 1500.f;
+    UPROPERTY(EditAnywhere, Category = "Combat|Dodge", meta = (ClampMin = "0.01")) float DodgeDuration = 0.28f;
+    UPROPERTY(EditAnywhere, Category = "Combat|Dodge", meta = (ClampMin = "0")) float DodgeCooldown = 0.55f;
+    UPROPERTY(EditAnywhere, Category = "Combat", meta = (ClampMin = "0")) float HurtInvulnerabilityDuration = 0.85f;
+    UPROPERTY(EditAnywhere, Category = "Combat|Attack", meta = (ClampMin = "0.01")) float AttackDuration = 0.53f;
+    UPROPERTY(EditAnywhere, Category = "Combat|Attack", meta = (ClampMin = "0")) float AttackCooldown = 0.48f;
+    UPROPERTY(EditAnywhere, Category = "Combat|Attack", meta = (ClampMin = "1")) float AttackReach = 210.f;
+    UPROPERTY(EditAnywhere, Category = "Combat|Attack", meta = (ClampMin = "1")) float AttackRadius = 85.f;
+    UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "100")) float MinimumCameraDistance = 300.f;
+    UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "500")) float RaisedCameraHeight = 720.f;
+    UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "500")) float BossCameraHeight = 1000.f;
+    UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0")) float CameraClearDelay = 0.15f;
+    UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0.01")) float CameraReturnDuration = 0.35f;
 
 protected:
     virtual void BeginPlay() override;
@@ -98,7 +115,10 @@ private:
     void UpdateClimbingIK();
     void TurnRate(float Value);
     void LookUpRate(float Value);
-    void BoundarySensePressed(); void BoundarySenseReleased(); void ArmSensePressed(); void ArmSenseReleased();
+    void BoundarySensePressed();
+    void BoundarySenseReleased();
+    void ArmSensePressed();
+    void ArmSenseReleased();
     ECorruptionWarning ComputeCorruptionWarning() const;
     void UpdateSenseFromBoss();
 
@@ -116,10 +136,8 @@ private:
     UPROPERTY(VisibleAnywhere) TObjectPtr<UControlRigComponent> ClimbingControlRig;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UMotionWarpingComponent> MotionWarping;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UPlayerSenseComponent> Sense;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UShirotsuraVisualComponent> ShirotsuraVisual;
     UPROPERTY() TObjectPtr<AIshibashiriBoss> SenseBoss;
-    UPROPERTY() TArray<TObjectPtr<UAnimSequence>> Animations;
-    int32 CurrentAnimation = INDEX_NONE;
-    bool bWeaponHidden = false;
     int32 Health = 3;
     float ForwardInput = 0.f;
     float RightInput = 0.f;
