@@ -117,6 +117,7 @@ void APrototypeGameMode::StartPlay()
 void APrototypeGameMode::RetryEncounter()
 {
     if (!Player || !Boss || !EncounterManager) return;
+    if (auto* Campaign=GetGameInstance<UCampaignGameInstance>()) Campaign->NotifyEncounterRetry(ECampaignState::Ishibashiri);
     if (BasinArena) BasinArena->SetCalmPresentation(false);
     GetWorldTimerManager().ClearTimer(CampaignAdvanceTimer);
     Result = EEncounterResult::Playing;

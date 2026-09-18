@@ -45,7 +45,66 @@ bool FRetryNoAdvance::RunTest(const FString&)
 {
     auto* C = NewObject<UCampaignGameInstance>();
     C->SetCampaignStateForTest(ECampaignState::Minedaki);
+    EShirotsuraCorruptionStage Before;
+    EShirotsuraCorruptionStage After;
+    TestTrue(TEXT("Minedaki retry enters the shared reset hook"), C->GetCorruptionStageForEncounter(ECampaignState::Minedaki, Before));
+    TestTrue(TEXT("actual retry hook accepts the current encounter"), C->NotifyEncounterRetry(ECampaignState::Minedaki));
+    TestTrue(TEXT("stage remains available after retry"), C->GetCorruptionStageForEncounter(ECampaignState::Minedaki, After));
     TestEqual(TEXT("retry owns no campaign transition"), C->GetCampaignState(), ECampaignState::Minedaki);
+    TestEqual(TEXT("retry retains corruption stage"), After, Before);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCorruptionStages, "IshibashiriPrototype.Campaign.CorruptionStages",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FCorruptionStages::RunTest(const FString&)
+{
+    auto* C = NewObject<UCampaignGameInstance>();
+    EShirotsuraCorruptionStage Stage = EShirotsuraCorruptionStage::Advanced;
+    TestFalse(TEXT("Title has no appearance stage"), UCampaignGameInstance::TryGetCorruptionStageForChapter(ECampaignState::Title, Stage));
+    TestFalse(TEXT("Completed has no appearance stage"),
+        UCampaignGameInstance::TryGetCorruptionStageForChapter(ECampaignState::Completed, Stage));
+
+    const ECampaignState EarlyChapters[] = {ECampaignState::Prologue, ECampaignState::IshibashiriApproach, ECampaignState::Ishibashiri,
+        ECampaignState::Interlude1, ECampaignState::Fuchimatoi};
+    for (const ECampaignState Chapter : EarlyChapters)
+    {
+        TestTrue(TEXT("early chapter resolves"), UCampaignGameInstance::TryGetCorruptionStageForChapter(Chapter, Stage));
+        TestEqual(TEXT("chapter uses Early"), Stage, EShirotsuraCorruptionStage::Early);
+    }
+    const ECampaignState AdvancedChapters[] = {ECampaignState::Interlude2, ECampaignState::Minedaki, ECampaignState::Interlude3,
+        ECampaignState::Magatsune, ECampaignState::Ending};
+    for (const ECampaignState Chapter : AdvancedChapters)
+    {
+        TestTrue(TEXT("advanced chapter resolves"), UCampaignGameInstance::TryGetCorruptionStageForChapter(Chapter, Stage));
+        TestEqual(TEXT("chapter uses Advanced"), Stage, EShirotsuraCorruptionStage::Advanced);
+    }
+
+    C->RestartCampaign();
+    C->AdvanceCardChapter();
+    TestTrue(TEXT("new campaign Prologue resolves"), C->GetCorruptionStageForEncounter(ECampaignState::Magatsune, Stage));
+    TestEqual(TEXT("new campaign is Early"), Stage, EShirotsuraCorruptionStage::Early);
+    C->SetCampaignStateForTest(ECampaignState::Fuchimatoi);
+    TestTrue(TEXT("Fuchimatoi completion enters Interlude2"), C->CompleteEncounter(ECampaignState::Fuchimatoi));
+    TestEqual(TEXT("completion changes chapter first"), C->GetCampaignState(), ECampaignState::Interlude2);
+    TestTrue(TEXT("Interlude2 stage resolves"), C->GetCorruptionStageForEncounter(ECampaignState::Fuchimatoi, Stage));
+    TestEqual(TEXT("Interlude2 is Advanced"), Stage, EShirotsuraCorruptionStage::Advanced);
+    C->SetCampaignStateForTest(ECampaignState::Ending);
+    TestTrue(TEXT("Ending stage resolves"), C->GetCorruptionStageForEncounter(ECampaignState::Magatsune, Stage));
+    TestEqual(TEXT("Ending retains Advanced"), Stage, EShirotsuraCorruptionStage::Advanced);
+
+    C = NewObject<UCampaignGameInstance>();
+    for (const ECampaignState Encounter : {ECampaignState::Ishibashiri, ECampaignState::Fuchimatoi})
+    {
+        TestTrue(TEXT("standalone early encounter resolves"), C->GetCorruptionStageForEncounter(Encounter, Stage));
+        TestEqual(TEXT("standalone encounter is Early"), Stage, EShirotsuraCorruptionStage::Early);
+    }
+    for (const ECampaignState Encounter : {ECampaignState::Minedaki, ECampaignState::Magatsune})
+    {
+        TestTrue(TEXT("standalone advanced encounter resolves"), C->GetCorruptionStageForEncounter(Encounter, Stage));
+        TestEqual(TEXT("standalone encounter is Advanced"), Stage, EShirotsuraCorruptionStage::Advanced);
+    }
     return true;
 }
 
