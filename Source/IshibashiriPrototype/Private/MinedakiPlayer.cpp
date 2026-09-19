@@ -37,7 +37,7 @@ AMinedakiPlayer::AMinedakiPlayer()
     PrimitiveBody->SetRelativeScale3D(FVector(.7, .7, 1.65));
     PrimitiveBody->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     ShirotsuraVisual = CreateDefaultSubobject<UShirotsuraVisualComponent>(TEXT("ShirotsuraVisual"));
-    ShirotsuraVisual->Configure(GetMesh(), PrimitiveBody);
+    ShirotsuraVisual->Configure(GetMesh(), PrimitiveBody, nullptr, nullptr, ECampaignState::Minedaki);
 }
 
 void AMinedakiPlayer::ConfigureBoss(AMinedakiBoss* InBoss)
