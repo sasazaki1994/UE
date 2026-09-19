@@ -4,6 +4,7 @@
 #include "Components/PrimitiveComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 namespace
 {
@@ -15,12 +16,13 @@ namespace
 UShirotsuraVisualComponent::UShirotsuraVisualComponent() { PrimaryComponentTick.bCanEverTick = true; }
 
 void UShirotsuraVisualComponent::Configure(USkeletalMeshComponent* InMesh, UPrimitiveComponent* InFallback,
-    UPrimitiveComponent* InFallbackWeapon, UPrimitiveComponent* InAdditionalFallback)
+    UPrimitiveComponent* InFallbackWeapon, UPrimitiveComponent* InAdditionalFallback, ECampaignState InStandaloneEncounter)
 {
     Mesh = InMesh;
     Fallback = InFallback;
     FallbackWeapon = InFallbackWeapon;
     AdditionalFallback = InAdditionalFallback;
+    StandaloneEncounter = InStandaloneEncounter;
     if (Mesh)
     {
         Mesh->SetSkeletalMesh(LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Rigged/Shirotsura/SK_Shirotsura")));
@@ -46,9 +48,55 @@ void UShirotsuraVisualComponent::BeginPlay()
     {
         ProductionVisuals::ApplyAtBeginPlay(Mesh, TEXT("Shirotsura"));
         bUsingRig = Mesh && Mesh->GetSkeletalMeshAsset();
+        ApplyCorruptionAppearance();
     }
     RefreshFallbackVisibility();
     ResetPresentation();
+}
+
+void UShirotsuraVisualComponent::ApplyCorruptionAppearance()
+{
+    bCorruptionStageResolved = false;
+    bCorruptionAppearanceApplied = false;
+    CorruptionMaterials.Reset();
+    if (!Mesh || !Mesh->GetSkeletalMeshAsset()) return;
+
+    const UCampaignGameInstance* Campaign = GetWorld() ? GetWorld()->GetGameInstance<UCampaignGameInstance>() : nullptr;
+    EShirotsuraCorruptionStage Stage;
+    if (!Campaign || !Campaign->GetCorruptionStageForEncounter(StandaloneEncounter, Stage))
+    {
+        UE_LOG(LogTemp, Verbose, TEXT("SHIROTSURA_CORRUPTION_SKIPPED stage unavailable"));
+        return;
+    }
+    bCorruptionStageResolved = true;
+
+    // The audited rig has a dedicated left-arm corruption section. Head and
+    // neck share the skin atlas with the right hand, so changing that slot
+    // would violate the unaffected-region contract and is deliberately skipped.
+    static const FName CorruptionSlot(TEXT("09 • petrified corruption"));
+    static const FName IntensityParameter(TEXT("ShirotsuraCorruptionIntensity"));
+    const int32 SlotIndex = Mesh->GetMaterialIndex(CorruptionSlot);
+    if (SlotIndex == INDEX_NONE)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SHIROTSURA_CORRUPTION_UNSUPPORTED mesh=%s missing_slot=%s"),
+            *GetNameSafe(Mesh->GetSkeletalMeshAsset()), *CorruptionSlot.ToString());
+        return;
+    }
+    UMaterialInterface* Source = Mesh->GetMaterial(SlotIndex);
+    float ExistingValue = 0.f;
+    if (!Source || !Source->GetScalarParameterValue(FMaterialParameterInfo(IntensityParameter), ExistingValue))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SHIROTSURA_CORRUPTION_UNSUPPORTED mesh=%s slot=%s missing_parameter=%s"),
+            *GetNameSafe(Mesh->GetSkeletalMeshAsset()), *CorruptionSlot.ToString(), *IntensityParameter.ToString());
+        return;
+    }
+    UMaterialInstanceDynamic* Instance = Mesh->CreateDynamicMaterialInstance(SlotIndex, Source);
+    if (!Instance) return;
+    Instance->SetScalarParameterValue(IntensityParameter, Stage == EShirotsuraCorruptionStage::Early ? .28f : 1.f);
+    CorruptionMaterials.Add(Instance);
+    bCorruptionAppearanceApplied = true;
+    UE_LOG(LogTemp, Display, TEXT("SHIROTSURA_CORRUPTION_APPLIED stage=%s slot=%s"),
+        Stage == EShirotsuraCorruptionStage::Early ? TEXT("Early") : TEXT("Advanced"), *CorruptionSlot.ToString());
 }
 
 void UShirotsuraVisualComponent::RefreshFallbackVisibility()

@@ -59,7 +59,7 @@ AFuchimatoiPlayer::AFuchimatoiPlayer()
     Head->SetRelativeScale3D(FVector(.45));
     Head->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     ShirotsuraVisual = CreateDefaultSubobject<UShirotsuraVisualComponent>(TEXT("ShirotsuraVisual"));
-    ShirotsuraVisual->Configure(GetMesh(), PrimitiveBody, nullptr, Head);
+    ShirotsuraVisual->Configure(GetMesh(), PrimitiveBody, nullptr, Head, ECampaignState::Fuchimatoi);
 }
 
 void AFuchimatoiPlayer::ConfigureBoss(AFuchimatoiBoss* InBoss)
