@@ -1,5 +1,7 @@
 # 検証記録 — 2026-09-10
 
+2026-09-19の追跡時計・検証ツールの改善と最新版mainへの適用結果は [PrototypeReliabilityValidation.md](PrototypeReliabilityValidation.md) に記録しています。
+
 ## 2026-09-17 ソースレビュー修正（UE Runtime 未検証）
 
 Linux コンテナ上での静的レビューに基づく修正です。Unreal Engine / MSVC がないため C++ のビルドと実行は行っておらず、`python -m pytest Tests`（68 passed）のみ確認しています。Windows UE 5.6.1 での `-Action Build`、`-Action Test -Approach`、`-Action Test -Campaign`、`-Action Test -Playthrough` の再実行が完了条件です。

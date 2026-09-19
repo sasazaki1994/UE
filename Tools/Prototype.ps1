@@ -27,7 +27,9 @@ param(
     [switch]$ClimbingGamepad,
     [switch]$Gamepad,
     [ValidateRange(0, 3600)][int]$TestSeconds = 0,
-    [ValidateRange(15, 240)][int]$TestFPS = 60
+    [ValidateRange(15, 240)][int]$TestFPS = 60,
+    # Zero selects a limit based on the simulated duration and capture frame rate.
+    [ValidateRange(0, 86400)][int]$TestTimeoutSeconds = 0
 )
 
 Set-StrictMode -Version Latest
@@ -74,6 +76,59 @@ function Invoke-Checked {
     if ($LASTEXITCODE -ne 0) { throw "$Program failed (exit $LASTEXITCODE). See Saved\Logs." }
 }
 
+function ConvertTo-NativeArgument {
+    param([AllowEmptyString()][string]$Argument)
+    if ($Argument.Length -gt 0 -and $Argument -notmatch '[\s"]') { return $Argument }
+    # Start-Process joins ArgumentList verbatim. Escape quotes and trailing
+    # backslashes according to Windows argv rules, including paths with spaces.
+    $Escaped = [regex]::Replace($Argument, '(\\*)"', '$1$1\"')
+    $Escaped = [regex]::Replace($Escaped, '(\\+)$', '$1$1')
+    return '"' + $Escaped + '"'
+}
+
+function Get-TestTimeoutSeconds {
+    param([string]$TestFlag, [bool]$IsCapture, [int]$Seconds, [int]$FPS)
+    # Use in-game watchdogs where available, with conservative budgets for
+    # Approach's current 1.31 km route (about 656 seconds) and Campaign's route
+    # plus four encounters (300 + 360 + 300 + 240), cards and level transitions.
+    $SimulatedLimit = switch ($TestFlag) {
+        '-CampaignE2E' { 2400 }
+        '-ApproachTest' { 720 }
+        '-FuchimatoiTest' { 360 }
+        '-MinedakiTest' { 300 }
+        '-MagatsuneTest' { 240 }
+        '-ClimbingTest' { 300 }
+        '-BasinPlaythroughTest' { 74 } # Sum of the ten non-looping phase limits.
+        '-PrototypePlaythrough' { [Math]::Max(180, $Seconds + 90) }
+        default { 65 }
+    }
+    # Captures can be capped at 60 rendered FPS while simulation uses a higher
+    # fixed FPS. Allow startup time and twice the expected run duration.
+    $CaptureFactor = if ($IsCapture) { [Math]::Max(1.0, $FPS / 60.0) } else { 1.0 }
+    return [int][Math]::Ceiling([Math]::Max(300.0, 120.0 + 2.0 * $SimulatedLimit * $CaptureFactor))
+}
+
+function Invoke-TimedTest {
+    param([string]$Program, [string[]]$Arguments, [int]$TimeoutSeconds, [string]$LogFile, [switch]$ShowWindow)
+    $CommandLine = ($Arguments | ForEach-Object { ConvertTo-NativeArgument $_ }) -join ' '
+    # -Onscreen explicitly requests a visible realtime test window.
+    $WindowStyle = if ($ShowWindow) { 'Normal' } else { 'Hidden' }
+    $Process = Start-Process -FilePath $Program -ArgumentList $CommandLine -PassThru -WindowStyle $WindowStyle
+    try {
+        # Retain the process handle so Windows PowerShell 5.1 can read ExitCode
+        # even when a short-lived process exits before WaitForExit is called.
+        $null = $Process.Handle
+        if (!$Process.WaitForExit($TimeoutSeconds * 1000)) {
+            try { $Process.Kill() } catch { if (!$Process.HasExited) { throw } }
+            $null = $Process.WaitForExit(5000)
+            throw "Test timed out after $TimeoutSeconds real seconds (PID $($Process.Id)). Read $LogFile"
+        }
+        if ($Process.ExitCode -ne 0) { throw "$Program failed (exit $($Process.ExitCode)). Read $LogFile" }
+    } finally {
+        $Process.Dispose()
+    }
+}
+
 function Build-Editor {
     Invoke-Checked $BuildTool @('IshibashiriPrototypeEditor', 'Win64', 'Development', "-Project=$ProjectFile", '-WaitMutex', '-NoHotReloadFromIDE')
 }
@@ -107,6 +162,7 @@ try {
     if ($TestSeconds -gt 0 -and !$Playthrough) { throw '-TestSeconds requires -Playthrough.' }
     if ($Capture -and (($Gamepad -and !$Fuchimatoi -and !$Minedaki -and !$Magatsune) -or $Grab -or $LocalClimbing)) { throw '-Capture requires route climbing, smoke or playthrough tests.' }
     if ($Capture -and $Approach) { throw '-Approach has no screenshot set yet (see Docs/IshibashiriApproachSlice.md); run it without -Capture.' }
+    if ($TestTimeoutSeconds -gt 0 -and $Action -ne 'Test') { throw '-TestTimeoutSeconds requires -Action Test.' }
     $ResolvedEngine = Find-Engine
     $BuildTool = Join-Path $ResolvedEngine 'Engine\Build\BatchFiles\Build.bat'
     $EditorExe = Join-Path $ResolvedEngine 'Engine\Binaries\Win64\UnrealEditor.exe'
@@ -162,14 +218,14 @@ try {
             if ($Basin) { $PlayArguments += '-BasinPrototype' }
             if ($Campaign) { $PlayArguments += '-Campaign' }
             if ($HighQuality) { $PlayArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
-            & $EditorExe @PlayArguments
+            Invoke-Checked $EditorExe $PlayArguments
         }
         'Editor' {
             $EditorArguments = @($ProjectFile, $LaunchMap)
             $EditorArguments += "-ProductionVisuals=$ProductionVisuals"
             if ($Basin) { $EditorArguments += '-BasinPrototype' }
             if ($HighQuality) { $EditorArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
-            & $EditorExe @EditorArguments
+            Invoke-Checked $EditorExe $EditorArguments
         }
         'Test' {
             $LogDir = Join-Path $ProjectRoot 'Saved\Logs'
@@ -212,7 +268,11 @@ try {
             } else {
                 $TestArguments += '-nullrhi'
             }
-            Invoke-Checked $EditorCmd $TestArguments
+            $Timeout = if ($TestTimeoutSeconds -gt 0) { $TestTimeoutSeconds } else {
+                Get-TestTimeoutSeconds -TestFlag $TestFlag -IsCapture $Capture -Seconds $TestSeconds -FPS $TestFPS
+            }
+            Write-Host "Test timeout: $Timeout real seconds"
+            Invoke-TimedTest -Program $EditorCmd -Arguments $TestArguments -TimeoutSeconds $Timeout -LogFile $LogFile -ShowWindow:$Onscreen
             $PassMarker = if ($GrabMotionWarp) { "GRAB_MOTION_WARP_TEST_PASS $RunId" } elseif ($BasinScenario) { "BASIN_SCENARIO_PASS $RunId" } elseif ($ClimbingIK) { "CLIMBING_IK_TEST_PASS $RunId" } elseif ($Climbing -or $ClimbingGamepad) { "CLIMB_TEST_PASS $RunId" } else { "PROTOTYPE_TEST_PASS $RunId" }
             if ($Fuchimatoi) { $PassMarker = "FUCHIMATOI_TEST_PASS $RunId" }
             if ($Minedaki) { $PassMarker = "MINEDAKI_TEST_PASS $RunId" }
@@ -273,6 +333,9 @@ try {
             Write-Host "Packaged game: $OutputDir"
         }
     }
+    # Start-Process does not update LASTEXITCODE. Explicitly report success to a
+    # PowerShell caller, including when its previous native command failed.
+    exit 0
 } catch {
     Write-Error $_ -ErrorAction Continue
     exit 1

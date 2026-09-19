@@ -211,7 +211,10 @@ void AIshibashiriBoss::EnterState(EIshibashiriState NewState)
     State = NewState;
     switch (State)
     {
-    case EIshibashiriState::Chase: StateTimeRemaining = ChaseDuration; break;
+    case EIshibashiriState::Chase:
+        StateTimeRemaining = ChaseDuration;
+        ChaseTimeElapsed = 0.f;
+        break;
     case EIshibashiriState::Telegraph: StateTimeRemaining = TelegraphDuration; break;
     case EIshibashiriState::Charge:
         StateTimeRemaining = MaxChargeDuration;
@@ -266,11 +269,14 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
         EnterState(EIshibashiriState::Chase);
     }
     // Bound movement steps and carry excess time into the next state at low frame rates.
+    const float ChaseTimeout = ChaseDuration + 4.f;
     float Remaining = DeltaSeconds;
     while (Remaining > KINDA_SMALL_NUMBER && GetState() != EIshibashiriState::Calmed)
     {
         float Step = FMath::Min(Remaining, 1.f / 60.f);
         if (StateTimeRemaining > 0.f) Step = FMath::Min(Step, StateTimeRemaining);
+        if (State == EIshibashiriState::Chase && ChaseTimeElapsed < ChaseTimeout)
+            Step = FMath::Min(Step, ChaseTimeout - ChaseTimeElapsed);
         Remaining -= Step;
         StateTimeRemaining = FMath::Max(0.f, StateTimeRemaining - Step);
         const FVector ToPlayer = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
@@ -278,6 +284,7 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
         {
         case EIshibashiriState::Chase:
         {
+            ChaseTimeElapsed += Step;
             if (!ToPlayer.IsNearlyZero()) SetActorRotation(ToPlayer.Rotation());
             const float Distance = FVector::Dist2D(Target->GetActorLocation(), GetActorLocation());
             if (Distance > ChaseStopDistance)
@@ -286,7 +293,7 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
                 SetActorLocation(GetActorLocation() + ToPlayer * FMath::Min(ChaseSpeed * Step, Distance - ChaseStopDistance), true, &Hit);
             }
             // The arena bounds distance; the timeout also avoids an endless chase at an obstruction.
-            if (StateTimeRemaining <= 0.f && (Distance <= ChargeTriggerDistance || VisualTime >= ChaseDuration + 4.f))
+            if (StateTimeRemaining <= 0.f && (Distance <= ChargeTriggerDistance || ChaseTimeElapsed >= ChaseTimeout))
                 EnterState(EIshibashiriState::Telegraph);
             break;
         }
