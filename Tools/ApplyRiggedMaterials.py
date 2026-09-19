@@ -15,10 +15,35 @@ root=Path(unreal.Paths.project_dir()).resolve()
 asset_tools=unreal.AssetToolsHelpers.get_asset_tools()
 lib=unreal.MaterialEditingLibrary
 
-def expression(mat,kind,x,y,prop):
+def expression(mat,kind,x,y,prop,tag):
     """Reuse the property's node through the public UE 5.6 material API."""
     found=lib.get_material_property_input_node(mat,prop)
-    return found if isinstance(found,kind) else lib.create_material_expression(mat,kind,x,y)
+    if isinstance(found,kind):
+        found.set_editor_property('desc',tag)
+        return found
+    for node in lib.get_all_material_expressions(mat):
+        if isinstance(node,kind) and str(node.get_editor_property('desc')) == tag:
+            return node
+    node=lib.create_material_expression(mat,kind,x,y)
+    node.set_editor_property('desc',tag)
+    return node
+
+def configure_shirotsura_corruption(mat, base_sample):
+    """Add the one audited stage parameter without inventing atlas UV masks."""
+    tag='SHIROTSURA_CORRUPTION_'
+    early=expression(mat,unreal.MaterialExpressionConstant3Vector,-210,-80,
+        unreal.MaterialProperty.MP_BASE_COLOR,tag+'EARLY_COLOR')
+    early.set_editor_property('constant',unreal.LinearColor(.16,.105,.085,1))
+    amount=expression(mat,unreal.MaterialExpressionScalarParameter,-210,20,
+        unreal.MaterialProperty.MP_BASE_COLOR,tag+'AMOUNT')
+    amount.set_editor_property('parameter_name','ShirotsuraCorruptionIntensity')
+    amount.set_editor_property('default_value',1.0)
+    blend=expression(mat,unreal.MaterialExpressionLinearInterpolate,40,0,
+        unreal.MaterialProperty.MP_BASE_COLOR,tag+'BLEND')
+    lib.connect_material_expressions(early,'',blend,'A')
+    lib.connect_material_expressions(base_sample,'RGB',blend,'B')
+    lib.connect_material_expressions(amount,'',blend,'Alpha')
+    lib.connect_material_property(blend,'',unreal.MaterialProperty.MP_BASE_COLOR)
 
 def surface_values(label):
     # Atlas color/normal is shared, but tactile response remains material-specific.
@@ -57,18 +82,20 @@ def apply_character_materials(name, dest, folder, replace_existing=True):
         # rooted expressions asserts in UE 5.6; reconnect new expressions safely.
         for kind,prop in [('BaseColor',unreal.MaterialProperty.MP_BASE_COLOR),('Normal',unreal.MaterialProperty.MP_NORMAL),('Roughness',unreal.MaterialProperty.MP_ROUGHNESS)]:
             sample=expression(mat,unreal.MaterialExpressionTextureSample,-450,{'BaseColor':0,'Normal':220,'Roughness':440}[kind],
-                prop)
+                prop,'BAKED_'+kind.upper())
             sample.set_editor_property('texture',textures[kind])
             sample.set_editor_property('sampler_type',unreal.MaterialSamplerType.SAMPLERTYPE_COLOR if kind=='BaseColor' else (unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL if kind=='Normal' else unreal.MaterialSamplerType.SAMPLERTYPE_MASKS))
             lib.connect_material_property(sample,'R' if kind=='Roughness' else 'RGB',prop)
+            if name=='Shirotsura' and label=='09 • petrified corruption' and kind=='BaseColor':
+                configure_shirotsura_corruption(mat,sample)
         roughness,metallic=surface_values(label)
         # Numeric material names survive a mesh reimport even when slot labels
         # change. Assign both properties for every slot to clear old responses.
-        emissive=expression(mat,unreal.MaterialExpressionConstant3Vector,-220,550,unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+        emissive=expression(mat,unreal.MaterialExpressionConstant3Vector,-220,550,unreal.MaterialProperty.MP_EMISSIVE_COLOR,'BAKED_EMISSIVE')
         glow=unreal.LinearColor(.30,.003,.002,1) if 'crimson' in label or 'ember' in label else unreal.LinearColor(0,0,0,1)
         emissive.set_editor_property('constant',glow)
         lib.connect_material_property(emissive,'',unreal.MaterialProperty.MP_EMISSIVE_COLOR)
-        metal=expression(mat,unreal.MaterialExpressionConstant,-220,620,unreal.MaterialProperty.MP_METALLIC)
+        metal=expression(mat,unreal.MaterialExpressionConstant,-220,620,unreal.MaterialProperty.MP_METALLIC,'BAKED_METALLIC')
         metal.set_editor_property('r',metallic)
         lib.connect_material_property(metal,'',unreal.MaterialProperty.MP_METALLIC)
         lib.recompile_material(mat)

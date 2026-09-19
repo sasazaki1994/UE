@@ -1,6 +1,6 @@
 # 1. 白面の物語と結末
 
-状態: 物語カード実装済み / 穢れ段階の管理API実装済み / マテリアル接続未実装。決定事項と提案の区別は [総目次](README.md) を参照。
+状態: 物語カード・穢れ段階管理API実装済み / 左腕の素材生成スクリプトとランタイム接続実装済み・UEでの生成は未実施 / 顔・首は共有atlasのため未対応。決定事項と提案の区別は [総目次](README.md) を参照。
 
 ## 物語の芯
 
@@ -35,7 +35,7 @@
 
 章別の対応は [機械可読契約](NarrativeContract.json) を正本とする。切替はFuchimatoi完了後にInterlude2へ入った時点で一度だけ。幕間のカード送り途中で別段階は挟まない。
 
-将来実装では章から外見を決め、EncounterのRetryでは同じ段階を保持する。新規CampaignではEarlyへ戻す。Title / Completedには外見を要求しない。単体起動の既定は石走り・淵纏い=Early、峰抱き・禍津根=Advanced。Save/Continueの新設は今回の必須条件ではない。
+実装は章から外見を決め、EncounterのRetryでは同じ段階を保持する。新規CampaignではEarlyへ戻す。Title / Completedには外見を要求しない。単体起動の既定は石走り・淵纏い=Early、峰抱き・禍津根=Advanced。Save/Continueの新設は今回の必須条件ではない。実資産調査と未対応範囲は [共通表示検証記録](../ShirotsuraSharedPresentationValidation.md) を正とする。
 
 外見の進行によるHP、速度、攻撃力、Stamina上限、操作受付の変更はない。既存の左腕Senseの回復リスクは別仕様であり、外見段階に連動させない。
 

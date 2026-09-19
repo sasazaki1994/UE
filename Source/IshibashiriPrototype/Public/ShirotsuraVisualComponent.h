@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Components/ActorComponent.h"
+#include "CampaignGameInstance.h"
 #include "ShirotsuraVisualComponent.generated.h"
 
 class UAnimSequence;
@@ -33,7 +34,8 @@ class ISHIBASHIRIPROTOTYPE_API UShirotsuraVisualComponent : public UActorCompone
 public:
     UShirotsuraVisualComponent();
     void Configure(USkeletalMeshComponent* InMesh, UPrimitiveComponent* InFallback, UPrimitiveComponent* InFallbackWeapon = nullptr,
-        UPrimitiveComponent* InAdditionalFallback = nullptr);
+        UPrimitiveComponent* InAdditionalFallback = nullptr,
+        ECampaignState InStandaloneEncounter = ECampaignState::Ishibashiri);
     void SetState(EShirotsuraVisualState State, float PlayRate = 1.f);
     void PlayOneShot(EShirotsuraVisualState State, float MinimumDuration = .35f);
     void ResetPresentation();
@@ -42,6 +44,8 @@ public:
     bool IsUsingRig() const { return bUsingRig; }
 
     USkeletalMeshComponent* GetVisualMesh() const { return Mesh; }
+    bool HasResolvedCorruptionStage() const { return bCorruptionStageResolved; }
+    bool HasAppliedCorruptionAppearance() const { return bCorruptionAppearanceApplied; }
 
 protected:
     virtual void BeginPlay() override;
@@ -50,13 +54,18 @@ protected:
 private:
     void RefreshFallbackVisibility();
     void ApplyState(EShirotsuraVisualState State, float PlayRate);
+    void ApplyCorruptionAppearance();
     UPROPERTY() TObjectPtr<USkeletalMeshComponent> Mesh;
     UPROPERTY() TObjectPtr<UPrimitiveComponent> Fallback;
     UPROPERTY() TObjectPtr<UPrimitiveComponent> FallbackWeapon;
     UPROPERTY() TObjectPtr<UPrimitiveComponent> AdditionalFallback;
     UPROPERTY() TArray<TObjectPtr<UAnimSequence>> Animations;
+    UPROPERTY() TArray<TObjectPtr<class UMaterialInstanceDynamic>> CorruptionMaterials;
+    ECampaignState StandaloneEncounter = ECampaignState::Ishibashiri;
     int32 CurrentState = INDEX_NONE;
     float OneShotRemaining = 0.f;
     bool bUsingRig = false;
     bool bWeaponHidden = false;
+    bool bCorruptionStageResolved = false;
+    bool bCorruptionAppearanceApplied = false;
 };

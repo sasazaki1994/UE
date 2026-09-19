@@ -87,8 +87,10 @@ def audit_contract(contract: dict) -> list[str]:
     if (not isinstance(delivery, dict)
             or delivery.get("story_cards") != "IMPLEMENTED_IN_CPP"
             or delivery.get("appearance_stage_management") != "IMPLEMENTED_IN_CPP"
-            or delivery.get("appearance_material_connection") != "NOT_IMPLEMENTED"
-            or delivery.get("appearance_runtime") != "MANAGEMENT_ONLY_NOT_VISUAL"
+            or delivery.get("appearance_material_connection") != "IMPLEMENTED_LEFT_ARM_ONLY"
+            or delivery.get("appearance_runtime") != "IMPLEMENTED_SAFE_FALLBACK"
+            or delivery.get("appearance_material_script") != "IMPLEMENTED_NOT_RUN"
+            or delivery.get("appearance_material_assets") != "NOT_GENERATED"
             or delivery.get("ue_runtime_validation") != "NOT_RUN"):
         issues.append("CONTRACT: delivery implementation and validation status differs")
     return issues
@@ -229,7 +231,8 @@ def main() -> int:
     for issue in issues:
         print(issue)
     print("NARRATIVE_SOURCE_CONTRACT_" + ("FAIL" if issues else "PASS"))
-    print("UE_RUNTIME=NOT_RUN; APPEARANCE_STAGE_MANAGEMENT=IMPLEMENTED; MATERIAL_CONNECTION=NOT_IMPLEMENTED; no gameplay certification")
+    print("UE_RUNTIME=NOT_RUN; APPEARANCE_STAGE_MANAGEMENT=IMPLEMENTED; MATERIAL_SCRIPT=IMPLEMENTED_NOT_RUN; "
+          "MATERIAL_CONNECTION=IMPLEMENTED_LEFT_ARM_ONLY; no gameplay certification")
     return int(bool(issues))
 
 

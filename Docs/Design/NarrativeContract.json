@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "PARTIALLY_IMPLEMENTED",
-  "source_baseline": "48dae5e1369a301ecc6f403f6e1c644fd8d059f4",
+  "source_baseline": "bca12fea09aa8daf94b384c58e01031f4996c4d8",
   "mask_is_sealing_device": false,
   "corruption_is_absorbed_from_purified_nushi": false,
   "corruption_stage_changes_gameplay_stats": false,
@@ -74,11 +74,22 @@
     "island_map": "CONCEPT_ONLY",
     "reduced_hud": "DESIGN_ONLY",
     "audio_and_calming": "DESIGN_ONLY",
-    "appearance_runtime": "MANAGEMENT_ONLY_NOT_VISUAL",
+    "appearance_runtime": "IMPLEMENTED_SAFE_FALLBACK",
     "ue_runtime_validation": "NOT_RUN",
     "story_cards": "IMPLEMENTED_IN_CPP",
     "appearance_stage_management": "IMPLEMENTED_IN_CPP",
-    "appearance_material_connection": "NOT_IMPLEMENTED"
+    "appearance_material_connection": "IMPLEMENTED_LEFT_ARM_ONLY",
+    "appearance_material_script": "IMPLEMENTED_NOT_RUN",
+    "appearance_material_assets": "NOT_GENERATED",
+    "unsupported_appearance_regions": [
+      "face",
+      "neck",
+      "left_eye",
+      "production_meshes_without_audited_slot_and_parameter"
+    ],
+    "ue_build": "NOT_RUN_NO_UNREAL_TOOLCHAIN",
+    "ue_render_validation": "NOT_RUN_NO_UNREAL_EDITOR",
+    "ue_interaction_regression": "NOT_RUN_NO_UNREAL_EDITOR"
   },
   "story_cards": {
     "Prologue": [
@@ -107,5 +118,33 @@
       "白面は、再び面を着けた。",
       "禍がまた生じても、ここで向き合う。"
     ]
+  },
+  "appearance_asset_audit": {
+    "left_arm": {
+      "status": "SUPPORTED_BY_DEDICATED_SLOT",
+      "slot": "09 • petrified corruption",
+      "base_color": "advanced_corruption_baked"
+    },
+    "face": {
+      "status": "UNSUPPORTED_SHARED_ATLAS",
+      "shares_with": [
+        "neck",
+        "right_hand"
+      ]
+    },
+    "neck": {
+      "status": "UNSUPPORTED_SHARED_ATLAS",
+      "shares_with": [
+        "face",
+        "right_hand"
+      ]
+    },
+    "left_eye": {
+      "status": "UNSUPPORTED_NO_INDEPENDENT_MATERIAL_PARAMETER"
+    },
+    "mask": {
+      "status": "SEPARATE_UNCHANGED",
+      "slot": "07 • aged whitewood mask"
+    }
   }
 }

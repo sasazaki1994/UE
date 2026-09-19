@@ -30,3 +30,50 @@ def test_shared_visual_has_mutually_exclusive_fallback_and_state_guard():
     assert "Fallback->SetVisibility(!bUsingRig" in source
     assert "Next == CurrentState" in source
     assert "ProductionVisuals::ApplyAtBeginPlay" in source
+
+
+def test_stage_is_applied_after_production_selection_and_is_not_tick_driven():
+    source = (PRIVATE / "ShirotsuraVisualComponent.cpp").read_text(encoding="utf-8")
+    begin = source.index("ProductionVisuals::ApplyAtBeginPlay")
+    apply = source.index("ApplyCorruptionAppearance();", begin)
+    tick = source.index("void UShirotsuraVisualComponent::TickComponent")
+    assert begin < apply < tick
+    assert "ApplyCorruptionAppearance();" not in source[tick:]
+    assert "GetCorruptionStageForEncounter(StandaloneEncounter" in source
+    assert "HasResolvedCorruptionStage" in (PUBLIC / "ShirotsuraVisualComponent.h").read_text(encoding="utf-8")
+    assert "HasAppliedCorruptionAppearance" in (PUBLIC / "ShirotsuraVisualComponent.h").read_text(encoding="utf-8")
+
+
+def test_standalone_encounters_pass_their_stage_authority():
+    expected = {
+        "Prototype": None,
+        "Fuchimatoi": "Fuchimatoi",
+        "Minedaki": "Minedaki",
+        "Magatsune": "Magatsune",
+    }
+    for player, encounter in expected.items():
+        source = (PRIVATE / f"{player}Player.cpp").read_text(encoding="utf-8")
+        if encounter:
+            assert f"ECampaignState::{encounter}" in source
+        else:
+            assert "ShirotsuraVisual->Configure(GetMesh(), Body, Sword);" in source
+
+
+def test_material_setup_is_shirotsura_only_and_idempotent_by_tag():
+    source = (ROOT / "Tools/ApplyRiggedMaterials.py").read_text(encoding="utf-8")
+    assert "name=='Shirotsura'" in source
+    assert "label=='09 • petrified corruption'" in source
+    assert "ShirotsuraCorruptionIntensity" in source
+    assert "get_all_material_expressions" in source
+    assert "tag+'BLEND'" in source
+    assert "delete_material_expression" not in source
+
+
+def test_no_gameplay_or_extra_appearance_state_was_added():
+    header = (PUBLIC / "CampaignGameInstance.h").read_text(encoding="utf-8")
+    enum = header.split("enum class EShirotsuraCorruptionStage", 1)[1].split("};", 1)[0]
+    assert enum.count("Early") == 1
+    assert enum.count("Advanced") == 1
+    visual = (PRIVATE / "ShirotsuraVisualComponent.cpp").read_text(encoding="utf-8")
+    for forbidden in ("MaxWalkSpeed", "Health", "Stamina", "InputComponent", "PlayerSense"):
+        assert forbidden not in visual

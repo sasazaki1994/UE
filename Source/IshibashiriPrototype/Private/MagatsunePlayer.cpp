@@ -33,7 +33,7 @@ AMagatsunePlayer::AMagatsunePlayer()
     PrimitiveBody->SetRelativeScale3D({.7, .7, 1.65});
     PrimitiveBody->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     ShirotsuraVisual = CreateDefaultSubobject<UShirotsuraVisualComponent>(TEXT("ShirotsuraVisual"));
-    ShirotsuraVisual->Configure(GetMesh(), PrimitiveBody);
+    ShirotsuraVisual->Configure(GetMesh(), PrimitiveBody, nullptr, nullptr, ECampaignState::Magatsune);
 }
 
 void AMagatsunePlayer::ConfigureBoss(AMagatsuneBoss* V)
