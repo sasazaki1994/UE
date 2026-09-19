@@ -57,6 +57,7 @@ void APrototypeSmokeTest::BeginPlay()
     if (!Require(Controller && Controller->GetPawn() == Player && Controller->GetHUD(), TEXT("Local player possesses character and has a HUD"))) return;
     if (!Require(Player->GetHealth() == 3 && Mode->GetBoss()->GetPosture() == 3, TEXT("Initial HP is 3/3"))) return;
     Mode->GetBoss()->SetActorTickEnabled(false);
+    if (!CheckChaseTiming()) return;
     StartPosition = Player->GetActorLocation();
     AddTickPrerequisiteActor(Mode->GetBoss());
     AddTickPrerequisiteComponent(Player->GetCharacterMovement());
@@ -67,6 +68,56 @@ void APrototypeSmokeTest::BeginPlay()
         PlaceAtWall();
         Next(EPhase::CameraWall);
     }
+}
+
+bool APrototypeSmokeTest::CheckChaseTiming()
+{
+    AIshibashiriBoss* Boss = Mode->GetBoss();
+    const float OriginalChaseSpeed = Boss->ChaseSpeed;
+    const float OriginalTriggerDistance = Boss->ChargeTriggerDistance;
+    const float OriginalChargeSpeed = Boss->ChargeSpeed;
+    // Keep the target out of trigger range and avoid walls/damage so only the
+    // timeout ends each chase. Run real AI updates with two frame partitions.
+    Boss->ChaseSpeed = 1.f;
+    Boss->ChargeTriggerDistance = 1.f;
+    Boss->ChargeSpeed = 100.f;
+    struct FSnapshot
+    {
+        EIshibashiriState State;
+        float Remaining;
+    };
+    TArray<FSnapshot> Snapshots;
+    for (const float FrameSeconds : { 1.f / 60.f, 0.4f })
+    {
+        Mode->RetryEncounter();
+        auto Advance = [Boss, FrameSeconds](float Seconds)
+        {
+            while (Seconds > KINDA_SMALL_NUMBER)
+            {
+                const float Step = FMath::Min(Seconds, FrameSeconds);
+                Boss->Tick(Step);
+                Seconds -= Step;
+            }
+        };
+        Advance(Boss->ChaseDuration + 4.f + 0.2f);
+        Snapshots.Add({ Boss->GetState(), Boss->GetStateTimeRemaining() });
+        // A frame straddling recovery and the next chase must also preserve time.
+        Advance(Boss->TelegraphDuration - 0.2f + Boss->MaxChargeDuration + Boss->RecoveryDuration + 0.3f);
+        Advance(Boss->ChaseDuration + 4.f - 0.3f + 0.2f);
+        Snapshots.Add({ Boss->GetState(), Boss->GetStateTimeRemaining() });
+    }
+    Boss->ChaseSpeed = OriginalChaseSpeed;
+    Boss->ChargeTriggerDistance = OriginalTriggerDistance;
+    Boss->ChargeSpeed = OriginalChargeSpeed;
+    Mode->RetryEncounter();
+    for (const FSnapshot& Snapshot : Snapshots)
+    {
+        if (!Require(Snapshot.State == EIshibashiriState::Telegraph
+            && FMath::IsNearlyEqual(Snapshot.Remaining, Boss->TelegraphDuration - 0.2f, 0.002f),
+            TEXT("Chase timeout and recovery carry-over agree at 60 FPS and during 400 ms hitches"))) return false;
+    }
+    UE_LOG(LogTemp, Display, TEXT("PROTOTYPE_TIMING_PASS %s: chase timeout and recovery carry-over"), *RunId);
+    return true;
 }
 
 bool APrototypeSmokeTest::Require(bool bCondition, const TCHAR* Message)

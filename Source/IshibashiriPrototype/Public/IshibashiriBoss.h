@@ -101,6 +101,7 @@ private:
     EIshibashiriState State = EIshibashiriState::Chase;
     int32 Posture = 3;
     float StateTimeRemaining = 0.f;
+    float ChaseTimeElapsed = 0.f;
     float VisualTime = 0.f;
     // A short, presentation-only tail after the gameplay Kakon has already
     // transitioned. It never gates progress or input.

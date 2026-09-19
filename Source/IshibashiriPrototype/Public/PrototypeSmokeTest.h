@@ -34,6 +34,7 @@ private:
     void PlaceAtWall();
     bool CheckRaisedCamera();
     bool CheckPlayerFraming();
+    bool CheckChaseTiming();
 
     UPROPERTY() TObjectPtr<APrototypeGameMode> Mode;
     EPhase Phase = EPhase::InputCamera;

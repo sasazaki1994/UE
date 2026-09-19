@@ -110,6 +110,17 @@ Generic Gamepadの移動・カメラ・各アクションを、白面の操作�
 
 ## 検証とパッケージ化
 
+追跡が接近条件を満たさない場合も、追跡開始から `ChaseDuration + 4` 秒で予告へ移ります。追跡時計は描画用時計から独立し、硬直明けやフレーム落ちでも残り時間を引き継ぎます。`-Camera` と通常のスモークテストの開始時に、60 FPSと400ミリ秒刻みで初回・硬直後の追跡期限を比較します。この検査はAIの直接更新を使います。
+
+`-Action Test` には実時間のタイムアウトがあります。`-TestTimeoutSeconds 0`（既定）は選択したテストと描画条件から自動計算し、正の値は秒数を指定します。期限を超えると、そのテスト用プロセスを終了して失敗を返します。ビルド・マップ生成の時間は含みません。`Play` / `Editor` も非0終了を検出します。今回の結果は [追跡時計・検証ツールの検証記録](Docs/PrototypeReliabilityValidation.md) を参照してください。
+
+```powershell
+# UEなしで検証ツールの正常終了・異常終了・タイムアウトを検査
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Tools\TestPrototypeTools.ps1
+# 追跡期限の回帰検査と現行モデルのカメラ検査（実時間制限を上書き）
+.\Tools\Prototype.ps1 -Action Test -Camera -SkipBuild -TestTimeoutSeconds 300
+```
+
 Windows UE 5.6.1実機での最終Reviewは `.\Tools\RunIshibashiriReviewGate.ps1` の1コマンドでEvidence bundleまで収集できます。
 
 ```powershell
