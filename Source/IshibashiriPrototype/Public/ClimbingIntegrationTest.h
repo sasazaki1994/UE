@@ -16,7 +16,10 @@ private:
     void Hold(const FKey& Key, bool Down);
     void Tap(const FKey& Key);
     void Next(int32 Value);
-    void SetupGrab(bool bResetEncounter = true);
+    void SetupGrab(bool bResetEncounter = true, int32 ResumePhase = 0);
+    bool DriveMountWindow(float Dt);
+    float AimAt(const FVector& Position);
+    void WalkTo(const FVector& Position, float StopDistance);
     bool Check(bool Condition, const TCHAR* Description);
     void Shot(const TCHAR* Name);
     void TickGrabMotionWarp(float Dt);
@@ -31,6 +34,8 @@ private:
     float BeforeStamina = 0.f;
     FVector BeforeBoss = FVector::ZeroVector;
     FVector BeforeFoot = FVector::ZeroVector;
+    FVector BeforeWalk = FVector::ZeroVector;
+    float MaxFootPoseDelta = 0.f;
     FString RunId;
     bool bFinished = false;
     bool bCapture = false;
@@ -45,4 +50,11 @@ private:
     int32 GrabWarpPhase = 0;
     int32 IKContactShot = 0;
     bool bIKShakeShot = false;
+    int32 ResumePhaseAfterMount = 0;
+    int32 LastBossState = INDEX_NONE;
+    float CombatStateTime = 0.f;
+    float AttackWait = 0.f;
+    FKey DodgeSide;
+    bool bDodgedThisCharge = false;
+    bool bReachedForelegApproach = false;
 };

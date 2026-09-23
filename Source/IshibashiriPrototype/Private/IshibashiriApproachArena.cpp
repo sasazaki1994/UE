@@ -71,8 +71,11 @@ void AIshibashiriApproachArena::OnConstruction(const FTransform& T)
     for (int32 I = 0; I < PathPoints.Num() - 1; ++I)
     {
         const FVector A = PathPoints[I], B = PathPoints[I + 1], D = B - A;
+        // Follow the elevation between waypoints so the road is walkable at each join.
+        // Extend each end by 50 cm to keep the collision surface continuous at bends.
+        constexpr float RoadEndOverlap = 50.f;
         AddPrimitive(*FString::Printf(TEXT("WetEarth%02d"), I), CubeMesh, (A + B) * .5f + FVector(0, 0, -42),
-            FVector(D.Size() / 100.f, 18.f, 1.f), FRotator(0, D.Rotation().Yaw, 0), Soil, true);
+            FVector((D.Size() + 2.f * RoadEndOverlap) / 100.f, 18.f, 1.f), D.Rotation(), Soil, true);
         const FVector Side = FVector::CrossProduct(D.GetSafeNormal(), FVector::UpVector);
         for (int32 S : {-1, 1})
         {

@@ -267,6 +267,11 @@ void AMinedakiIntegrationTest::Tick(float Dt)
         }
         break;
     case 9:
+        if (Time > .2f && !P->IsMounted())
+        {
+            Check(false, TEXT("Final route recovery regrab failed"));
+            return;
+        }
         if (B->GetActionState() == EMinedakiActionState::FinalRoute) Shot(TEXT("10-FinalCling"));
         if (P->GetRouteNode() == AMinedakiBoss::Kakon3Node && !P->IsRouteMoving())
         {
@@ -275,6 +280,7 @@ void AMinedakiIntegrationTest::Tick(float Dt)
             Tap(EKeys::LeftMouseButton);
             Next(10);
         }
+        else if (P->IsMounted()) Move(1);
         break;
     case 10:
         if (B->GetActionState() == EMinedakiActionState::Calm && B->GetNushiState() == ENushiState::Calm &&
