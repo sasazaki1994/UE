@@ -41,7 +41,13 @@ void AClimbingIntegrationTest::BeginPlay()
     Mode=GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Check(Mode && Mode->GetPlayer() && Mode->GetBoss(),TEXT("Encounter spawned"))) return;
     AddTickPrerequisiteComponent(Mode->GetPlayer()->GetClimbing());
-    if (bGrabMotionWarp) Mode->RetryEncounter(); else SetupGrab();
+    if (bGrabMotionWarp)
+    {
+        Mode->RetryEncounter();
+        GrabWarpPhase = -1;
+        DodgeSide = EKeys::A;
+    }
+    else SetupGrab();
     UE_LOG(LogTemp,Display,TEXT("CLIMB_TEST_BEGIN %s"),*RunId);
 }
 void AClimbingIntegrationTest::Hold(const FKey& Key,bool Down)
@@ -56,6 +62,7 @@ void AClimbingIntegrationTest::Hold(const FKey& Key,bool Down)
         else if (Key == EKeys::SpaceBar) Mapped = EKeys::Gamepad_FaceButton_Bottom;
         else if (Key == EKeys::LeftMouseButton) Mapped = EKeys::Gamepad_FaceButton_Left;
         else if (Key == EKeys::R) Mapped = EKeys::Gamepad_FaceButton_Top;
+        else if (Key == EKeys::LeftShift) Mapped = EKeys::Gamepad_FaceButton_Right;
         else if (Key == EKeys::Q) Mapped = EKeys::Gamepad_LeftTrigger;
         else if (Key == EKeys::F) Mapped = EKeys::Gamepad_LeftShoulder;
         else if (Key == EKeys::W || Key == EKeys::S) Mapped = EKeys::Gamepad_LeftY;
@@ -77,21 +84,109 @@ bool AClimbingIntegrationTest::Check(bool Condition,const TCHAR* Description)
     else UE_LOG(LogTemp,Display,TEXT("CLIMB_CHECK %s: %s"),*RunId,Description);
     return Condition;
 }
-void AClimbingIntegrationTest::SetupGrab(bool bResetEncounter)
+float AClimbingIntegrationTest::AimAt(const FVector& Position)
+{
+    APrototypePlayer* P=Mode->GetPlayer();
+    const float DesiredYaw=(Position-P->GetActorLocation()).Rotation().Yaw;
+    const float Error=FMath::FindDeltaAngleDegrees(P->GetController()->GetControlRotation().Yaw,DesiredYaw);
+    Cast<APlayerController>(P->GetController())->InputKey(FInputKeyEventArgs::CreateSimulated(
+        bGamepad?EKeys::Gamepad_RightX:EKeys::MouseX,IE_Axis,
+        // Right-stick dead zone is 0.2; /45 would stop near 9 degrees,
+        // outside the recovery counter's 8-degree aim requirement.
+        bGamepad?FMath::Clamp(Error/20.f,-1.f,1.f):FMath::Clamp(Error*5.f,-300.f,300.f)));
+    return FMath::Abs(Error);
+}
+void AClimbingIntegrationTest::WalkTo(const FVector& Position,float StopDistance)
+{
+    const float Error=AimAt(Position);
+    Hold(EKeys::W,Error<15.f&&FVector::Dist2D(Mode->GetPlayer()->GetActorLocation(),Position)>StopDistance);
+}
+bool AClimbingIntegrationTest::DriveMountWindow(float Dt)
+{
+    APrototypePlayer* P=Mode->GetPlayer(); AIshibashiriBoss* B=Mode->GetBoss();
+    AttackWait=FMath::Max(0.f,AttackWait-Dt);
+    if (P->GetHealth()!=P->MaxHealth || !Mode->IsEncounterActive())
+    {
+        Check(false,TEXT("Ground dodge and counter route preserves health and encounter"));
+        return false;
+    }
+    const EIshibashiriState State=B->GetState();
+    if (State==EIshibashiriState::Kneel)
+    {
+        Hold(EKeys::W,false);Hold(EKeys::A,false);Hold(EKeys::D,false);
+        return Check(B->GetPosture()==0,TEXT("Input sword counters open the Kneel mount window"));
+    }
+    if (LastBossState!=static_cast<int32>(State))
+    {
+        CombatStateTime=0.f;
+        if (State==EIshibashiriState::Telegraph)
+        {
+            const FVector Right=FRotator(0.f,P->GetController()->GetControlRotation().Yaw,0.f).RotateVector(FVector::RightVector);
+            DodgeSide=FVector::DotProduct(Right,-P->GetActorLocation())>=0.f?EKeys::D:EKeys::A;
+        }
+        if (State==EIshibashiriState::Charge) bDodgedThisCharge=false;
+        LastBossState=static_cast<int32>(State);
+    }
+    CombatStateTime+=Dt;
+    if (State==EIshibashiriState::Chase || (State==EIshibashiriState::Recover && !B->CanBeCountered()))
+    {
+        Hold(EKeys::A,false);Hold(EKeys::D,false);
+        const FVector Bait=B->GetActorLocation()+(-B->GetActorLocation()).GetSafeNormal2D()*850.f;
+        WalkTo(Bait,70.f);
+    }
+    else if (State==EIshibashiriState::Telegraph)
+    {
+        Hold(EKeys::W,false);
+        AimAt(B->GetActorLocation());
+        Hold(DodgeSide,B->GetStateTimeRemaining()<.1f);
+    }
+    else if (State==EIshibashiriState::Charge)
+    {
+        Hold(EKeys::W,false);
+        if (CombatStateTime<.42f)
+        {
+            Hold(DodgeSide,true);
+            if (CombatStateTime>=.1f && !bDodgedThisCharge)
+            {
+                Tap(EKeys::LeftShift);
+                bDodgedThisCharge=true;
+            }
+        }
+        else
+        {
+            Hold(DodgeSide,false);
+            if (FVector::DotProduct(P->GetActorLocation()-B->GetActorLocation(),B->GetChargeDirection())< -250.f)
+                WalkTo(B->GetActorLocation(),300.f);
+            else AimAt(B->GetActorLocation());
+        }
+    }
+    else if (State==EIshibashiriState::Recover)
+    {
+        Hold(DodgeSide,false);
+        const float Error=AimAt(B->GetActorLocation());
+        const float Distance=FVector::Dist2D(P->GetActorLocation(),B->GetActorLocation());
+        Hold(EKeys::W,Error<15.f&&Distance>300.f);
+        if (Distance<350.f && Error<8.f && AttackWait<=0.f)
+        {
+            Tap(EKeys::LeftMouseButton);
+            AttackWait=.5f;
+        }
+    }
+    return false;
+}
+void AClimbingIntegrationTest::SetupGrab(bool bResetEncounter,int32 ResumePhase)
 {
     for (const FKey& Key: Held.Array()) Hold(Key,false);
+    Release.Empty();
     if (bResetEncounter) Mode->RetryEncounter();
-    if (!bCampaignE2E) Mode->GetBoss()->SetActorTickEnabled(false);
-    APrototypePlayer* P=Mode->GetPlayer();
-    FVector Entry=Mode->GetBoss()->GetClimbPosition(0); Entry.Z=92;
-    // Approach toward the boss from outside the authored foreleg. The old
-    // fixed world-X fixture faced 128 degrees away from the current warp target
-    // and was rejected by main's existing 100-degree grab-facing limit.
-    const FVector Outward=(Entry-Mode->GetBoss()->GetActorLocation()).GetSafeNormal2D();
-    BeforeFoot=P->GetMesh()->GetBoneLocation(TEXT("foot_L"),EBoneSpaces::ComponentSpace);
-    if (bCampaignE2E) { Next(-1); return; }
-    P->SetActorLocation(Entry+Outward*210.f);
-    P->GetController()->SetControlRotation(FRotator(-12,(-Outward).Rotation().Yaw,0));
+    Mode->GetBoss()->SetActorTickEnabled(true);
+    ResumePhaseAfterMount=ResumePhase;
+    LastBossState=INDEX_NONE;
+    CombatStateTime=AttackWait=0.f;
+    DodgeSide=EKeys::A;
+    bDodgedThisCharge=false;
+    bReachedForelegApproach=false;
+    Next(-1);
 }
 void AClimbingIntegrationTest::Shot(const TCHAR* Name)
 {
@@ -160,6 +255,12 @@ void AClimbingIntegrationTest::Tick(float Dt)
     if (bGrabMotionWarp)
     {
         if (Total>45.f) { Check(false,TEXT("Grab Motion Warp validation timeout")); return; }
+        if (GrabWarpPhase<0)
+        {
+            if (!DriveMountWindow(Dt)) return;
+            GrabWarpPhase=0;
+            Time=0.f;
+        }
         TickGrabMotionWarp(Dt); return;
     }
     auto P=Mode->GetPlayer();auto B=Mode->GetBoss();auto C=P->GetClimbing();
@@ -177,29 +278,80 @@ void AClimbingIntegrationTest::Tick(float Dt)
     {
     case -1:
     {
-        const FVector Entry=B->GetClimbPosition(0);
-        const float DesiredYaw=(Entry-P->GetActorLocation()).Rotation().Yaw;
-        const float Error=FMath::FindDeltaAngleDegrees(P->GetController()->GetControlRotation().Yaw,DesiredYaw);
-        Cast<APlayerController>(P->GetController())->InputKey(FInputKeyEventArgs::CreateSimulated(
-            bGamepad?EKeys::Gamepad_RightX:EKeys::MouseX,IE_Axis,bGamepad?FMath::Clamp(Error/45.f,-1.f,1.f):FMath::Clamp(Error*5.f,-300.f,300.f)));
-        if(B->GetState()==EIshibashiriState::Charge)Tap(EKeys::LeftShift);
-        Hold(EKeys::W,FMath::Abs(Error)<15.f&&FVector::Dist2D(P->GetActorLocation(),Entry)>180.f);
-        if(FVector::Dist2D(P->GetActorLocation(),Entry)<=180.f){Hold(EKeys::W,false);Shot(TEXT("01-Ground"));Tap(EKeys::Q);Tap(EKeys::F);Tap(EKeys::E);Next(2);}
+        if (!DriveMountWindow(Dt)) break;
+        if (bCampaignE2E) { Next(-2); break; }
+        // The standalone route test isolates locomotion and climbing after the
+        // input-driven posture break. Keep Kneel open while it exercises both.
+        B->SetActorTickEnabled(false);
+        FVector Entry=B->GetClimbPosition(0); Entry.Z=92.f;
+        const FVector Outward=(Entry-B->GetActorLocation()).GetSafeNormal2D();
+        // Phase 0 walks toward the foreleg before E. Later regrabs press E
+        // directly, so start those inside the three-dimensional GrabRange.
+        P->SetActorLocation(Entry+Outward*(ResumePhaseAfterMount==0?210.f:120.f));
+        P->GetController()->SetControlRotation(FRotator(-12.f,(-Outward).Rotation().Yaw,0.f));
+        if (ResumePhaseAfterMount!=0) P->SetActorRotation((-Outward).Rotation());
+        Next(ResumePhaseAfterMount==0?0:-3);
         break;
     }
+    case -2:
+    {
+        const FVector Entry=B->GetClimbPosition(0);
+        if (!B->CanMount()) { Check(false,TEXT("Kneel mount window stays open during the ground approach")); break; }
+        // Walk to the same reachable outer foreleg position as the standalone
+        // fixture, then face the entry before pressing Grab.
+        const FVector Outward=(Entry-B->GetActorLocation()).GetSafeNormal2D();
+        const FVector Approach=Entry+Outward*190.f;
+        if (!bReachedForelegApproach)
+        {
+            if (FVector::Dist2D(P->GetActorLocation(),Approach)>25.f) WalkTo(Approach,25.f);
+            else { Hold(EKeys::W,false); bReachedForelegApproach=true; }
+            break;
+        }
+        // Camera yaw alone does not turn the Character's actor while idle.
+        // Walking inward aligns the actor with the motion-warp facing gate.
+        const float Error=AimAt(Entry);
+        const float Distance=FVector::Dist2D(P->GetActorLocation(),Entry);
+        const FVector Facing=(B->GetActorLocation()-Entry).GetSafeNormal2D();
+        const float Angle=FMath::Abs(FMath::FindDeltaAngleDegrees(P->GetActorRotation().Yaw,Facing.Rotation().Yaw));
+        Hold(EKeys::W,Error<8.f && (Distance>150.f || (Angle>=C->MaximumWarpAngle && Distance>80.f)));
+        if(Distance<=150.f && Error<8.f && Angle<C->MaximumWarpAngle
+            && !P->IsAttacking() && !P->IsDodging())
+        {
+            if (!Check(FVector::Dist(P->GetActorLocation(),Entry)<C->GrabRange,
+                TEXT("Campaign foreleg approach reaches the grab range"))) return;
+            Hold(EKeys::W,false);Shot(TEXT("01-Ground"));Tap(EKeys::Q);Tap(EKeys::F);Tap(EKeys::E);Next(2);
+        }
+        break;
+    }
+    case -3:
+        if (Time>.3f && !P->IsAttacking() && !P->IsDodging())
+        {
+            if (!Check(FVector::Dist(P->GetActorLocation(),B->GetClimbPosition(0))<C->GrabRange,
+                TEXT("Regrab fixture is within the foreleg grab range"))) return;
+            Tap(EKeys::E);
+            Next(ResumePhaseAfterMount);
+        }
+        break;
     case 0:
-        if (Time>.3f)
+        if (Time>.3f && !P->IsAttacking())
         {
             if (!Check(P->GetMesh()->GetNumBones()>=19 && B->GetVisualMesh()->GetNumBones()>=20,TEXT("Both deformation skeletons loaded"))) return;
             if (bClimbingIK && !Check(P->GetClimbingControlRig()->GetControlRig()!=nullptr,TEXT("Climbing Control Rig asset is instantiated"))) return;
             if (!Check(P->GetMesh()->GetSingleNodeInstance() && P->GetMesh()->GetSingleNodeInstance()->GetCurrentAsset(),TEXT("Player animation is playing"))) return;
+            BeforeFoot=P->GetMesh()->GetBoneLocation(TEXT("foot_L"),EBoneSpaces::ComponentSpace);
+            BeforeWalk=P->GetActorLocation();
+            MaxFootPoseDelta=0.f;
             Shot(TEXT("01-Ground"));Tap(EKeys::Q);Tap(EKeys::F);Hold(EKeys::W,true);Next(1);
         } break;
     case 1:
+        if (!P->IsAttacking())
+            MaxFootPoseDelta=FMath::Max(MaxFootPoseDelta,FVector::Dist(
+                P->GetMesh()->GetBoneLocation(TEXT("foot_L"),EBoneSpaces::ComponentSpace),BeforeFoot));
         if (Time>.35f)
         {
             Hold(EKeys::W,false);
-            if (!Check(!P->GetMesh()->GetBoneLocation(TEXT("foot_L"),EBoneSpaces::ComponentSpace).Equals(BeforeFoot,.05f),TEXT("Locomotion changes foot bone pose"))) return;
+            if (!Check(FVector::Dist2D(P->GetActorLocation(),BeforeWalk)>20.f && MaxFootPoseDelta>.05f,
+                TEXT("Locomotion moves the player and changes the foot bone pose"))) return;
             Tap(EKeys::E);Next(2);
         } break;
     case 2:
@@ -310,16 +462,8 @@ void AClimbingIntegrationTest::Tick(float Dt)
                 TEXT("Retry resets all shared Kakon and restarts the common lifecycle"))) return;
             // Re-run the full route after the actual keyboard/gamepad Retry.
             // Do not hide an incomplete reset behind another setup reset.
-            SetupGrab(false);
-            if (CompletedRoutes < 2)
-            {
-                if (!bCampaignE2E) Next(0);
-            }
-            else
-            {
-                if (!Check(CompletedRoutes==2,TEXT("Full three-core route clears again after input Retry"))) return;
-                Tap(EKeys::E);Next(20);
-            }
+            if (CompletedRoutes>=2 && !Check(CompletedRoutes==2,TEXT("Full three-core route clears again after input Retry"))) return;
+            SetupGrab(false,CompletedRoutes==2?20:0);
         } break;
     case 20:
         if (Time>.15f)
@@ -331,7 +475,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
         if (Time>.15f)
         {
             if (!Check(!C->IsClimbing() && P->GetCharacterMovement()->IsFalling(),TEXT("Space detaches and restores falling movement"))) return;
-            SetupGrab();Tap(EKeys::E);Next(22);
+            SetupGrab(true,22);
         } break;
     case 22:
         if (Time>.15f) { Hold(EKeys::E,true);Next(23); } break;
@@ -339,7 +483,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
         if (!C->IsClimbing())
         {
             if (!Check(C->GetStamina()<1.f,TEXT("Exhausted stamina forces detachment"))) return;
-            SetupGrab();Tap(EKeys::E);Next(24);
+            SetupGrab(true,24);
         } break;
     case 24:
         if (Time>.15f) { B->SetActorTickEnabled(true);Hold(EKeys::W,true);Next(25); } break;
