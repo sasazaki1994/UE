@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "delivery_status": "blocked",
+  "listening_review": "not_performed",
+  "ue_import_review": "not_performed",
+  "format": {"sample_rate_hz": 48000, "sample_width_bits": 16, "channels": 1},
+  "preview": null,
+  "events": [
+    {"name": "BoundaryReading", "status": "pending", "candidate": "Kenney audio catalog: interface/natural chime", "reason": "Network access was unavailable; source page, audio, author and redistribution terms could not be inspected."},
+    {"name": "ArmWarning", "status": "pending", "candidate": "Kenney audio catalog: low warning/impact", "reason": "Network access was unavailable; source page, audio, author and redistribution terms could not be inspected."},
+    {"name": "MountOpen", "status": "pending", "candidate": "Kenney audio catalog: stone impact", "reason": "Network access was unavailable; source page, audio, author and redistribution terms could not be inspected."},
+    {"name": "ClingWarning", "status": "pending", "candidate": "Freesound: CC0 stone creak plus bell", "reason": "Network access was unavailable; candidates could not be auditioned or their individual licenses verified."},
+    {"name": "KakonPurified", "status": "pending", "candidate": "Freesound: CC0 stone crack plus water release", "reason": "Network access was unavailable; candidates could not be auditioned or their individual licenses verified."},
+    {"name": "EncounterCalmed", "status": "pending", "candidate": "Freesound: CC0 breathing plus wind/water", "reason": "Network access was unavailable; candidates could not be auditioned or their individual licenses verified."}
+  ]
+}
