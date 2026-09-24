@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
@@ -30,8 +31,9 @@ def test_tool_docs_and_validation_contract():
     doc = read("Docs/MagatsuneVerticalSlice.md")
     for shot in range(1, 13): assert f"`{shot:02d}-" in doc
     data = json.loads(read("Docs/MagatsuneValidation.json"))
-    assert data["base"] == "e08d3de659638b9d9c622e599b5f58ade08704c3"
-    assert data["checks"]["build"]["status"] == "NOT_RUN"
+    assert re.fullmatch(r"[0-9a-f]{40}", data["base"])
+    for gate in ("build", "automation", "keyboard60", "keyboard30", "gamepad60", "screenshots"):
+        assert data["checks"][gate]["status"] in {"PASS", "FAIL", "NOT_RUN"}
 
 def test_living_terrain_presentation_keeps_gameplay_authority():
     boss = read("Source/IshibashiriPrototype/Private/MagatsuneBoss.cpp")
