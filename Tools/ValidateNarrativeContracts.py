@@ -18,10 +18,10 @@ ENCOUNTERS = ["Ishibashiri", "Fuchimatoi", "Minedaki", "Magatsune"]
 PLAYERS = ["PrototypePlayer", "FuchimatoiPlayer", "MinedakiPlayer", "MagatsunePlayer"]
 STORY_CARDS = {
     "Prologue": ["白い面は、禍祓いのしるし。", "境界石が砕け、白面の手と顔にも禍が残った。", "自らの穢れを祓う手掛かりを求め、主のもとへ。", "主を討つな。宿った禍だけを祓え。"],
-    "Interlude1": ["石走りの息が、ゆっくりと戻る。", "水の底で、同じ脈動が続いている。", "第二の主　淵纏い"],
-    "Interlude2": ["腕の痕が広がり、顔の痕も深くなっていた。", "第三の主　峰抱き"],
-    "Interlude3": ["三柱は鎮まった。顔と腕の痕は消えない。", "禍の流れは、島の奥へ続いている。", "禍津根"],
-    "Ending": ["地の脈動が静まり、主たちの息が戻る。", "面を外す。顔と腕の痕は、まだそこにある。", "白面は、再び面を着けた。", "禍がまた生じても、ここで向き合う。"],
+    "Interlude1": ["石走りは生きている。息が戻る。", "水の底で、同じ脈動が続いている。", "第二の主　淵纏い"],
+    "Interlude2": ["腕と顔に、白面自身の穢れが深く残る。", "第三の主　峰抱き"],
+    "Interlude3": ["三柱は生きて鎮まる。白面の穢れは残る。", "島の奥で主ならぬ禍津根が脈打つ。", "禍津根"],
+    "Ending": ["地は静まり、三柱の主は生きている。", "面を外す。白面自身の穢れは、まだ残る。", "白面は、再び面を着けた。", "禍がまた生じても、ここで向き合う。"],
 }
 REQUIRED = [PREFIX + "Private/" + name + ".cpp" for name in [
     "IshibashiriBoss", "PrototypeGameMode", "NushiStateComponent", "NushiProgressComponent",
