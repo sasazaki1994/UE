@@ -13,9 +13,19 @@ Feature: STEP 4C Windows review-gate evidence runner
     When RunIshibashiriReviewGate.ps1 is invoked
     Then Approach and Ishibashiri run at 60 and 30 FPS
     And keyboard and gamepad campaign paths run
+    And Fuchimatoi, Minedaki, and Magatsune each run at 60 and 30 FPS
+    And each standalone encounter runs its required gamepad, fall recovery, and capture coverage without duplicating equivalent runs
     And Legacy and HighQuality captures are copied rather than moved
     And summary.json contains only PASS, FAIL, BLOCKED, NOT_RUN, or NOT_APPLICABLE gate states
     And package runs only after every major gate passes
+
+  Scenario: Review the complete plan without Unreal Engine
+    Given Unreal Engine is unavailable
+    When RunIshibashiriReviewGate.ps1 is invoked with DryRun
+    Then no build, gameplay, capture, or package process is started
+    And every planned command is recorded in execution order with its required inputs and expected artifacts
+    And every gate and the overall verdict are NOT_RUN in JSON and Markdown evidence
+    And DryRun is never reported as successful Unreal validation
 
   Scenario: Control Rig is unavailable
     Given CR_Shirotsura_Climbing.uasset is absent
