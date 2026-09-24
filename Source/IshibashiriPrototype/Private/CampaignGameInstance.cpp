@@ -71,6 +71,7 @@ void UCampaignGameInstance::StartCampaign()
 
 bool UCampaignGameInstance::AdvanceCardChapter()
 {
+    const bool bStartingFromTitle = State == ECampaignState::Title;
     switch (State)
     {
     case ECampaignState::Title: StartCampaign(); break;
@@ -84,7 +85,7 @@ bool UCampaignGameInstance::AdvanceCardChapter()
     }
     ChapterStartSeconds = FPlatformTime::Seconds();
     if (State == ECampaignState::Completed) ClearChapterSave();
-    else if (State != ECampaignState::Title) SaveChapter();
+    else if (State != ECampaignState::Title && !bStartingFromTitle) SaveChapter();
     UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_E2E %s chapter_start_time=%.3f"), CampaignStateName(State), GetCampaignElapsedSeconds());
     return true;
 }
@@ -175,7 +176,12 @@ void UCampaignGameInstance::SaveChapter()
 void UCampaignGameInstance::ClearChapterSave()
 {
     if (!bPersistenceEnabled) return;
-    UGameplayStatics::DeleteGameInSlot(CampaignSaveSlot, 0);
+    if (!UGameplayStatics::DeleteGameInSlot(CampaignSaveSlot, 0) && UGameplayStatics::DoesSaveGameExist(CampaignSaveSlot, 0))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("CAMPAIGN_SAVE_CLEAR_FAILED"));
+        LoadChapterSave();
+        return;
+    }
     bHasContinue = false;
     ContinueChapter = ECampaignState::Title;
 }
