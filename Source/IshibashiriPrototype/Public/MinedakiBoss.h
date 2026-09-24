@@ -9,7 +9,7 @@ class UPointLightComponent;
 UENUM()
 enum class EMinedakiActionState : uint8
 {
-    Grounded, PreparingClimb, ClimbingWall, Shaking, LedgeTransition, UpperPlatform,
+    Grounded, PreparingClimb, ClimbingWall, ShakeWarning, Shaking, LedgeTransition, UpperPlatform,
     ArmBridgeTransition, ArmBridge, FinalTransition, FinalRoute, Calming, Calm
 };
 
@@ -54,6 +54,7 @@ public:
     FVector GetRouteLocal(int32 Node) const;
     FVector GetRouteWorld(int32 Node) const;
     float GetClimbTime() const { return ClimbTime; }
+    float GetTransitionAlpha() const { return RouteTransitionSeconds > 0.f ? FMath::Clamp(TransitionTime / RouteTransitionSeconds, 0.f, 1.f) : 1.f; }
     FMinedakiTelemetry Telemetry;
     void LogTelemetry(const TCHAR* Event) const;
     void RefreshSenseGuidance() { SetRouteVisibility(); }
@@ -72,6 +73,8 @@ public:
     UPROPERTY(EditAnywhere,Category="Minedaki|Pose") float MaximumPitch=70.f;
     UPROPERTY(EditAnywhere,Category="Minedaki|Pose") float MaximumYaw=20.f;
     UPROPERTY(EditAnywhere,Category="Minedaki|Pose") float ShakeRoll=24.f;
+    UPROPERTY(EditAnywhere,Category="Minedaki|Pose",meta=(ClampMin="0",ClampMax="30",Units="cm")) float BreathingHeight=14.f;
+    UPROPERTY(EditAnywhere,Category="Minedaki|Pose",meta=(ClampMin="2",Units="s")) float BreathingPeriod=6.f;
 private:
     UFUNCTION() void HandleKakonPurified(AKakonActor* Kakon);
     void AdvancePostKakon(float Dt);
@@ -90,6 +93,6 @@ private:
     UPROPERTY() TObjectPtr<UStaticMeshComponent> RightArm;
     EMinedakiActionState ActionState=EMinedakiActionState::Grounded;
     FTransform SpawnPose;
-    float ClimbTime=0, TransitionTime=0, CalmTime=0;
-    bool bShakeApplied=false, bTransitionShakeApplied=false;
+    float ClimbTime=0, TransitionTime=0, CalmTime=0, LivingTime=0;
+    bool bShakeApplied=false;
 };
