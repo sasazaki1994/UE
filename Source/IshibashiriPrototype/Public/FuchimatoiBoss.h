@@ -58,11 +58,13 @@ public:
     FString GetActionLabel() const;
     float GetActionTimeRemaining() const { return ActionTimeRemaining; }
     float GetBodyLength() const;
+    float GetAttackPresentation() const;
     static constexpr int32 RouteNodeCount = 10;
 
     UPROPERTY(EditAnywhere, Category="Nushi|Fuchimatoi|Bite") float WindupDuration = 1.25f;
     UPROPERTY(EditAnywhere, Category="Nushi|Fuchimatoi|Bite") float SubmergedDuration = 1.5f;
     UPROPERTY(EditAnywhere, Category="Nushi|Fuchimatoi|Bite") float SnaggedDuration = 4.5f;
+    UPROPERTY(EditAnywhere, Category="Nushi|Fuchimatoi|Bite") float BiteRecoveryDuration = 1.1f;
 
     UFUNCTION(BlueprintCallable, Category="Nushi|Fuchimatoi")
     void BeginBiteWindup();
@@ -150,6 +152,8 @@ private:
     FVector BiteAimWorldLocation=FVector::ZeroVector;
     FTransform EncounterSpawn;
     float ActionTimeRemaining = 0.f;
+    float ActionDuration = 0.f;
+    float SerpentTime = 0.f;
     bool bPlayable = false;
 
     void TryTransition(EFuchimatoiActionState ExpectedState, EFuchimatoiActionState NewState);

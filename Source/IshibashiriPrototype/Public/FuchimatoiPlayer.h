@@ -91,4 +91,6 @@ private:
     float RouteProgress = 0, RouteDelay = 0;
     bool bRecoveryApproach = false;
     float RecoveryStaminaGrace = 0;
+    FVector SmoothedCameraFocus = FVector::ZeroVector;
+    float CameraPresentationFOV = 80.f;
 };

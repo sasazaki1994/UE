@@ -35,10 +35,20 @@ public:
     UFUNCTION(BlueprintPure, Category="Nushi")
     ENushiState GetNushiState() const;
 
+    // Small, gameplay-neutral presentation envelope shared by every Nushi.
+    // Encounter implementations decide how to render it; progression never waits for it.
+    void NotifyPurificationPresentation();
+    void AdvancePresentation(float DeltaSeconds);
+    float GetPurificationPresentation() const { return PurificationPresentation; }
+    float GetCalmPresentation() const { return CalmPresentation; }
+
 private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Nushi", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UNushiProgressComponent> NushiProgressComponent;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Nushi", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UNushiStateComponent> NushiStateComponent;
+
+    float PurificationPresentation = 0.f;
+    float CalmPresentation = 0.f;
 };
