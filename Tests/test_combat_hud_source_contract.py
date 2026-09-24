@@ -27,10 +27,24 @@ def test_normal_hud_does_not_use_development_labels():
 
 
 def test_variable_hud_rows_size_the_background():
-    for name in ("PrototypeHUD.cpp", "FuchimatoiHUD.cpp", "MinedakiHUD.cpp", "MagatsuneHUD.cpp"):
+    expected_line_counts = {
+        "PrototypeHUD.cpp": "2 + (bCampaign ? 1 : 0) + SenseLines + (bDebugGuidance ? 2 : 0) + (Player && !Player->GetFeedback().IsEmpty() ? 1 : 0)",
+        "FuchimatoiHUD.cpp": "4+SenseLines+(bDebugGuidance?2:0)+(bRecoveryBehindCamera?1:0)",
+        "MinedakiHUD.cpp": "4 + SenseLines + (bDebugGuidance ? 2 : 0)",
+        "MagatsuneHUD.cpp": "4 + SenseLines + (bDebugGuidance ? 1 : 0)",
+    }
+    for name, line_count in expected_line_counts.items():
         text = source(name)
-        assert "LineCount" in text
+        assert f"LineCount = {line_count}" in text or f"LineCount={line_count}" in text
         assert "SenseLines" in text
+
+
+def test_fuchimatoi_counts_offscreen_recovery_guidance():
+    text = source("FuchimatoiHUD.cpp")
+    assert "bRecoveryBehindCamera=Boss->IsRecoveryUnlocked()" in text
+    assert "Project(Boss->GetRecoveryAnchor()->GetActorLocation()).Z<=0" in text
+    assert "(bRecoveryBehindCamera?1:0)" in text
+    assert "Gold beacon is behind the camera - turn to find it" in text
 
 
 def test_required_player_guidance_remains_available():
