@@ -218,7 +218,8 @@ void AClimbingIntegrationTest::TickGrabMotionWarp(float Dt)
         Shot(TEXT("01-BeforeGrab")); Tap(EKeys::E); GrabWarpPhase=1; Time=0.f; return;
     }
     case 1:
-        if (!C->IsGrabWarping()) { Check(false,TEXT("Motion Warp starts from normal Grab input (asset contract required)")); return; }
+        if (!C->IsGrabWarping() || C->IsFallbackGrabApproach())
+        { Check(false,TEXT("Authored Motion Warp starts from normal Grab input (asset contract required)")); return; }
         Shot(TEXT("02-WarpStart")); GrabWarpPhase=2; Time=0.f; return;
     case 2:
         if (Time>.22f) { Shot(TEXT("03-Approach")); GrabWarpPhase=3; } return;
@@ -355,7 +356,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
             Tap(EKeys::E);Next(2);
         } break;
     case 2:
-        if (Time>.12f)
+        if (C->IsClimbing() || Time>.8f)
         {
             if (!Check(C->IsClimbing() && C->GetNode()==0,TEXT("E mounts from ground after movement input"))) return;
             if (bClimbingIK) Shot(TEXT("01-Grab"));
@@ -466,9 +467,9 @@ void AClimbingIntegrationTest::Tick(float Dt)
             SetupGrab(false,CompletedRoutes==2?20:0);
         } break;
     case 20:
-        if (Time>.15f)
+        if (C->IsClimbing() && Time>.15f)
         {
-            if (!Check(C->IsClimbing(),TEXT("Can grab again after retry"))) return;
+            if (!Check(C->GetNode()==0,TEXT("Can grab again after retry"))) return;
             Tap(EKeys::SpaceBar);Next(21);
         } break;
     case 21:
@@ -478,7 +479,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
             SetupGrab(true,22);
         } break;
     case 22:
-        if (Time>.15f) { Hold(EKeys::E,true);Next(23); } break;
+        if (C->IsClimbing() && Time>.15f) { Hold(EKeys::E,true);Next(23); } break;
     case 23:
         if (!C->IsClimbing())
         {
@@ -486,7 +487,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
             SetupGrab(true,24);
         } break;
     case 24:
-        if (Time>.15f) { B->SetActorTickEnabled(true);Hold(EKeys::W,true);Next(25); } break;
+        if (C->IsClimbing() && Time>.15f) { B->SetActorTickEnabled(true);Hold(EKeys::W,true);Next(25); } break;
     case 25:
         if (C->GetNode()==3 && !C->IsMoving()) { Hold(EKeys::W,false);Hold(EKeys::E,false);Next(26); } break;
     case 26:

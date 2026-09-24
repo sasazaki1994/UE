@@ -9,6 +9,7 @@ class AFuchimatoiPlayer;
 class AFuchimatoiRouteAnchor;
 class UFuchimatoiSimulationComponent;
 class UStaticMeshComponent;
+class UPointLightComponent;
 
 struct FFuchimatoiTelemetry
 {
@@ -138,6 +139,7 @@ private:
     UPROPERTY() TObjectPtr<AFuchimatoiArena> Arena;
     UPROPERTY() TObjectPtr<AFuchimatoiPlayer> Player;
     UPROPERTY() TObjectPtr<UStaticMeshComponent> Head;
+    UPROPERTY() TObjectPtr<UPointLightComponent> HeadCueLight;
     UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> BodySegments;
     UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> BodyJoints;
     UPROPERTY() TArray<TObjectPtr<AFuchimatoiRouteAnchor>> RouteAnchors;

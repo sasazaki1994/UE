@@ -12,6 +12,18 @@
     ならば Campaign Chapterは変わらない
     かつ 別EncounterのCompleted通知は拒否される
 
+  シナリオ: 終了後に章の先頭から再開する
+    前提 Campaignが峰抱きの途中で終了した
+    もし TitleでRまたはYを押してContinueする
+    ならば 峰抱きの先頭から開始する
+    かつ 禍根、スタミナ、Boss PhaseはGameModeの初期値になる
+    かつ 穢れ段階はAdvancedのままである
+
+  シナリオ: 自動入力テストは通常の保存領域を変更しない
+    前提 続きから再開できる保存データがある
+    もし Campaign E2Eを実行する
+    ならば テストの進行は通常の保存データを上書きしない
+
   シナリオ: Chapter境界でSenseを破棄する
     前提 Boundary SenseまたはCorruption Senseを保持している
     もし 次ChapterへTravelする

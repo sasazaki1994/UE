@@ -4,6 +4,7 @@
 #include "MinedakiBoss.generated.h"
 class AMinedakiPlayer;
 class UStaticMeshComponent;
+class UPointLightComponent;
 
 UENUM()
 enum class EMinedakiActionState : uint8
@@ -79,6 +80,7 @@ private:
     void UpdateArmHolds();
     void SetRouteVisibility();
     UPROPERTY() TObjectPtr<USceneComponent> BodyRoot;
+    UPROPERTY() TObjectPtr<UPointLightComponent> BodyCueLight;
     UPROPERTY() TObjectPtr<AActor> GrabFrame;
     UPROPERTY() TObjectPtr<AMinedakiPlayer> Player;
     UPROPERTY() TArray<TObjectPtr<AKakonActor>> Kakons;

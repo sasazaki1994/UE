@@ -20,7 +20,8 @@ def test_grab_target_reuses_route_zero_and_tracks_the_boss():
     assert "Candidate->GetClimbPosition(0)" in climbing
     assert "AddOrUpdateWarpTargetFromTransform(GrabWarpTargetName, Target)" in climbing
     assert "MaximumWarpDistance" in climbing and "MaximumWarpAngle" in climbing
-    assert "SetActorLocation(Boss->GetClimbPosition(Node))" in climbing  # documented legacy fallback only
+    assert "StartFallbackGrabApproach(Candidate)" in climbing
+    assert "FMath::Lerp(GrabWarpStartLocation, Target.GetLocation(), SmoothT)" in climbing
 
 
 def test_warp_has_one_handoff_and_shared_cancel_cleanup():

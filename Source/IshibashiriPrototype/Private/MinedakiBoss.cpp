@@ -5,6 +5,7 @@
 #include "KakonActor.h"
 #include "NushiProgressComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "UObject/ConstructorHelpers.h"
@@ -16,6 +17,12 @@ AMinedakiBoss::AMinedakiBoss()
     SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("MinedakiRoot")));
     BodyRoot = CreateDefaultSubobject<USceneComponent>(TEXT("BodyRoot"));
     BodyRoot->SetupAttachment(RootComponent);
+    BodyCueLight=CreateDefaultSubobject<UPointLightComponent>(TEXT("BodyTransitionCue"));
+    BodyCueLight->SetupAttachment(BodyRoot);
+    BodyCueLight->SetRelativeLocation(FVector(0,0,1350));
+    BodyCueLight->SetAttenuationRadius(800.f);
+    BodyCueLight->SetCastShadows(false);
+    BodyCueLight->SetIntensity(0.f);
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
     static ConstructorHelpers::FObjectFinder<UMaterialInterface> Material(
         TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
@@ -103,6 +110,7 @@ void AMinedakiBoss::EndPlay(const EEndPlayReason::Type Reason)
 void AMinedakiBoss::ResetNushi()
 {
     Super::ResetNushi();
+    BodyCueLight->SetIntensity(0.f);
     ActionState = EMinedakiActionState::Grounded;
     ClimbTime = TransitionTime = CalmTime = 0;
     bShakeApplied = bTransitionShakeApplied = false;
@@ -187,6 +195,11 @@ void AMinedakiBoss::Tick(float Dt)
     if (GetNushiState() == ENushiState::Active) Telemetry.Elapsed += Dt;
     AdvanceWallClimb(Dt);
     AdvancePostKakon(Dt);
+    const bool bWarning=ActionState==EMinedakiActionState::PreparingClimb
+        || ActionState==EMinedakiActionState::Shaking || IsBodyTransitioning();
+    BodyCueLight->SetLightColor(FLinearColor(.46f,.24f,.13f));
+    BodyCueLight->SetIntensity(GetNushiState()==ENushiState::Active && bWarning
+        ? 16000.f*(.8f+.2f*FMath::Sin(GetWorld()->GetTimeSeconds()*8.f)) : 0.f);
 }
 
 void AMinedakiBoss::AdvanceWallClimb(float Dt)

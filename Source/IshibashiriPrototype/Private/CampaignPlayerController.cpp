@@ -17,11 +17,17 @@ void ACampaignPlayerController::SetupInputComponent()
     Super::SetupInputComponent();
     InputComponent->BindAction(TEXT("Attack"), IE_Pressed, this, &ACampaignPlayerController::Confirm);
     InputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ACampaignPlayerController::Confirm);
+    InputComponent->BindAction(TEXT("Retry"), IE_Pressed, this, &ACampaignPlayerController::ContinueSaved);
 }
 
 void ACampaignPlayerController::Confirm()
 {
     if (auto* Mode = GetWorld()->GetAuthGameMode<ACampaignGameMode>()) Mode->ConfirmCard();
+}
+
+void ACampaignPlayerController::ContinueSaved()
+{
+    if (auto* Mode = GetWorld()->GetAuthGameMode<ACampaignGameMode>()) Mode->ContinueSavedCampaign();
 }
 
 void ACampaignPlayerController::PlayerTick(float DeltaTime)

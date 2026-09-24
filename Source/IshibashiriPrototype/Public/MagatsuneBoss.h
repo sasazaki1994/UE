@@ -6,6 +6,7 @@ class AMagatsunePlayer;
 class UStaticMeshComponent;
 class UStaticMesh;
 class UMaterialInterface;
+class UPointLightComponent;
 
 UENUM()
 enum class EMagatsunePhase : uint8 { SurfaceRoot, RootRockRoute, FinalRise, Calming, Calm };
@@ -57,6 +58,7 @@ private:
     void BuildPrimitive(UStaticMesh* Mesh,UMaterialInterface* Material,const TCHAR* Name,USceneComponent* Parent,FVector At,FVector Scale);
     void RefreshRoutes();
     UPROPERTY() TObjectPtr<USceneComponent> MovingRoot;
+    UPROPERTY() TObjectPtr<UPointLightComponent> RootCueLight;
     UPROPERTY() TObjectPtr<AActor> GrabFrame;
     UPROPERTY() TObjectPtr<AMagatsunePlayer> Player;
     UPROPERTY() TArray<TObjectPtr<AKakonActor>> Kakons;

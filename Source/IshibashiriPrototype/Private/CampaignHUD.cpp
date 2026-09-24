@@ -41,7 +41,7 @@ void ACampaignHUD::DrawHUD()
     {
     case ECampaignState::Title:
         Heading = TEXT("禍祓い");
-        Body = TEXT("START");
+        Body = TEXT("NEW GAME");
         break;
     case ECampaignState::Prologue:
     {
@@ -94,6 +94,26 @@ void ACampaignHUD::DrawHUD()
     // continue prompt even on narrow screens.
     DrawWrappedCardText(Canvas, Body, GEngine->GetMediumFont(), Canvas->ClipX * .20f, BodyTop, Canvas->ClipX * .60f,
         FMath::Min(1.05f, FMath::Max(.65f, (ContinueTop - BodyTop) / 180.f)));
-    DrawText(
-        TEXT("SPACE / X : CONTINUE"), FLinearColor(.55f, .65f, .7f), Canvas->ClipX * .39f, Canvas->ClipY * .78f, GEngine->GetSmallFont());
+    const bool bTitle = C->GetCampaignState() == ECampaignState::Title;
+    DrawText(bTitle ? TEXT("SPACE / X : NEW GAME") : TEXT("SPACE / X : CONTINUE"),
+        FLinearColor(.55f, .65f, .7f), Canvas->ClipX * .39f, Canvas->ClipY * .78f, GEngine->GetSmallFont());
+    if (bTitle && C->HasContinue())
+    {
+        const TCHAR* Chapter = TEXT("PROLOGUE");
+        switch (C->GetContinueChapter())
+        {
+        case ECampaignState::IshibashiriApproach: Chapter = TEXT("APPROACH"); break;
+        case ECampaignState::Ishibashiri: Chapter = TEXT("ISHIBASHIRI"); break;
+        case ECampaignState::Interlude1: Chapter = TEXT("INTERLUDE 1"); break;
+        case ECampaignState::Fuchimatoi: Chapter = TEXT("FUCHIMATOI"); break;
+        case ECampaignState::Interlude2: Chapter = TEXT("INTERLUDE 2"); break;
+        case ECampaignState::Minedaki: Chapter = TEXT("MINEDAKI"); break;
+        case ECampaignState::Interlude3: Chapter = TEXT("INTERLUDE 3"); break;
+        case ECampaignState::Magatsune: Chapter = TEXT("MAGATSUNE"); break;
+        case ECampaignState::Ending: Chapter = TEXT("ENDING"); break;
+        default: break;
+        }
+        DrawText(FString::Printf(TEXT("R / Y : CONTINUE (%s)"), Chapter), FLinearColor(.75f, .68f, .46f),
+            Canvas->ClipX * .39f, Canvas->ClipY * .84f, GEngine->GetSmallFont());
+    }
 }

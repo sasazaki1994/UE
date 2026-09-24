@@ -623,7 +623,15 @@ void APrototypePlayer::ResetForEncounter(const FTransform& Spawn)
 
 void APrototypePlayer::UpdateAnimation()
 {
-    if (Climbing && Climbing->IsGrabWarping()) return;
+    if (Climbing && Climbing->IsGrabWarping())
+    {
+        if (Climbing->IsFallbackGrabApproach())
+        {
+            ShirotsuraVisual->SetWeaponHidden(true);
+            ShirotsuraVisual->SetState(EShirotsuraVisualState::Climb);
+        }
+        return; // The authored montage owns the pose when it is available.
+    }
     const bool Climb = Climbing && Climbing->IsClimbing();
     ShirotsuraVisual->SetWeaponHidden(IsGrabbing() && !IsAttacking());
     EShirotsuraVisualState Clip = EShirotsuraVisualState::Idle;
