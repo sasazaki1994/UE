@@ -55,28 +55,28 @@ void ACampaignHUD::DrawHUD()
     }
     case ECampaignState::Interlude1:
     {
-        const TCHAR* T[] = {TEXT("石走りの息が、ゆっくりと戻る。"), TEXT("水の底で、同じ脈動が続いている。"), TEXT("第二の主　淵纏い")};
+        const TCHAR* T[] = {TEXT("石走りは生きている。息が戻る。"), TEXT("水の底で、同じ脈動が続いている。"), TEXT("第二の主　淵纏い")};
         Heading = TEXT("INTERLUDE");
         Body = T[FMath::Clamp(I, 0, 2)];
         break;
     }
     case ECampaignState::Interlude2:
     {
-        const TCHAR* T[] = {TEXT("腕の痕が広がり、顔の痕も深くなっていた。"), TEXT("第三の主　峰抱き")};
+        const TCHAR* T[] = {TEXT("腕と顔に、白面自身の穢れが深く残る。"), TEXT("第三の主　峰抱き")};
         Heading = TEXT("INTERLUDE");
         Body = T[FMath::Clamp(I, 0, 1)];
         break;
     }
     case ECampaignState::Interlude3:
     {
-        const TCHAR* T[] = {TEXT("三柱は鎮まった。顔と腕の痕は消えない。"), TEXT("禍の流れは、島の奥へ続いている。"), TEXT("禍津根")};
+        const TCHAR* T[] = {TEXT("三柱は生きて鎮まる。白面の穢れは残る。"), TEXT("島の奥で主ならぬ禍津根が脈打つ。"), TEXT("禍津根")};
         Heading = TEXT("INTERLUDE");
         Body = T[FMath::Clamp(I, 0, 2)];
         break;
     }
     case ECampaignState::Ending:
     {
-        const TCHAR* T[] = {TEXT("地の脈動が静まり、主たちの息が戻る。"), TEXT("面を外す。顔と腕の痕は、まだそこにある。"),
+        const TCHAR* T[] = {TEXT("地は静まり、三柱の主は生きている。"), TEXT("面を外す。白面自身の穢れは、まだ残る。"),
             TEXT("白面は、再び面を着けた。"), TEXT("禍がまた生じても、ここで向き合う。")};
         Heading = TEXT("ENDING");
         Body = T[FMath::Clamp(I, 0, 3)];
