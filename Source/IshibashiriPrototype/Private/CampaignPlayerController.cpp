@@ -18,6 +18,8 @@ void ACampaignPlayerController::SetupInputComponent()
     InputComponent->BindAction(TEXT("Attack"), IE_Pressed, this, &ACampaignPlayerController::Confirm);
     InputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ACampaignPlayerController::Confirm);
     InputComponent->BindAction(TEXT("Retry"), IE_Pressed, this, &ACampaignPlayerController::ContinueSaved);
+    InputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &ACampaignPlayerController::CancelNewGameConfirmation);
+    InputComponent->BindKey(EKeys::Gamepad_FaceButton_Right, IE_Pressed, this, &ACampaignPlayerController::CancelNewGameConfirmation);
 }
 
 void ACampaignPlayerController::Confirm()
@@ -28,6 +30,11 @@ void ACampaignPlayerController::Confirm()
 void ACampaignPlayerController::ContinueSaved()
 {
     if (auto* Mode = GetWorld()->GetAuthGameMode<ACampaignGameMode>()) Mode->ContinueSavedCampaign();
+}
+
+void ACampaignPlayerController::CancelNewGameConfirmation()
+{
+    if (auto* Mode = GetWorld()->GetAuthGameMode<ACampaignGameMode>()) Mode->CancelNewGameConfirmation();
 }
 
 void ACampaignPlayerController::PlayerTick(float DeltaTime)

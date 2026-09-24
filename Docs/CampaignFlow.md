@@ -30,7 +30,7 @@ R / Yは従来どおり各GameModeの `RetryEncounter` だけを呼ぶ。Campaig
 - Interlude: 黒背景、各1〜3枚。次の主を示し、禍津根を「第四の主」とは表記しない。
 - Ending: 禍津根は鎮まったこと、主が生存すること、左腕に禍が残ること、再発の可能性を4枚で示す。終了後Completedのタイトルへ戻り、再STARTできる。
 - Space / X（既存Jump / Attack mapping）でカードを進める。石走り開始時だけ既存HUDに `Q / LT: 境断ち` と `F / LB: 左腕` を表示する。
-- TitleでSpace / Xは新規開始、保存がある場合だけR / Yで前回の章の先頭から再開する。Endingを読み終えると保存を消去する。
+- TitleでSpace / Xは新規開始。保存がなければ1回、保存があれば上書き警告後の2回目で開始する。確認中はEsc / Bで取消し、R / Yで前回の章の先頭からContinueできる。Endingを読み終えると保存を消去する。
 
 ## 保存と再開
 

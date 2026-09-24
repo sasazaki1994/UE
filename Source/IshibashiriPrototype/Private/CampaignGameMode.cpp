@@ -26,6 +26,7 @@ void ACampaignGameMode::ConfirmCard()
     UCampaignGameInstance* Campaign = GetGameInstance<UCampaignGameInstance>();
     if (!Campaign) return;
     const ECampaignState State = Campaign->GetCampaignState();
+    if (State == ECampaignState::Title && !NewGameConfirmation.RequestStart(Campaign->HasContinue())) { return; }
     const int32 LastCard = State == ECampaignState::Prologue ? 3
         : State == ECampaignState::Ending                    ? 3
                                           : (State == ECampaignState::Interlude1 || State == ECampaignState::Interlude3 ? 2 : 1);
@@ -40,5 +41,11 @@ void ACampaignGameMode::ConfirmCard()
 void ACampaignGameMode::ContinueSavedCampaign()
 {
     UCampaignGameInstance* Campaign = GetGameInstance<UCampaignGameInstance>();
-    if (Campaign && Campaign->ContinueCampaign()) Campaign->TravelToCurrentChapter(this);
+    if (Campaign && Campaign->ContinueCampaign())
+    {
+        NewGameConfirmation.Cancel();
+        Campaign->TravelToCurrentChapter(this);
+    }
 }
+
+void ACampaignGameMode::CancelNewGameConfirmation() { NewGameConfirmation.Cancel(); }

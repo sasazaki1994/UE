@@ -41,7 +41,9 @@ void ACampaignHUD::DrawHUD()
     {
     case ECampaignState::Title:
         Heading = TEXT("禍祓い");
-        Body = TEXT("NEW GAME");
+        Body = M->IsNewGameConfirmationPending()
+            ? TEXT("新しく始めると前回の続きが上書きされます。\nもう一度 NEW GAME を入力してください。")
+            : TEXT("NEW GAME");
         break;
     case ECampaignState::Prologue:
     {
@@ -95,8 +97,8 @@ void ACampaignHUD::DrawHUD()
     DrawWrappedCardText(Canvas, Body, GEngine->GetMediumFont(), Canvas->ClipX * .20f, BodyTop, Canvas->ClipX * .60f,
         FMath::Min(1.05f, FMath::Max(.65f, (ContinueTop - BodyTop) / 180.f)));
     const bool bTitle = C->GetCampaignState() == ECampaignState::Title;
-    DrawText(bTitle ? TEXT("SPACE / X : NEW GAME") : TEXT("SPACE / X : CONTINUE"),
-        FLinearColor(.55f, .65f, .7f), Canvas->ClipX * .39f, Canvas->ClipY * .78f, GEngine->GetSmallFont());
+    DrawText(bTitle ? TEXT("SPACE / X : NEW GAME") : TEXT("SPACE / X : CONTINUE"), FLinearColor(.55f, .65f, .7f), Canvas->ClipX * .39f,
+        Canvas->ClipY * .78f, GEngine->GetSmallFont());
     if (bTitle && C->HasContinue())
     {
         const TCHAR* Chapter = TEXT("PROLOGUE");
@@ -113,7 +115,12 @@ void ACampaignHUD::DrawHUD()
         case ECampaignState::Ending: Chapter = TEXT("ENDING"); break;
         default: break;
         }
-        DrawText(FString::Printf(TEXT("R / Y : CONTINUE (%s)"), Chapter), FLinearColor(.75f, .68f, .46f),
-            Canvas->ClipX * .39f, Canvas->ClipY * .84f, GEngine->GetSmallFont());
+        DrawText(FString::Printf(TEXT("R / Y : CONTINUE (%s)"), Chapter), FLinearColor(.75f, .68f, .46f), Canvas->ClipX * .39f,
+            Canvas->ClipY * .84f, GEngine->GetSmallFont());
+        if (M->IsNewGameConfirmationPending())
+        {
+            DrawText(TEXT("ESC / B : CANCEL"), FLinearColor(.65f, .7f, .72f), Canvas->ClipX * .39f, Canvas->ClipY * .89f,
+                GEngine->GetSmallFont());
+        }
     }
 }
