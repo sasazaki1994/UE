@@ -6,6 +6,12 @@
     ならば IshibashiriApproach、Ishibashiri、Fuchimatoi、Minedaki、Magatsune、Endingの順に進む
     かつ Ending後はCompletedになる
 
+  シナリオ: 物語カードを機械可読契約どおり表示する
+    前提 NarrativeContract.jsonのstory_cardsが章別の正本である
+    もし CampaignHUDの物語カードをソース検査する
+    ならば 各章の本文は正本と同じ順序かつ同じ枚数である
+    かつ 本文の章移動、順序変更、重複、欠落は検査に失敗する
+
   シナリオ: 未完了またはRetryでは進まない
     前提 CampaignがEncounter中である
     もし 現在EncounterをRetryする

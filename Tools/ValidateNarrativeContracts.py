@@ -16,13 +16,7 @@ CHAPTERS = [
 APPEARANCE = dict(zip(CHAPTERS, [None] + ["Early"] * 5 + ["Advanced"] * 5 + [None]))
 ENCOUNTERS = ["Ishibashiri", "Fuchimatoi", "Minedaki", "Magatsune"]
 PLAYERS = ["PrototypePlayer", "FuchimatoiPlayer", "MinedakiPlayer", "MagatsunePlayer"]
-STORY_CARDS = {
-    "Prologue": ["白い面は、禍祓いのしるし。", "境界石が砕け、白面の手と顔にも禍が残った。", "自らの穢れを祓う手掛かりを求め、主のもとへ。", "主を討つな。宿った禍だけを祓え。"],
-    "Interlude1": ["石走りは生きている。息が戻る。", "水の底で、同じ脈動が続いている。", "第二の主　淵纏い"],
-    "Interlude2": ["腕と顔に、白面自身の穢れが深く残る。", "第三の主　峰抱き"],
-    "Interlude3": ["三柱は生きて鎮まる。白面の穢れは残る。", "島の奥で主ならぬ禍津根が脈打つ。", "禍津根"],
-    "Ending": ["地は静まり、三柱の主は生きている。", "面を外す。白面自身の穢れは、まだ残る。", "白面は、再び面を着けた。", "禍がまた生じても、ここで向き合う。"],
-}
+CARD_CHAPTERS = ["Prologue", "Interlude1", "Interlude2", "Interlude3", "Ending"]
 REQUIRED = [PREFIX + "Private/" + name + ".cpp" for name in [
     "IshibashiriBoss", "PrototypeGameMode", "NushiStateComponent", "NushiProgressComponent",
     "NushiEncounterManager", "KakonActor", "PlayerSenseComponent", "CampaignGameInstance",
@@ -74,7 +68,6 @@ def audit_contract(contract: dict) -> list[str]:
         "normal_victory_condition": "all_registered_kakon_purified",
         "ending": {"nushi_survive": True, "magatsune_destroyed": False,
                    "corruption_remains": True, "appearance": "Advanced"},
-        "story_cards": STORY_CARDS,
         "encounters": [
             {"id": name, "kind": "living_terrain" if name == "Magatsune" else "nushi", "kakon_count": 3}
             for name in ENCOUNTERS
@@ -83,6 +76,13 @@ def audit_contract(contract: dict) -> list[str]:
     for key, value in expected.items():
         if key not in contract or contract[key] != value:
             issues.append("CONTRACT: unexpected or missing " + key)
+    story_cards = contract.get("story_cards")
+    if (not isinstance(story_cards, dict)
+            or list(story_cards) != CARD_CHAPTERS
+            or any(not isinstance(cards, list) or not cards
+                   or any(not isinstance(card, str) or not card for card in cards)
+                   for cards in story_cards.values())):
+        issues.append("CONTRACT: story_cards must contain ordered, non-empty card lists for each card chapter")
     delivery = contract.get("delivery", {})
     if (not isinstance(delivery, dict)
             or delivery.get("story_cards") != "IMPLEMENTED_IN_CPP"
@@ -192,10 +192,24 @@ def audit_sources(sources: dict[str, str], contract: dict) -> list[str]:
             issues.append("APPEARANCE: retry route missing stage retention hook for " + encounter)
 
     hud = sources.get(PREFIX + "Private/CampaignHUD.cpp", "")
-    for chapter, cards in STORY_CARDS.items():
-        for card in cards:
-            if card not in hud:
-                issues.append("STORY_CARD: missing " + chapter + ": " + card)
+    hud_body = body(hide_noncode(hud, keep_strings=True), "ACampaignHUD::DrawHUD")
+    actual_cards = {}
+    case_pattern = re.compile(r"case\s+ECampaignState::(\w+)\s*:")
+    cases = list(case_pattern.finditer(hud_body))
+    for index, match in enumerate(cases):
+        chapter = match.group(1)
+        if chapter not in CARD_CHAPTERS or chapter in actual_cards:
+            continue
+        case_text = hud_body[match.end():cases[index + 1].start() if index + 1 < len(cases) else len(hud_body)]
+        array = re.search(r"const\s+TCHAR\s*\*\s*T\s*\[\s*\]\s*=\s*\{([\s\S]*?)\}\s*;", case_text)
+        actual_cards[chapter] = (re.findall(r'TEXT\s*\(\s*"((?:\\.|[^"\\])*)"\s*\)', array.group(1))
+                                 if array else [])
+    expected_cards = contract.get("story_cards")
+    if isinstance(expected_cards, dict):
+        for chapter, expected in expected_cards.items():
+            actual = actual_cards.get(chapter)
+            if actual != expected:
+                issues.append(f"STORY_CARD: {chapter} expected {expected!r}, found {actual!r}")
 
     # Inspect display strings only: not comments, documentation, Player death or DeadTree.
     forbidden = re.compile(r"\bBoss\s+HP\b|\b(?:NUSHI|COLOSSUS)\s+(?:KILLED|DEAD)\b|第四の主", re.IGNORECASE)
