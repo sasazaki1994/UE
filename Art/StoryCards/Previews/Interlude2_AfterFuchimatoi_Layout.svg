@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Interlude2 story-card layout preview</title>
+  <desc id="desc">The text-free Interlude2 artwork with the current CampaignHUD strings overlaid for layout review.</desc>
+  <image width="1920" height="1080" xlink:href="../Interlude2_AfterFuchimatoi.png"/>
+  <rect width="1920" height="1080" fill="#02070b" opacity="0.16"/>
+  <g font-family="'Noto Sans CJK JP','Yu Gothic',sans-serif" text-anchor="start">
+    <text x="806" y="367" fill="#d9b968" font-size="68" font-weight="700" letter-spacing="8">INTERLUDE</text>
+    <text x="384" y="570" fill="#f2f2ed" font-size="45" font-weight="500">腕の痕が広がり、顔の痕も深くなっていた。</text>
+    <text x="749" y="843" fill="#8ca6b3" font-size="28" font-weight="600" letter-spacing="2">SPACE / X : CONTINUE</text>
+  </g>
+</svg>
