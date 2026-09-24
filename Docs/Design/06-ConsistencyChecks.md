@@ -18,7 +18,7 @@ python -m unittest discover -s Tests -p 'test_narrative_contracts.py' -v
 | 外見2パターン | Early / Advanced、Interlude2切替、各章の対応、共通資産、性能不変を契約JSONで確認 |
 | 設定の禁止事項 | 仮面の封印機能、祓った主からの穢れ吸収、禍津根の第四主化が契約JSONで有効になっていないこと |
 | Campaign | 現行enumの12状態と対応表が一致、淵纏い→Interlude2→峰抱きの接続が残っていること |
-| 物語カード | C++の全16本文が契約JSONと一致すること |
+| 物語カード | 契約JSONの `story_cards` を正本として、C++の各章の本文が表示順・枚数を含めて一致すること |
 | 穢れ段階API | 全章の導出、非Campaign時のEncounter既定値、4つの実Retry経路から共通通知を通ること |
 | 直接鎮静の再混入 | 本番 `.cpp/.h` の明示的な `CalmNushi()` 呼び出しを列挙し、共通の全浄化ハンドラ以外を拒否 |
 | 完了通知の所有者 | 明示的な `OnEncounterCompleted.Broadcast()` と `FinishEncounter(true)` の位置を限定 |

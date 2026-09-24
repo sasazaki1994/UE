@@ -120,6 +120,33 @@ class NarrativeContractsTests(unittest.TestCase):
         mutated = self.sources[path].replace("Campaign->NotifyEncounterRetry(ECampaignState::Minedaki);", "")
         self.assertTrue(any("APPEARANCE:" in issue for issue in self.changed("MinedakiGameMode.cpp", mutated)))
 
+    def test_story_card_order_swap_in_actual_hud_fails(self):
+        path = "Source/IshibashiriPrototype/Private/CampaignHUD.cpp"
+        first, second = self.contract["story_cards"]["Prologue"][:2]
+        mutated = self.sources[path].replace(first, "CARD_SWAP_SENTINEL", 1)
+        mutated = mutated.replace(second, first, 1).replace("CARD_SWAP_SENTINEL", second, 1)
+        self.assertTrue(any("STORY_CARD: Prologue" in issue for issue in self.changed("CampaignHUD.cpp", mutated)))
+
+    def test_story_card_cross_chapter_swap_in_actual_hud_fails(self):
+        path = "Source/IshibashiriPrototype/Private/CampaignHUD.cpp"
+        prologue = self.contract["story_cards"]["Prologue"][0]
+        interlude = self.contract["story_cards"]["Interlude1"][0]
+        mutated = self.sources[path].replace(prologue, "CARD_SWAP_SENTINEL", 1)
+        mutated = mutated.replace(interlude, prologue, 1).replace("CARD_SWAP_SENTINEL", interlude, 1)
+        issues = self.changed("CampaignHUD.cpp", mutated)
+        self.assertTrue(any("STORY_CARD: Prologue" in issue for issue in issues))
+        self.assertTrue(any("STORY_CARD: Interlude1" in issue for issue in issues))
+
+    def test_story_card_duplicate_and_missing_card_in_actual_hud_fail(self):
+        path = "Source/IshibashiriPrototype/Private/CampaignHUD.cpp"
+        first, second = self.contract["story_cards"]["Ending"][:2]
+        duplicated = self.sources[path].replace(second, first, 1)
+        missing = self.sources[path].replace(f', TEXT("{second}")', "", 1)
+        for mutation in (duplicated, missing):
+            with self.subTest(mutation="duplicate" if mutation == duplicated else "missing"):
+                self.assertTrue(any("STORY_CARD: Ending" in issue
+                                    for issue in self.changed("CampaignHUD.cpp", mutation)))
+
     def test_display_scope_does_not_ban_player_death_or_dead_trees(self):
         self.assertEqual(self.changed("ExtraPlayer.cpp", 'void AExtraPlayer::Text() { TEXT("Player dead"); TEXT("DeadTree"); }'), [])
         self.assertTrue(any("DISPLAY:" in issue for issue in self.changed("ExtraHUD.cpp", 'void AExtraHUD::Text() { TEXT("Boss HP -1"); }')))
