@@ -31,3 +31,18 @@
     前提 Build、Approach、Encounter、Retry、Sense、IK、Legacy、HighQuality の主要 Gate が成功している
     なら Package を作成する
     かつ Package 版で Title、Prologue、Approach 開始、Player 移動、Encounter 開始を確認する
+
+  シナリオ: 全主戦の回帰証跡を一括収集する
+    前提 Development Editor Build が成功している
+    なら 石走り、淵纏い、峰抱き、禍津根を 60 FPS と 30 FPS で単体検証する
+    かつ 各主戦で必要なゲームパッド、落下復帰、画面キャプチャを検証する
+    かつ 同一条件を満たす実行を重複させない
+    かつ 各実行の終了コード、ログ、キャプチャ、対象 commit SHA を証跡へ記録する
+
+  シナリオ: DryRun は実機検証成功ではない
+    前提 Unreal Engine を利用できない
+    もし Review Gate を DryRun で実行する
+    なら 実行予定コマンドを順番どおりに JSON と Markdown へ記録する
+    かつ 必要な入力と期待する成果物を記録する
+    かつ 全項目と総合結果を "NOT_RUN" と記録する
+    かつ UE Build または実プレイの成功として扱わない

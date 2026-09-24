@@ -2,7 +2,8 @@
 param(
     [string]$EngineRoot = $env:UE_ROOT,
     [switch]$UpdateReviewDocument,
-    [string]$EvidenceRoot
+    [string]$EvidenceRoot,
+    [switch]$DryRun
 )
 
 Set-StrictMode -Version Latest
@@ -17,7 +18,7 @@ if (!$SourceSha) { $SourceSha = 'UNKNOWN' }
 $Stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
 if (!$EvidenceRoot) { $EvidenceRoot = Join-Path $ProjectRoot "Artifacts\IshibashiriReviewGate\$Stamp-$($SourceSha.Substring(0,[Math]::Min(12,$SourceSha.Length)))" }
 $EvidenceRoot = [IO.Path]::GetFullPath($EvidenceRoot)
-$Folders = @('logs','screenshots','performance','campaign','approach','climbing','ik','package')
+$Folders = @('logs','screenshots','performance','campaign','approach','climbing','ik','fuchimatoi','minedaki','magatsune','package')
 New-Item -ItemType Directory -Force -Path $EvidenceRoot | Out-Null
 foreach ($Folder in $Folders) { New-Item -ItemType Directory -Force -Path (Join-Path $EvidenceRoot $Folder) | Out-Null }
 
@@ -26,6 +27,9 @@ $Results = [ordered]@{
     ishibashiri30='NOT_RUN'; gamepad='NOT_RUN'; retry='NOT_RUN'; senseReset='NOT_RUN'
     controlRig='NOT_RUN'; legacy='NOT_RUN'; highQuality='NOT_RUN'; campaign60='NOT_RUN'
     campaign30='NOT_RUN'; campaignGamepad='NOT_RUN'; package='NOT_RUN'
+    fuchimatoi60='NOT_RUN'; fuchimatoi30='NOT_RUN'; fuchimatoiGamepad='NOT_RUN'
+    minedaki60='NOT_RUN'; minedaki30='NOT_RUN'; minedakiGamepad='NOT_RUN'
+    magatsune60='NOT_RUN'; magatsune30='NOT_RUN'; magatsuneGamepad='NOT_RUN'
 }
 $Environment = [ordered]@{
     timestampUtc=$Stamp; sourceSha=$SourceSha; platform=[Environment]::OSVersion.VersionString
@@ -42,13 +46,20 @@ function Write-JsonFile([object]$Value, [string]$Path) {
 }
 
 function Save-Summary([string]$Verdict) {
-    $Summary = [ordered]@{ schemaVersion=1; gate='STEP 4C — Windows UE Validation Runner / Evidence Pipeline'; sourceSha=$SourceSha; ueVersion=$Environment.ueVersion; results=$Results; reasons=$Reasons; runs=$RunRecords; verdict=$Verdict }
+    $Summary = [ordered]@{ schemaVersion=2; gate='STEP 4C — Windows UE Validation Runner / Evidence Pipeline'; dryRun=[bool]$DryRun; sourceSha=$SourceSha; ueVersion=$Environment.ueVersion; results=$Results; reasons=$Reasons; runs=$RunRecords; verdict=$Verdict }
     # Flat aliases retain the review-gate example's machine-friendly shape.
     foreach ($Item in $Results.GetEnumerator()) { $Summary[$Item.Key] = $Item.Value }
     Write-JsonFile $Environment (Join-Path $EvidenceRoot 'environment.json')
     Write-JsonFile $Summary (Join-Path $EvidenceRoot 'summary.json')
     $Lines = @('# Ishibashiri Review Gate Evidence','',"- Source SHA: ``$SourceSha``","- UE version: ``$($Environment.ueVersion)``","- Verdict: **$Verdict**",'', '| Gate | Result |','|---|---|')
     foreach ($Item in $Results.GetEnumerator()) { $Lines += "| $($Item.Key) | **$($Item.Value)** |" }
+    $Lines += @('', '## Execution plan', '', '| Order | Run | Result | Exit code | Command | Required inputs | Expected artifacts |', '|---:|---|---|---:|---|---|---|')
+    $Order = 0
+    foreach ($Run in $RunRecords) {
+        $Order++
+        $ExitCode = if ($null -eq $Run.exitCode) { 'NOT_RUN' } else { [string]$Run.exitCode }
+        $Lines += "| $Order | $($Run.name) | $($Run.result) | $ExitCode | ``$($Run.command)`` | $($Run.requiredInputs -join '<br>') | $($Run.expectedArtifacts -join '<br>') |"
+    }
     $Lines | Set-Content -LiteralPath (Join-Path $EvidenceRoot 'summary.md') -Encoding UTF8
     if ($UpdateReviewDocument) { Copy-Item -LiteralPath (Join-Path $EvidenceRoot 'summary.json') -Destination (Join-Path $ProjectRoot 'Docs\IshibashiriReviewGate.json') -Force }
 }
@@ -63,6 +74,7 @@ function Resolve-Engine {
 }
 
 function Copy-NewEvidence([datetime]$Since, [string]$Area) {
+    $Copied = [Collections.Generic.List[string]]::new()
     foreach ($Source in @((Join-Path $ProjectRoot 'Saved\Logs'), (Join-Path $ProjectRoot 'Saved\Screenshots'))) {
         if (!(Test-Path -LiteralPath $Source)) { continue }
         $Destination = if ($Source -like '*Screenshots') { Join-Path $EvidenceRoot 'screenshots' } else { Join-Path $EvidenceRoot "logs\$Area" }
@@ -72,8 +84,10 @@ function Copy-NewEvidence([datetime]$Since, [string]$Area) {
             $Target = Join-Path $Destination $Relative
             New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Target) | Out-Null
             Copy-Item -LiteralPath $_.FullName -Destination $Target -Force
+            $Copied.Add($Target.Substring($EvidenceRoot.Length).TrimStart('\','/').Replace('\','/'))
         }
     }
+    return @($Copied)
 }
 
 function Invoke-Gate([string]$Name, [string]$Area, [string[]]$Arguments) {
@@ -81,14 +95,25 @@ function Invoke-Gate([string]$Name, [string]$Area, [string[]]$Arguments) {
     $Stdout = Join-Path $EvidenceRoot "logs\$Name.stdout.log"
     $Stderr = Join-Path $EvidenceRoot "logs\$Name.stderr.log"
     $Command = "& '$Prototype' " + (($Arguments | ForEach-Object { if ($_ -match '\s') { "'$_'" } else { $_ } }) -join ' ')
-    $Command | Set-Content -LiteralPath (Join-Path $EvidenceRoot "logs\$Name.command.txt") -Encoding UTF8
+    $CommandFile = Join-Path $EvidenceRoot "logs\$Name.command.txt"
+    $Command | Set-Content -LiteralPath $CommandFile -Encoding UTF8
+    $RequiredInputs = @('Windows host', 'Unreal Engine 5.6.1', 'MSVC x64 toolchain', 'Windows SDK', "project at $ProjectFile", "source commit $SourceSha")
+    $ExpectedArtifacts = @("logs/$Name.command.txt", "logs/$Name.stdout.log", "logs/$Name.stderr.log", "logs/$Name.exitcode.txt")
+    if ($Area -ne 'build' -and $Area -ne 'package') { $ExpectedArtifacts += @("logs/$Area/", 'screenshots/ (when -Capture is present)') }
+    if ($Area -eq 'package') { $ExpectedArtifacts += 'package/' }
+    if ($DryRun) {
+        $RunRecords.Add([ordered]@{ name=$Name; area=$Area; command=$Command; arguments=$Arguments; result='NOT_RUN'; exitCode=$null; startedUtc=$null; stdout="logs/$Name.stdout.log"; stderr="logs/$Name.stderr.log"; requiredInputs=$RequiredInputs; expectedArtifacts=$ExpectedArtifacts })
+        return 'NOT_RUN'
+    }
     $InvokeArgs = @('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$Prototype) + $Arguments
     if ($EngineRoot) { $InvokeArgs += @('-EngineRoot',$EngineRoot) }
     $QuotedArgs = ($InvokeArgs | ForEach-Object { '"' + ($_ -replace '"','\"') + '"' }) -join ' '
     $Process = Start-Process -FilePath (Get-Process -Id $PID).Path -ArgumentList $QuotedArgs -Wait -PassThru -RedirectStandardOutput $Stdout -RedirectStandardError $Stderr
     $Process.ExitCode | Set-Content -LiteralPath (Join-Path $EvidenceRoot "logs\$Name.exitcode.txt")
-    Copy-NewEvidence $Started $Area
-    $RunRecords.Add([ordered]@{ name=$Name; command=$Command; exitCode=$Process.ExitCode; startedUtc=$Started.ToUniversalTime().ToString('o'); stdout="logs/$Name.stdout.log"; stderr="logs/$Name.stderr.log" })
+    $CopiedEvidence = @(Copy-NewEvidence $Started $Area)
+    $RunResult = if ($Process.ExitCode -eq 0) { 'PASS' } else { 'FAIL' }
+    $ActualArtifacts = @("logs/$Name.command.txt", "logs/$Name.stdout.log", "logs/$Name.stderr.log", "logs/$Name.exitcode.txt") + $CopiedEvidence
+    $RunRecords.Add([ordered]@{ name=$Name; area=$Area; command=$Command; arguments=$Arguments; result=$RunResult; exitCode=$Process.ExitCode; startedUtc=$Started.ToUniversalTime().ToString('o'); stdout="logs/$Name.stdout.log"; stderr="logs/$Name.stderr.log"; requiredInputs=$RequiredInputs; expectedArtifacts=$ExpectedArtifacts; artifacts=$ActualArtifacts })
     if ($Process.ExitCode -eq 0) { return 'PASS' }
     return 'FAIL'
 }
@@ -96,6 +121,34 @@ function Invoke-Gate([string]$Name, [string]$Area, [string[]]$Arguments) {
 try {
     $Environment.isWindows = $env:OS -eq 'Windows_NT'
     $Drive = [IO.DriveInfo]::new([IO.Path]::GetPathRoot($EvidenceRoot)); $Environment.freeDiskBytes = $Drive.AvailableFreeSpace
+    if ($DryRun) {
+        $Reasons.dryRun = 'Planning only: no Unreal build, gameplay, capture, or package process was started.'
+        $null = Invoke-Gate 'build' 'build' @('-Action','Build')
+        $null = Invoke-Gate 'approach60' 'approach' @('-Action','Test','-Approach','-TestFPS','60')
+        $null = Invoke-Gate 'approach30' 'approach' @('-Action','Test','-Approach','-TestFPS','30')
+        $null = Invoke-Gate 'ishibashiri60' 'climbing' @('-Action','Test','-Climbing','-Basin','-SkipBuild','-TestFPS','60')
+        $null = Invoke-Gate 'ishibashiri30' 'climbing' @('-Action','Test','-Climbing','-Basin','-SkipBuild','-TestFPS','30')
+        $null = Invoke-Gate 'gamepad' 'climbing' @('-Action','Test','-ClimbingGamepad','-Basin','-SkipBuild','-TestFPS','60')
+        $null = Invoke-Gate 'climbingIK' 'ik' @('-Action','Test','-ClimbingIK','-Capture','-Basin','-SkipBuild','-TestFPS','60')
+        $null = Invoke-Gate 'legacy' 'climbing' @('-Action','Test','-Climbing','-Capture','-Basin','-SkipBuild','-TestFPS','60')
+        $null = Invoke-Gate 'highQuality' 'climbing' @('-Action','Test','-Climbing','-Capture','-Basin','-HighQuality','-SkipBuild','-TestFPS','60')
+        $null = Invoke-Gate 'campaign60' 'campaign' @('-Action','Test','-Campaign','-SkipBuild','-TestFPS','60')
+        $null = Invoke-Gate 'campaign30' 'campaign' @('-Action','Test','-Campaign','-SkipBuild','-TestFPS','30')
+        $null = Invoke-Gate 'campaignGamepad' 'campaign' @('-Action','Test','-Campaign','-SkipBuild','-Gamepad','-TestFPS','60')
+        $null = Invoke-Gate 'fuchimatoi60' 'fuchimatoi' @('-Action','Test','-Fuchimatoi','-Recovery','-Capture','-SkipBuild','-TestFPS','60')
+        $null = Invoke-Gate 'fuchimatoi30' 'fuchimatoi' @('-Action','Test','-Fuchimatoi','-Recovery','-SkipBuild','-TestFPS','30')
+        $null = Invoke-Gate 'fuchimatoiGamepad' 'fuchimatoi' @('-Action','Test','-Fuchimatoi','-Recovery','-Gamepad','-SkipBuild','-TestFPS','60')
+        $null = Invoke-Gate 'minedaki60' 'minedaki' @('-Action','Test','-Minedaki','-Capture','-SkipBuild','-TestFPS','60')
+        $null = Invoke-Gate 'minedaki30' 'minedaki' @('-Action','Test','-Minedaki','-SkipBuild','-TestFPS','30')
+        $null = Invoke-Gate 'minedakiGamepad' 'minedaki' @('-Action','Test','-Minedaki','-Gamepad','-SkipBuild','-TestFPS','60')
+        $null = Invoke-Gate 'magatsune60' 'magatsune' @('-Action','Test','-Magatsune','-Capture','-SkipBuild','-TestFPS','60')
+        $null = Invoke-Gate 'magatsune30' 'magatsune' @('-Action','Test','-Magatsune','-SkipBuild','-TestFPS','30')
+        $null = Invoke-Gate 'magatsuneGamepad' 'magatsune' @('-Action','Test','-Magatsune','-Gamepad','-SkipBuild','-TestFPS','60')
+        $null = Invoke-Gate 'package' 'package' @('-Action','Package')
+        Save-Summary 'NOT_RUN'
+        Write-Host "DryRun only; Unreal validation was NOT_RUN. Evidence: $EvidenceRoot"
+        exit 0
+    }
     if (!$Environment.isWindows) { Save-Summary 'UNVERIFIED — WINDOWS UE 5.6.1 NOT AVAILABLE'; Write-Host "Evidence: $EvidenceRoot"; exit 2 }
     $ResolvedEngine = Resolve-Engine
     $Environment.engineRoot = $ResolvedEngine
@@ -141,7 +194,18 @@ try {
     $Results.campaign60 = Invoke-Gate 'campaign60' 'campaign' @('-Action','Test','-Campaign','-SkipBuild','-TestFPS','60')
     $Results.campaign30 = Invoke-Gate 'campaign30' 'campaign' @('-Action','Test','-Campaign','-SkipBuild','-TestFPS','30')
     $Results.campaignGamepad = Invoke-Gate 'campaignGamepad' 'campaign' @('-Action','Test','-Campaign','-SkipBuild','-Gamepad','-TestFPS','60')
-    $Major = @('approach60','approach30','ishibashiri60','ishibashiri30','gamepad','retry','senseReset','legacy','highQuality','campaign60','campaign30','campaignGamepad')
+    # Recovery and capture share the 60 FPS run so equivalent long encounters are not repeated.
+    $Results.fuchimatoi60 = Invoke-Gate 'fuchimatoi60' 'fuchimatoi' @('-Action','Test','-Fuchimatoi','-Recovery','-Capture','-SkipBuild','-TestFPS','60')
+    $Results.fuchimatoi30 = Invoke-Gate 'fuchimatoi30' 'fuchimatoi' @('-Action','Test','-Fuchimatoi','-Recovery','-SkipBuild','-TestFPS','30')
+    $Results.fuchimatoiGamepad = Invoke-Gate 'fuchimatoiGamepad' 'fuchimatoi' @('-Action','Test','-Fuchimatoi','-Recovery','-Gamepad','-SkipBuild','-TestFPS','60')
+    # Minedaki and Magatsune integration drivers include their fall/recovery paths.
+    $Results.minedaki60 = Invoke-Gate 'minedaki60' 'minedaki' @('-Action','Test','-Minedaki','-Capture','-SkipBuild','-TestFPS','60')
+    $Results.minedaki30 = Invoke-Gate 'minedaki30' 'minedaki' @('-Action','Test','-Minedaki','-SkipBuild','-TestFPS','30')
+    $Results.minedakiGamepad = Invoke-Gate 'minedakiGamepad' 'minedaki' @('-Action','Test','-Minedaki','-Gamepad','-SkipBuild','-TestFPS','60')
+    $Results.magatsune60 = Invoke-Gate 'magatsune60' 'magatsune' @('-Action','Test','-Magatsune','-Capture','-SkipBuild','-TestFPS','60')
+    $Results.magatsune30 = Invoke-Gate 'magatsune30' 'magatsune' @('-Action','Test','-Magatsune','-SkipBuild','-TestFPS','30')
+    $Results.magatsuneGamepad = Invoke-Gate 'magatsuneGamepad' 'magatsune' @('-Action','Test','-Magatsune','-Gamepad','-SkipBuild','-TestFPS','60')
+    $Major = @('approach60','approach30','ishibashiri60','ishibashiri30','gamepad','retry','senseReset','legacy','highQuality','campaign60','campaign30','campaignGamepad','fuchimatoi60','fuchimatoi30','fuchimatoiGamepad','minedaki60','minedaki30','minedakiGamepad','magatsune60','magatsune30','magatsuneGamepad')
     if (!($Major | Where-Object { $Results[$_] -ne 'PASS' })) {
         $Results.package = Invoke-Gate 'package' 'package' @('-Action','Package')
         $PackageSource = Join-Path $ProjectRoot 'Artifacts\Windows'
@@ -153,7 +217,7 @@ try {
     $Verdict = if ($States -contains 'FAIL') {'FAIL'} elseif ($States -contains 'BLOCKED' -or $States -contains 'NOT_RUN') {'PARTIAL'} else {'PASS'}
     Save-Summary $Verdict
     Write-Host "Evidence: $EvidenceRoot"
-    if ($Verdict -eq 'FAIL') { exit 1 } else { exit 0 }
+    if ($Verdict -eq 'PASS') { exit 0 } else { exit 1 }
 } catch {
     $_ | Out-String | Set-Content -LiteralPath (Join-Path $EvidenceRoot 'logs\runner-error.log') -Encoding UTF8
     Save-Summary 'FAIL'
