@@ -45,6 +45,10 @@ public:
     bool CompleteEncounter(ECampaignState Encounter);
     bool CompleteApproach();
     void RestartCampaign();
+    bool ContinueCampaign();
+    bool HasContinue() const { return bHasContinue; }
+    ECampaignState GetContinueChapter() const { return ContinueChapter; }
+    static bool IsResumableChapter(ECampaignState Chapter);
 
     bool IsCampaignActive() const { return bCampaignActive; }
 
@@ -67,12 +71,23 @@ public:
         bCampaignActive = true;
         State = Value;
     }
+    void SetContinueForTest(ECampaignState Chapter)
+    {
+        bHasContinue = true;
+        ContinueChapter = Chapter;
+    }
 #endif
 
 private:
+    void SaveChapter();
+    void ClearChapterSave();
+    void LoadChapterSave();
     void ResetChapterRuntime(UObject* WorldContext);
     UPROPERTY() ECampaignState State = ECampaignState::Title;
     bool bCampaignActive = false;
+    bool bPersistenceEnabled = false;
+    bool bHasContinue = false;
+    ECampaignState ContinueChapter = ECampaignState::Title;
     double CampaignStartSeconds = 0.0;
     double ChapterStartSeconds = 0.0;
 };

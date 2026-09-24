@@ -13,6 +13,7 @@ protected:
     virtual void SetupInputComponent() override;
 private:
     void Confirm();
+    void ContinueSaved();
     float AutoConfirmSeconds=0.f;
     bool bCompleted=false;
 };

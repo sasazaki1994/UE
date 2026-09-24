@@ -32,6 +32,7 @@ public:
     bool TryPurify();
     bool IsClimbing() const { return Boss != nullptr; }
     bool IsGrabWarping() const { return bGrabWarping; }
+    bool IsFallbackGrabApproach() const { return bFallbackGrabApproach; }
     bool IsMoving() const { return Destination != INDEX_NONE; }
     bool IsResting() const;
     bool IsGripping() const { return bGripHeld; }
@@ -59,11 +60,13 @@ public:
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1", ClampMax="179")) float MaximumWarpAngle = 100.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1")) float CompletionDistanceTolerance = 35.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1", ClampMax="90")) float CompletionAngleTolerance = 18.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="0.1", ClampMax="1")) float FallbackApproachSeconds = .32f;
     UPROPERTY(EditAnywhere, Category="Climbing|IK", meta=(ClampMin="0.01")) float IKBlendInSeconds = .22f;
     UPROPERTY(EditAnywhere, Category="Climbing|IK", meta=(ClampMin="0.01")) float IKBlendOutSeconds = .16f;
 private:
     void UpdateIK(float Dt);
     bool StartGrabWarp(AIshibashiriBoss* Candidate);
+    void StartFallbackGrabApproach(AIshibashiriBoss* Candidate);
     void UpdateGrabWarp(float Dt);
     void CancelGrabWarp(const TCHAR* Reason);
     void CompleteGrabWarp();
@@ -80,11 +83,13 @@ private:
     float UnsafeBuckTime = 0.f;
     bool bGripHeld = false;
     bool bGrabWarping = false;
+    bool bFallbackGrabApproach = false;
     float GrabWarpElapsed = 0.f;
     float GrabWarpDuration = 0.f;
     float GrabWarpStartDistance = 0.f;
     float GrabWarpStartAngle = 0.f;
     FVector GrabWarpStartLocation = FVector::ZeroVector;
+    FQuat GrabWarpStartRotation = FQuat::Identity;
     UPROPERTY() TObjectPtr<AIshibashiriBoss> GrabWarpBoss;
     float IKWeight = 0.f;
     FClimbingIKTargets IKTargets;

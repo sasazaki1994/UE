@@ -1,6 +1,9 @@
 #include "CampaignGameInstance.h"
+#include "CampaignSaveGame.h"
 #include "PlayerSenseComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/Guid.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -121,6 +124,49 @@ bool FSenseChapterReset::RunTest(const FString&)
     TestFalse(TEXT("Boundary off"), S->IsBoundarySenseActive());
     TestFalse(TEXT("Corruption off"), S->IsCorruptionSenseActive());
     TestEqual(TEXT("risk tail zero"), S->GetRiskRemaining(), 0.f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FResumeChapterBoundary, "IshibashiriPrototype.Campaign.ResumeChapterBoundary",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FResumeChapterBoundary::RunTest(const FString&)
+{
+    auto* C = NewObject<UCampaignGameInstance>();
+    TestFalse(TEXT("Title is not a checkpoint"), UCampaignGameInstance::IsResumableChapter(ECampaignState::Title));
+    TestFalse(TEXT("Completed is not a checkpoint"), UCampaignGameInstance::IsResumableChapter(ECampaignState::Completed));
+    TestFalse(TEXT("No checkpoint cannot continue"), C->ContinueCampaign());
+    C->SetContinueForTest(ECampaignState::Minedaki);
+    TestTrue(TEXT("Chapter boundary can continue"), C->ContinueCampaign());
+    TestEqual(TEXT("Continue resumes selected chapter"), C->GetCampaignState(), ECampaignState::Minedaki);
+    EShirotsuraCorruptionStage Stage;
+    TestTrue(TEXT("Continued chapter resolves appearance"), C->GetCorruptionStageForEncounter(ECampaignState::Minedaki, Stage));
+    TestEqual(TEXT("Advanced appearance survives resume"), Stage, EShirotsuraCorruptionStage::Advanced);
+    TestFalse(TEXT("Continue is only available on Title"), C->ContinueCampaign());
+    C->RestartCampaign();
+    C->SetContinueForTest(ECampaignState::Completed);
+    TestFalse(TEXT("Invalid saved chapter is rejected"), C->ContinueCampaign());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCampaignSaveRoundTrip, "IshibashiriPrototype.Campaign.SaveRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FCampaignSaveRoundTrip::RunTest(const FString&)
+{
+    const FString Slot = FString::Printf(TEXT("MagabaraiTest_%s"), *FGuid::NewGuid().ToString(EGuidFormats::Digits));
+    UCampaignSaveGame* Save = NewObject<UCampaignSaveGame>();
+    Save->Chapter = ECampaignState::Minedaki;
+    const bool bSaved = UGameplayStatics::SaveGameToSlot(Save, Slot, 0);
+    TestTrue(TEXT("Separate test slot is writable"), bSaved);
+    UCampaignSaveGame* Loaded = bSaved ? Cast<UCampaignSaveGame>(UGameplayStatics::LoadGameFromSlot(Slot, 0)) : nullptr;
+    TestNotNull(TEXT("Chapter save survives serialization"), Loaded);
+    if (Loaded)
+    {
+        TestEqual(TEXT("Version retained"), Loaded->Version, UCampaignSaveGame::CurrentVersion);
+        TestEqual(TEXT("Chapter retained"), Loaded->Chapter, ECampaignState::Minedaki);
+    }
+    if (bSaved) TestTrue(TEXT("Test slot cleaned"), UGameplayStatics::DeleteGameInSlot(Slot, 0));
     return true;
 }
 

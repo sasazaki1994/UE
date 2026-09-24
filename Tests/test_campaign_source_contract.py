@@ -12,7 +12,19 @@ def test_campaign_has_fixed_minimal_state_order():
     states = ["Title", "Prologue", "IshibashiriApproach", "Ishibashiri", "Interlude1", "Fuchimatoi", "Interlude2", "Minedaki", "Interlude3", "Magatsune", "Ending", "Completed"]
     positions = [header.index(state) for state in states]
     assert positions == sorted(positions)
-    assert "SaveGame" not in header
+    # Save only the chapter boundary; the state machine still owns no boss progress.
+    save = read("Source/IshibashiriPrototype/Public/CampaignSaveGame.h")
+    assert "ECampaignState Chapter" in save
+    assert not any(field in save for field in ("KakonCount", "BossPhase", "Stamina", "RetryCount"))
+
+
+def test_continue_is_title_only_and_input_tests_do_not_write_player_saves():
+    source = read("Source/IshibashiriPrototype/Private/CampaignGameInstance.cpp")
+    controller = read("Source/IshibashiriPrototype/Private/CampaignPlayerController.cpp")
+    assert "State != ECampaignState::Title" in source
+    assert "PrototypeTestRun=" in source and "bPersistenceEnabled" in source
+    assert "LoadGameFromSlot" in source and "SaveGameToSlot" in source
+    assert 'BindAction(TEXT("Retry")' in controller
 
 
 def test_campaign_completion_is_connected_to_all_existing_managers():

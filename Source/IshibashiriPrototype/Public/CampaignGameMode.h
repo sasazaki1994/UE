@@ -11,6 +11,7 @@ public:
     ACampaignGameMode();
     virtual void StartPlay() override;
     void ConfirmCard();
+    void ContinueSavedCampaign();
     int32 GetCardIndex() const { return CardIndex; }
 private:
     int32 CardIndex=0;

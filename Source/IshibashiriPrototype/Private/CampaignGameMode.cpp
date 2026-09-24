@@ -36,3 +36,9 @@ void ACampaignGameMode::ConfirmCard()
     }
     ++CardIndex;
 }
+
+void ACampaignGameMode::ContinueSavedCampaign()
+{
+    UCampaignGameInstance* Campaign = GetGameInstance<UCampaignGameInstance>();
+    if (Campaign && Campaign->ContinueCampaign()) Campaign->TravelToCurrentChapter(this);
+}

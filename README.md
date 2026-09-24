@@ -11,6 +11,10 @@
 .\Tools\Prototype.ps1 -Action Test -Campaign -SkipBuild -Gamepad -TestFPS 60
 ```
 
+CampaignのTitleではSpace / Xで新規開始し、保存がある場合はR / Yで最後の章の先頭から再開します。主戦途中の禍根・スタミナは保存しません。自動入力テストは通常の保存領域を使用しません。実装範囲と未検証項目は [Campaign Flow](Docs/CampaignFlow.md) を参照してください。
+
+石走りの前脚への取り付きは、Montage未配置時にも短い接近動作を表示します。これは手足のIKやRoot Motionを使った完成アニメーションではありません。淵纏い・峰抱き・禍津根には状態に連動する控えめな光の予告を追加しました。[表現更新の検証範囲](Docs/EncounterPresentationFollowup.md)を参照してください。
+
 最終局面「禍津根」のPrimitive Vertical Sliceは **`.\Tools\Prototype.ps1 -Action Play -Magatsune`** で起動します。禍津根は第四の主ではなく、地表へ噴出した禍をRoot A → Root/岩柱 → 中央核の順に鎮める「生きて動く地形」です。既存Grab / Cling / Staminaと共通Kakon / Nushi Lifecycleを再利用し、3/3後は破壊せず静止してVictoryへ進みます。詳細と未実行のUE検証は [禍津根Vertical Slice](Docs/MagatsuneVerticalSlice.md) を参照してください。
 
 ```powershell

@@ -77,21 +77,7 @@ void UColossusClimbingComponent::GrabPressed()
     if (FVector::Dist(Player->GetActorLocation(), WarpTarget.GetLocation()) > MaximumWarpDistance
         || FacingAngle(Player, WarpTarget) > MaximumWarpAngle) return;
     if (StartGrabWarp(Candidate)) return;
-
-    // Missing editor-authored assets retain the pre-warp gameplay path. This is
-    // intentionally a visible legacy snap, not a claim that warping succeeded.
-    Boss = Candidate;
-    Boss->NotifyMounted();
-    Node = 0; Destination = INDEX_NONE; Progress = 0.f; UnsafeBuckTime = 0.f;
-    InputDelay = .15f;
-    Player->GetCharacterMovement()->StopMovementImmediately();
-    Player->GetCharacterMovement()->ClearAccumulatedForces();
-    Player->GetCharacterMovement()->DisableMovement();
-    Player->GetCharacterMovement()->bOrientRotationToMovement = false;
-    Player->GetCapsuleComponent()->IgnoreActorWhenMoving(Boss, true);
-    AddTickPrerequisiteActor(Boss);
-    Player->SetActorLocation(Boss->GetClimbPosition(Node));
-    UE_LOG(LogTemp, Warning, TEXT("GRAB_WARP_LEGACY_FALLBACK asset contract unavailable"));
+    StartFallbackGrabApproach(Candidate);
 }
 
 void UColossusClimbingComponent::GrabReleased()
@@ -126,10 +112,12 @@ bool UColossusClimbingComponent::StartGrabWarp(AIshibashiriBoss* Candidate)
         return false;
     }
     bGrabWarping = true;
+    bFallbackGrabApproach = false;
     GrabWarpBoss = Candidate;
     GrabWarpElapsed = 0.f;
     GrabWarpDuration = Player->GetGrabWarpAnimationLength();
     GrabWarpStartLocation = Player->GetActorLocation();
+    GrabWarpStartRotation = Player->GetActorQuat();
     Player->StopJumping();
     Player->GetCharacterMovement()->ClearAccumulatedForces();
     Player->GetCharacterMovement()->StopMovementImmediately();
@@ -143,18 +131,41 @@ bool UColossusClimbingComponent::StartGrabWarp(AIshibashiriBoss* Candidate)
     return true;
 }
 
+void UColossusClimbingComponent::StartFallbackGrabApproach(AIshibashiriBoss* Candidate)
+{
+    // The shipped rig has no authored grab montage. Preserve the same mount
+    // rules while moving the capsule over a short, visible interval.
+    bGrabWarping = bFallbackGrabApproach = true;
+    GrabWarpBoss = Candidate;
+    GrabWarpElapsed = 0.f;
+    GrabWarpDuration = FMath::Max(.1f, FallbackApproachSeconds);
+    GrabWarpStartLocation = Player->GetActorLocation();
+    GrabWarpStartRotation = Player->GetActorQuat();
+    Player->StopJumping();
+    Player->GetCharacterMovement()->ClearAccumulatedForces();
+    Player->GetCharacterMovement()->StopMovementImmediately();
+    Player->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+    Player->GetCharacterMovement()->bOrientRotationToMovement = false;
+    Player->GetCapsuleComponent()->IgnoreActorWhenMoving(Candidate, true);
+    AddTickPrerequisiteActor(Candidate);
+    UE_LOG(LogTemp, Display, TEXT("GRAB_APPROACH_START duration=%.3f asset_fallback=1"), GrabWarpDuration);
+}
+
 void UColossusClimbingComponent::CancelGrabWarp(const TCHAR* Reason)
 {
     if (!bGrabWarping) return;
     AIshibashiriBoss* Previous = GrabWarpBoss;
     bGrabWarping = false;
+    const bool bWasFallback = bFallbackGrabApproach;
+    bFallbackGrabApproach = false;
     GrabWarpBoss = nullptr;
     GrabWarpElapsed = GrabWarpDuration = 0.f;
     if (Previous) RemoveTickPrerequisiteActor(Previous);
     if (Player)
     {
+        if (bWasFallback && IsValid(Previous)) Player->GetCapsuleComponent()->IgnoreActorWhenMoving(Previous, false);
         if (UMotionWarpingComponent* Warping = Player->GetMotionWarping()) Warping->RemoveWarpTarget(GrabWarpTargetName);
-        Player->EndGrabWarpAnimation();
+        if (!bWasFallback) Player->EndGrabWarpAnimation();
         Player->GetCharacterMovement()->ClearAccumulatedForces();
         Player->GetCharacterMovement()->StopMovementImmediately();
         Player->GetCharacterMovement()->SetMovementMode(MOVE_Falling);
@@ -176,9 +187,14 @@ void UColossusClimbingComponent::CompleteGrabWarp()
         return;
     }
     bGrabWarping = false;
+    const bool bWasFallback = bFallbackGrabApproach;
+    bFallbackGrabApproach = false;
     GrabWarpBoss = nullptr;
-    if (UMotionWarpingComponent* Warping = Player->GetMotionWarping()) Warping->RemoveWarpTarget(GrabWarpTargetName);
-    Player->EndGrabWarpAnimation();
+    if (!bWasFallback)
+    {
+        if (UMotionWarpingComponent* Warping = Player->GetMotionWarping()) Warping->RemoveWarpTarget(GrabWarpTargetName);
+        Player->EndGrabWarpAnimation();
+    }
     Boss = Candidate;
     Boss->NotifyMounted();
     Node = 0; Destination = INDEX_NONE; Progress = 0.f; UnsafeBuckTime = 0.f;
@@ -189,7 +205,8 @@ void UColossusClimbingComponent::CompleteGrabWarp()
     Player->GetCharacterMovement()->bOrientRotationToMovement = false;
     Player->GetCapsuleComponent()->IgnoreActorWhenMoving(Boss, true);
     // The prerequisite installed for the moving warp target remains valid for climbing.
-    UE_LOG(LogTemp, Display, TEXT("GRAB_WARP_COMPLETE position_error=%.1f angle_error=%.1f"), DistanceError, AngleError);
+    UE_LOG(LogTemp, Display, TEXT("GRAB_%s_COMPLETE position_error=%.1f angle_error=%.1f"),
+        bWasFallback ? TEXT("APPROACH") : TEXT("WARP"), DistanceError, AngleError);
 }
 
 void UColossusClimbingComponent::UpdateGrabWarp(float Dt)
@@ -204,8 +221,15 @@ void UColossusClimbingComponent::UpdateGrabWarp(float Dt)
         CancelGrabWarp(TEXT("UnsafeState")); return;
     }
     const FTransform Target = MakeGrabWarpTarget(GrabWarpBoss);
-    Player->GetMotionWarping()->AddOrUpdateWarpTargetFromTransform(GrabWarpTargetName, Target);
+    if (!bFallbackGrabApproach) Player->GetMotionWarping()->AddOrUpdateWarpTargetFromTransform(GrabWarpTargetName, Target);
     GrabWarpElapsed += Dt;
+    if (bFallbackGrabApproach)
+    {
+        const float T = FMath::Clamp(GrabWarpElapsed / GrabWarpDuration, 0.f, 1.f);
+        const float SmoothT = T * T * (3.f - 2.f * T);
+        Player->SetActorLocation(FMath::Lerp(GrabWarpStartLocation, Target.GetLocation(), SmoothT));
+        Player->SetActorRotation(FQuat::Slerp(GrabWarpStartRotation, Target.GetRotation(), SmoothT));
+    }
 #if !UE_BUILD_SHIPPING
     if (FParse::Param(FCommandLine::Get(), TEXT("GrabWarpDebug")))
     {

@@ -5,6 +5,7 @@
 #include "KakonActor.h"
 #include "NushiProgressComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "UObject/ConstructorHelpers.h"
@@ -16,6 +17,13 @@ AMagatsuneBoss::AMagatsuneBoss()
     SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("MagatsuneRoot")));
     MovingRoot = CreateDefaultSubobject<USceneComponent>(TEXT("LivingTerrainRoot"));
     MovingRoot->SetupAttachment(RootComponent);
+    RootCueLight=CreateDefaultSubobject<UPointLightComponent>(TEXT("RootPulseCue"));
+    RootCueLight->SetupAttachment(MovingRoot);
+    RootCueLight->SetRelativeLocation(FVector(500,0,720));
+    RootCueLight->SetAttenuationRadius(950.f);
+    RootCueLight->SetCastShadows(false);
+    RootCueLight->SetLightColor(FLinearColor(.45f,.08f,.10f));
+    RootCueLight->SetIntensity(0.f);
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Cube(TEXT("/Engine/BasicShapes/Cube.Cube"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
     static ConstructorHelpers::FObjectFinder<UMaterialInterface> Material(
@@ -121,6 +129,7 @@ FVector AMagatsuneBoss::GetRecoveryWorld() const { return GetRouteWorld(GetRecov
 void AMagatsuneBoss::ResetNushi()
 {
     Super::ResetNushi();
+    RootCueLight->SetIntensity(0.f);
     SetActorTransform(SpawnTransform);
     MovingRoot->SetRelativeTransform(FTransform::Identity);
     Phase = EMagatsunePhase::SurfaceRoot;
@@ -194,6 +203,9 @@ void AMagatsuneBoss::Tick(float Dt)
             LogTelemetry(TEXT("Calm_Completed_Victory"));
         }
     }
+    // The eruption is a landscape pulse, not an extra creature attack.
+    RootCueLight->SetIntensity(GetNushiState()==ENushiState::Active && bLargePulse
+        ? 26000.f*(.8f+.2f*FMath::Sin(GetWorld()->GetTimeSeconds()*9.f)) : 0.f);
 }
 
 bool AMagatsuneBoss::TryPurify()

@@ -6,7 +6,7 @@
 
 `Title → Prologue → IshibashiriApproach → Ishibashiri → Interlude1 → Fuchimatoi → Interlude2 → Minedaki → Interlude3 → Magatsune → Ending → Completed`
 
-状態は上記11個だけで、Kakon数、Boss phase、Recovery、Retry、SaveGameをCampaignへ複製しない。
+状態は上記11個だけで、Kakon数、Boss phase、Recovery、RetryをCampaignへ複製しない。保存対象は再開用の章境界だけで、主戦の途中は章の先頭からやり直す。
 
 ## 起動とChapter遷移
 
@@ -30,6 +30,11 @@ R / Yは従来どおり各GameModeの `RetryEncounter` だけを呼ぶ。Campaig
 - Interlude: 黒背景、各1〜3枚。次の主を示し、禍津根を「第四の主」とは表記しない。
 - Ending: 禍津根は鎮まったこと、主が生存すること、左腕に禍が残ること、再発の可能性を4枚で示す。終了後Completedのタイトルへ戻り、再STARTできる。
 - Space / X（既存Jump / Attack mapping）でカードを進める。石走り開始時だけ既存HUDに `Q / LT: 境断ち` と `F / LB: 左腕` を表示する。
+- TitleでSpace / Xは新規開始、保存がある場合だけR / Yで前回の章の先頭から再開する。Endingを読み終えると保存を消去する。
+
+## 保存と再開
+
+`UCampaignSaveGame` は版数と `ECampaignState` の章境界だけを `MagabaraiCampaign` slotへ保存する。カード送り、接近章の出口、Encounter完了時に更新し、現在の章でRetryしても保存状態は変えない。再開は現在章のGameModeを通常どおり生成するため、禍根、体力、スタミナ、Grab、Senseを初期値へ戻す。TitleとCompleted、不明な版数・章は再開候補にしない。`-CampaignE2E` と実行固有 `-PrototypeTestRun` がある自動攻略では保存を読み書きしない。
 
 ## Sense Resetと遷移安全性
 
@@ -49,6 +54,6 @@ Travel直前に現在Pawnの `UPlayerSenseComponent::ResetSense` を呼び、Bou
 
 ## 未実装
 
-- Save/Continue、Checkpoint、Profile。
+- Encounter途中のCheckpoint、Profile、複数Save Slot。
 - 本番Map、探索、村、NPC、音声、Sequencer、BGM、完成アート。
-- Windows UE 5.6.1でのSTEP 3C Campaign E2E実行証跡（このLinux環境ではUNVERIFIED）。
+- 章単位の保存・再起動・破損Save・既存Campaign回帰のWindows UE 5.6.1検証は未実行。

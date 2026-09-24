@@ -37,3 +37,10 @@
       | Player死亡 |
       | Fall |
       | Retry |
+
+  シナリオ: Montageがまだ無い環境の取り付き
+    前提 白面のGrab MontageとAnimBPが未配置である
+    もし 有効な膝つき中にEまたはRBでGrabする
+    ならば 既存Climb clipと短い補間でnode 0へ接近する
+    かつ 取り付き直後にnode 0へ瞬間移動しない
+    かつ 対象が無効になるかRetryすると移動と衝突無視を解除する

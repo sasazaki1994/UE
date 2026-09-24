@@ -8,6 +8,7 @@
 #include "KakonActor.h"
 #include "NushiProgressComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -198,6 +199,14 @@ void AFuchimatoiBoss::CreatePrimitiveBody()
             I%2==0?FLinearColor(.13,.43,.29):FLinearColor(.23,.50,.32)));
     }
     Head=BodyJoints[0];
+    HeadCueLight=NewObject<UPointLightComponent>(this,TEXT("HeadActionCue"));
+    AddInstanceComponent(HeadCueLight);
+    HeadCueLight->SetupAttachment(Head);
+    HeadCueLight->SetMobility(EComponentMobility::Movable);
+    HeadCueLight->SetAttenuationRadius(650.f);
+    HeadCueLight->SetCastShadows(false);
+    HeadCueLight->SetIntensity(0.f);
+    HeadCueLight->RegisterComponent();
     for (int32 Side : {-1,1})
     {
         UStaticMeshComponent* Eye=Mesh(FString::Printf(TEXT("Eye%d"),Side),Sphere,FLinearColor(1,.65,.04));
@@ -287,6 +296,18 @@ void AFuchimatoiBoss::UpdateBody()
     const FLinearColor Color=GetNushiState()==ENushiState::Calm?FLinearColor(.3,.6,.95)
         :IsSnagged()?FLinearColor(.7,.95,.2):ActionState==EFuchimatoiActionState::BiteWindup?FLinearColor(1,.25,.03):FLinearColor(.06,.3,.25);
     SetPrimitiveColor(Cast<UMaterialInstanceDynamic>(Head->GetMaterial(0)),Color);
+    // Only the immediate attack and reachable head illuminate the nearby rock.
+    // Gameplay timing and route visibility remain owned by the state machine.
+    if (HeadCueLight)
+    {
+        const bool bCalm=GetNushiState()==ENushiState::Calm;
+        const bool bWindup=ActionState==EFuchimatoiActionState::BiteWindup;
+        const bool bLunge=ActionState==EFuchimatoiActionState::BiteLunge;
+        HeadCueLight->SetLightColor(bCalm?FLinearColor(.24f,.38f,.45f)
+            :IsSnagged()?FLinearColor(.48f,.36f,.17f):FLinearColor(.62f,.13f,.08f));
+        const float Pulse=.75f+.25f*FMath::Sin(GetWorld()->GetTimeSeconds()*10.f);
+        HeadCueLight->SetIntensity(bCalm?0.f:bWindup?14000.f*Pulse:bLunge?22000.f:IsSnagged()?6000.f:0.f);
+    }
 }
 
 void AFuchimatoiBoss::WithdrawHead()

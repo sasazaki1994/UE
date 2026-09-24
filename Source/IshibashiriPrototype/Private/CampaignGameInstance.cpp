@@ -1,4 +1,5 @@
 #include "CampaignGameInstance.h"
+#include "CampaignSaveGame.h"
 #include "PlayerSenseComponent.h"
 #include "Components/ActorComponent.h"
 #include "EngineUtils.h"
@@ -11,6 +12,7 @@
 namespace
 {
     const FName CampaignMap(TEXT("/Game/Maps/L_Prototype_01"));
+    const FString CampaignSaveSlot(TEXT("MagabaraiCampaign"));
 
     const TCHAR* GameModeFor(ECampaignState State)
     {
@@ -50,7 +52,11 @@ void UCampaignGameInstance::Init()
 {
     Super::Init();
     bCampaignActive = FParse::Param(FCommandLine::Get(), TEXT("Campaign"));
+    FString TestRun;
+    bPersistenceEnabled = !FParse::Param(FCommandLine::Get(), TEXT("CampaignE2E"))
+        && !FParse::Value(FCommandLine::Get(), TEXT("PrototypeTestRun="), TestRun);
     State = ECampaignState::Title;
+    if (bCampaignActive && bPersistenceEnabled) LoadChapterSave();
     CampaignStartSeconds = ChapterStartSeconds = FPlatformTime::Seconds();
     UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_E2E Title chapter_start_time=0.000"));
 }
@@ -59,6 +65,8 @@ void UCampaignGameInstance::StartCampaign()
 {
     bCampaignActive = true;
     State = ECampaignState::Prologue;
+    CampaignStartSeconds = ChapterStartSeconds = FPlatformTime::Seconds();
+    SaveChapter();
 }
 
 bool UCampaignGameInstance::AdvanceCardChapter()
@@ -75,6 +83,8 @@ bool UCampaignGameInstance::AdvanceCardChapter()
     default: return false;
     }
     ChapterStartSeconds = FPlatformTime::Seconds();
+    if (State == ECampaignState::Completed) ClearChapterSave();
+    else if (State != ECampaignState::Title) SaveChapter();
     UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_E2E %s chapter_start_time=%.3f"), CampaignStateName(State), GetCampaignElapsedSeconds());
     return true;
 }
@@ -84,6 +94,7 @@ bool UCampaignGameInstance::CompleteApproach()
     if (!bCampaignActive || State != ECampaignState::IshibashiriApproach) return false;
     State = ECampaignState::Ishibashiri;
     ChapterStartSeconds = FPlatformTime::Seconds();
+    SaveChapter();
     UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_E2E IshibashiriApproach Completed approach_clear_time=%.3f"), GetCampaignElapsedSeconds());
     UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_E2E Ishibashiri Started chapter_start_time=%.3f"), GetCampaignElapsedSeconds());
     return true;
@@ -104,6 +115,7 @@ bool UCampaignGameInstance::CompleteEncounter(ECampaignState Encounter)
     UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_E2E %s Completed encounter_clear_time=%.3f"), CampaignStateName(Encounter),
         Now - ChapterStartSeconds);
     ChapterStartSeconds = Now;
+    SaveChapter();
     UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_E2E %s chapter_start_time=%.3f"), CampaignStateName(State), GetCampaignElapsedSeconds());
     return true;
 }
@@ -114,6 +126,68 @@ void UCampaignGameInstance::RestartCampaign()
     State = ECampaignState::Title;
     CampaignStartSeconds = ChapterStartSeconds = FPlatformTime::Seconds();
     UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_E2E Title chapter_start_time=0.000"));
+}
+
+bool UCampaignGameInstance::IsResumableChapter(ECampaignState Chapter)
+{
+    switch (Chapter)
+    {
+    case ECampaignState::Prologue:
+    case ECampaignState::IshibashiriApproach:
+    case ECampaignState::Ishibashiri:
+    case ECampaignState::Interlude1:
+    case ECampaignState::Fuchimatoi:
+    case ECampaignState::Interlude2:
+    case ECampaignState::Minedaki:
+    case ECampaignState::Interlude3:
+    case ECampaignState::Magatsune:
+    case ECampaignState::Ending: return true;
+    default: return false;
+    }
+}
+
+void UCampaignGameInstance::LoadChapterSave()
+{
+    bHasContinue = false;
+    ContinueChapter = ECampaignState::Title;
+    const UCampaignSaveGame* Save = Cast<UCampaignSaveGame>(UGameplayStatics::LoadGameFromSlot(CampaignSaveSlot, 0));
+    if (!Save || Save->Version != UCampaignSaveGame::CurrentVersion || !IsResumableChapter(Save->Chapter)) return;
+    bHasContinue = true;
+    ContinueChapter = Save->Chapter;
+}
+
+void UCampaignGameInstance::SaveChapter()
+{
+    if (!bPersistenceEnabled || !bCampaignActive || !IsResumableChapter(State)) return;
+    UCampaignSaveGame* Save = Cast<UCampaignSaveGame>(UGameplayStatics::CreateSaveGameObject(UCampaignSaveGame::StaticClass()));
+    if (!Save) return;
+    Save->Chapter = State;
+    if (!UGameplayStatics::SaveGameToSlot(Save, CampaignSaveSlot, 0))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("CAMPAIGN_SAVE_FAILED chapter=%d"), static_cast<int32>(State));
+        return;
+    }
+    bHasContinue = true;
+    ContinueChapter = State;
+    UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_SAVED chapter=%d"), static_cast<int32>(State));
+}
+
+void UCampaignGameInstance::ClearChapterSave()
+{
+    if (!bPersistenceEnabled) return;
+    UGameplayStatics::DeleteGameInSlot(CampaignSaveSlot, 0);
+    bHasContinue = false;
+    ContinueChapter = ECampaignState::Title;
+}
+
+bool UCampaignGameInstance::ContinueCampaign()
+{
+    if (State != ECampaignState::Title || !bHasContinue || !IsResumableChapter(ContinueChapter)) return false;
+    bCampaignActive = true;
+    State = ContinueChapter;
+    CampaignStartSeconds = ChapterStartSeconds = FPlatformTime::Seconds();
+    UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_CONTINUE chapter=%d"), static_cast<int32>(State));
+    return true;
 }
 
 double UCampaignGameInstance::GetCampaignElapsedSeconds() const { return FPlatformTime::Seconds() - CampaignStartSeconds; }

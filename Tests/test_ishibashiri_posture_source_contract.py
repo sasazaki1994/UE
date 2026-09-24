@@ -31,7 +31,9 @@ def test_only_recover_counter_and_kneel_mount_window():
 def test_new_grab_is_gated_but_success_uses_existing_route():
     assert "if (!Candidate->CanMount()) return;" in CLIMB
     assert "!Candidate->CanMount()" in CLIMB
-    assert CLIMB.count("Boss->NotifyMounted();") == 2
+    # Authored montage and asset-free approach converge on one mount hand-off.
+    assert CLIMB.count("Boss->NotifyMounted();") == 1
+    assert "StartFallbackGrabApproach(Candidate)" in CLIMB
     assert "Node = 0; Destination = INDEX_NONE" in CLIMB
     assert "if (Target->IsGrabbing() && !Target->GetClimbing()->IsGrabWarping())" in BOSS
 
