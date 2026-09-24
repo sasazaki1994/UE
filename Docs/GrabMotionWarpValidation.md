@@ -44,9 +44,9 @@ Windows UE 5.6でasset割当後、`./Tools/Prototype.ps1 -Action Test -GrabMotio
 
 Regression matrix: Build、Camera、Grab、Climbing 60/30 FPS、ClimbingGamepad、ClimbingIK、BasinScenario、Retry、Legacy、High Quality。本環境にはWindows UE 5.6、MSVC、RHIと必要Montage/AnimBP assetがないため、Editor Build、Montage生成、Motion Warping Runtime、FBIK Runtime、FPS、screenshots、位置/角度誤差、見た目改善はすべて **UNVERIFIED**。Static Python validationだけを結果として記録する。
 
-## 2026-09-23 source update: asset missing fallback
+## 2026-09-24 source update: asset missing fallback
 
-Montage / AnimBPが無い通常プレイでも、Grab成立直後にnode 0へ瞬間移動せず、約0.32秒で移動する。既存Climb clipを表示し、毎frame更新されるRoute node 0へ向きを合わせる。移動中に対象が無効になった場合とRetryではMovementと衝突無視を解除する。これはRoot Motionを使うMotion Warpingや手足のIKではなく、アセット受領までの簡易表示である。専用`-GrabMotionWarp`テストは引き続き本物のMontageを要求し、このfallbackを合格扱いにしない。Windows UEでの描画・衝突・カメラ検証は未実行。
+Montage / AnimBPが無い通常プレイでも、Grab成立直後にnode 0へ瞬間移動せず、約0.48秒で移動する。開始transformは石走りrelativeで保持するため、接近中の歩行・旋回にも運ばれる。向きは移動より早く揃え、既存Climb clipによる手を伸ばす読みを先行させ、最後の22%で接触へ収束してからGrabを成立させる。Grab中は画角を88度へ穏やかに寄せ、成立後は100度へ戻して巨体と経路を見せる。移動中に対象が無効になった場合とRetryではMovementと衝突無視を解除する。これはRoot Motionを使うMotion Warpingや専用Grab animationではなく、既存assetとC++だけの安全な簡易表示である。専用`-GrabMotionWarp`テストは引き続き本物のMontageを要求し、このfallbackを合格扱いにしない。Windows UEでの描画・衝突・カメラ検証は未実行。
 
 ## Known issues
 

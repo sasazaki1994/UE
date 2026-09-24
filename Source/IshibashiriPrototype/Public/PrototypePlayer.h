@@ -97,6 +97,8 @@ public:
     UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "500")) float BossCameraHeight = 1000.f;
     UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0")) float CameraClearDelay = 0.15f;
     UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0.01")) float CameraReturnDuration = 0.35f;
+    UPROPERTY(EditAnywhere, Category = "Camera|Climbing", meta = (ClampMin = "70", ClampMax = "120")) float GrabCameraFOV = 88.f;
+    UPROPERTY(EditAnywhere, Category = "Camera|Climbing", meta = (ClampMin = "70", ClampMax = "120")) float ClimbingCameraFOV = 100.f;
 
 protected:
     virtual void BeginPlay() override;
@@ -153,6 +155,8 @@ private:
     float CameraClearElapsed = 0.f;
     FVector RaisedCameraOffset = FVector::ZeroVector;
     FVector RaisedCameraFocusOffset = FVector::ZeroVector;
+    FVector SmoothedClimbCameraLocation = FVector::ZeroVector;
+    float PresentationFOV = 95.f;
     FVector DodgeDirection = FVector::ForwardVector;
     FVector AttackDirection = FVector::ForwardVector;
     FString Feedback;

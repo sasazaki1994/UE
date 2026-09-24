@@ -2,7 +2,7 @@
 
 ## Scope / acceptance
 
-Priority 2 は既存 Climb / Hang / Grip animation と11点 Route Climbing を Base Pose / body placement として維持し、前脚の node 0 から最初の肩岩（休息点 node 3）だけを補正する。受け入れ仕様は `Specs/Acceptance/ClimbingIK.feature`。自由登攀、trace による経路置換、残り8点、描画profileには変更を加えていない。
+Priority 2 は既存 Climb / Hang / Grip animation と11点 Route Climbing を Base Pose / body placement として維持し、前脚の node 0 から肩、背中、分岐上の休息点まで同じcreature-local接触targetを供給する。受け入れ仕様は `Specs/Acceptance/ClimbingIK.feature` と `Specs/VisualQualityUpgrade.feature`。自由登攀、trace による経路置換、描画profileには変更を加えていない。
 
 ## Plugin / module
 
@@ -22,7 +22,7 @@ Control Rig asset `/Game/Characters/Rigged/Shirotsura/CR_Shirotsura_Climbing` �
 
 ## Weight / reset
 
-node 0〜3（destinationも3以下）だけが対象。Grab後は0から0.22秒で1へ、Climb中は1、node 3 Restは0.72、それ以外・Jump Off・Fallは0.16秒で0へ補間する。Shake中はCling成功なら対象範囲のweightを維持し、失敗してDetachするとblend outする。Retryは`Reset()`でweight=0、4 targetをidentityへ即時クリアして次encounterへの残留を防ぐ。
+全11 node（およびedge補間中のdestination）が対象。Grab後は0から0.22秒で1へ、Climb中は1、休息点は姿勢を固めすぎない0.82、Shake中は1を維持する。Cling失敗・Jump Off・Fallは0.16秒で0へ補間する。Retryは`Reset()`でweight=0、4 targetをidentityへ即時クリアして次encounterへの残留を防ぐ。targetは従来どおりauthored route周辺の近似であり、実際の皮膚面へのtrace結果ではない。
 
 ## Debug / numerical evaluation
 
@@ -48,4 +48,4 @@ ClimbingIKは通常Gameplay入力でGrabから全route regressionまで進み、
 
 Python static testsとJSON validation以外は、このLinux環境にWindows UE 5.6 / MSVC / RHIがないため **UNVERIFIED**。Build、Control Rig asset生成、FBIK runtime、各regression、30/60 FPS、Legacy/High Quality、screenshots、cm誤差、肘・膝・pelvisの見た目を確認済みとは扱わない。特にasset未作成のcheckoutではGameplayは維持されるが見た目はまだ改善しない。
 
-11点全体へは今回のoffsetを複製せず、各route edge単位で4つのlocal contactをauthoringし、到達誤差とjoint limitを区間ごとに検証する。まず本sliceのWindows比較で浮き・貫通・反転が改善し、Gameplay/FPS回帰がないと確認できた場合だけ段階展開する。
+現在は全routeへtarget供給範囲を広げたが、offset自体は共通近似のままである。UE Editorで各route edge単位に4つのlocal contactをauthoringし、到達誤差とjoint limitを区間ごとに検証する必要がある。まずWindows比較で浮き・貫通・反転が改善し、Gameplay/FPS回帰がないことを確認する。

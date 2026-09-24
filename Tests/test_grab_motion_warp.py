@@ -21,7 +21,16 @@ def test_grab_target_reuses_route_zero_and_tracks_the_boss():
     assert "AddOrUpdateWarpTargetFromTransform(GrabWarpTargetName, Target)" in climbing
     assert "MaximumWarpDistance" in climbing and "MaximumWarpAngle" in climbing
     assert "StartFallbackGrabApproach(Candidate)" in climbing
-    assert "FMath::Lerp(GrabWarpStartLocation, Target.GetLocation(), SmoothT)" in climbing
+    assert "GrabWarpStartRelative * GrabWarpBoss->GetActorTransform()" in climbing
+    assert "FMath::Lerp(MovingStart.GetLocation(), Target.GetLocation(), ReachT)" in climbing
+
+
+def test_fallback_has_separate_reach_alignment_and_camera_staging():
+    climbing = read("Source/IshibashiriPrototype/Private/ColossusClimbingComponent.cpp")
+    player = read("Source/IshibashiriPrototype/Private/PrototypePlayer.cpp")
+    assert "const float ReachT" in climbing and "const float AlignT" in climbing
+    assert "GrabCameraFOV" in player and "ClimbingCameraFOV" in player
+    assert "VInterpTo(SmoothedClimbCameraLocation" in player
 
 
 def test_warp_has_one_handoff_and_shared_cancel_cleanup():
