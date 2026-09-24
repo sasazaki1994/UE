@@ -1,5 +1,7 @@
 # 禍祓い Campaign Flow (STEP 3B foundation / STEP 3C E2E)
 
+> **現況注記（2026-09-24）:** 以下の `31c95dd...` は本資料作成時の実装基準であり、現在 main の基準ではない。現在の統合ソース、素材、UE 未検証項目は [main 開発状況監査](MainStatusAudit-2026-09-24.md) を参照する。静的 source-contract の PASS を Campaign の UE 動作確認とは扱わない。
+
 ## 目的と構成
 
 基準は `31c95dd1c8e0e5a48b3d77eec12d31994fddb33f`。既存4戦の内部Gameplayを変更せず、プロセス内だけ保持する薄い `UCampaignGameInstance` で接続する。
@@ -48,11 +50,11 @@ Travel直前に現在Pawnの `UPlayerSenseComponent::ResetSense` を呼び、Bou
 
 `IshibashiriPrototype.Campaign` のState fixtureは引き続きState責務だけを検証する。STEP 3Cの `Prototype.ps1 -Action Test -Campaign` はそれとは別に、カードと既存Encounter DriverのPlayerController入力を連結する。acceptance specは `Specs/CampaignFlow.feature`、実行可否と結果は `Docs/CampaignE2EValidation.md`。
 
-## Validation
+## Validation（当時の記録）
 
 このLinux環境にはWindows UE 5.6.1 Runtimeがないため、C++ Build、Automation、入力Smoke、既存Encounter regressionは **NOT_RUN**。Python source-contractテストと静的検査のみ実施する。詳細は `CampaignValidation.json`。
 
-## 未実装
+## 現在も未実装または未確認
 
 - Encounter途中のCheckpoint、Profile、複数Save Slot。
 - 本番Map、探索、村、NPC、音声、Sequencer、BGM、完成アート。
