@@ -23,7 +23,9 @@ void AFuchimatoiHUD::DrawHUD()
         DrawText(Text,Color,22,Y,GEngine->GetMediumFont(),Scale); Y+=25*Scale;
     };
     const int32 SenseLines=(Player->GetSense()->IsBoundarySenseActive()?1:0)+(Player->GetSense()->IsCorruptionSenseActive()?1:0);
-    const int32 LineCount=4+SenseLines+(bDebugGuidance?2:0);
+    const bool bRecoveryBehindCamera=Boss->IsRecoveryUnlocked()
+        && Project(Boss->GetRecoveryAnchor()->GetActorLocation()).Z<=0;
+    const int32 LineCount=4+SenseLines+(bDebugGuidance?2:0)+(bRecoveryBehindCamera?1:0);
     DrawRect(FLinearColor(0,0,0,.78),10,8,FMath::Min(Canvas->ClipX-20,(bDebugGuidance?900.f:720.f)*Scale),(16+25*LineCount)*Scale);
     Line(TEXT("MAGAHARAI / FUCHIMATOI"),FLinearColor(.4,1,.8));
     Line(FString::Printf(TEXT("KAKON %d/3 | STAMINA %.0f/100"),

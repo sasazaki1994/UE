@@ -6,7 +6,7 @@ This change applies the short-text policy in `Docs/Design/04-InformationDesign.m
 
 Implementation-facing labels are opt-in through `-DebugGuidance`. State/phase labels, route node numbers, recovery multipliers, height, cling time, shake/fall/recovery counters, HP/posture, and broad control telemetry are not part of the normal HUD. Minedaki route guidance names the next physical action instead of exposing node numbers.
 
-No new UI framework is introduced. Each Canvas HUD counts its optional Sense/debug rows and sizes its existing translucent background using the same draw scale. This prevents optional rows from extending below a fixed-height panel while keeping the existing immediate-mode drawing path.
+No new UI framework is introduced. Each Canvas HUD counts its optional Sense/debug rows and sizes its existing translucent background using the same draw scale. Fuchimatoi also counts the extra recovery direction row shown when the gold beacon is behind the camera. This prevents optional rows from extending below a fixed-height panel while keeping the existing immediate-mode drawing path.
 
 ## Before / after comparison
 
