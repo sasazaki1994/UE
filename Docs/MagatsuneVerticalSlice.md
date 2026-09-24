@@ -22,6 +22,8 @@
 
 Engine基本Cube/Sphereだけで、中央核、9個の黒いRoot segment、Route marker、地面、岩柱、崩れた柱、6本の腐食樹木を構築する。Skeletal Mesh、Physics、Landscape、PCG、Destruction、Niagaraは使用しない。`LivingTerrainRoot` をDeltaSecondsでsmooth interpolationし、その子のGrab frame、禍根、Routeが同じTransformへ追従する。Phase 1は正弦波のZ移動±35 cm / Yaw±3° / Roll±7°、Phase 2はZ+120 cm / Pitch -8°、FinalはZ+390 cm / Pitch 38° / Roll 31°。30/60/120 FPSの相対追従Automationを定義した。
 
+9個のRoot segmentにだけ小さな位相差と局所Z/回転オフセットを与え、一枚の地形が同時に動く見え方を抑える。これらはNoCollisionの表示部品に限定し、Grab frame、12 Route marker、3禍根、攻略位置は従来どおり権威ある `LivingTerrainRoot` に直接追従する。大脈動の既存 `Wave > .78` とFinal Riseの既存 `.42 < T < .72` を変えず、それより前に根の局所動作、暗い赤の局所光、カメラの緩やかな引きで予告する。
+
 ## Grab / Cling / Stamina
 
 専用Playerは既存 `UGrabComponent` と `UStaminaComponent` をそのままDefault Subobjectとして持つ。Root親に付けた非scale Grab frameへ `TryGrab` し、Route移動は公開 `SetRelativeGrabTransform` を使う。このため移動中も世界座標へ置き去りにならない。E/RBはGrabとClingを兼ね、新Actionはない。通常移動はGrabだけ、Phase 1の周期Large PulseとFinal RiseはCling推奨で、非ClingまたはStamina不足なら落下する。Root上は消費、safe nodeと非Grab中は回復する。
@@ -36,7 +38,9 @@ Engine基本Cube/Sphereだけで、中央核、9個の黒いRoot segment、Route
 
 ## HUD / Input
 
-HUDはMAGATSUNE、KAKON、次Route、Grab可能、Large PulseのCling予告、Recovery方向、CALMED / ENCOUNTER COMPLETED / VICTORYを表示する。入力はWASD/Left Stick、Mouse/Right Stick、E/RB、Space/A、Left Click/X、R/Yだけである。境断ち探知、左腕能力、札は実装しない。
+HUDはMAGATSUNE、KAKON、Stamina、Grab可能、Large PulseのCling予告、Recovery方向、CALMED / ENCOUNTER COMPLETED / VICTORYに絞る。内部Phase名とRoute番号は `-DebugGuidance` 時のみ表示する。入力はWASD/Left Stick、Mouse/Right Stick、E/RB、Space/A、Left Click/X、R/Yだけである。境断ち探知、左腕能力、札は実装しない。
+
+Root/岩柱への移行、最終隆起、中央核、鎮静は、淨化と鎮静の共通presentation envelopeを局所光とFOV/注視点の補助に接続して読ませる。カメラはinterpolationでまとめ、controllerの角度を上書きせず、振動も追加しない。
 
 ## Telemetry
 
@@ -67,5 +71,6 @@ Capture runは `01-Arrival`、`02-RootMovement`、`03-FirstGrab`、`04-Kakon1`�
 1. Rootは剛体segmentの親Transform変形で、節ごとの波や接地変形はまだ単純。
 2. Phase 2はRoot/岩柱の視覚的往復をRoute nodeで表現するだけで、自由ジャンプ経路や分岐はない。
 3. Recoveryは安全性優先の位置補正で、落下軌道から棚への連続的な着地演出と人間操作の距離調整が未検証。
+4. Rootの皮膚、岩と根の境界、浄化光の完成material/VFX/audioは未提供のため、現時点はprimitiveとpoint lightによる代替表現。
 
 次はWindows + UE 5.6.1でUHT/Editor build、5 Automation、Keyboard 60/30、Gamepad 60、Recovery、12 Captureの順に検証し、その後既存3 Encounterの指定Regressionを実行する。

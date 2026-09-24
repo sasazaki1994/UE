@@ -32,3 +32,14 @@ def test_tool_docs_and_validation_contract():
     data = json.loads(read("Docs/MagatsuneValidation.json"))
     assert data["base"] == "e08d3de659638b9d9c622e599b5f58ade08704c3"
     assert data["checks"]["build"]["status"] == "NOT_RUN"
+
+def test_living_terrain_presentation_keeps_gameplay_authority():
+    boss = read("Source/IshibashiriPrototype/Private/MagatsuneBoss.cpp")
+    player = read("Source/IshibashiriPrototype/Private/MagatsunePlayer.cpp")
+    hud = read("Source/IshibashiriPrototype/Private/MagatsuneHUD.cpp")
+    assert "The cue precedes the unchanged Wave > .78 gameplay check" in boss
+    assert "RootVisuals[I]->SetRelativeLocation" in boss
+    assert "GrabFrame, RouteMarkers and" in boss and "authoritative MovingRoot" in boss
+    assert "AdvancePresentation(Dt)" in boss and "NotifyPurificationPresentation()" in boss
+    assert "VInterpTo" in player and "FInterpTo" in player
+    assert "IsDebugGuidanceEnabled()" in hud and 'TEXT("DEBUG Phase=%s | Route=%d/12")' in hud

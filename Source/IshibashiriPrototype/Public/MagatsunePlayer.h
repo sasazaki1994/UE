@@ -69,4 +69,8 @@ private:
     int32 Node = INDEX_NONE, Destination = INDEX_NONE;
     float ForwardInput = 0, MoveProgress = 0, RouteDelay = 0, RecoveryGrace = 0;
     bool bGripHeld = false, bFalling = false, bRecovering = false;
+    FVector SmoothedCameraFocus = FVector::ZeroVector;
+    FVector SmoothedCameraLocation = FVector::ZeroVector;
+    float CameraPresentationFOV = 82.f;
+    bool bCameraInitialized = false;
 };

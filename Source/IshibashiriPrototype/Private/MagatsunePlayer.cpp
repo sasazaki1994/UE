@@ -218,6 +218,9 @@ void AMagatsunePlayer::ResetForEncounter()
     ShirotsuraVisual->ResetPresentation();
     ForwardInput = MoveProgress = RouteDelay = RecoveryGrace = 0;
     bGripHeld = bFalling = bRecovering = false;
+    SmoothedCameraFocus = SmoothedCameraLocation = FVector::ZeroVector;
+    CameraPresentationFOV = 82.f;
+    bCameraInitialized = false;
     Stamina->ResetStamina();
     GetCharacterMovement()->StopMovementImmediately();
     GetCharacterMovement()->SetMovementMode(MOVE_Walking);
@@ -225,13 +228,26 @@ void AMagatsunePlayer::ResetForEncounter()
     if (Controller) Controller->SetControlRotation(FRotator(-12, 0, 0));
 }
 
-void AMagatsunePlayer::CalcCamera(float, FMinimalViewInfo& V)
+void AMagatsunePlayer::CalcCamera(float Dt, FMinimalViewInfo& V)
 {
-    const FVector Focus = IsMounted() ? GetActorLocation() : FVector(300, 0, 700);
+    const FVector PlayerFocus = IsMounted() ? GetActorLocation() : FVector(300, 0, 700);
+    const float Transition = Boss ? Boss->GetTransitionAlpha() : 0.f;
+    const float Cue = Boss ? FMath::Max(Boss->GetAnticipation(), Boss->GetPurificationPresentation()) : 0.f;
+    const float FocusWeight = Boss ? FMath::Clamp(.18f * Transition + .10f * Cue + .12f * Boss->GetCalmPresentation(), 0.f, .30f) : 0.f;
+    const FVector DesiredFocus = Boss ? FMath::Lerp(PlayerFocus, Boss->GetPresentationFocus(), FocusWeight) : PlayerFocus;
+    if (!bCameraInitialized) { SmoothedCameraFocus = DesiredFocus; bCameraInitialized = true; }
+    SmoothedCameraFocus = FMath::VInterpTo(SmoothedCameraFocus, DesiredFocus, Dt, 2.4f);
     const FRotator Orbit(FMath::Clamp(GetControlRotation().Pitch, -55.f, -5.f), GetControlRotation().Yaw, 0);
-    V.Location = Focus - Orbit.Vector() * (IsMounted() ? 1600 : 2300);
-    V.Rotation = (Focus - V.Location).Rotation();
-    V.FOV = 82;
+    const float Distance = (IsMounted() ? 1600.f : 2300.f) + 180.f * Transition + 100.f * Cue;
+    const FVector DesiredLocation = SmoothedCameraFocus - Orbit.Vector() * Distance;
+    if (SmoothedCameraLocation.IsNearlyZero()) SmoothedCameraLocation = DesiredLocation;
+    SmoothedCameraLocation = FMath::VInterpTo(SmoothedCameraLocation, DesiredLocation, Dt, 3.2f);
+    V.Location = SmoothedCameraLocation;
+    V.Rotation = (SmoothedCameraFocus - V.Location).Rotation();
+    const float Purify = Boss ? Boss->GetPurificationPresentation() : 0.f;
+    const float Calm = Boss ? Boss->GetCalmPresentation() : 0.f;
+    CameraPresentationFOV = FMath::FInterpTo(CameraPresentationFOV, 82.f + 2.f * Cue + Purify - Calm, Dt, 3.f);
+    V.FOV = CameraPresentationFOV;
 }
 
 void AMagatsunePlayer::BoundarySensePressed()
