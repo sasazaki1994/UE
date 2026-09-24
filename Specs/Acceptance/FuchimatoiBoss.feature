@@ -1,6 +1,27 @@
 Feature: Fuchimatoi boss action lifecycle
   Fuchimatoi owns a minimal action state machine while shared Nushi state remains on NushiBase.
 
+  Scenario: Bite is read from the creature before it becomes dangerous
+    Given Fuchimatoi is Submerged
+    When the bite windup begins
+    Then the head should draw back and track the player smoothly
+    And the local warning light should build with windup progress
+    And the bite target should remain unlocked until the lunge begins
+
+  Scenario: A missed bite leaves a quiet recovery opening
+    Given Fuchimatoi is BiteLunge
+    When the bite misses the bait rock and player
+    Then the head should interpolate back into the body
+    And the next windup should wait for bite recovery and submerged time
+    And production presentation should not draw a world-space attack marker
+
+  Scenario: Purification presentation does not own progression
+    Given an exposed Fuchimatoi Kakon is reachable
+    When the Kakon is purified
+    Then shared purification presentation should pulse briefly
+    And the existing Nushi progress should advance immediately
+    And three purified Kakon should still transition to Calm and Victory without a presentation gate
+
   Scenario: Fuchimatoi performs its basic attack cycle
     Given Fuchimatoi is Submerged
     When the bite windup begins

@@ -85,6 +85,8 @@ void AFuchimatoiBoss::ResetNushi()
     BiteTargetLocalLocation = FVector::ZeroVector;
     bHasBiteTarget = false;
     ActionTimeRemaining = SubmergedDuration;
+    ActionDuration = SubmergedDuration;
+    SerpentTime = 0.f;
     if (bPlayable)
     {
         SetActorTransform(EncounterSpawn);
@@ -255,7 +257,13 @@ void AFuchimatoiBoss::UpdateBody()
     for (int32 I=0; I<BodyJoints.Num(); ++I)
     {
         const FVector CoilLocal=EncounterSpawn.InverseTransformPosition(CoiledBody[I]);
-        const FVector Local=FMath::Lerp(HeadProxyLocalLocation+BodyOffsets[I],CoilLocal,CoilingProgress);
+        FVector RestLocal=HeadProxyLocalLocation+BodyOffsets[I];
+        // A slow phase-delayed lateral wave makes the proxy read as one heavy
+        // ground-bound body instead of independently translated primitives.
+        const float WaveWeight=(1.f-CoilingProgress)*FMath::Clamp(float(I)/5.f,0.f,1.f);
+        RestLocal.Y += FMath::Sin(SerpentTime*1.35f-I*.58f)*42.f*WaveWeight;
+        RestLocal.Z += FMath::Sin(SerpentTime*.9f-I*.42f)*12.f*WaveWeight;
+        const FVector Local=FMath::Lerp(RestLocal,CoilLocal,CoilingProgress);
         Points.Add(Local);
         BodyJoints[I]->SetRelativeLocation(Local);
         const float Width=I==0?2.25f:FMath::Lerp(1.9f,.5f,float(I)/10.f);
@@ -291,8 +299,11 @@ void AFuchimatoiBoss::UpdateBody()
         SetPrimitiveColor(Cast<UMaterialInstanceDynamic>(KakonMarkers[I]->GetMaterial(0)),
             bActive?FLinearColor(1,.03,.04):FLinearColor(.09,.04,.04));
     }
-    if (ActionState==EFuchimatoiActionState::BiteWindup && Player)
-        Head->SetWorldRotation((Player->GetActorLocation()-Head->GetComponentLocation()).Rotation());
+    if ((ActionState==EFuchimatoiActionState::BiteWindup || ActionState==EFuchimatoiActionState::BiteLunge) && Player)
+    {
+        const FRotator Desired=(Player->GetActorLocation()-Head->GetComponentLocation()).Rotation();
+        Head->SetWorldRotation(FMath::RInterpTo(Head->GetComponentRotation(),Desired,1.f/60.f,5.f));
+    }
     const FLinearColor Color=GetNushiState()==ENushiState::Calm?FLinearColor(.3,.6,.95)
         :IsSnagged()?FLinearColor(.7,.95,.2):ActionState==EFuchimatoiActionState::BiteWindup?FLinearColor(1,.25,.03):FLinearColor(.06,.3,.25);
     SetPrimitiveColor(Cast<UMaterialInstanceDynamic>(Head->GetMaterial(0)),Color);
@@ -305,23 +316,28 @@ void AFuchimatoiBoss::UpdateBody()
         const bool bLunge=ActionState==EFuchimatoiActionState::BiteLunge;
         HeadCueLight->SetLightColor(bCalm?FLinearColor(.24f,.38f,.45f)
             :IsSnagged()?FLinearColor(.48f,.36f,.17f):FLinearColor(.62f,.13f,.08f));
-        const float Pulse=.75f+.25f*FMath::Sin(GetWorld()->GetTimeSeconds()*10.f);
-        HeadCueLight->SetIntensity(bCalm?0.f:bWindup?14000.f*Pulse:bLunge?22000.f:IsSnagged()?6000.f:0.f);
+        const float Attack=GetAttackPresentation();
+        const float Pulse=.72f+.28f*FMath::Sin(GetWorld()->GetTimeSeconds()*FMath::Lerp(3.f,9.f,Attack));
+        const float Purify=GetPurificationPresentation();
+        HeadCueLight->SetIntensity(bCalm?0.f:bWindup?FMath::Lerp(3500.f,14000.f,Attack)*Pulse
+            :bLunge?18000.f:IsSnagged()?4500.f:Purify*5500.f);
     }
 }
 
 void AFuchimatoiBoss::WithdrawHead()
 {
-    HeadProxyLocalLocation=FVector::ZeroVector;
     BiteTargetLocalLocation=FVector::ZeroVector; bHasBiteTarget=false;
     SetActionState(EFuchimatoiActionState::Submerged);
-    ActionTimeRemaining=SubmergedDuration;
+    ActionTimeRemaining=SubmergedDuration+BiteRecoveryDuration;
+    ActionDuration=ActionTimeRemaining;
 }
 
 void AFuchimatoiBoss::AdvanceEncounter(float Dt)
 {
+    AdvancePresentation(Dt);
     if (!bPlayable || !Player || !Player->CanAct() || GetNushiState()!=ENushiState::Active) return;
     Telemetry.Elapsed+=FMath::Max(0.f,Dt);
+    SerpentTime+=FMath::Max(0.f,Dt);
     // Bound sweeps independently of render FPS and preserve phase time at boundaries.
     float Remaining=FMath::Max(0.f,Dt);
     while (Remaining>KINDA_SMALL_NUMBER)
@@ -332,14 +348,19 @@ void AFuchimatoiBoss::AdvanceEncounter(float Dt)
         switch (ActionState)
         {
         case EFuchimatoiActionState::Submerged:
+            HeadProxyLocalLocation=FMath::VInterpTo(HeadProxyLocalLocation,FVector::ZeroVector,Step,3.2f);
             if (ActionTimeRemaining<=0)
             {
-                BeginBiteWindup(); ActionTimeRemaining=WindupDuration;
+                HeadProxyLocalLocation=FVector::ZeroVector;
+                BeginBiteWindup(); ActionTimeRemaining=WindupDuration; ActionDuration=WindupDuration;
                 ++Telemetry.BiteAttempts; LogTelemetry(TEXT("Bite"));
             }
             break;
         case EFuchimatoiActionState::BiteWindup:
             BiteAimWorldLocation=Player->GetActorLocation();
+            // Pull the head back and down before committing. The target remains
+            // live during this readable anticipation, then locks for the lunge.
+            HeadProxyLocalLocation=FMath::VInterpTo(HeadProxyLocalLocation,FVector(-155.f,0.f,-55.f),Step,3.5f);
             if (ActionTimeRemaining<=0)
             {
                 FVector Aim=Player->GetActorLocation(); Aim.Z=GetActorLocation().Z;
@@ -386,7 +407,7 @@ void AFuchimatoiBoss::AdvanceEncounter(float Dt)
         }
     }
     UpdateBody();
-    if (ActionState==EFuchimatoiActionState::BiteWindup || ActionState==EFuchimatoiActionState::BiteLunge)
+    if (IsDebugGuidanceEnabled() && (ActionState==EFuchimatoiActionState::BiteWindup || ActionState==EFuchimatoiActionState::BiteLunge))
     {
         const bool bLocked=ActionState==EFuchimatoiActionState::BiteLunge;
         FVector Target=BiteAimWorldLocation; Target.Z=8;
@@ -395,12 +416,12 @@ void AFuchimatoiBoss::AdvanceEncounter(float Dt)
         DrawDebugDirectionalArrow(GetWorld(),GetHeadWorldLocation(),Target,60,Color,false,-1,0,5);
         DrawDebugDirectionalArrow(GetWorld(),Arena->GetBaitPosition(),Arena->GetBaitRock()->GetComponentLocation(),60,FColor::Yellow,false,-1,0,6);
     }
-    if (CanRecover())
+    if (IsDebugGuidanceEnabled() && CanRecover())
     {
         const FVector Point=RecoveryAnchor->GetActorLocation();
         DrawDebugLine(GetWorld(),Point-FVector(0,0,180),Point+FVector(0,0,220),FColor(255,215,70),false,-1,0,10);
     }
-    if (Player->IsMounted())
+    if (IsDebugGuidanceEnabled() && Player->IsMounted())
     {
         const int32 Node=Player->GetGuidanceNode();
         const AFuchimatoiRouteAnchor* From=Player->IsRecovering()?RecoveryAnchor.Get():GetRouteAnchor(Player->GetRouteNode());
@@ -464,9 +485,16 @@ bool AFuchimatoiBoss::TryPurifyAtNode(int32 Node)
 }
 void AFuchimatoiBoss::HandleKakonPurified(AKakonActor* Kakon)
 {
+    NotifyPurificationPresentation();
     if (KakonActors.Num()>0 && Kakon==KakonActors[0]) BeginCoiling();
     LogTelemetry(TEXT("Purified"));
     UpdateBody();
+}
+float AFuchimatoiBoss::GetAttackPresentation() const
+{
+    if (ActionState==EFuchimatoiActionState::BiteLunge) return 1.f;
+    if (ActionState!=EFuchimatoiActionState::BiteWindup || ActionDuration<=0.f) return 0.f;
+    return FMath::Clamp(1.f-ActionTimeRemaining/ActionDuration,0.f,1.f);
 }
 FString AFuchimatoiBoss::GetActionLabel() const
 {

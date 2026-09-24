@@ -97,6 +97,24 @@ bool AFuchimatoiPlayer::IsOnRecoveryGround() const
 void AFuchimatoiPlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
 {
     Super::CalcCamera(DeltaTime, OutResult);
+    if (Boss)
+    {
+        const float Attack=Boss->GetAttackPresentation();
+        const float Purify=Boss->GetPurificationPresentation();
+        const float Calm=Boss->GetCalmPresentation();
+        const FVector PlayerFocus=GetActorLocation()+FVector(0,0,35);
+        const float BossWeight=IsMounted()?.18f:FMath::Lerp(.10f,.28f,Attack);
+        const FVector DesiredFocus=FMath::Lerp(PlayerFocus,Boss->GetHeadWorldLocation(),BossWeight);
+        if (SmoothedCameraFocus.IsNearlyZero()) SmoothedCameraFocus=DesiredFocus;
+        SmoothedCameraFocus=FMath::VInterpTo(SmoothedCameraFocus,DesiredFocus,DeltaTime,2.6f);
+        const float DesiredFOV=80.f+Attack*3.f+Purify*1.5f-Calm*1.f;
+        CameraPresentationFOV=FMath::FInterpTo(CameraPresentationFOV,DesiredFOV,DeltaTime,3.5f);
+        OutResult.FOV=CameraPresentationFOV;
+        // Keep player agency: only bias pitch/yaw toward the creature and never
+        // overwrite the controller or add oscillating camera shake.
+        const FRotator Framed=(SmoothedCameraFocus-OutResult.Location).Rotation();
+        OutResult.Rotation=FMath::RInterpTo(OutResult.Rotation,Framed,DeltaTime,Attack>0.f?1.8f:.55f);
+    }
     // Supplement the spring arm with the same player-to-camera sphere retreat
     // used by the Ishibashiri climbing camera. Its offset pivot can miss a ledge.
     const FVector Focus = GetActorLocation() + FVector(0, 0, 35);
@@ -357,6 +375,8 @@ void AFuchimatoiPlayer::ResetForEncounter(const FTransform& Spawn)
     // Side view keeps the spring arm clear of the bait rock when mounting the head.
     if (Controller) Controller->SetControlRotation(FRotator(-22, 110, 0));
     Arm->TargetArmLength = 1050;
+    SmoothedCameraFocus = FVector::ZeroVector;
+    CameraPresentationFOV = 80.f;
 }
 
 ECorruptionWarning AFuchimatoiPlayer::ComputeCorruptionWarning() const
