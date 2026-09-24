@@ -53,15 +53,18 @@ void APrototypeHUD::DrawHUD()
     }
     const float X = 22.f * Scale;
     float Y = 18.f * Scale;
+    const bool bCampaign = GetGameInstance<UCampaignGameInstance>() && GetGameInstance<UCampaignGameInstance>()->IsCampaignActive();
+    const int32 SenseLines = Player ? ((Player->GetSense()->IsBoundarySenseActive() ? 1 : 0) + (Player->GetSense()->IsCorruptionSenseActive() ? 1 : 0)) : 0;
+    const int32 LineCount = 2 + (bCampaign ? 1 : 0) + SenseLines + (bDebugGuidance ? 2 : 0) + (Player && !Player->GetFeedback().IsEmpty() ? 1 : 0);
     const float Width = FMath::Min((bDebugGuidance ? 630.f : 430.f) * Scale, Canvas->ClipX - X * 2.f);
-    DrawRect(FLinearColor(0.015f, 0.02f, 0.025f, 0.72f), X - 8.f, Y - 8.f, Width, (bDebugGuidance ? 195.f : 105.f) * Scale);
+    DrawRect(FLinearColor(0.015f, 0.02f, 0.025f, 0.72f), X - 8.f, Y - 8.f, Width, (16.f + 28.f * LineCount) * Scale);
     auto Line = [this, X, &Y, Scale](const FString& Text, FLinearColor Color = FLinearColor::White, float Size = 1.f)
     {
         DrawText(Text, Color, X, Y, GEngine->GetMediumFont(), Scale * Size, false);
         Y += 26.f * Scale * Size;
     };
     Line(TEXT("MAGAHARAI / ISHIBASHIRI"), FLinearColor(0.85f, 0.88f, 0.78f), 1.2f);
-    if (const auto* Campaign=GetGameInstance<UCampaignGameInstance>(); Campaign && Campaign->IsCampaignActive())
+    if (bCampaign)
         // The combat HUD stays English so it never depends on a CJK-capable UFont.
         Line(TEXT("Q / LT: Boundary Sense    F / LB: Corrupted Arm"),FLinearColor(.3f,.9f,1.f),.8f);
     if (!Player || !Boss)
