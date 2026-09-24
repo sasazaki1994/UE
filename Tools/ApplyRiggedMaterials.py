@@ -28,7 +28,7 @@ def expression(mat,kind,x,y,prop,tag):
     node.set_editor_property('desc',tag)
     return node
 
-def configure_shirotsura_corruption(mat, base_sample):
+def configure_shirotsura_corruption(mat, base_sample, mask_sample=None):
     """Add the one audited stage parameter without inventing atlas UV masks."""
     tag='SHIROTSURA_CORRUPTION_'
     early=expression(mat,unreal.MaterialExpressionConstant3Vector,-210,-80,
@@ -40,9 +40,19 @@ def configure_shirotsura_corruption(mat, base_sample):
     amount.set_editor_property('default_value',1.0)
     blend=expression(mat,unreal.MaterialExpressionLinearInterpolate,40,0,
         unreal.MaterialProperty.MP_BASE_COLOR,tag+'BLEND')
-    lib.connect_material_expressions(early,'',blend,'A')
-    lib.connect_material_expressions(base_sample,'RGB',blend,'B')
-    lib.connect_material_expressions(amount,'',blend,'Alpha')
+    alpha=amount
+    if mask_sample:
+        # A zero mask must be an exact pass-through for the right hand and mask.
+        lib.connect_material_expressions(base_sample,'RGB',blend,'A')
+        lib.connect_material_expressions(early,'',blend,'B')
+        alpha=expression(mat,unreal.MaterialExpressionMultiply,-80,100,
+            unreal.MaterialProperty.MP_BASE_COLOR,tag+'MASKED_AMOUNT')
+        lib.connect_material_expressions(mask_sample,'R',alpha,'A')
+        lib.connect_material_expressions(amount,'',alpha,'B')
+    else:
+        lib.connect_material_expressions(early,'',blend,'A')
+        lib.connect_material_expressions(base_sample,'RGB',blend,'B')
+    lib.connect_material_expressions(alpha,'',blend,'Alpha')
     lib.connect_material_property(blend,'',unreal.MaterialProperty.MP_BASE_COLOR)
 
 def surface_values(label):
@@ -71,6 +81,15 @@ def apply_character_materials(name, dest, folder, replace_existing=True):
         elif kind=='Roughness':
             tex.set_editor_property('compression_settings',unreal.TextureCompressionSettings.TC_MASKS)
         textures[kind]=tex
+    mask_path=folder/('T_'+name+'_FaceNeckMask.png')
+    if name=='Shirotsura' and mask_path.exists():
+        t=unreal.AssetImportTask();t.filename=str(mask_path)
+        t.destination_path=dest;t.destination_name='T_'+name+'_FaceNeckMask'
+        t.automated=True;t.replace_existing=replace_existing;t.save=True
+        asset_tools.import_asset_tasks([t])
+        textures['FaceNeckMask']=unreal.load_asset(dest+'/T_'+name+'_FaceNeckMask')
+        textures['FaceNeckMask'].set_editor_property('srgb',False)
+        textures['FaceNeckMask'].set_editor_property('compression_settings',unreal.TextureCompressionSettings.TC_MASKS)
     mesh=unreal.load_asset(dest+'/SK_'+name)
     slots=mesh.get_editor_property('materials')
     for i,slot in enumerate(slots):
@@ -88,6 +107,12 @@ def apply_character_materials(name, dest, folder, replace_existing=True):
             lib.connect_material_property(sample,'R' if kind=='Roughness' else 'RGB',prop)
             if name=='Shirotsura' and label=='09 • petrified corruption' and kind=='BaseColor':
                 configure_shirotsura_corruption(mat,sample)
+            if name=='Shirotsura' and label=='05 • exposed right hand' and kind=='BaseColor' and 'FaceNeckMask' in textures:
+                mask=expression(mat,unreal.MaterialExpressionTextureSample,-450,120,
+                    unreal.MaterialProperty.MP_BASE_COLOR,'SHIROTSURA_FACE_NECK_MASK')
+                mask.set_editor_property('texture',textures['FaceNeckMask'])
+                mask.set_editor_property('sampler_type',unreal.MaterialSamplerType.SAMPLERTYPE_MASKS)
+                configure_shirotsura_corruption(mat,sample,mask)
         roughness,metallic=surface_values(label)
         # Numeric material names survive a mesh reimport even when slot labels
         # change. Assign both properties for every slot to clear old responses.

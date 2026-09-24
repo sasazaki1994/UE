@@ -14,6 +14,7 @@ PBR_MODE='fallback'
 if '--pbr-mode' in sys.argv:
     PBR_MODE=sys.argv[sys.argv.index('--pbr-mode')+1]
 ATLAS_SIZE=2048
+FACE_NECK_MASK_ATTRIBUTE='ShirotsuraFaceNeckMask'
 if '--atlas-size' in sys.argv:
     ATLAS_SIZE=int(sys.argv[sys.argv.index('--atlas-size')+1])
     if ATLAS_SIZE not in (2048,4096):raise ValueError('Atlas size must be 2048 or 4096')
@@ -30,6 +31,16 @@ def build(name):
     for ob in list(bpy.context.scene.objects):
         if ob.name.startswith('STUDIO_'): bpy.data.objects.remove(ob,do_unlink=True)
     meshes=[o for o in bpy.context.scene.objects if o.type=='MESH']
+    if name == 'Shirotsura':
+        # Preserve source-object provenance through the join.  Material 05 is
+        # shared by the head, neck and right hand, so material/UV bounds alone
+        # are not a safe way to manufacture this mask.
+        for ob in meshes:
+            attr=ob.data.color_attributes.get(FACE_NECK_MASK_ATTRIBUTE) or ob.data.color_attributes.new(
+                name=FACE_NECK_MASK_ATTRIBUTE,type='BYTE_COLOR',domain='CORNER')
+            selected=ob.name.startswith(('Head_under_mask','Neck_anatomy'))
+            value=(1.0,1.0,1.0,1.0) if selected else (0.0,0.0,0.0,1.0)
+            for item in attr.data:item.color=value
     bpy.ops.object.armature_add(enter_editmode=True)
     rig=bpy.context.object; rig.name=name+'_Rig'
     rig.data.edit_bones.remove(rig.data.edit_bones[0])
@@ -323,11 +334,34 @@ def bake_surface(body,out,name,manifest_path=PBR.MANIFEST,asset_root=PBR.ROOT,ap
         bpy.ops.object.bake(type=('DIFFUSE' if kind=='BaseColor' else kind.upper()))
         image.filepath_raw=str(out/(image.name+'.png'));image.file_format='PNG';image.save();image.pack()
         images[kind]=image
+    if name == 'Shirotsura':
+        attr=body.data.color_attributes.get(FACE_NECK_MASK_ATTRIBUTE)
+        assert attr, 'Face/neck provenance was lost while joining the rig mesh'
+        mask=bpy.data.images.get('T_Shirotsura_FaceNeckMask') or bpy.data.images.new(
+            'T_Shirotsura_FaceNeckMask',width=ATLAS_SIZE,height=ATLAS_SIZE,alpha=False)
+        mask.colorspace_settings.name='Non-Color'
+        for mat in body.data.materials:
+            nt=mat.node_tree
+            target=nt.nodes.get('BakeTarget_FaceNeckMask') or nt.nodes.new('ShaderNodeTexImage')
+            target.image=mask;target.name='BakeTarget_FaceNeckMask'
+            vertex=nt.nodes.get('FaceNeckMask_Source') or nt.nodes.new('ShaderNodeVertexColor')
+            vertex.layer_name=FACE_NECK_MASK_ATTRIBUTE
+            emission=nt.nodes.get('FaceNeckMask_Emission') or nt.nodes.new('ShaderNodeEmission')
+            nt.links.new(vertex.outputs['Color'],emission.inputs['Color'])
+            output=next(n for n in nt.nodes if n.type=='OUTPUT_MATERIAL')
+            nt.links.new(emission.outputs['Emission'],output.inputs['Surface'])
+            for node in nt.nodes:node.select=False
+            target.select=True;nt.nodes.active=target
+        bpy.ops.object.bake(type='EMIT')
+        mask.filepath_raw=str(out/'T_Shirotsura_FaceNeckMask.png');mask.file_format='PNG';mask.save();mask.pack()
+        images['FaceNeckMask']=mask
     for mat in body.data.materials:
         nt=mat.node_tree;p=nt.nodes.get('Principled BSDF')
         col=nt.nodes.get('BakeTarget_BaseColor');nor=nt.nodes.get('BakeTarget_Normal');rough=nt.nodes.get('BakeTarget_Roughness')
         uv=nt.nodes.get('BakedPBR_AtlasUV') or nt.nodes.new('ShaderNodeUVMap');uv.name='BakedPBR_AtlasUV';uv.uv_map='AtlasUV'
         for node in (col,nor,rough): nt.links.new(uv.outputs['UV'],node.inputs['Vector'])
+        output=next(n for n in nt.nodes if n.type=='OUTPUT_MATERIAL')
+        nt.links.new(p.outputs['BSDF'],output.inputs['Surface'])
         nt.links.new(col.outputs['Color'],p.inputs['Base Color'])
         normal=nt.nodes.get('BakedPBR_Normal') or nt.nodes.new('ShaderNodeNormalMap');normal.name='BakedPBR_Normal';normal.uv_map='AtlasUV';normal.space='TANGENT'
         nt.links.new(nor.outputs['Color'],normal.inputs['Color'])

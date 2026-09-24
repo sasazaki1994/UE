@@ -69,6 +69,20 @@ def test_material_setup_is_shirotsura_only_and_idempotent_by_tag():
     assert "delete_material_expression" not in source
 
 
+def test_face_neck_mask_uses_source_object_provenance_and_is_optional_until_regenerated():
+    rig = (ROOT / "Tools/RigCharacterModels.py").read_text(encoding="utf-8")
+    materials = (ROOT / "Tools/ApplyRiggedMaterials.py").read_text(encoding="utf-8")
+    runtime = (PRIVATE / "ShirotsuraVisualComponent.cpp").read_text(encoding="utf-8")
+    assert "FACE_NECK_MASK_ATTRIBUTE='ShirotsuraFaceNeckMask'" in rig
+    assert "ob.name.startswith(('Head_under_mask','Neck_anatomy'))" in rig
+    assert "T_Shirotsura_FaceNeckMask.png" in rig
+    assert "mask_path.exists()" in materials
+    assert "label=='05 • exposed right hand'" in materials
+    assert "SHIROTSURA_FACE_NECK_MASK" in materials
+    assert "A zero mask must be an exact pass-through" in materials
+    assert 'FName(TEXT("05 • exposed right hand"))' in runtime
+
+
 def test_no_gameplay_or_extra_appearance_state_was_added():
     header = (PUBLIC / "CampaignGameInstance.h").read_text(encoding="utf-8")
     enum = header.split("enum class EShirotsuraCorruptionStage", 1)[1].split("};", 1)[0]
