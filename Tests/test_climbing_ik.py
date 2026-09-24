@@ -23,10 +23,10 @@ def test_real_authored_bone_names_are_used():
         assert effector in runtime
 
 
-def test_vertical_slice_preserves_route_and_has_local_targets():
+def test_full_route_preserves_authored_nodes_and_has_local_targets():
     boss = (ROOT / "Source/IshibashiriPrototype/Private/IshibashiriBoss.cpp").read_text()
     climbing = (ROOT / "Source/IshibashiriPrototype/Private/ColossusClimbingComponent.cpp").read_text()
-    assert "Node >= 0 && Node <= 3" in climbing
+    assert "Node >= 0 && (Destination == INDEX_NONE || Destination >= 0)" in climbing
     assert "Frame.TransformPosition(Anchor + Offset)" in climbing
     assert boss.count("{-270,-215,65}") == 1
     assert "IKBlendInSeconds" in (ROOT / "Source/IshibashiriPrototype/Public/ColossusClimbingComponent.h").read_text()

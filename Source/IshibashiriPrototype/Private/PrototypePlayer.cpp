@@ -122,6 +122,11 @@ void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
     const FVector Pivot = PlayerLocation + FVector(0.f, 0.f, 90.f);
     const APrototypeGameMode* Mode = World->GetAuthGameMode<APrototypeGameMode>();
     const AIshibashiriBoss* Boss = Mode ? Mode->GetBoss() : nullptr;
+    float DesiredFOV = 95.f;
+    if (Climbing->IsGrabWarping()) DesiredFOV = GrabCameraFOV;
+    else if (Climbing->IsClimbing()) DesiredFOV = ClimbingCameraFOV + (Boss && Boss->IsBucking() ? 3.f : 0.f);
+    PresentationFOV = FMath::FInterpTo(PresentationFOV, DesiredFOV, FMath::Max(0.f, DeltaTime), 5.f);
+    OutResult.FOV = PresentationFOV;
     if (Climbing->IsClimbing())
     {
         const FRotator View = Controller ? Controller->GetControlRotation() : GetActorRotation();
@@ -137,13 +142,18 @@ void APrototypePlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
         if (GetWorld()->SweepSingleByChannel(
                 CameraHit, PlayerLocation, Location, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(15), ClimbParams))
             Location = CameraHit.Location;
-        OutResult.Location = Location;
-        OutResult.Rotation = (PlayerLocation + FVector(0, 0, 40) - Location).Rotation();
+        if (SmoothedClimbCameraLocation.IsNearlyZero()) SmoothedClimbCameraLocation = Location;
+        // Low-pass only the camera, never the attached pawn. This retains the
+        // creature's large movement while filtering animation-frequency jitter.
+        SmoothedClimbCameraLocation = FMath::VInterpTo(SmoothedClimbCameraLocation, Location, DeltaTime, 8.f);
+        OutResult.Location = SmoothedClimbCameraLocation;
+        OutResult.Rotation = (PlayerLocation + FVector(0, 0, 40) - OutResult.Location).Rotation();
         bUsingRaisedCamera = false;
         bFrameBossWithCamera = false;
         CameraClearElapsed = 0.f;
         return;
     }
+    SmoothedClimbCameraLocation = FVector::ZeroVector;
 
     // The boss deliberately ignores the Camera channel so it never shortens the
     // spring arm and causes an abrupt close-up. Detect it on the Visibility
@@ -610,6 +620,8 @@ void APrototypePlayer::ResetForEncounter(const FTransform& Spawn)
     CameraClearElapsed = 0.f;
     RaisedCameraOffset = FVector::ZeroVector;
     RaisedCameraFocusOffset = FVector::ZeroVector;
+    SmoothedClimbCameraLocation = FVector::ZeroVector;
+    PresentationFOV = 95.f;
     PresentationTime = 0.f;
     ConsumeMovementInputVector();
     SetActorTransform(Spawn, false, nullptr, ETeleportType::TeleportPhysics);

@@ -21,12 +21,14 @@ float FacingAngle(const APrototypePlayer* Player, const FTransform& Target)
 
 bool UColossusClimbingComponent::IsIKVerticalSlice() const
 {
-    return Boss && Node >= 0 && Node <= 3 && (Destination == INDEX_NONE || Destination <= 3);
+    // Every authored route hold is creature-local. The optional Control Rig can
+    // therefore keep contact from foreleg through both shoulders and the back.
+    return Boss && Node >= 0 && (Destination == INDEX_NONE || Destination >= 0);
 }
 
 void UColossusClimbingComponent::UpdateIK(float Dt)
 {
-    const float Desired = IsIKVerticalSlice() ? (IsResting() ? .72f : 1.f) : 0.f;
+    const float Desired = IsIKVerticalSlice() ? (IsResting() && !Boss->IsBucking() ? .82f : 1.f) : 0.f;
     const float Seconds = Desired > IKWeight ? IKBlendInSeconds : IKBlendOutSeconds;
     IKWeight = FMath::FInterpConstantTo(IKWeight, Desired, Dt, 1.f / FMath::Max(.01f, Seconds));
     if (!Boss) return;
@@ -118,6 +120,7 @@ bool UColossusClimbingComponent::StartGrabWarp(AIshibashiriBoss* Candidate)
     GrabWarpDuration = Player->GetGrabWarpAnimationLength();
     GrabWarpStartLocation = Player->GetActorLocation();
     GrabWarpStartRotation = Player->GetActorQuat();
+    GrabWarpStartRelative = Player->GetActorTransform().GetRelativeTransform(Candidate->GetActorTransform());
     Player->StopJumping();
     Player->GetCharacterMovement()->ClearAccumulatedForces();
     Player->GetCharacterMovement()->StopMovementImmediately();
@@ -141,6 +144,7 @@ void UColossusClimbingComponent::StartFallbackGrabApproach(AIshibashiriBoss* Can
     GrabWarpDuration = FMath::Max(.1f, FallbackApproachSeconds);
     GrabWarpStartLocation = Player->GetActorLocation();
     GrabWarpStartRotation = Player->GetActorQuat();
+    GrabWarpStartRelative = Player->GetActorTransform().GetRelativeTransform(Candidate->GetActorTransform());
     Player->StopJumping();
     Player->GetCharacterMovement()->ClearAccumulatedForces();
     Player->GetCharacterMovement()->StopMovementImmediately();
@@ -226,9 +230,14 @@ void UColossusClimbingComponent::UpdateGrabWarp(float Dt)
     if (bFallbackGrabApproach)
     {
         const float T = FMath::Clamp(GrabWarpElapsed / GrabWarpDuration, 0.f, 1.f);
-        const float SmoothT = T * T * (3.f - 2.f * T);
-        Player->SetActorLocation(FMath::Lerp(GrabWarpStartLocation, Target.GetLocation(), SmoothT));
-        Player->SetActorRotation(FQuat::Slerp(GrabWarpStartRotation, Target.GetRotation(), SmoothT));
+        // Preserve the start in boss space so the whole approach is carried by
+        // the moving creature. Rotation leads translation: Shirotsura visibly
+        // turns/reaches before contact, then settles without a final snap.
+        const FTransform MovingStart = GrabWarpStartRelative * GrabWarpBoss->GetActorTransform();
+        const float ReachT = FMath::SmoothStep(0.f, .78f, T);
+        const float AlignT = FMath::SmoothStep(0.f, .58f, T);
+        Player->SetActorLocation(FMath::Lerp(MovingStart.GetLocation(), Target.GetLocation(), ReachT));
+        Player->SetActorRotation(FQuat::Slerp(MovingStart.GetRotation(), Target.GetRotation(), AlignT));
     }
 #if !UE_BUILD_SHIPPING
     if (FParse::Param(FCommandLine::Get(), TEXT("GrabWarpDebug")))

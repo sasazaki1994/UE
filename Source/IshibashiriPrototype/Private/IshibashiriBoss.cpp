@@ -477,6 +477,9 @@ void AIshibashiriBoss::HandleNushiStateChanged()
     if (GetNushiState() == ENushiState::Calm)
     {
         StateTimeRemaining = 0.f;
+        // Completion stops encounter ticking immediately, so commit the quiet
+        // presentation in the state callback rather than waiting for Tick.
+        UpdateVisuals();
         UpdateCreatureAnimation();
     }
 }

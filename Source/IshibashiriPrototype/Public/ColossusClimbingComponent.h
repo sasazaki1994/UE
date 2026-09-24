@@ -42,6 +42,7 @@ public:
     int32 GetDestination() const { return Destination; }
     float GetIKWeight() const { return IKWeight; }
     bool IsIKVerticalSlice() const;
+    float GetGrabApproachAlpha() const { return bGrabWarping && GrabWarpDuration > 0.f ? FMath::Clamp(GrabWarpElapsed / GrabWarpDuration, 0.f, 1.f) : 0.f; }
     const FClimbingIKTargets& GetIKTargets() const { return IKTargets; }
     AIshibashiriBoss* GetBoss() const { return Boss; }
     FString GetHint() const;
@@ -60,7 +61,7 @@ public:
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1", ClampMax="179")) float MaximumWarpAngle = 100.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1")) float CompletionDistanceTolerance = 35.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1", ClampMax="90")) float CompletionAngleTolerance = 18.f;
-    UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="0.1", ClampMax="1")) float FallbackApproachSeconds = .32f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="0.1", ClampMax="1")) float FallbackApproachSeconds = .48f;
     UPROPERTY(EditAnywhere, Category="Climbing|IK", meta=(ClampMin="0.01")) float IKBlendInSeconds = .22f;
     UPROPERTY(EditAnywhere, Category="Climbing|IK", meta=(ClampMin="0.01")) float IKBlendOutSeconds = .16f;
 private:
@@ -90,6 +91,7 @@ private:
     float GrabWarpStartAngle = 0.f;
     FVector GrabWarpStartLocation = FVector::ZeroVector;
     FQuat GrabWarpStartRotation = FQuat::Identity;
+    FTransform GrabWarpStartRelative = FTransform::Identity;
     UPROPERTY() TObjectPtr<AIshibashiriBoss> GrabWarpBoss;
     float IKWeight = 0.f;
     FClimbingIKTargets IKTargets;
