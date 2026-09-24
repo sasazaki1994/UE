@@ -27,6 +27,22 @@ def test_continue_is_title_only_and_input_tests_do_not_write_player_saves():
     assert 'BindAction(TEXT("Retry")' in controller
 
 
+
+def test_new_game_overwrite_requires_confirmation_without_blocking_continue():
+    mode = read("Source/IshibashiriPrototype/Private/CampaignGameMode.cpp")
+    header = read("Source/IshibashiriPrototype/Public/CampaignGameMode.h")
+    controller = read("Source/IshibashiriPrototype/Private/CampaignPlayerController.cpp")
+    hud = read("Source/IshibashiriPrototype/Private/CampaignHUD.cpp")
+    assert "State == ECampaignState::Title && !NewGameConfirmation.RequestStart(Campaign->HasContinue())" in mode
+    assert "!NewGameConfirmation.RequestStart(Campaign->HasContinue())" in mode
+    assert mode.index("NewGameConfirmation.RequestStart") < mode.index("Campaign->AdvanceCardChapter()")
+    assert "ContinueCampaign()" in mode and "NewGameConfirmation.Cancel()" in mode
+    assert "FCampaignNewGameConfirmation NewGameConfirmation" in header
+    assert "Escape" in controller and "Gamepad_FaceButton_Right" in controller
+    assert "CancelNewGameConfirmation" in controller
+    assert "新しく始めると前回の続きが上書きされます" in hud
+    assert "ESC / B : CANCEL" in hud
+
 def test_campaign_completion_is_connected_to_all_existing_managers():
     for encounter in ("Prototype", "Fuchimatoi", "Minedaki", "Magatsune"):
         source = read(f"Source/IshibashiriPrototype/Private/{encounter}GameMode.cpp")

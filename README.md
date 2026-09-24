@@ -11,7 +11,7 @@
 .\Tools\Prototype.ps1 -Action Test -Campaign -SkipBuild -Gamepad -TestFPS 60
 ```
 
-CampaignのTitleではSpace / Xで新規開始し、保存がある場合はR / Yで最後の章の先頭から再開します。主戦途中の禍根・スタミナは保存しません。自動入力テストは通常の保存領域を使用しません。実装範囲と未検証項目は [Campaign Flow](Docs/CampaignFlow.md) を参照してください。
+CampaignのTitleではSpace / Xで新規開始します。保存がある場合は上書き警告後に同じ入力をもう1回行い、Esc / Bで取り消します。確認中もR / Yで最後の章の先頭から再開できます。主戦途中の禍根・スタミナは保存しません。自動入力テストは通常の保存領域を使用しません。実装範囲と未検証項目は [Campaign Flow](Docs/CampaignFlow.md) を参照してください。
 
 石走りの前脚への取り付きは、Montage未配置時にも短い接近動作を表示します。これは手足のIKやRoot Motionを使った完成アニメーションではありません。淵纏い・峰抱き・禍津根には状態に連動する控えめな光の予告を追加しました。[表現更新の検証範囲](Docs/EncounterPresentationFollowup.md)を参照してください。
 

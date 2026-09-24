@@ -1,5 +1,6 @@
 #include "CampaignGameInstance.h"
 #include "CampaignSaveGame.h"
+#include "CampaignGameMode.h"
 #include "PlayerSenseComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/AutomationTest.h"
@@ -146,6 +147,24 @@ bool FResumeChapterBoundary::RunTest(const FString&)
     C->RestartCampaign();
     C->SetContinueForTest(ECampaignState::Completed);
     TestFalse(TEXT("Invalid saved chapter is rejected"), C->ContinueCampaign());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCampaignNewGameConfirmationTest, "IshibashiriPrototype.Campaign.NewGameOverwriteConfirmation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FCampaignNewGameConfirmationTest::RunTest(const FString&)
+{
+    FCampaignNewGameConfirmation Confirmation;
+    TestTrue(TEXT("No save starts on first input"), Confirmation.RequestStart(false));
+    TestFalse(TEXT("Save blocks first input"), Confirmation.RequestStart(true));
+    TestTrue(TEXT("First input enters confirmation"), Confirmation.IsPending());
+    Confirmation.Cancel();
+    TestFalse(TEXT("Cancel clears confirmation"), Confirmation.IsPending());
+    TestFalse(TEXT("Start after cancel requires confirmation again"), Confirmation.RequestStart(true));
+    TestTrue(TEXT("Second consecutive input starts"), Confirmation.RequestStart(true));
+    Confirmation.Cancel(); // Continue uses the same reset without blocking its action.
+    TestFalse(TEXT("Continue clears transient confirmation"), Confirmation.IsPending());
     return true;
 }
 
