@@ -39,7 +39,7 @@
 ## 最初の実行ゲート
 
 1. `Tools/RunIshibashiriReviewGate.ps1 -DryRun` で予定されるコマンドを確認する。詳細な既存ゲートは `Docs/IshibashiriReviewGate.md`。
-2. UE環境で `.\\Tools\\Prototype.ps1 -Action Build` を実行し、必要なら `-Action Test -Approach -TestFPS 60` / `30` と `-Action Test -Climbing -TestFPS 60` / `30` を同じビルドで確認する。既存のレビューゲート実行とログ収集を優先する。
+2. UE環境で `.\Tools\Prototype.ps1 -Action Build` を実行し、必要なら `-Action Test -Approach -TestFPS 60` / `30` と `-Action Test -Climbing -TestFPS 60` / `30` を同じビルドで確認する。既存のレビューゲート実行とログ収集を優先する。
 3. 従来の単体石走り戦と4戦Campaignを混同せず、**新たな石走り編用の起動動線**が必要かを実機で判断する。必要なら既存Campaignの章進行を壊さない明示的な選択肢として実装し、対応する入力テストを加える。
 4. 30/60の固定刻みテストは実GPUの性能測定ではない。実描画、カメラ、接触、音、入力と、使うPCのフレーム時間を別に記録する。
 5. 最初の実機ゲートが通るまで、新しい3D素材を本番アセットと呼ばず、後半3戦の本番アートへ着手しない。
