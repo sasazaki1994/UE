@@ -1,22 +1,99 @@
 {
-  "base": "e08d3de659638b9d9c622e599b5f58ade08704c3",
-  "recordedOn": "2026-09-14 UTC",
-  "scope": "Magatsune primitive playable vertical slice",
-  "environment": { "platform": "Linux container", "ueVersion": "NOT_RUN (Unreal Engine is not installed)", "powershell": "NOT_RUN (pwsh is not installed)" },
+  "base": "5ab11a53b1a8386f66b86015bae317eda75a1100",
+  "recordedOn": "2026-09-24 UTC",
+  "scope": "Magatsune living-terrain presentation polish",
+  "environment": {
+    "platform": "Linux container",
+    "ueVersion": "NOT_RUN (Unreal Engine is not installed)",
+    "powershell": "NOT_RUN (pwsh is not installed)"
+  },
   "checks": {
-    "gitDiffCheck": { "status": "PASS", "command": "git diff --check" },
-    "jsonValidation": { "status": "PASS", "command": "python3 -m json.tool Docs/MagatsuneValidation.json" },
-    "sourceContract": { "status": "PASS", "command": "python3 -m pytest -q Tests/test_magatsune_source_contract.py", "result": "3 passed" },
-    "build": { "status": "NOT_RUN", "command": ".\\Tools\\Prototype.ps1 -Action Build -Magatsune", "reason": "Windows and UE 5.6.1 are unavailable" },
-    "automation": { "status": "NOT_RUN", "tests": ["MagatsuneLifecycle", "RootTransformFollow", "RoutePhaseTransition", "FallRecovery", "RetryReset"] },
-    "keyboard60": { "status": "NOT_RUN", "command": ".\\Tools\\Prototype.ps1 -Action Test -Magatsune -SkipBuild -TestFPS 60" },
-    "keyboard30": { "status": "NOT_RUN", "command": ".\\Tools\\Prototype.ps1 -Action Test -Magatsune -SkipBuild -TestFPS 30" },
-    "gamepad60": { "status": "NOT_RUN", "command": ".\\Tools\\Prototype.ps1 -Action Test -Magatsune -SkipBuild -Gamepad -TestFPS 60" },
-    "recovery": { "status": "NOT_RUN", "planned": "Input-driven fall at 1/3, recovery re-grab, then Victory" },
-    "ishibashiriRegression": { "status": "NOT_RUN", "planned": ["Climbing Basin", "Grab", "Camera"] },
-    "fuchimatoiRegression": { "status": "NOT_RUN", "planned": ["Normal", "Recovery"] },
-    "minedakiRegression": { "status": "NOT_RUN", "planned": ["Full Encounter", "Recovery"] },
-    "screenshots": { "status": "NOT_RUN", "required": 12, "reason": "No render-capable UE environment" }
+    "gitDiffCheck": {
+      "status": "PASS",
+      "command": "git diff --check"
+    },
+    "jsonValidation": {
+      "status": "PASS",
+      "command": "python3 -m json.tool Docs/MagatsuneValidation.json"
+    },
+    "sourceContract": {
+      "status": "PASS",
+      "command": "python3 -m pytest -q Tests/test_magatsune_source_contract.py",
+      "result": "4 passed"
+    },
+    "build": {
+      "status": "NOT_RUN",
+      "command": ".\\Tools\\Prototype.ps1 -Action Build -Magatsune",
+      "reason": "Windows and UE 5.6.1 are unavailable in this Linux container"
+    },
+    "automation": {
+      "status": "NOT_RUN",
+      "tests": [
+        "MagatsuneLifecycle",
+        "RootTransformFollow",
+        "RoutePhaseTransition",
+        "FallRecovery",
+        "RetryReset"
+      ]
+    },
+    "keyboard60": {
+      "status": "NOT_RUN",
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -Magatsune -SkipBuild -TestFPS 60"
+    },
+    "keyboard30": {
+      "status": "NOT_RUN",
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -Magatsune -SkipBuild -TestFPS 30"
+    },
+    "gamepad60": {
+      "status": "NOT_RUN",
+      "command": ".\\Tools\\Prototype.ps1 -Action Test -Magatsune -SkipBuild -Gamepad -TestFPS 60"
+    },
+    "recovery": {
+      "status": "NOT_RUN",
+      "planned": "Input-driven fall at 1/3, recovery re-grab, then Victory"
+    },
+    "ishibashiriRegression": {
+      "status": "NOT_RUN",
+      "planned": [
+        "Climbing Basin",
+        "Grab",
+        "Camera"
+      ]
+    },
+    "fuchimatoiRegression": {
+      "status": "NOT_RUN",
+      "planned": [
+        "Normal",
+        "Recovery"
+      ]
+    },
+    "minedakiRegression": {
+      "status": "NOT_RUN",
+      "planned": [
+        "Full Encounter",
+        "Recovery"
+      ]
+    },
+    "screenshots": {
+      "status": "NOT_RUN",
+      "required": 12,
+      "reason": "No render-capable UE environment"
+    },
+    "pythonSuite": {
+      "status": "PASS",
+      "command": "python3 -m pytest -q",
+      "result": "107 passed, 16 subtests passed"
+    },
+    "gameplayContract": {
+      "status": "PASS",
+      "command": "python3 Tools/GameplayContract.py",
+      "result": "all digests match"
+    },
+    "narrativeContract": {
+      "status": "PASS",
+      "command": "python3 Tools/ValidateNarrativeContracts.py",
+      "result": "NARRATIVE_SOURCE_CONTRACT_PASS; UE_RUNTIME=NOT_RUN"
+    }
   },
   "verdict": "IMPLEMENTED BUT UE VALIDATION NOT RUN"
 }

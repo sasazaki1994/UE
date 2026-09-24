@@ -33,6 +33,9 @@ public:
     bool TryPurify();
     bool IsRouteNodeEnabled(int32 Node) const;
     bool IsLargePulse() const { return bLargePulse; }
+    float GetAnticipation() const { return Anticipation; }
+    float GetTransitionAlpha() const;
+    FVector GetPresentationFocus() const;
     bool IsSafeNode(int32 Node) const { return Node==3||Node==7||Node==10; }
     int32 GetRecoveryNode() const;
     FVector GetRecoveryWorld() const;
@@ -63,8 +66,10 @@ private:
     UPROPERTY() TObjectPtr<AMagatsunePlayer> Player;
     UPROPERTY() TArray<TObjectPtr<AKakonActor>> Kakons;
     UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> RouteMarkers;
+    UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> RootVisuals;
+    TArray<FVector> RootVisualBaseLocations;
     FTransform SpawnTransform;
     EMagatsunePhase Phase=EMagatsunePhase::SurfaceRoot;
-    float PhaseTime=0, CalmTime=0;
+    float PhaseTime=0, CalmTime=0, Anticipation=0;
     bool bLargePulse=false, bPulseResolved=false;
 };

@@ -9,6 +9,7 @@
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "DebugGuidance.h"
 
 void AMagatsuneHUD::DrawHUD()
 {
@@ -26,12 +27,15 @@ void AMagatsuneHUD::DrawHUD()
         Y += 26;
     };
     Line(TEXT("MAGATSUNE / LIVING CORRUPTED TERRAIN"), {.75f, .3f, 1});
-    Line(FString::Printf(TEXT("%s | KAKON %d/3 | STAMINA %.0f | ROUTE %d/12"), *B->GetPhaseLabel(),
-        B->GetNushiProgressComponent()->GetPurifiedCount(), P->GetStamina()->GetCurrentStamina(), P->GetRouteNode() + 1));
+    Line(FString::Printf(TEXT("KAKON %d/3 | STAMINA %.0f"),
+        B->GetNushiProgressComponent()->GetPurifiedCount(), P->GetStamina()->GetCurrentStamina()));
+    if (IsDebugGuidanceEnabled())
+        Line(FString::Printf(TEXT("DEBUG Phase=%s | Route=%d/12"), *B->GetPhaseLabel(), P->GetRouteNode() + 1), {.45f,.75f,1.f});
     Line(Victory                                        ? TEXT("CALMED | ENCOUNTER COMPLETED | VICTORY | R / Y: Retry")
             : B->GetPhase() == EMagatsunePhase::Calming ? TEXT("CALMING - the roots are settling, not disappearing")
             : P->IsRecovering()                         ? TEXT("RECOVERY: follow amber root base, then E / RB to re-Grab")
             : B->IsLargePulse()                         ? TEXT("LARGE PULSE - HOLD E / RB TO CLING")
+            : B->GetAnticipation() > .15f               ? TEXT("THE ROOTS ARE GATHERING - PREPARE TO CLING")
             : P->IsMounted()                            ? TEXT("NEXT ROUTE: W / LS | SAFE ROCKS RESTORE STAMINA | LMB / X: Purify")
                                                         : TEXT("GRAB AVAILABLE: approach Root A and press E / RB"),
         {1, .8f, .2f});

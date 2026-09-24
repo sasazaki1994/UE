@@ -32,8 +32,11 @@ AMagatsuneBoss::AMagatsuneBoss()
     for (int32 I = 0; I < 9; ++I)
     {
         const float A = I * .72f;
-        BuildPrimitive(Cube.Object, Material.Object, *FString::Printf(TEXT("CorruptedRoot%d"), I), MovingRoot,
-            {I * 170.f - 350, FMath::Sin(A) * 330.f, 110 + I * 65.f}, {2.4, 1.25, 3.1});
+        const FVector At(I * 170.f - 350, FMath::Sin(A) * 330.f, 110 + I * 65.f);
+        const FName Name(*FString::Printf(TEXT("CorruptedRoot%d"), I));
+        BuildPrimitive(Cube.Object, Material.Object, *Name.ToString(), MovingRoot, At, {2.4, 1.25, 3.1});
+        RootVisuals.Add(Cast<UStaticMeshComponent>(GetDefaultSubobjectByName(Name)));
+        RootVisualBaseLocations.Add(At);
     }
     for (int32 I = 0; I < RouteNodeCount; ++I)
     {
@@ -133,7 +136,7 @@ void AMagatsuneBoss::ResetNushi()
     SetActorTransform(SpawnTransform);
     MovingRoot->SetRelativeTransform(FTransform::Identity);
     Phase = EMagatsunePhase::SurfaceRoot;
-    PhaseTime = CalmTime = 0;
+    PhaseTime = CalmTime = Anticipation = 0;
     bLargePulse = bPulseResolved = false;
     Telemetry = FMagatsuneTelemetry();
     for (int32 I = 0; I < Kakons.Num(); ++I)
@@ -148,11 +151,15 @@ void AMagatsuneBoss::Tick(float Dt)
 {
     Super::Tick(Dt);
     if (!FMath::IsFinite(Dt) || Dt <= 0) return;
+    AdvancePresentation(Dt);
     if (GetNushiState() == ENushiState::Active) Telemetry.Elapsed += Dt;
     if (Phase == EMagatsunePhase::SurfaceRoot)
     {
         PhaseTime += Dt;
         const float Wave = FMath::Sin(PhaseTime * (2 * PI / FMath::Max(.1f, PulsePeriod)));
+        const float Cycle = FMath::Fmod(PhaseTime, FMath::Max(.1f, PulsePeriod)) / FMath::Max(.1f, PulsePeriod);
+        // The cue precedes the unchanged Wave > .78 gameplay check below.
+        Anticipation = FMath::SmoothStep(0.f, 1.f, FMath::Clamp((Cycle - .04f) / .10f, 0.f, 1.f)) * (bLargePulse ? 0.f : 1.f);
         MovingRoot->SetRelativeLocation({0, 0, 35 * Wave});
         MovingRoot->SetRelativeRotation({0, 3 * Wave, 7 * Wave});
         bLargePulse = Wave > .78f;
@@ -177,6 +184,7 @@ void AMagatsuneBoss::Tick(float Dt)
                 FTransform(FRotator(FMath::Lerp(-8.f, 38.f, T), FMath::Lerp(12.f, -18.f, T), FMath::Lerp(10.f, 31.f, T)),
                     FVector(0, 0, FMath::Lerp(120.f, 390.f, T))));
             bLargePulse = T > .42f && T < .72f;
+            Anticipation = bLargePulse ? 0.f : FMath::SmoothStep(0.f, 1.f, FMath::Clamp(T / .38f, 0.f, 1.f));
             if (bLargePulse && !bPulseResolved)
             {
                 bPulseResolved = true;
@@ -188,11 +196,13 @@ void AMagatsuneBoss::Tick(float Dt)
         if (PhaseTime >= TransitionSeconds)
         {
             bLargePulse = false;
+            Anticipation = 0.f;
             RefreshRoutes();
         }
     }
     else if (Phase == EMagatsunePhase::Calming)
     {
+        Anticipation = 0.f;
         CalmTime = FMath::Min(CalmTime + Dt, CalmSeconds);
         const float T = FMath::SmoothStep(0.f, 1.f, CalmTime / FMath::Max(.01f, CalmSeconds));
         MovingRoot->SetRelativeTransform(
@@ -203,9 +213,35 @@ void AMagatsuneBoss::Tick(float Dt)
             LogTelemetry(TEXT("Calm_Completed_Victory"));
         }
     }
+    // These offsets belong only to non-colliding art. GrabFrame, RouteMarkers and
+    // Kakons remain direct children of the authoritative MovingRoot transform.
+    const float VisualStrength = (1.f - GetCalmPresentation()) * (3.f + 7.f * Anticipation);
+    for (int32 I = 0; I < RootVisuals.Num(); ++I)
+    {
+        const float LocalWave = FMath::Sin(PhaseTime * 2.f * PI / FMath::Max(.1f, PulsePeriod) - I * .31f);
+        RootVisuals[I]->SetRelativeLocation(RootVisualBaseLocations[I] + FVector(0, 0, LocalWave * VisualStrength));
+        RootVisuals[I]->SetRelativeRotation(FRotator(LocalWave * .35f, 0, LocalWave * .65f));
+    }
     // The eruption is a landscape pulse, not an extra creature attack.
-    RootCueLight->SetIntensity(GetNushiState()==ENushiState::Active && bLargePulse
-        ? 26000.f*(.8f+.2f*FMath::Sin(GetWorld()->GetTimeSeconds()*9.f)) : 0.f);
+    const float Purify = GetPurificationPresentation();
+    RootCueLight->SetLightColor(Purify > 0.f ? FLinearColor(.12f,.7f,.55f)
+        : GetNushiState()==ENushiState::Calm ? FLinearColor(.18f,.36f,.42f) : FLinearColor(.45f,.08f,.10f));
+    RootCueLight->SetIntensity(Purify > 0.f ? 22000.f * Purify
+        : GetNushiState()==ENushiState::Active && (bLargePulse || Anticipation > 0.f)
+            ? FMath::Lerp(3500.f,26000.f,bLargePulse?1.f:Anticipation)*(.9f+.1f*FMath::Sin(GetWorld()->GetTimeSeconds()*7.f))
+            : GetNushiState()==ENushiState::Calm ? 1200.f*(1.f-GetCalmPresentation()) : 0.f);
+}
+
+float AMagatsuneBoss::GetTransitionAlpha() const
+{
+    return Phase == EMagatsunePhase::RootRockRoute || Phase == EMagatsunePhase::FinalRise
+        ? FMath::Clamp(PhaseTime / FMath::Max(.01f, TransitionSeconds), 0.f, 1.f) : 0.f;
+}
+
+FVector AMagatsuneBoss::GetPresentationFocus() const
+{
+    const int32 Node = Phase == EMagatsunePhase::RootRockRoute ? 7 : Phase == EMagatsunePhase::FinalRise || Phase == EMagatsunePhase::Calming ? 11 : 3;
+    return GetRouteWorld(Node);
 }
 
 bool AMagatsuneBoss::TryPurify()
@@ -220,6 +256,7 @@ void AMagatsuneBoss::HandlePurified(AKakonActor* K)
     const int32 I = Kakons.IndexOfByKey(K);
     if (I == INDEX_NONE) return;
     Telemetry.KakonPurified = I + 1;
+    NotifyPurificationPresentation();
     LogTelemetry(*FString::Printf(TEXT("Kakon%d"), I + 1));
     if (I < 2)
     {
