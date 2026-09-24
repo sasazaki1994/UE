@@ -21,7 +21,7 @@
 
 ## 次工程（今回未実装）
 
-- 顔・首・左腕の Early / Advanced 二段階状態を実マテリアルスロットへ接続する。既存 API と章対応は維持しているが、マテリアル切替は今回の必須範囲外であり未接続のままである。
+- この節は初回の共通表示実装時点の記録である。左腕の接続、および顔・首マスクの再生成手順については以下の追記を正とする。
 
 ## 禍祓い二段階表示（2026-09-18）
 
@@ -51,3 +51,20 @@
 - スクリプト実装: **IMPLEMENTED**。実際の `.uasset` 再生成: **NOT_RUN**（Unreal Editor 不在）。従って、リポジトリ内の現在の material asset はまだ parameter を持たず、ランタイムは安全に `UNSUPPORTED` として既存表示を保つ。
 - ランタイム接続: **IMPLEMENTED_IN_CPP**。素材適用成功: **NOT_RUN / asset generation pending**。顔・首・左目: **UNSUPPORTED**。
 - UE build / Automation / 同一カメラでの Early・Advanced 描画比較 / 入力操作回帰: **NOT_RUN**（Unreal Editor / UnrealBuildTool 不在）。架空の比較画像は作成していない。
+
+## 顔・首マスク制作経路（2026-09-24）
+
+### 実素材と UV の再監査
+
+- GitHub の `main` はネットワークの CONNECT 403 により取得できず、ローカルの基準点は merge commit `45d9d83` のままである。この制約を「最新 main 確認済み」とは扱わない。
+- 共有画像 `T_Shirotsura_BaseColor.png` と生成元 `Shirotsura_Rigged.blend` / `SK_Shirotsura.fbx`、生成コードを照合した。生成処理は全オブジェクトを join して一つの `AtlasUV` を再展開し、顔 `Head_under_mask`、首 `Neck_anatomy`、右手を同じ skin material に集約する。従って、既存画像の色または矩形範囲だけから三者を安全に復元することはできない。
+- 一方、join **前**には顔と首が明示的なオブジェクト名を持ち、仮面は `Reference_mask_carved_porcelain`、右手は別名である。この制作 provenance なら対象 polygon を推測せず区別できる。`ShirotsuraFaceNeckMask` corner color を全メッシュへ作り、顔・首だけ白、それ以外（右手・仮面を含む）を黒にしてから join し、同じ `AtlasUV` へ `T_Shirotsura_FaceNeckMask.png` をベイクする手順を追加した。
+
+### 安全な接続と現在の素材状態
+
+1. Blender 3.6 で `Tools/RigCharacterModels.py` を白面に対して再実行し、BaseColor 等と同じ解像度の mask PNG を生成する。
+2. UV オーバーレイまたは mask 描画で顔・首が白、右手・仮面が黒、島の bleed がないことを確認する。確認できなければ PNG と `.uasset` を採用しない。
+3. Unreal Editor で `CHARACTER_ASSET_FILTER=Shirotsura` として `Tools/ApplyRiggedMaterials.py` を実行する。PNG がある場合だけ共有 skin material に mask × `ShirotsuraCorruptionIntensity` の graph を作る。PNG がなければ skin material は変更しない。
+4. ランタイムは左腕と共有 skin の各 slot を独立に検査し、同じ既存 `Early=.28` / `Advanced=1.0` 値を、parameter が実在する slot にだけ設定する。このため未再生成 asset、別 mesh、slot 欠落でも右手や仮面へ無条件の色変更は行わない。
+
+現在チェックイン済みの PNG / FBX / `.uasset` は再生成していないため、顔・首用 mask 素材は **PENDING_ASSET_REGENERATION**、顔・首の見た目は **NOT_COMPLETE** である。モデル、skeleton、animation clip、能力、Campaign 章順は変更していない。Blender ベイク、UE C++ build、Automation、Early / Advanced の同一カメラ描画比較はこの環境では **NOT_RUN** であり、実装完了の根拠にはしていない。

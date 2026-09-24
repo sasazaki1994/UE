@@ -34,9 +34,17 @@ Feature: Shared Shirotsura presentation
     Then stage resolution and material application are reported separately
     And no shared material or unrelated slot is changed
 
-  Scenario: Only the verified left-arm section is changed
+  Scenario: Face and neck use an authored provenance mask
     Given face and neck skin share an atlas section with the right hand
-    When the corruption material setup is run twice
+    When the rig and corruption material setup are regenerated
     Then the dedicated left-arm section has one idempotent two-stage blend graph
-    And face, neck, and left-eye completion remains explicitly unsupported
+    And the face and neck polygons are white in a separately baked atlas mask
+    And the right-hand and mask polygons are black in that mask
+    And the shared skin section samples the mask before applying the two-stage blend
     And mask, clothing, right arm, sword, gameplay stats, Sense, and input are unchanged
+
+  Scenario: Missing audited mask does not change shared skin
+    Given the current checked-in Unreal assets have not been regenerated with the face-neck mask
+    When the material setup or runtime appearance application is run
+    Then the shared skin section keeps its existing material
+    And the verified left-arm section may still use the existing appearance parameter

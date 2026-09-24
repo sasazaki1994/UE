@@ -70,33 +70,34 @@ void UShirotsuraVisualComponent::ApplyCorruptionAppearance()
     }
     bCorruptionStageResolved = true;
 
-    // The audited rig has a dedicated left-arm corruption section. Head and
-    // neck share the skin atlas with the right hand, so changing that slot
-    // would violate the unaffected-region contract and is deliberately skipped.
-    static const FName CorruptionSlot(TEXT("09 • petrified corruption"));
+    // The arm has a dedicated section. The shared skin section is eligible only
+    // after its material has the authored face/neck mask parameter; legacy
+    // assets therefore keep the right hand unchanged instead of guessing UVs.
+    static const FName CorruptionSlots[] = {
+        FName(TEXT("09 • petrified corruption")),
+        FName(TEXT("05 • exposed right hand"))
+    };
     static const FName IntensityParameter(TEXT("ShirotsuraCorruptionIntensity"));
-    const int32 SlotIndex = Mesh->GetMaterialIndex(CorruptionSlot);
-    if (SlotIndex == INDEX_NONE)
+    for (const FName& CorruptionSlot : CorruptionSlots)
     {
-        UE_LOG(LogTemp, Warning, TEXT("SHIROTSURA_CORRUPTION_UNSUPPORTED mesh=%s missing_slot=%s"),
-            *GetNameSafe(Mesh->GetSkeletalMeshAsset()), *CorruptionSlot.ToString());
-        return;
+        const int32 SlotIndex = Mesh->GetMaterialIndex(CorruptionSlot);
+        if (SlotIndex == INDEX_NONE) continue;
+        UMaterialInterface* Source = Mesh->GetMaterial(SlotIndex);
+        float ExistingValue = 0.f;
+        if (!Source || !Source->GetScalarParameterValue(FMaterialParameterInfo(IntensityParameter), ExistingValue)) continue;
+        UMaterialInstanceDynamic* Instance = Mesh->CreateDynamicMaterialInstance(SlotIndex, Source);
+        if (!Instance) continue;
+        Instance->SetScalarParameterValue(IntensityParameter, Stage == EShirotsuraCorruptionStage::Early ? .28f : 1.f);
+        CorruptionMaterials.Add(Instance);
+        UE_LOG(LogTemp, Display, TEXT("SHIROTSURA_CORRUPTION_APPLIED stage=%s slot=%s"),
+            Stage == EShirotsuraCorruptionStage::Early ? TEXT("Early") : TEXT("Advanced"), *CorruptionSlot.ToString());
     }
-    UMaterialInterface* Source = Mesh->GetMaterial(SlotIndex);
-    float ExistingValue = 0.f;
-    if (!Source || !Source->GetScalarParameterValue(FMaterialParameterInfo(IntensityParameter), ExistingValue))
+    bCorruptionAppearanceApplied = CorruptionMaterials.Num() > 0;
+    if (!bCorruptionAppearanceApplied)
     {
-        UE_LOG(LogTemp, Warning, TEXT("SHIROTSURA_CORRUPTION_UNSUPPORTED mesh=%s slot=%s missing_parameter=%s"),
-            *GetNameSafe(Mesh->GetSkeletalMeshAsset()), *CorruptionSlot.ToString(), *IntensityParameter.ToString());
-        return;
+        UE_LOG(LogTemp, Warning, TEXT("SHIROTSURA_CORRUPTION_UNSUPPORTED mesh=%s missing audited slots or parameter=%s"),
+            *GetNameSafe(Mesh->GetSkeletalMeshAsset()), *IntensityParameter.ToString());
     }
-    UMaterialInstanceDynamic* Instance = Mesh->CreateDynamicMaterialInstance(SlotIndex, Source);
-    if (!Instance) return;
-    Instance->SetScalarParameterValue(IntensityParameter, Stage == EShirotsuraCorruptionStage::Early ? .28f : 1.f);
-    CorruptionMaterials.Add(Instance);
-    bCorruptionAppearanceApplied = true;
-    UE_LOG(LogTemp, Display, TEXT("SHIROTSURA_CORRUPTION_APPLIED stage=%s slot=%s"),
-        Stage == EShirotsuraCorruptionStage::Early ? TEXT("Early") : TEXT("Advanced"), *CorruptionSlot.ToString());
 }
 
 void UShirotsuraVisualComponent::RefreshFallbackVisibility()
