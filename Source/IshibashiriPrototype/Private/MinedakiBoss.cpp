@@ -112,11 +112,12 @@ void AMinedakiBoss::ResetNushi()
     Super::ResetNushi();
     BodyCueLight->SetIntensity(0.f);
     ActionState = EMinedakiActionState::Grounded;
-    ClimbTime = TransitionTime = CalmTime = 0;
-    bShakeApplied = bTransitionShakeApplied = false;
+    ClimbTime = TransitionTime = CalmTime = LivingTime = 0;
+    bShakeApplied = false;
     Telemetry = FMinedakiTelemetry();
     SetActorTransform(SpawnPose);
     BodyRoot->SetRelativeRotation(FRotator::ZeroRotator);
+    BodyRoot->SetRelativeLocation(FVector::ZeroVector);
     LeftArm->SetRelativeLocation({-70, -390, 1020});
     RightArm->SetRelativeLocation({-70, 390, 1020});
     LeftArm->SetRelativeRotation(FRotator::ZeroRotator);
@@ -192,14 +193,24 @@ void AMinedakiBoss::NotifyRouteNode(int32 Node)
 void AMinedakiBoss::Tick(float Dt)
 {
     Super::Tick(Dt);
+    AdvancePresentation(Dt);
     if (GetNushiState() == ENushiState::Active) Telemetry.Elapsed += Dt;
     AdvanceWallClimb(Dt);
     AdvancePostKakon(Dt);
-    const bool bWarning=ActionState==EMinedakiActionState::PreparingClimb
+    LivingTime += Dt;
+    const float CalmScale = 1.f - GetCalmPresentation();
+    const float Breath = BreathingPeriod > 0.f ? FMath::Sin(LivingTime * 2.f * PI / BreathingPeriod) : 0.f;
+    BodyRoot->SetRelativeLocation(FVector(0.f, 0.f, BreathingHeight * Breath * CalmScale));
+    const bool bWarning=ActionState==EMinedakiActionState::PreparingClimb || ActionState==EMinedakiActionState::ShakeWarning
         || ActionState==EMinedakiActionState::Shaking || IsBodyTransitioning();
-    BodyCueLight->SetLightColor(FLinearColor(.46f,.24f,.13f));
-    BodyCueLight->SetIntensity(GetNushiState()==ENushiState::Active && bWarning
-        ? 16000.f*(.8f+.2f*FMath::Sin(GetWorld()->GetTimeSeconds()*8.f)) : 0.f);
+    const bool bRest = ActionState==EMinedakiActionState::UpperPlatform || ActionState==EMinedakiActionState::ArmBridge
+        || ActionState==EMinedakiActionState::FinalRoute;
+    const float PurifyPulse = GetPurificationPresentation();
+    BodyCueLight->SetLightColor(PurifyPulse > 0.f ? FLinearColor(.12f,.7f,.55f)
+        : bRest && !bWarning ? FLinearColor(.12f,.38f,.24f) : FLinearColor(.46f,.24f,.13f));
+    BodyCueLight->SetIntensity(PurifyPulse > 0.f ? 22000.f * PurifyPulse
+        : GetNushiState()==ENushiState::Active && bWarning ? 16000.f*(.8f+.2f*FMath::Sin(LivingTime*8.f))
+        : GetNushiState()==ENushiState::Active && bRest ? 2400.f : 0.f);
 }
 
 void AMinedakiBoss::AdvanceWallClimb(float Dt)
@@ -226,10 +237,17 @@ void AMinedakiBoss::AdvanceWallClimb(float Dt)
         Position = {FMath::Lerp(-350.f, -650.f, Smooth(T)), 80 * FMath::Sin(T * PI), Height};
         Rotation = {FMath::Lerp(35.f, MaximumPitch, FMath::Min(T * 3, 1.f)), FMath::Lerp(8.f, MaximumYaw, Smooth(T)), 0};
         ActionState = EMinedakiActionState::ClimbingWall;
-        if (T >= .4f && T < .65f)
+        if (T >= .32f && T < .5f)
+        {
+            // A readable whole-body tension precedes the gameplay check.  The
+            // surface moves slowly here; it does not yet demand Cling.
+            ActionState = EMinedakiActionState::ShakeWarning;
+            Rotation.Roll = 3.f * FMath::SmoothStep(.32f, .5f, T);
+        }
+        else if (T >= .5f && T < .68f)
         {
             ActionState = EMinedakiActionState::Shaking;
-            Rotation.Roll = ShakeRoll * FMath::Sin((T - .4f) / .25f * PI);
+            Rotation.Roll = ShakeRoll * FMath::Sin((T - .5f) / .18f * PI);
         }
     }
     else
@@ -242,7 +260,7 @@ void AMinedakiBoss::AdvanceWallClimb(float Dt)
     SetActorLocation(SpawnPose.TransformPosition(Position));
     BodyRoot->SetRelativeRotation(Rotation);
     UpdateArmHolds();
-    if (!bShakeApplied && ClimbTime >= PrepareSeconds + WallSeconds * .5f)
+    if (!bShakeApplied && ClimbTime >= PrepareSeconds + WallSeconds * .54f)
     {
         bShakeApplied = true;
         ++Telemetry.Shakes;
@@ -279,7 +297,10 @@ void AMinedakiBoss::AdvancePostKakon(float Dt)
             return;
         }
         TransitionTime = FMath::Min(TransitionTime + Dt, RouteTransitionSeconds);
-        const float T = FMath::SmoothStep(0.f, 1.f, TransitionTime / RouteTransitionSeconds);
+        const float RawT = TransitionTime / RouteTransitionSeconds;
+        // The opening quarter is anticipation: light and camera announce the
+        // enormous limb before the safe bridge surface starts moving.
+        const float T = FMath::SmoothStep(0.f, 1.f, FMath::Clamp((RawT - .25f) / .75f, 0.f, 1.f));
         if (ActionState == EMinedakiActionState::ArmBridgeTransition)
         {
             BodyRoot->SetRelativeRotation({-12 * T, 18 * T, -20 * T});
@@ -293,13 +314,8 @@ void AMinedakiBoss::AdvancePostKakon(float Dt)
             RightArm->SetRelativeLocation(FMath::Lerp(FVector(-70, 390, 1020), FVector(-100, 520, 1510), T));
             RightArm->SetRelativeRotation({0, 0, -65 * T});
         }
-        if (!bTransitionShakeApplied && T >= .55f)
-        {
-            bTransitionShakeApplied = true;
-            ++Telemetry.Shakes;
-            if (Player) Player->ResolveShake();
-            LogTelemetry(ActionState == EMinedakiActionState::ArmBridgeTransition ? TEXT("Phase2TiltShake") : TEXT("Phase3HeadRiseShake"));
-        }
+        // Route-forming transitions never apply the phase-one Shake check.
+        // They create a path rather than unexpectedly throwing the climber.
         if (TransitionTime >= RouteTransitionSeconds) FinishTransition();
     }
     if (ActionState == EMinedakiActionState::Calming)
@@ -325,7 +341,6 @@ void AMinedakiBoss::AdvancePostKakon(float Dt)
 void AMinedakiBoss::BeginPhase(int32 Phase)
 {
     TransitionTime = 0;
-    bTransitionShakeApplied = false;
     ++Telemetry.BodyRouteTransitions;
     if (Phase == 2)
     {
@@ -372,6 +387,7 @@ void AMinedakiBoss::HandleKakonPurified(AKakonActor* Kakon)
     const int32 Index = Kakons.IndexOfByKey(Kakon);
     if (Index == INDEX_NONE) return;
     Telemetry.KakonPurified = Index + 1;
+    NotifyPurificationPresentation();
     SetPrimitiveColor(Cast<UMaterialInstanceDynamic>(CoreMarkers[Index]->GetMaterial(0)), FLinearColor(.3, 1, .85));
     if (Index == 0) BeginPhase(2);
     else if (Index == 1) BeginPhase(3);

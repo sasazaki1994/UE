@@ -83,4 +83,6 @@ private:
     float ForwardInput = 0, Progress = 0, RouteDelay = 0;
     bool bGripHeld = false, bFallen = false, bRecovering = false;
     float RecoveryGrace = 0;
+    FVector SmoothedCameraLocation = FVector::ZeroVector;
+    bool bCameraInitialized = false;
 };

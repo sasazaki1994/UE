@@ -234,7 +234,10 @@ void AMinedakiPlayer::Tick(float Dt)
     if (!IsRouteMoving()) return;
     const FVector From = Boss->GetRouteLocal(Node), To = Boss->GetRouteLocal(Destination);
     Progress = FMath::Min(1.f, Progress + RouteSpeed * Dt / FMath::Max(1.f, FVector::Dist(From, To)));
-    Grab->SetRelativeGrabTransform(FTransform(FRotator(0, 180, 0), FMath::Lerp(From, To, Progress)));
+    const float SurfaceT = FMath::SmoothStep(0.f, 1.f, Progress);
+    const FVector RouteDirection = (To - From).GetSafeNormal();
+    const FRotator SurfaceFacing = FRotationMatrix::MakeFromXZ(-FVector::ForwardVector, RouteDirection).Rotator();
+    Grab->SetRelativeGrabTransform(FTransform(SurfaceFacing, FMath::Lerp(From, To, SurfaceT)));
     if (Progress >= 1)
     {
         Node = Destination;
@@ -261,26 +264,45 @@ void AMinedakiPlayer::ResetForEncounter()
     GetCharacterMovement()->bOrientRotationToMovement = true;
     SetActorTransform(SpawnTransform(), false, nullptr, ETeleportType::TeleportPhysics);
     if (Controller) Controller->SetControlRotation(FRotator(-18, 145, 0));
+    bCameraInitialized = false;
 }
 
 void AMinedakiPlayer::CalcCamera(float Dt, FMinimalViewInfo& View)
 {
-    const FVector Focus = IsMounted() ? GetActorLocation() + FVector(0, 0, 80) : FMath::Lerp(GetActorLocation(), FVector(0, 0, 1800), .6f);
-    const float Distance = IsMounted() ? 2100.f : 3200.f;
+    FVector Focus = IsMounted() ? GetActorLocation() + FVector(0, 0, 80) : FMath::Lerp(GetActorLocation(), FVector(0, 0, 1800), .6f);
+    float Distance = IsMounted() ? 1850.f : 3200.f;
+    float PresentationFov = 80.f;
+    if (Boss && Boss->GetActionState() == EMinedakiActionState::ArmBridgeTransition)
+    {
+        const float Reveal = FMath::SmoothStep(0.f, 1.f, Boss->GetTransitionAlpha());
+        Focus = FMath::Lerp(Focus, Boss->GetRouteWorld(9), .42f * Reveal);
+        Distance = FMath::Lerp(Distance, 2600.f, Reveal);
+        PresentationFov += 3.f * Reveal;
+    }
+    else if (Boss && (Boss->GetActionState() == EMinedakiActionState::FinalTransition || GetRouteNode() >= 11))
+    {
+        Focus = FMath::Lerp(Focus, Boss->GetRouteWorld(13), .25f);
+        Distance = 2250.f;
+        PresentationFov = 82.f;
+    }
     const FRotator Orbit(FMath::Clamp(GetControlRotation().Pitch, -60.f, -8.f), GetControlRotation().Yaw, 0);
-    View.Location = Focus - Orbit.Vector() * Distance;
+    const FVector DesiredLocation = Focus - Orbit.Vector() * Distance;
+    if (!bCameraInitialized) { SmoothedCameraLocation = DesiredLocation; bCameraInitialized = true; }
+    SmoothedCameraLocation = FMath::VInterpTo(SmoothedCameraLocation, DesiredLocation, Dt, IsMounted() ? 3.5f : 6.f);
+    View.Location = SmoothedCameraLocation;
     FHitResult Hit;
     FCollisionQueryParams Params(SCENE_QUERY_STAT(MinedakiCamera), false, this);
     if (GetWorld()->SweepSingleByChannel(Hit, Focus, View.Location, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(18), Params))
         View.Location = Hit.Location;
     View.Rotation = (Focus - View.Location).Rotation();
-    View.FOV = 80;
+    View.FOV = PresentationFov + (Boss ? Boss->GetPurificationPresentation() * 1.5f : 0.f);
 }
 
 ECorruptionWarning AMinedakiPlayer::ComputeCorruptionWarning() const
 {
     if (!Boss) return ECorruptionWarning::None;
-    if (Boss->GetActionState() == EMinedakiActionState::Shaking) return ECorruptionWarning::Danger;
+    if (Boss->GetActionState() == EMinedakiActionState::ShakeWarning || Boss->GetActionState() == EMinedakiActionState::Shaking)
+        return ECorruptionWarning::Danger;
     return Boss->IsBodyTransitioning() ? ECorruptionWarning::Transition : ECorruptionWarning::None;
 }
 

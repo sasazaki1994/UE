@@ -54,3 +54,19 @@ def test_zero_duration_transitions_are_guarded() -> None:
 
     assert "RouteTransitionSeconds<=0" in source
     assert "CalmSeconds<=0" in source
+
+
+def test_living_mountain_presentation_preserves_gameplay_authority() -> None:
+    header = compact(read("Source/IshibashiriPrototype/Public/MinedakiBoss.h"))
+    boss = compact(read("Source/IshibashiriPrototype/Private/MinedakiBoss.cpp"))
+    player = compact(read("Source/IshibashiriPrototype/Private/MinedakiPlayer.cpp"))
+
+    assert "ShakeWarning" in header
+    assert "BreathingHeight=14.f" in header and "BreathingPeriod=6.f" in header
+    assert "AdvancePresentation(Dt)" in boss
+    assert "NotifyPurificationPresentation()" in boss
+    assert "(RawT-.25f)/.75f" in boss
+    transition = boss[boss.index("voidAMinedakiBoss::AdvancePostKakon"):boss.index("voidAMinedakiBoss::BeginPhase")]
+    assert "Player->ResolveShake()" not in transition
+    assert "FMath::SmoothStep(0.f,1.f,Progress)" in player
+    assert "VInterpTo(SmoothedCameraLocation" in player

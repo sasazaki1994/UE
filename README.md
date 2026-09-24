@@ -26,7 +26,7 @@ CampaignのTitleではSpace / Xで新規開始し、保存がある場合はR / 
 .\Tools\Prototype.ps1 -Action Test -Magatsune -SkipBuild -Gamepad -TestFPS 60
 ```
 
-第三の主「峰抱き」の完成Primitive主戦は **`.\Tools\Prototype.ps1 -Action Play -Minedaki`** で起動します。脚から背中へ登り、巨体の崖登り、腕橋、肩から頭部への身体変形ルートをClingで渡って3つの禍根を祓うと、共通Nushi進行で **3/3 → Calm → Encounter Completed → Victory** になります。落下時は進行を保持して安全棚から再Grabでき、R / Yの全Retryも残しています。詳細は [峰抱き完成主戦・検証](Docs/MinedakiSlice.md) を参照してください。通常起動の石走りと `-Fuchimatoi` は維持しています。
+第三の主「峰抱き」の完成Primitive主戦は **`.\Tools\Prototype.ps1 -Action Play -Minedaki`** で起動します。脚から背中へ登り、呼吸する巨体の崖登り、予兆を読んで行うCling、安全な休息点、主の腕が道になるArm Bridge、肩から頭部への身体変形ルートを渡って3つの禍根を祓うと、共通Nushi進行で **3/3 → Calm → Encounter Completed → Victory** になります。落下時は進行を保持して安全棚から再Grabでき、R / Yの全Retryも残しています。基本Contractは [峰抱き完成主戦・検証](Docs/MinedakiSlice.md)、Living Mountain演出の実装境界・`ASSET_REQUIRED`・`NOT_RUN`は [峰抱き Living Mountain Vertical Slice](Docs/MinedakiLivingMountainVerticalSlice.md) を参照してください。通常起動の石走りと `-Fuchimatoi` は維持しています。
 
 UE 5.6 / Windows向け。白面の祓い手を操作し、約12mの巨猪へ取り付き、移動する背中の岩棚を登って3つの禍根を祓います。
 主人公と猪に骨組み・スキニング・アニメーションを実装し、岩肌・布・皮膚の質感を改善しています。
