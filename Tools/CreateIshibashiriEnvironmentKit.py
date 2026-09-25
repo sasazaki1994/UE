@@ -205,15 +205,18 @@ def boundary_stone(mats):
     return [obj], collision
 
 
-def dimensions_and_triangles(objects):
-    points = [obj.matrix_world @ Vector(corner) for obj in objects for corner in obj.bound_box]
+def geometry_metrics(objects):
+    """Measure authored vertices; object bound_box can be stale after direct mesh edits."""
+    points = [obj.matrix_world @ vertex.co for obj in objects for vertex in obj.data.vertices]
     mins = [min(p[i] for p in points) for i in range(3)]
     maxs = [max(p[i] for p in points) for i in range(3)]
-    triangles = 0
+    vertices = triangles = 0
     for obj in objects:
+        obj.data.update()
+        vertices += len(obj.data.vertices)
         obj.data.calc_loop_triangles()
         triangles += len(obj.data.loop_triangles)
-    return [round((maxs[i]-mins[i])*100, 3) for i in range(3)], triangles
+    return [round((maxs[i]-mins[i])*100, 3) for i in range(3)], vertices, triangles
 
 
 def preview(path, visual, dimensions):
@@ -288,7 +291,8 @@ def generate(asset, builder, manifest_asset):
         "Moss": procedural_material("Moss", (.09,.14,.065), .95, 11, .2),
     }
     visual, collision = builder(mats)
-    dimensions, triangles = dimensions_and_triangles(visual)
+    dimensions, vertices, triangles = geometry_metrics(visual)
+    collision_dimensions, collision_vertices, collision_triangles = geometry_metrics([collision])
     directory = OUTPUT / asset.removeprefix("SM_Ishibashiri_")
     directory.mkdir(parents=True, exist_ok=True)
     selected = visual + [collision]
@@ -302,7 +306,10 @@ def generate(asset, builder, manifest_asset):
     report = {
         "asset_id": asset, "generator": "Blender procedural", "blender_version": bpy.app.version_string,
         "seed": seed, "dimensions_cm": {"x": dimensions[0], "y": dimensions[1], "z": dimensions[2]},
-        "triangle_count": triangles, "mesh_object_count": len(visual),
+        "vertex_count": vertices, "triangle_count": triangles, "mesh_object_count": len(visual),
+        "visual_object_names": [obj.name for obj in visual],
+        "collision": {"name": collision.name, "dimensions_cm": collision_dimensions,
+                      "vertex_count": collision_vertices, "triangle_count": collision_triangles},
         "material_count": len({slot.material.name for obj in visual for slot in obj.material_slots}),
         "material_note": MATERIAL_NOTE, "lod_status": {"LOD0":"GENERATED", "LOD1":"NOT_GENERATED", "LOD2":"NOT_GENERATED"},
         "collision_status": "GENERATED: " + collision.name, "pivot": manifest_asset["pivot_policy"],

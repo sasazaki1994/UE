@@ -245,6 +245,21 @@ def import_rig_helper():
     return module
 
 
+def required_baseline_actions(character, available):
+    """Validate baseline action names against rig-info without generating clips."""
+    required = read(ROOT / 'Art/Characters' / character / 'Rigged/rig-info.json')['animations']
+    required_names = list(required)
+    if len(required_names) != len(set(required_names)):
+        raise ValueError('Duplicate required action in rig-info.json')
+    missing = [name for name in required_names if name not in available]
+    renamed = [name for name in available
+               if any(name.startswith(required_name + '.') for required_name in required_names)]
+    if missing or renamed:
+        raise ValueError('Baseline action contract mismatch: missing=%s unexpected_renames=%s' %
+                         (missing, renamed))
+    return required_names
+
+
 def prepare_rig(args):
     base = folder(args.character)
     clean = base / 'Blender' / (args.character + '_Clean.blend')
@@ -256,7 +271,19 @@ def prepare_rig(args):
     target_meshes = meshes()
     baseline = ROOT / 'Art/Characters' / args.character / 'Rigged' / (args.character + '_Rigged.blend')
     with bpy.data.libraries.load(str(baseline), link=False) as (src, dst):
+        required_names = required_baseline_actions(args.character, list(src.actions))
         dst.objects = src.objects
+        # Actions are independent datablocks. Loading objects does not guarantee that
+        # unassigned clips follow them, so append the rig-info contract explicitly.
+        dst.actions = required_names
+    loaded_actions = [action for action in dst.actions if action]
+    loaded_names = [action.name for action in loaded_actions]
+    if len(loaded_actions) != len(required_names) or set(loaded_names) != set(required_names):
+        raise ValueError('Required action load count/name mismatch: expected %s, loaded %s' %
+                         (required_names, loaded_names))
+    for action in loaded_actions:
+        # Preserve explicitly appended, currently unassigned actions in the prepared blend.
+        action.use_fake_user = True
     appended = [o for o in dst.objects if o]
     for ob in appended:
         bpy.context.collection.objects.link(ob)
@@ -266,7 +293,7 @@ def prepare_rig(args):
         raise ValueError('Baseline must contain one armature and one weighted mesh')
     rig, donor = rigs[0], donors[0]
     rig.data.pose_position = 'REST'
-    # Shared skeleton/actions are retained verbatim; geometry stays Tripo sourced.
+    # Shared skeleton/actions are loaded from the baseline; geometry stays Tripo sourced.
     for body in target_meshes:
         select([body])
         for group in donor.vertex_groups:
@@ -319,6 +346,14 @@ def verify_rig(name, rig, body):
         if not weights or any(not math.isfinite(w) or w < 0 for w in weights) or abs(sum(weights) - 1) > .001:
             raise ValueError('Unweighted/unnormalized vertex: ' + str(vertex.index))
     required = read(ROOT / 'Art/Characters' / name / 'Rigged/rig-info.json')['animations']
+    required_names = list(required)
+    present = [action.name for action in bpy.data.actions if action.name in required]
+    renamed = [action.name for action in bpy.data.actions
+               if any(action.name.startswith(clip + '.') for clip in required_names)]
+    missing = [clip for clip in required_names if clip not in present]
+    if missing or len(present) != len(required_names) or renamed:
+        raise ValueError('Baseline action contract mismatch: missing=%s renamed=%s expected_count=%d actual_count=%d' %
+                         (missing, renamed, len(required_names), len(present)))
     deformation = {}
     rig.data.pose_position = 'POSE'
     rig.animation_data_clear()

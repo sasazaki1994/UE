@@ -16,6 +16,7 @@ ASSETS = (
     "SM_Ishibashiri_BoundaryStone_A",
 )
 TOLERANCE = 0.03
+PREVIEW_PREFIX = "PREVIEW_"
 
 
 def fail(message):
@@ -24,6 +25,23 @@ def fail(message):
 
 def fresh_scene():
     bpy.ops.wm.read_factory_settings(use_empty=True)
+
+
+def aabb(points):
+    lower = [min(point[i] for point in points) for i in range(3)]
+    upper = [max(point[i] for point in points) for i in range(3)]
+    return {"min": lower, "max": upper,
+            "dimensions_cm": [round((upper[i] - lower[i]) * 100, 3) for i in range(3)]}
+
+
+def object_diagnostic(obj):
+    obj.data.calc_loop_triangles()
+    local = [vertex.co.copy() for vertex in obj.data.vertices]
+    world = [obj.matrix_world @ point for point in local]
+    return {"name": obj.name, "location": list(obj.location),
+            "rotation_euler": list(obj.rotation_euler), "scale": list(obj.scale),
+            "vertex_count": len(local), "triangle_count": len(obj.data.loop_triangles),
+            "local_aabb": aabb(local), "world_aabb": aabb(world)}
 
 
 def mesh_metrics(objects):
@@ -44,8 +62,8 @@ def mesh_metrics(objects):
             fail(f"{obj.name}: abnormal scale {tuple(obj.scale)}")
     if vertices <= 0 or triangles <= 0 or not points:
         fail("empty geometry")
-    dimensions = [max(p[i] for p in points) - min(p[i] for p in points) for i in range(3)]
-    return vertices, triangles, [round(value * 100, 3) for value in dimensions]
+    bounds = aabb(points)
+    return vertices, triangles, bounds["dimensions_cm"], bounds
 
 
 def import_and_validate(asset, suffix, report):
@@ -56,25 +74,47 @@ def import_and_validate(asset, suffix, report):
     else:
         bpy.ops.import_scene.gltf(filepath=str(path))
     meshes = [obj for obj in bpy.context.scene.objects if obj.type == "MESH"]
+    preview_objects = [obj.name for obj in bpy.context.scene.objects if obj.name.startswith(PREVIEW_PREFIX)]
+    if preview_objects:
+        fail(f"{asset} {suffix}: preview objects leaked into export: {preview_objects}")
     collision_name = "UCX_" + asset + "_00"
     collisions = [obj for obj in meshes if obj.name == collision_name]
     if len(collisions) != 1:
         fail(f"{asset} {suffix}: expected collision {collision_name}, got {[o.name for o in meshes]}")
     visual = [obj for obj in meshes if not obj.name.startswith("UCX_")]
-    vertices, triangles, dimensions = mesh_metrics(visual)
-    collision_vertices, collision_triangles, _ = mesh_metrics(collisions)
+    expected_names = set(report["visual_object_names"])
+    actual_names = {obj.name for obj in visual}
+    if actual_names != expected_names:
+        fail(f"{asset} {suffix}: visual object mismatch expected={sorted(expected_names)} actual={sorted(actual_names)}")
+    vertices, triangles, dimensions, world_bounds = mesh_metrics(visual)
+    collision_vertices, collision_triangles, collision_dimensions, collision_bounds = mesh_metrics(collisions)
+    # Importers may split vertices at normals/UV seams; triangle loss is not valid.
+    if triangles != report["triangle_count"]:
+        fail(f"{asset} {suffix}: triangle count mismatch {triangles}/{report['triangle_count']}")
+    expected_collision = report["collision"]
+    if collision_triangles != expected_collision["triangle_count"]:
+        fail(f"{asset} {suffix}: collision geometry count mismatch")
     expected = list(report["dimensions_cm"].values())
     deviations = [abs(actual-wanted)/max(wanted, 1e-9) for actual, wanted in zip(dimensions, expected)]
     if any(value > TOLERANCE for value in deviations):
         fail(f"{asset} {suffix}: dimensions {dimensions} differ from {expected}; deviations={deviations}")
+    collision_deviations = [abs(actual-wanted)/max(wanted, 1e-9)
+                            for actual, wanted in zip(collision_dimensions, expected_collision["dimensions_cm"])]
+    if any(value > TOLERANCE for value in collision_deviations):
+        fail(f"{asset} {suffix}: collision dimensions changed; deviations={collision_deviations}")
     return {
         "status": "PASS", "format": suffix[1:].upper(), "file": path.name,
-        "mesh_count": len(visual), "vertices": vertices, "triangles": triangles,
+        "mesh_count": len(visual), "visual_object_names": sorted(actual_names),
+        "vertex_count": vertices, "triangle_count": triangles,
         "dimensions_cm": dict(zip(("x", "y", "z"), dimensions)),
+        "world_aabb": world_bounds, "objects": [object_diagnostic(obj) for obj in visual],
         "dimension_tolerance_fraction": TOLERANCE,
         "collision": {"status": "PASS", "name": collision_name,
-                      "vertices": collision_vertices, "triangles": collision_triangles},
+                      "vertex_count": collision_vertices, "triangle_count": collision_triangles,
+                      "dimensions_cm": collision_dimensions, "world_aabb": collision_bounds,
+                      "object": object_diagnostic(collisions[0])},
         "finite_geometry": True, "scale_check": "PASS", "empty_geometry": False,
+        "preview_objects": [],
     }
 
 
