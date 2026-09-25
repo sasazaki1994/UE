@@ -220,12 +220,20 @@ def preview(path, visual, dimensions):
     gray = procedural_material("PreviewGround", (.14, .15, .16), .95, 3)
     bpy.ops.mesh.primitive_plane_add(size=max(dimensions)*3, location=(0, 0, -.012))
     ground = bpy.context.object; ground.name = "PREVIEW_Ground"; ground.data.materials.append(gray)
+    # A neutral 172 cm capsule makes scale legible in the artifact without being
+    # selected for (or included in) either production export.
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=12, location=(-dimensions[0]/200-.65, 0, .86))
+    human = bpy.context.object; human.name = "PREVIEW_HumanScale_172cm"
+    human.scale = (.24, .24, .86)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    human.data.materials.append(procedural_material("HumanScale", (.32, .36, .40), .72, 2, 0))
     target = Vector((0, 0, dimensions[2]/200))
     distance = max(dimensions)/100 * 1.65
     bpy.ops.object.camera_add(location=(distance*.72, -distance, target.z + distance*.28))
     camera = bpy.context.object; camera.name = "PREVIEW_Camera"
     camera.rotation_euler = (target-camera.location).to_track_quat("-Z", "Y").to_euler()
-    camera.data.type = "ORTHO"; camera.data.ortho_scale = max(dimensions[2]/100*1.15, dimensions[0]/100*1.25)
+    camera.data.type = "ORTHO"
+    camera.data.ortho_scale = max(dimensions[2]/100*1.15, dimensions[0]/100*1.5 + 1.0)
     bpy.context.scene.camera = camera
     for location, energy, size in (((-distance,-distance,distance*1.4),900, distance*.8),
                                    ((distance,-distance*.4,distance),500,distance*.6)):
@@ -233,6 +241,39 @@ def preview(path, visual, dimensions):
         light=bpy.context.object; light.name="PREVIEW_Light"; light.data.energy=energy; light.data.size=size
         light.rotation_euler=(target-light.location).to_track_quat("-Z","Y").to_euler()
     bpy.context.scene.render.filepath = str(path)
+    bpy.ops.render.render(write_still=True)
+
+
+def contact_sheet(entries):
+    """Render the three already-rendered previews into one dependency-free sheet."""
+    reset(SEED)
+    scene = bpy.context.scene
+    scene.render.engine = "BLENDER_EEVEE"
+    scene.render.resolution_x, scene.render.resolution_y = 1800, 720
+    scene.render.resolution_percentage = 100
+    scene.world.color = (.018, .022, .028)
+    for index, (asset, preview_path, dimensions, triangles) in enumerate(entries):
+        x = (index - 1) * 6.1
+        bpy.ops.mesh.primitive_plane_add(size=2, location=(x, 0, 0.65), rotation=(math.pi/2, 0, 0))
+        panel = bpy.context.object
+        panel.scale = (2.7, 2.7, 1)
+        mat = bpy.data.materials.new("Contact_" + asset); mat.use_nodes = True
+        nodes = mat.node_tree.nodes; links = mat.node_tree.links
+        for node in list(nodes): nodes.remove(node)
+        output = nodes.new("ShaderNodeOutputMaterial"); emission = nodes.new("ShaderNodeEmission")
+        texture = nodes.new("ShaderNodeTexImage"); texture.image = bpy.data.images.load(str(preview_path), check_existing=False)
+        links.new(texture.outputs["Color"], emission.inputs["Color"]); links.new(emission.outputs["Emission"], output.inputs["Surface"])
+        panel.data.materials.append(mat)
+        bpy.ops.object.text_add(location=(x-2.7, -.02, -2.35), rotation=(math.pi/2, 0, 0))
+        label = bpy.context.object
+        label.data.body = "%s\n%.1f x %.1f x %.1f cm | %s triangles" % (asset, *dimensions, format(triangles, ","))
+        label.data.align_x = "LEFT"; label.data.size = .30; label.data.space_line = 1.15
+        label.data.materials.append(procedural_material("Label_" + str(index), (.75, .88, .92), .8, 2, 0))
+    bpy.ops.object.camera_add(location=(0, -18, 0))
+    camera = bpy.context.object; camera.rotation_euler = (math.pi/2, 0, 0)
+    camera.data.type = "ORTHO"; camera.data.ortho_scale = 7.2
+    scene.camera = camera
+    scene.render.filepath = str(OUTPUT / "IshibashiriEnvironment_FirstBatch_ContactSheet.png")
     bpy.ops.render.render(write_still=True)
 
 
@@ -276,8 +317,14 @@ def main():
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     specs = {a["asset_id"]: a for a in manifest["assets"]}
     builders = (old_cedar, rock, boundary_stone)
+    entries = []
     for asset, builder in zip(ASSET_IDS, builders):
         generate(asset, builder, specs[asset])
+        directory = OUTPUT / asset.removeprefix("SM_Ishibashiri_")
+        report = json.loads((directory/(asset+"_report.json")).read_text(encoding="utf-8"))
+        entries.append((asset, directory/(asset+"_preview.png"),
+                        list(report["dimensions_cm"].values()), report["triangle_count"]))
+    contact_sheet(entries)
     print("Generated exactly three BLENDER PRODUCTION CANDIDATE assets in", OUTPUT)
 
 

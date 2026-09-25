@@ -143,3 +143,9 @@ python Tools/VerifyIshibashiriEnvironmentKit.py
 - Tripoを契約しても、自動的に全Assetを作り直す必要はない。
 
 現在の環境にBlender executableがない場合はasset実体を偽造せず、manifestの`fallback_generation_status`を`NOT_RUN`に維持する。この場合の結果は **BLENDER GENERATION NOT_RUN — BLENDER EXECUTABLE NOT AVAILABLE** とする。
+
+## GitHub Actions first-batch evidence
+
+`Ishibashiri environment first batch` workflowは公式archiveのBlender 3.6.23をSHA256検証してから、cleanな生成先で上記3点だけを実生成する。FBX/GLBはそれぞれfresh sceneへ再importし、mesh/vertex/triangle、有限座標、scale、report寸法との差、実在する`UCX_` collision geometryを検査する。Previewにはexportされない172cm capsuleを置き、解像度・非単色を検査する。3枚のContact Sheet、各round-trip JSON、validation summary、全成果物の`SHA256SUMS.txt`も同じ14日保持Artifactへ収録する。
+
+このworkflowの成功は **BLENDER PRODUCTION CANDIDATE** までを意味する。UE Import、material、collision、navigation、Approach/Basin配置、Grab/Climbing regression、HighQuality、Lumen、VSM、FPS、Before/After、human visual approvalはWindows UE 5.6.1で実施するまで全て`NOT_RUN`である。workflowは生成binaryをGitへcommitしない。

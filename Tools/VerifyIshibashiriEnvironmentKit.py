@@ -27,7 +27,7 @@ def validate(root=GENERATED):
         directory = root / asset.removeprefix("SM_Ishibashiri_")
         expected = [directory/(asset+suffix) for suffix in (".glb", ".fbx", "_report.json", "_preview.png")]
         absent = [str(p.relative_to(root.parent) if p.is_relative_to(root.parent) else p)
-                  for p in expected if not p.is_file()]
+                  for p in expected if not p.is_file() or p.stat().st_size <= 0]
         if absent:
             missing.extend(absent)
             continue
@@ -38,6 +38,9 @@ def validate(root=GENERATED):
             continue
         spec = specs[asset]
         if report.get("asset_id") != asset: errors.append(f"{asset}: asset_id mismatch")
+        for key in ("blender_version", "seed", "dimensions_cm", "triangle_count", "material_count",
+                    "pivot", "collision_status", "lod_status", "generation_status"):
+            if key not in report: errors.append(f"{asset}: required report field {key} missing")
         for axis, limits in dimension_ranges(spec).items():
             value = report.get("dimensions_cm", {}).get(axis)
             if value is None or not limits[0] <= value <= limits[1]:

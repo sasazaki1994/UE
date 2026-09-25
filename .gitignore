@@ -14,6 +14,7 @@
 /Tests/__pycache__/
 /.pytest_cache/
 /Artifacts/
+/Art/Environment/Ishibashiri/Generated/
 /Art/*.zip
 /compile_commands.json
 /.cache/
