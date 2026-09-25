@@ -294,6 +294,11 @@ try {
             if ($Capture) {
                 if ($IshibashiriDemo) {
                     $PlannedDemoShots = @('01-Title','02-Prologue','03-Approach','04-IshibashiriReveal','05-Charge','06-GroundGrab','07-Climbing','08-Kakon1','09-Kakon2','10-Kakon3','11-Calm','12-DemoEnding1','13-DemoEnding2','14-ReturnToTitle')
+                    $DemoCaptureDir = Join-Path $ProjectRoot "Saved\Screenshots\IshibashiriDemo\$RunId"
+                    foreach ($Name in $PlannedDemoShots) {
+                        $Shot = Get-Item -LiteralPath (Join-Path $DemoCaptureDir "$Name.png") -ErrorAction Stop
+                        if ($Shot.Length -lt 100) { throw "Screenshot is empty: $($Shot.FullName)" }
+                    }
                     Write-Host "Ishibashiri demo capture destination: Saved\Screenshots\IshibashiriDemo\$RunId"
                     Write-Host "Capture contract: $($PlannedDemoShots -join ', ')"
                     exit 0

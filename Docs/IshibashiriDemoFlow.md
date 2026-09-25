@@ -52,3 +52,7 @@ runnerとカード側には専用保存先、終了カード、Title復帰の取
 - UE Build / UHT / Runtime / Visual / Input / Screenshot: **NOT_RUN — WINDOWS UE 5.6.1 REQUIRED**。
 - 実機では最初に、保存済み通常Campaignが不変であること、Titleからの全入力、3/3→Calm→Completed→2カード→Titleの順序、ログが1回だけであること、Fuchimatoiがspawnしないことを確認する。
 - Captureは上記14場面の存在、内容、順序を同じRunIdで確認する。静的検査は画像の実在や視覚品質を証明しない。
+
+## 専用Review Gate
+
+Windows + UE 5.6.1でのBuild、Demo E2E matrix、14場面Capture、HighQuality実証、Save/Retry/Sense、通常Campaign最小Regression、およびPackage可否は [Ishibashiri Demo Review Gate](IshibashiriDemoReviewGate.md) の1コマンドで判定する。現時点の実機結果はNOT_RUNである。
