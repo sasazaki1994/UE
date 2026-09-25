@@ -69,3 +69,7 @@ Prologueは現在の4枚をまず流用し、初見プレイで冗長な場合�
 - `Docs/CampaignFlow.md`: 全4戦の本編。石走り編の短い結末はまだ実装されていない。
 
 本方針の確定によって、UE実行結果、Tripo完成モデル、音源、石走り編専用のEndingが生成されたわけではない。
+
+## 専用Demo Review Gateへの移行
+
+実装済みの石走り専用フローを最初の完成目標として判定する現在の手順は [Ishibashiri Demo Review Gate](IshibashiriDemoReviewGate.md) を正本とする。従来のFull Review Gateは4戦全体のmatrix用として維持する。
