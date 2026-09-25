@@ -21,3 +21,14 @@
     かつ 6音を仕様順に聴けるプレビューWAVがある
     かつ 無音、クリッピング、極端な音量差がない
     かつ 人による試聴結果とUE内確認の実施有無を区別して記録する
+
+  シナリオ: 自動検査は人とUEによる確認を代行しない
+    もし 共通効果音validatorを実行する
+    なら provenance、WAV、previewの自動検査結果を個別に表示する
+    かつ 人による試聴が未実施なら human listening NOT_RUN と表示する
+    かつ UEへのimportが未実施なら UE import NOT_RUN と表示する
+
+  シナリオ: 不完全なライセンス情報を採用扱いにしない
+    前提 役割が adopted と記録されている
+    もし license URLまたは再配布確認が欠けている
+    なら validatorはprovenance不備として失敗する

@@ -1,6 +1,6 @@
 # 共通効果音 試作記録
 
-## 結論（2026-09-24）
+## 結論（2026-09-25）
 
 素材サイトへの外部接続が HTTP 403 で遮断され、音源ページ、音声本体、作者、個別ライセンスを確認できなかった。したがって、試聴済みまたはライセンス確認済みとは報告せず、WAV とプレビューは収録していない。無関係なローカル音声や生成音で6役を埋めることもしない。候補と不足理由は `Audio/CommonSfx/manifest.json` に記録した。
 
@@ -12,6 +12,20 @@
 - GitHub `sasazaki1994/UE` main: https://github.com/sasazaki1994/UE
 
 この状態は「適切な素材が見つかった」状態ではなく、調査環境の制約による **blocked** である。
+
+2026-09-25 に再調査したが、`git fetch origin main` は CONNECT tunnel の HTTP 403、外部ページの直接確認も利用可能なWeb経路で HTTP 401 となった。このため最新 `main` の取得、元ページの確認、音源取得のいずれも完了していない。既存checkoutの内容だけを確認し、出典を推測せず、6役はすべて `pending` のままとした。
+
+## Validator結果
+
+validatorは、blocked時にも次を別々に表示する。
+
+- provenance: `BLOCKED`
+- WAV technical validation: `NOT_RUN`
+- preview: `NOT_RUN`
+- human listening: `NOT_RUN`
+- UE import: `NOT_RUN`
+
+したがってPythonの実行成功は、人による試聴やゲーム内確認の完了を意味しない。
 
 ## 再開手順
 
