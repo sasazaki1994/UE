@@ -23,6 +23,21 @@ Feature: Ishibashiri first-batch Blender evidence
     And physical dimensions and non-empty collision geometry remain within 3 percent
     And no PREVIEW object is present in either production export
 
+  Scenario: Render review evidence without exporting review helpers
+    Given each candidate has a production visual mesh and a named UCX collision proxy
+    When its neutral review preview is rendered
+    Then every UCX object is hidden from the render
+    And every production visual mesh remains visible in the render
+    And the grounded 172 cm reference is framed beside rather than over the candidate
+    But the FBX and GLB selections still contain the UCX proxy
+    And no PREVIEW object is selected for either production export
+
+  Scenario: Compare all three candidates in one contact sheet
+    Given usable individual previews for OldCedar_A, Rock_A, and BoundaryStone_A
+    When Blender renders the 1800 by 720 contact sheet
+    Then the three uncropped previews appear in separate left, centre, and right panels
+    And every panel identifies the asset, dimensions, and triangle count
+
   Scenario: Preserve the downstream review boundary
     Given Blender generation and round-trip checks pass
     When the evidence artifact is packaged with checksums

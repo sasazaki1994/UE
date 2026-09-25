@@ -21,6 +21,8 @@ ASSET_IDS = (
     "SM_Ishibashiri_BoundaryStone_A",
 )
 MATERIAL_NOTE = "PROCEDURAL MATERIAL — UE FINAL MATERIAL / BAKE REQUIRED"
+PREVIEW_PREFIX = "PREVIEW_"
+COLLISION_PREFIX = "UCX_"
 
 
 def reset(seed):
@@ -60,6 +62,21 @@ def procedural_material(name, base, roughness, noise_scale, bump_strength=0.18):
     links.new(noise.outputs["Fac"], bump.inputs["Height"])
     links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
     mat["export_note"] = MATERIAL_NOTE
+    return mat
+
+
+def emission_material(name, colour):
+    """Unlit material for review annotations that must remain legible headlessly."""
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    nodes, links = mat.node_tree.nodes, mat.node_tree.links
+    for node in list(nodes):
+        nodes.remove(node)
+    output = nodes.new("ShaderNodeOutputMaterial")
+    emission = nodes.new("ShaderNodeEmission")
+    emission.inputs["Color"].default_value = (*colour, 1)
+    emission.inputs["Strength"].default_value = 1.0
+    links.new(emission.outputs["Emission"], output.inputs["Surface"])
     return mat
 
 
@@ -219,29 +236,66 @@ def geometry_metrics(objects):
     return [round((maxs[i]-mins[i])*100, 3) for i in range(3)], vertices, triangles
 
 
+def world_bounds(objects):
+    points = [obj.matrix_world @ Vector(corner) for obj in objects for corner in obj.bound_box]
+    return ([min(point[axis] for point in points) for axis in range(3)],
+            [max(point[axis] for point in points) for axis in range(3)])
+
+
+def set_preview_visibility(visual):
+    """Keep collision in the scene/exports, but never in human-review renders."""
+    visual_ids = {id(obj) for obj in visual}
+    for obj in bpy.context.scene.objects:
+        if obj.name.startswith(COLLISION_PREFIX):
+            obj.hide_render = True
+        elif id(obj) in visual_ids:
+            obj.hide_render = False
+
+
 def preview(path, visual, dimensions):
-    gray = procedural_material("PreviewGround", (.14, .15, .16), .95, 3)
-    bpy.ops.mesh.primitive_plane_add(size=max(dimensions)*3, location=(0, 0, -.012))
+    set_preview_visibility(visual)
+    lower, upper = world_bounds(visual)
+    width = upper[0] - lower[0]
+    gray = procedural_material("PreviewGround", (.22, .23, .24), .95, 3)
+    ground_size = max(max(dimensions) / 100 * 3.0, width + 4.0,
+                      (upper[1] - lower[1]) + 4.0, 5.0)
+    bpy.ops.mesh.primitive_plane_add(size=ground_size, location=(0, 0, -.012))
     ground = bpy.context.object; ground.name = "PREVIEW_Ground"; ground.data.materials.append(gray)
     # A neutral 172 cm capsule makes scale legible in the artifact without being
     # selected for (or included in) either production export.
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=12, location=(-dimensions[0]/200-.65, 0, .86))
+    human_x = lower[0] - .62
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=12, location=(human_x, 0, .86))
     human = bpy.context.object; human.name = "PREVIEW_HumanScale_172cm"
     human.scale = (.24, .24, .86)
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     human.data.materials.append(procedural_material("HumanScale", (.32, .36, .40), .72, 2, 0))
-    target = Vector((0, 0, dimensions[2]/200))
-    distance = max(dimensions)/100 * 1.65
-    bpy.ops.object.camera_add(location=(distance*.72, -distance, target.z + distance*.28))
+    review_objects = visual + [human]
+    review_lower, review_upper = world_bounds(review_objects)
+    target = Vector(tuple((review_lower[i] + review_upper[i]) * .5 for i in range(3)))
+    # The AABB diagonal is a conservative fit for the projected 3/4 silhouette.
+    span = (Vector(review_upper) - Vector(review_lower)).length
+    distance = max(span * 1.8, 6.0)
+    view_direction = Vector((.78, -1.0, .34)).normalized()
+    bpy.ops.object.camera_add(location=target + view_direction * distance)
     camera = bpy.context.object; camera.name = "PREVIEW_Camera"
     camera.rotation_euler = (target-camera.location).to_track_quat("-Z", "Y").to_euler()
     camera.data.type = "ORTHO"
-    camera.data.ortho_scale = max(dimensions[2]/100*1.15, dimensions[0]/100*1.5 + 1.0)
+    # A conservative 15% review margin also protects the scale reference from cropping.
+    camera.data.ortho_scale = span * 1.30
     bpy.context.scene.camera = camera
-    for location, energy, size in (((-distance,-distance,distance*1.4),900, distance*.8),
-                                   ((distance,-distance*.4,distance),500,distance*.6)):
+    scene = bpy.context.scene
+    scene.world.use_nodes = True
+    scene.world.node_tree.nodes["Background"].inputs["Color"].default_value = (.12, .13, .15, 1)
+    scene.world.node_tree.nodes["Background"].inputs["Strength"].default_value = .65
+    if hasattr(scene, "eevee"):
+        scene.eevee.use_gtao = True
+        scene.eevee.gtao_distance = 3
+        scene.eevee.gtao_factor = 1.15
+    for index, (location, energy, size) in enumerate((
+            ((-distance*.65, -distance*.55, target.z + distance*.85), 1250, distance*.7),
+            ((distance*.55, -distance*.25, target.z + distance*.35), 700, distance*.55))):
         bpy.ops.object.light_add(type="AREA", location=location)
-        light=bpy.context.object; light.name="PREVIEW_Light"; light.data.energy=energy; light.data.size=size
+        light=bpy.context.object; light.name="PREVIEW_Light_%02d" % index; light.data.energy=energy; light.data.size=size
         light.rotation_euler=(target-light.location).to_track_quat("-Z","Y").to_euler()
     bpy.context.scene.render.filepath = str(path)
     bpy.ops.render.render(write_still=True)
@@ -256,22 +310,24 @@ def contact_sheet(entries):
     scene.render.resolution_percentage = 100
     scene.world.color = (.018, .022, .028)
     for index, (asset, preview_path, dimensions, triangles) in enumerate(entries):
-        x = (index - 1) * 6.1
+        x = (index - 1) * 6.0
         bpy.ops.mesh.primitive_plane_add(size=2, location=(x, 0, 0.65), rotation=(math.pi/2, 0, 0))
         panel = bpy.context.object
-        panel.scale = (2.7, 2.7, 1)
+        panel.name = "CONTACT_Panel_%02d" % index
+        panel.scale = (2.65, 2.65, 1)
         mat = bpy.data.materials.new("Contact_" + asset); mat.use_nodes = True
         nodes = mat.node_tree.nodes; links = mat.node_tree.links
         for node in list(nodes): nodes.remove(node)
         output = nodes.new("ShaderNodeOutputMaterial"); emission = nodes.new("ShaderNodeEmission")
+        emission.inputs["Strength"].default_value = 1.0
         texture = nodes.new("ShaderNodeTexImage"); texture.image = bpy.data.images.load(str(preview_path), check_existing=False)
         links.new(texture.outputs["Color"], emission.inputs["Color"]); links.new(emission.outputs["Emission"], output.inputs["Surface"])
         panel.data.materials.append(mat)
         bpy.ops.object.text_add(location=(x-2.7, -.02, -2.35), rotation=(math.pi/2, 0, 0))
         label = bpy.context.object
-        label.data.body = "%s\n%.1f x %.1f x %.1f cm | %s triangles" % (asset, *dimensions, format(triangles, ","))
-        label.data.align_x = "LEFT"; label.data.size = .30; label.data.space_line = 1.15
-        label.data.materials.append(procedural_material("Label_" + str(index), (.75, .88, .92), .8, 2, 0))
+        label.data.body = "%s\nDimensions: %.1f x %.1f x %.1f cm\nTriangles: %s" % (asset, *dimensions, format(triangles, ","))
+        label.data.align_x = "LEFT"; label.data.size = .25; label.data.space_line = 1.05
+        label.data.materials.append(emission_material("Label_" + str(index), (.75, .88, .92)))
     bpy.ops.object.camera_add(location=(0, -18, 0))
     camera = bpy.context.object; camera.rotation_euler = (math.pi/2, 0, 0)
     camera.data.type = "ORTHO"; camera.data.ortho_scale = 7.2
@@ -295,7 +351,11 @@ def generate(asset, builder, manifest_asset):
     collision_dimensions, collision_vertices, collision_triangles = geometry_metrics([collision])
     directory = OUTPUT / asset.removeprefix("SM_Ishibashiri_")
     directory.mkdir(parents=True, exist_ok=True)
+    # Production exports intentionally include collision and are completed before
+    # any PREVIEW_ helper is created.
     selected = visual + [collision]
+    if any(obj.name.startswith(PREVIEW_PREFIX) for obj in selected):
+        raise RuntimeError("preview-only object entered production export selection")
     bpy.ops.object.select_all(action="DESELECT")
     for obj in selected: obj.select_set(True)
     bpy.context.view_layer.objects.active = visual[0]

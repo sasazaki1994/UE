@@ -98,3 +98,24 @@ def test_roundtrip_contract_checks_geometry_collision_and_previews():
     assert "TOLERANCE = 0.03" in source
     assert '"ue_import": "NOT_RUN"' in source
     assert '"visual_approval": "NOT_RUN"' in source
+
+
+def test_preview_visibility_and_export_selection_are_separate_contracts():
+    source = GENERATOR.read_text(encoding="utf-8")
+    assert "def set_preview_visibility(visual):" in source
+    assert "obj.name.startswith(COLLISION_PREFIX)" in source
+    assert "obj.hide_render = True" in source
+    assert "obj.hide_render = False" in source
+    assert "selected = visual + [collision]" in source
+    assert "preview-only object entered production export selection" in source
+    assert source.index("bpy.ops.export_scene.gltf") < source.index("preview(directory/")
+
+
+def test_contact_sheet_has_three_separate_labelled_panels_and_exact_validation():
+    generator = GENERATOR.read_text(encoding="utf-8")
+    validator = ROUNDTRIP.read_text(encoding="utf-8")
+    assert "scene.render.resolution_x, scene.render.resolution_y = 1800, 720" in generator
+    assert "x = (index - 1) * 6.0" in generator
+    for label in ("Dimensions:", "Triangles:"):
+        assert label in generator
+    assert '(contact["width"], contact["height"]) != (1800, 720)' in validator

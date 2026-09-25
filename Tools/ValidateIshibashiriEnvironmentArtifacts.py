@@ -145,7 +145,9 @@ def main():
         (directory / (asset + "_roundtrip.json")).write_text(
             json.dumps(roundtrip, indent=2) + "\n", encoding="utf-8")
         results[asset] = "PASS"
-    contact = validate_png(OUTPUT / "IshibashiriEnvironment_FirstBatch_ContactSheet.png", (1200, 600))
+    contact = validate_png(OUTPUT / "IshibashiriEnvironment_FirstBatch_ContactSheet.png", (1800, 720))
+    if (contact["width"], contact["height"]) != (1800, 720):
+        fail(f"contact sheet must be 1800x720, got {contact['width']}x{contact['height']}")
     summary = {
         "source_commit": os.environ.get("SOURCE_COMMIT", "UNKNOWN"),
         "blender_version": bpy.app.version_string,
