@@ -271,14 +271,24 @@ def prepare_rig(args):
     target_meshes = meshes()
     baseline = ROOT / 'Art/Characters' / args.character / 'Rigged' / (args.character + '_Rigged.blend')
     with bpy.data.libraries.load(str(baseline), link=False) as (src, dst):
-        required_names = required_baseline_actions(args.character, list(src.actions))
+        # LibraryLoadContext mutates collections assigned to ``dst`` in place,
+        # replacing requested names with the loaded datablocks on context exit.
+        # Keep the validation authority immutable and give Blender its own list.
+        required_names = tuple(required_baseline_actions(args.character, list(src.actions)))
         dst.objects = src.objects
         # Actions are independent datablocks. Loading objects does not guarantee that
         # unassigned clips follow them, so append the rig-info contract explicitly.
-        dst.actions = required_names
+        dst.actions = list(required_names)
     loaded_actions = [action for action in dst.actions if action]
     loaded_names = [action.name for action in loaded_actions]
-    if len(loaded_actions) != len(required_names) or set(loaded_names) != set(required_names):
+    loaded_by_name = [bpy.data.actions.get(name) for name in required_names]
+    renamed = [action.name for action in bpy.data.actions
+               if any(action.name.startswith(name + '.') for name in required_names)]
+    if (not all(isinstance(name, str) for name in required_names)
+            or len(loaded_actions) != len(required_names)
+            or loaded_names != list(required_names)
+            or any(action is None for action in loaded_by_name)
+            or renamed):
         raise ValueError('Required action load count/name mismatch: expected %s, loaded %s' %
                          (required_names, loaded_names))
     for action in loaded_actions:
