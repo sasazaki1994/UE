@@ -1,0 +1,285 @@
+"""Deterministic, free Blender candidates for the Ishibashiri first adoption batch.
+
+Run: blender --background --factory-startup --python Tools/CreateIshibashiriEnvironmentKit.py
+No network service, downloaded texture, paid API, or Marketplace asset is used.
+"""
+import json
+import math
+import random
+from pathlib import Path
+
+import bpy
+from mathutils import Vector
+
+ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = ROOT / "Art/Environment/Ishibashiri/manifest.json"
+OUTPUT = MANIFEST.parent / "Generated"
+SEED = 830194
+ASSET_IDS = (
+    "SM_Ishibashiri_OldCedar_A",
+    "SM_Ishibashiri_Rock_A",
+    "SM_Ishibashiri_BoundaryStone_A",
+)
+MATERIAL_NOTE = "PROCEDURAL MATERIAL — UE FINAL MATERIAL / BAKE REQUIRED"
+
+
+def reset(seed):
+    random.seed(seed)
+    bpy.ops.object.select_all(action="SELECT")
+    bpy.ops.object.delete(use_global=False)
+    for datablocks in (bpy.data.materials, bpy.data.curves, bpy.data.meshes):
+        for block in list(datablocks):
+            datablocks.remove(block)
+    scene = bpy.context.scene
+    scene.unit_settings.system = "METRIC"
+    scene.unit_settings.scale_length = 1.0
+    scene.render.engine = "BLENDER_EEVEE_NEXT" if bpy.app.version >= (4, 2, 0) else "BLENDER_EEVEE"
+    scene.render.resolution_x = scene.render.resolution_y = 900
+    scene.render.resolution_percentage = 100
+    scene.render.image_settings.file_format = "PNG"
+    scene.world.color = (0.055, 0.06, 0.065)
+
+
+def procedural_material(name, base, roughness, noise_scale, bump_strength=0.18):
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    nodes, links = mat.node_tree.nodes, mat.node_tree.links
+    bsdf = nodes.get("Principled BSDF")
+    bsdf.inputs["Base Color"].default_value = (*base, 1)
+    bsdf.inputs["Roughness"].default_value = roughness
+    noise = nodes.new("ShaderNodeTexNoise")
+    noise.inputs["Scale"].default_value = noise_scale
+    noise.inputs["Detail"].default_value = 5
+    ramp = nodes.new("ShaderNodeValToRGB")
+    ramp.color_ramp.elements[0].color = (*tuple(c * 0.45 for c in base), 1)
+    ramp.color_ramp.elements[1].color = (*tuple(min(1, c * 1.35) for c in base), 1)
+    bump = nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = bump_strength
+    links.new(noise.outputs["Fac"], ramp.inputs["Fac"])
+    links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
+    links.new(noise.outputs["Fac"], bump.inputs["Height"])
+    links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    mat["export_note"] = MATERIAL_NOTE
+    return mat
+
+
+def mesh_object(name, verts, faces, material):
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(verts, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.data.materials.append(material)
+    return obj
+
+
+def tapered_tube(name, points, radii, material, sides=16):
+    points = [Vector(p) for p in points]
+    verts = []
+    for i, point in enumerate(points):
+        tangent = (points[min(i + 1, len(points)-1)] - points[max(0, i-1)]).normalized()
+        axis = Vector((0, 1, 0)) if abs(tangent.y) < .85 else Vector((1, 0, 0))
+        u, v = tangent.cross(axis).normalized(), tangent.cross(tangent.cross(axis).normalized()).normalized()
+        for side in range(sides):
+            angle = 2 * math.pi * side / sides + i * .09
+            irregular = 1 + .045 * math.sin(side * 5.0 + i * .71)
+            verts.append(point + radii[i] * irregular * (u*math.cos(angle) + v*math.sin(angle)))
+    faces = [tuple(reversed(range(sides)))]
+    for ring in range(len(points)-1):
+        for side in range(sides):
+            a = ring*sides + side
+            faces.append((a, ring*sides+(side+1)%sides,
+                          (ring+1)*sides+(side+1)%sides, a+sides))
+    faces.append(tuple((len(points)-1)*sides+i for i in range(sides)))
+    return mesh_object(name, verts, faces, material)
+
+
+def old_cedar(mats):
+    height = 21.0
+    rings, sides = 105, 48
+    points, radii = [], []
+    for i in range(rings):
+        t = i / (rings-1)
+        flare = .22 * math.exp(-t*22)
+        points.append((.15*math.sin(t*2.5)+.10*t*t, .09*math.sin(t*4.1), height*t))
+        radii.append((.47*(1-t)**.72 + .055) + flare)
+    visual = [tapered_tube("Cedar_Trunk", points, radii, mats["Bark"], sides)]
+    for branch in range(11):
+        z = 8.1 + branch*1.02
+        angle = branch*2.399 + .25
+        length = 1.78 - branch*.045 + random.uniform(-.12, .12)
+        origin = Vector((.15*math.sin(z/height*2.5), .09*math.sin(z/height*4.1), z))
+        direction = Vector((math.cos(angle), math.sin(angle), .20 + branch*.018)).normalized()
+        pts = [origin + direction*length*(j/14) + Vector((0, 0, -.18*(j/14)**2)) for j in range(15)]
+        visual.append(tapered_tube("Cedar_Branch_%02d" % branch, pts,
+                                   [.15*(1-j/15)+.022 for j in range(15)], mats["Bark"], 16))
+        for cluster in range(1 if branch < 3 else 2):
+            location = pts[-1] + Vector((0, 0, .25*cluster))
+            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=3, radius=1, location=location)
+            leaf = bpy.context.object
+            leaf.name = "Cedar_Foliage_%02d_%d" % (branch, cluster)
+            leaf.scale = (.68, .48, .62)
+            leaf.rotation_euler[2] = angle
+            bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+            for vertex in leaf.data.vertices:
+                vertex.co *= 1 + .10*math.sin(vertex.index*1.73)
+            leaf.data.materials.append(mats["Foliage"])
+            visual.append(leaf)
+    # Root flare lobes are geometry and remain bark-only.
+    for root in range(6):
+        a = root*math.pi/3 + .2
+        pts = [(0, 0, .14), (.55*math.cos(a), .55*math.sin(a), .08),
+               (1.05*math.cos(a), 1.05*math.sin(a), .015)]
+        visual.append(tapered_tube("Cedar_Root_%02d" % root, pts, [.25, .16, .035], mats["Bark"], 12))
+    bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=.48, depth=20.0, location=(0, 0, 10.0))
+    collision = bpy.context.object
+    collision.name = "UCX_SM_Ishibashiri_OldCedar_A_00"
+    return visual, collision
+
+
+def rock(mats):
+    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=5, radius=1)
+    obj = bpy.context.object
+    obj.name = "Rock_Faceted"
+    for vertex in obj.data.vertices:
+        p = vertex.co.normalized()
+        # Quantized low-frequency displacement creates planes; deterministic chips affect upper edges.
+        n = math.sin(p.x*7.1) + math.sin(p.y*9.3+1.2) + math.sin(p.z*6.7-.8)
+        displacement = round(n*2.2)/22.0
+        chip = .82 if p.z > .45 and p.x + p.y > .72 else 1.0
+        vertex.co *= (1 + displacement) * chip
+        vertex.co.x *= 1.78
+        vertex.co.y *= 1.31
+        vertex.co.z *= 1.12
+        if vertex.co.z < -.72:
+            vertex.co.z = -.72 + (vertex.co.z+.72)*.12
+    obj.location.z = .72
+    obj.data.materials.append(mats["WetRock"])
+    # Bake the ground placement into vertices so the exported asset origin remains at Z=0.
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    bpy.ops.object.transform_apply(location=True, rotation=False, scale=False)
+    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1, location=(0, 0, .70))
+    collision = bpy.context.object
+    collision.name = "UCX_SM_Ishibashiri_Rock_A_00"
+    collision.scale = (1.64, 1.18, .98)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    return [obj], collision
+
+
+def boundary_stone(mats):
+    # Six independently gridded faces make erosion/chips possible without a beveled-cube shortcut.
+    verts, faces, n = [], [], 35
+    lean = math.radians(6.2)
+    def point(face, u, v):
+        x, y, z = 0.0, 0.0, 0.0
+        if face < 2:
+            x = (-.28 if face == 0 else .28); y=(u-.5)*.52; z=v*1.94
+        elif face < 4:
+            y = (-.26 if face == 2 else .26); x=(u-.5)*.56; z=v*1.94
+        else:
+            z = 0 if face == 4 else 1.94; x=(u-.5)*.56; y=(v-.5)*.52
+        crown_chip = .10*max(0, (z-1.72)/.22) * (1 if x > .05 else .35)
+        z -= crown_chip
+        erosion = .012*math.sin((u*17 + v*13 + face)*2.1) + .007*math.sin(v*43+face)
+        x += erosion + math.tan(lean)*z
+        y += .007*math.sin(u*31 + v*11)
+        # Slightly buried-looking broad base.
+        if z < .22: x *= 1.0 + .11*(1-z/.22)
+        return (x, y, z)
+    for face in range(6):
+        base = len(verts)
+        for j in range(n+1):
+            for i in range(n+1): verts.append(point(face, i/n, j/n))
+        for j in range(n):
+            for i in range(n):
+                a = base+j*(n+1)+i
+                faces.extend(((a,a+1,a+n+2), (a,a+n+2,a+n+1)))
+    obj = mesh_object("BoundaryStone_Weathered", verts, faces, mats["BoundaryStone"])
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(math.tan(lean)*.92, 0, .92))
+    collision = bpy.context.object
+    collision.name = "UCX_SM_Ishibashiri_BoundaryStone_A_00"
+    collision.dimensions = (.58, .54, 1.84)
+    collision.rotation_euler[1] = lean
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    return [obj], collision
+
+
+def dimensions_and_triangles(objects):
+    points = [obj.matrix_world @ Vector(corner) for obj in objects for corner in obj.bound_box]
+    mins = [min(p[i] for p in points) for i in range(3)]
+    maxs = [max(p[i] for p in points) for i in range(3)]
+    triangles = 0
+    for obj in objects:
+        obj.data.calc_loop_triangles()
+        triangles += len(obj.data.loop_triangles)
+    return [round((maxs[i]-mins[i])*100, 3) for i in range(3)], triangles
+
+
+def preview(path, visual, dimensions):
+    gray = procedural_material("PreviewGround", (.14, .15, .16), .95, 3)
+    bpy.ops.mesh.primitive_plane_add(size=max(dimensions)*3, location=(0, 0, -.012))
+    ground = bpy.context.object; ground.name = "PREVIEW_Ground"; ground.data.materials.append(gray)
+    target = Vector((0, 0, dimensions[2]/200))
+    distance = max(dimensions)/100 * 1.65
+    bpy.ops.object.camera_add(location=(distance*.72, -distance, target.z + distance*.28))
+    camera = bpy.context.object; camera.name = "PREVIEW_Camera"
+    camera.rotation_euler = (target-camera.location).to_track_quat("-Z", "Y").to_euler()
+    camera.data.type = "ORTHO"; camera.data.ortho_scale = max(dimensions[2]/100*1.15, dimensions[0]/100*1.25)
+    bpy.context.scene.camera = camera
+    for location, energy, size in (((-distance,-distance,distance*1.4),900, distance*.8),
+                                   ((distance,-distance*.4,distance),500,distance*.6)):
+        bpy.ops.object.light_add(type="AREA", location=location)
+        light=bpy.context.object; light.name="PREVIEW_Light"; light.data.energy=energy; light.data.size=size
+        light.rotation_euler=(target-light.location).to_track_quat("-Z","Y").to_euler()
+    bpy.context.scene.render.filepath = str(path)
+    bpy.ops.render.render(write_still=True)
+
+
+def generate(asset, builder, manifest_asset):
+    seed = SEED + ASSET_IDS.index(asset)
+    reset(seed)
+    mats = {
+        "Bark": procedural_material("Bark", (.16,.105,.065), .88, 24, .32),
+        "Foliage": procedural_material("Foliage", (.055,.12,.065), .82, 8, .12),
+        "WetRock": procedural_material("WetRock", (.105,.12,.125), .58, 5, .28),
+        "BoundaryStone": procedural_material("BoundaryStone", (.19,.20,.19), .76, 7, .25),
+        "Moss": procedural_material("Moss", (.09,.14,.065), .95, 11, .2),
+    }
+    visual, collision = builder(mats)
+    dimensions, triangles = dimensions_and_triangles(visual)
+    directory = OUTPUT / asset.removeprefix("SM_Ishibashiri_")
+    directory.mkdir(parents=True, exist_ok=True)
+    selected = visual + [collision]
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in selected: obj.select_set(True)
+    bpy.context.view_layer.objects.active = visual[0]
+    bpy.ops.export_scene.gltf(filepath=str(directory/(asset+".glb")), use_selection=True, export_format="GLB")
+    bpy.ops.export_scene.fbx(filepath=str(directory/(asset+".fbx")), use_selection=True,
+        object_types={"MESH"}, axis_forward="-Y", axis_up="Z", apply_unit_scale=True,
+        add_leaf_bones=False, bake_anim=False)
+    report = {
+        "asset_id": asset, "generator": "Blender procedural", "blender_version": bpy.app.version_string,
+        "seed": seed, "dimensions_cm": {"x": dimensions[0], "y": dimensions[1], "z": dimensions[2]},
+        "triangle_count": triangles, "mesh_object_count": len(visual),
+        "material_count": len({slot.material.name for obj in visual for slot in obj.material_slots}),
+        "material_note": MATERIAL_NOTE, "lod_status": {"LOD0":"GENERATED", "LOD1":"NOT_GENERATED", "LOD2":"NOT_GENERATED"},
+        "collision_status": "GENERATED: " + collision.name, "pivot": manifest_asset["pivot_policy"],
+        "unit": "meter (UE import centimeters)", "forward_axis": "-Y", "generation_status": "BLENDER PRODUCTION CANDIDATE",
+        "ue_import_status": "NOT_RUN", "ue_visual_review_status": "NOT_RUN",
+    }
+    (directory/(asset+"_report.json")).write_text(json.dumps(report, indent=2, ensure_ascii=False)+"\n", encoding="utf-8")
+    preview(directory/(asset+"_preview.png"), visual, dimensions)
+
+
+def main():
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    specs = {a["asset_id"]: a for a in manifest["assets"]}
+    builders = (old_cedar, rock, boundary_stone)
+    for asset, builder in zip(ASSET_IDS, builders):
+        generate(asset, builder, specs[asset])
+    print("Generated exactly three BLENDER PRODUCTION CANDIDATE assets in", OUTPUT)
+
+
+if __name__ == "__main__":
+    main()

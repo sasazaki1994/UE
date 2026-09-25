@@ -124,3 +124,22 @@ Old Ropeはまず固定segmentとする。繰り返し用途で変形が必要�
 Tripo生成、Blender cleanup、FBX/GLB、texture、UE Import、runtime scale、collision、navigation、Grab/Climbing、render、performance、HighQuality比較、captureはすべて**NOT_RUN**。Windows UE 5.6.1、Blender、Tripoが必要であり、source-only testはこれらを証明しない。
 
 Gameplay、Approach距離/path point、Basin size、Grab/Climbing/Kakon、camera、Boss AI、白面/石走りmodel、後半Boss、村/建物、open world、PCG/procedural forest、Niagara、音源は変更・制作しない。
+
+## Tripo未契約時のFree Fallback Pipeline
+
+First Adoption Batchの3点だけは、外部texture、network access、有料AI、外部3D API、Marketplace素材を使わず、`Tools/CreateIshibashiriEnvironmentKit.py` によりBlender内のgeometryとprocedural materialから決定的に生成できる。`manifest.json` の寸法、LOD0 triangle budget、material slot上限、collision、pivot、Gameplay constraintを正本とし、Tripo向けpromptとstatusは変更しない。
+
+```bash
+blender --background --factory-startup --python Tools/CreateIshibashiriEnvironmentKit.py
+python Tools/VerifyIshibashiriEnvironmentKit.py
+```
+
+生成物は `Art/Environment/Ishibashiri/Generated/{OldCedar_A,Rock_A,BoundaryStone_A}/` にGLB、FBX、report、neutralな3/4 previewとして出力する。LOD0を優先し、silhouetteを目視比較できないLOD1/LOD2は `NOT_GENERATED` と明記する。procedural nodeのGLB/FBX完全移植は保証せず、reportに **PROCEDURAL MATERIAL — UE FINAL MATERIAL / BAKE REQUIRED** と記録する。生成後もUE ImportとUE Visual Reviewは実施するまで `NOT_RUN` であり、成果物は **BLENDER PRODUCTION CANDIDATE** であってFINAL PRODUCTION ASSETではない。
+
+採用関係は次の通りとする。
+
+- Blender candidateが十分な品質なら、そのまま採用可能。
+- Blender candidateが不足する場合だけ、将来のTripo版と比較する。
+- Tripoを契約しても、自動的に全Assetを作り直す必要はない。
+
+現在の環境にBlender executableがない場合はasset実体を偽造せず、manifestの`fallback_generation_status`を`NOT_RUN`に維持する。この場合の結果は **BLENDER GENERATION NOT_RUN — BLENDER EXECUTABLE NOT AVAILABLE** とする。
