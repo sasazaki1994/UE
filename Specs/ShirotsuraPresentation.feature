@@ -43,6 +43,14 @@ Feature: Shared Shirotsura presentation
     And the shared skin section samples the mask before applying the two-stage blend
     And mask, clothing, right arm, sword, gameplay stats, Sense, and input are unchanged
 
+  Scenario: Production smoke fixture exercises the provenance bake contract
+    Given the reviewed Shirotsura test fixture has a corner byte-color provenance mask
+    And that synthetic mask contains deterministic black and white polygon values
+    When the production export bakes the fixture with a 32 by 32 atlas
+    Then BaseColor, Normal, Roughness, and FaceNeckMask PNG files are saved
+    And the FaceNeckMask image is 32 by 32 and contains differing pixel values
+    And the Shirotsura-only mask requirement is not applied to Ishibashiri
+
   Scenario: Missing audited mask does not change shared skin
     Given the current checked-in Unreal assets have not been regenerated with the face-neck mask
     When the material setup or runtime appearance application is run

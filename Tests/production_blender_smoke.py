@@ -9,6 +9,20 @@ import ProductionCharacter as P
 import ProductionCharacterBlender as B
 
 
+FACE_NECK_MASK_ATTRIBUTE = 'ShirotsuraFaceNeckMask'
+
+
+def add_shirotsura_fixture_provenance(body):
+    """Author test-only face/neck provenance on the reviewed rigged fixture."""
+    attribute = body.data.color_attributes.new(
+        name=FACE_NECK_MASK_ATTRIBUTE, type='BYTE_COLOR', domain='CORNER')
+    for polygon in body.data.polygons:
+        value = 1.0 if polygon.index % 2 == 0 else 0.0
+        for loop_index in polygon.loop_indices:
+            attribute.data[loop_index].color = (value, value, value, 1.0)
+    return attribute
+
+
 def main():
     results = []
     with tempfile.TemporaryDirectory(prefix='intake-fixture-') as tmp:
@@ -70,8 +84,15 @@ def main():
             rigged, rig_metrics, _ = B.prepare_rig(args)
             assert rigged.is_file() and rig_metrics['bone_count'] == 18
             rig = next(o for o in bpy.context.scene.objects if o.type == 'ARMATURE')
-            deform = B.verify_rig('Shirotsura', rig, B.meshes()[0])
+            body = B.meshes()[0]
+            deform = B.verify_rig('Shirotsura', rig, body)
             assert len(deform) == 10
+            mask_attribute = add_shirotsura_fixture_provenance(body)
+            assert mask_attribute.domain == 'CORNER' and mask_attribute.data_type == 'BYTE_COLOR'
+            mask_values = {round(item.color[0]) for item in mask_attribute.data}
+            assert mask_values == {0, 1}
+            # The review hash must cover the synthetic provenance consumed by export.
+            bpy.ops.wm.save_as_mainfile(filepath=str(rigged))
             results.append({'stage': 'provisional_weight_transfer_and_deformation', 'status': 'pass'})
             for sub in ('Textures', 'Export'):
                 (base / sub).mkdir()
@@ -90,8 +111,21 @@ def main():
             try:
                 fbx, _, _ = B.export(args)
                 assert fbx.is_file()
-                assert len(list((base / 'Textures').glob('T_*.png'))) == 3
+                expected_textures = {
+                    'T_Shirotsura_BaseColor.png',
+                    'T_Shirotsura_Normal.png',
+                    'T_Shirotsura_Roughness.png',
+                    'T_Shirotsura_FaceNeckMask.png',
+                }
+                assert {path.name for path in (base / 'Textures').glob('T_*.png')} == expected_textures
                 assert tuple(bpy.data.images['T_Shirotsura_BaseColor'].size) == (32, 32)
+                mask_image = bpy.data.images['T_Shirotsura_FaceNeckMask']
+                assert tuple(mask_image.size) == (32, 32)
+                mask_path = base / 'Textures/T_Shirotsura_FaceNeckMask.png'
+                assert mask_path.is_file() and mask_path.stat().st_size > 0
+                mask_pixels = mask_image.pixels[:]
+                mask_red = mask_pixels[0::4]
+                assert max(mask_red) - min(mask_red) > .5
                 results.append({'stage': 'review_gate_bake_fbx_export', 'status': 'pass', 'atlas_size': 32})
             finally:
                 B.import_rig_helper = original_helper

@@ -13,6 +13,7 @@ Art/Characters/Production/
     Blender/                        # *_Clean.blend、*_Rigged.blend
     Export/                         # SK_<name>.fbx
     Textures/                       # T_<name>_{BaseColor,Normal,Roughness}.png
+                                    # 白面のみ T_Shirotsura_FaceNeckMask.png も必須
     Validation/                     # preflight/cleanup/rig/export/ue-import/adoption.json
       rig-review.template.json      # artistによる実物レビューの雛形
       review.template.json          # 回帰、同条件画像、性能、8項目採点の雛形
@@ -83,7 +84,7 @@ Blenderで `*_Rigged.blend` を開き、肩/肘/手首/股関節/膝/足首、�
 & $IntakeBlender --background --factory-startup --disable-autoexec --python-exit-code 2 --python Tools/ProductionCharacterBlender.py -- export --character Ishibashiri
 ```
 
-Exportはclean/source/baseline RigのHash、レビュー対象Hash、骨階層・rest pose・Weight合計・全Actionの変形を再確認する。Jump等の定常poseはフレーム間変化でなくrest poseとの差で検査する。既存 `RigCharacterModels.bake_surface` のUV/Atlas経路とFBX出力規約を使う。Tripo Materialを別のCC0 PBRで置換せず、2048px BaseColor/Normal/RoughnessへBakeする。既存 `CharacterPBR` の通常Fallback生成への適用は保持する。全ActionのGeometry変形は確認するが、美的な変形品質は人が判断する。
+Exportはclean/source/baseline RigのHash、レビュー対象Hash、骨階層・rest pose・Weight合計・全Actionの変形を再確認する。Jump等の定常poseはフレーム間変化でなくrest poseとの差で検査する。既存 `RigCharacterModels.bake_surface` のUV/Atlas経路とFBX出力規約を使う。Tripo Materialを別のCC0 PBRで置換せず、2048px BaseColor/Normal/RoughnessへBakeする。白面はさらにrigged meshのCORNER/BYTE_COLOR属性 `ShirotsuraFaceNeckMask` を必須入力とし、同じ解像度の `T_Shirotsura_FaceNeckMask.png` へBakeする。この白面専用契約を石走りへ適用しない。既存 `CharacterPBR` の通常Fallback生成への適用は保持する。全ActionのGeometry変形は確認するが、美的な変形品質は人が判断する。
 
 ## UE ImportとVisual切替
 
