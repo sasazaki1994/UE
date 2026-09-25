@@ -1,0 +1,550 @@
+{
+  "schema_version": 1,
+  "package_id": "IshibashiriEnvironmentKit",
+  "baseline_commit": "a0e87c3aba0ebff9619046f5c1aa956d205315c4",
+  "baseline_note": "Local main-equivalent includes merged PR #82; remote fetch was attempted but HTTP 403 made freshness unverifiable.",
+  "target_engine": "UE5.6",
+  "units": "centimeters",
+  "player_scale_authority": {
+    "height_cm": 172,
+    "capsule_radius_cm": 42,
+    "capsule_half_height_cm": 88,
+    "sources": [
+      "Docs/TripoProductionIntake.md",
+      "Source/IshibashiriPrototype/Private/PrototypePlayer.cpp"
+    ]
+  },
+  "first_adoption_batch": [
+    "SM_Ishibashiri_OldCedar_A",
+    "SM_Ishibashiri_Rock_A",
+    "SM_Ishibashiri_BoundaryStone_A"
+  ],
+  "production_order": [
+    "SM_Ishibashiri_OldCedar_A",
+    "SM_Ishibashiri_Rock_A",
+    "SM_Ishibashiri_BoundaryStone_A",
+    "SM_Ishibashiri_FallenCedar_A",
+    "SM_Ishibashiri_OldCedar_B",
+    "SM_Ishibashiri_Rock_B",
+    "SM_Ishibashiri_RitualPost_A",
+    "SM_Ishibashiri_OldRope_A",
+    "Decals"
+  ],
+  "nanite_policy": "UE RUNTIME DECISION",
+  "capture_status": "NOT_RUN — WINDOWS UE 5.6.1 REQUIRED",
+  "assets": [
+    {
+      "asset_id": "SM_Ishibashiri_OldCedar_A",
+      "role": "primary old cedar for Approach and Basin",
+      "priority": 1,
+      "production_status": "spec_only",
+      "generator": "Tripo AI",
+      "target_engine": "UE5.6",
+      "source_file": null,
+      "prompt_file": "Prompts/OldCedar_A.md",
+      "dimensions": {
+        "height_cm": [
+          1800,
+          2400
+        ],
+        "crown_width_cm": [
+          350,
+          550
+        ],
+        "trunk_diameter_cm": [
+          70,
+          110
+        ],
+        "player_height_reference_cm": 172,
+        "placement_scale_range": [
+          0.85,
+          1.15
+        ]
+      },
+      "textures": [],
+      "texture_specification": "BaseColor, Normal, Roughness at 2048; Opacity/Mask only for foliage cards",
+      "material_policy": "1 bark/trunk plus 1 foliage slot maximum; shared cedar materials candidate",
+      "lods": [
+        {
+          "name": "LOD0",
+          "triangle_target_min": 28000,
+          "triangle_target_max": 45000,
+          "source_file": null
+        },
+        {
+          "name": "LOD1",
+          "triangle_target_min": 14000,
+          "triangle_target_max": 23000,
+          "source_file": null
+        },
+        {
+          "name": "LOD2",
+          "triangle_target_min": 5000,
+          "triangle_target_max": 9000,
+          "source_file": null
+        }
+      ],
+      "nanite": "UE RUNTIME DECISION",
+      "collision_policy": "simple trunk capsule(s) only",
+      "pivot_policy": "trunk base at ground contact, centered in XY",
+      "gameplay_constraints": [
+        "Do not block the existing Approach navigation corridor",
+        "Do not block the Ishibashiri Grab or Climbing entrance",
+        "Do not narrow the Basin combat dodge space",
+        "Do not change Approach distance, path points, Basin size, or collision gameplay contract"
+      ],
+      "ue_import_status": "NOT_RUN",
+      "visual_review_status": "NOT_RUN",
+      "blender_cleanup_status": "NOT_RUN",
+      "tripo_generation_status": "NOT_RUN"
+    },
+    {
+      "asset_id": "SM_Ishibashiri_Rock_A",
+      "role": "primary wet mountain rock for path shoulders, cliffs, and Basin",
+      "priority": 2,
+      "production_status": "spec_only",
+      "generator": "Tripo AI",
+      "target_engine": "UE5.6",
+      "source_file": null,
+      "prompt_file": "Prompts/Rock_A.md",
+      "dimensions": {
+        "size_cm": {
+          "x": [
+            280,
+            420
+          ],
+          "y": [
+            200,
+            340
+          ],
+          "z": [
+            180,
+            300
+          ]
+        },
+        "player_height_reference_cm": 172,
+        "placement_scale_range": [
+          0.65,
+          1.8
+        ]
+      },
+      "textures": [],
+      "texture_specification": "BaseColor, Normal, Roughness at 2048; share with Rock_B where UV/texel density permits",
+      "material_policy": "1 shared rock material slot preferred; vertex color moss/wetness variation candidate",
+      "lods": [
+        {
+          "name": "LOD0",
+          "triangle_target_min": 12000,
+          "triangle_target_max": 22000,
+          "source_file": null
+        },
+        {
+          "name": "LOD1",
+          "triangle_target_min": 6000,
+          "triangle_target_max": 11000,
+          "source_file": null
+        },
+        {
+          "name": "LOD2",
+          "triangle_target_min": 2000,
+          "triangle_target_max": 4500,
+          "source_file": null
+        }
+      ],
+      "nanite": "UE RUNTIME DECISION",
+      "collision_policy": "one or a small set of simple convex hulls; never per-poly collision",
+      "pivot_policy": "ground-contact center",
+      "gameplay_constraints": [
+        "Do not block the existing Approach navigation corridor",
+        "Do not block the Ishibashiri Grab or Climbing entrance",
+        "Do not narrow the Basin combat dodge space",
+        "Do not change Approach distance, path points, Basin size, or collision gameplay contract"
+      ],
+      "ue_import_status": "NOT_RUN",
+      "visual_review_status": "NOT_RUN",
+      "blender_cleanup_status": "NOT_RUN",
+      "tripo_generation_status": "NOT_RUN"
+    },
+    {
+      "asset_id": "SM_Ishibashiri_BoundaryStone_A",
+      "role": "small weathered mountain boundary marker",
+      "priority": 3,
+      "production_status": "spec_only",
+      "generator": "Tripo AI",
+      "target_engine": "UE5.6",
+      "source_file": null,
+      "prompt_file": "Prompts/BoundaryStone_A.md",
+      "dimensions": {
+        "size_cm": {
+          "x": [
+            55,
+            80
+          ],
+          "y": [
+            40,
+            65
+          ],
+          "z": [
+            170,
+            220
+          ]
+        },
+        "player_height_reference_cm": 172,
+        "authored_lean_degrees": [
+          4,
+          9
+        ]
+      },
+      "textures": [],
+      "texture_specification": "BaseColor, Normal, Roughness at 2048 maximum",
+      "material_policy": "1 stone material slot; optional shared rock shader, distinct parameters",
+      "lods": [
+        {
+          "name": "LOD0",
+          "triangle_target_min": 10000,
+          "triangle_target_max": 18000,
+          "source_file": null
+        },
+        {
+          "name": "LOD1",
+          "triangle_target_min": 5000,
+          "triangle_target_max": 9000,
+          "source_file": null
+        },
+        {
+          "name": "LOD2",
+          "triangle_target_min": 1800,
+          "triangle_target_max": 3500,
+          "source_file": null
+        }
+      ],
+      "nanite": "UE RUNTIME DECISION",
+      "collision_policy": "simple box or convex hull",
+      "pivot_policy": "ground-contact center; lean belongs to mesh silhouette but placement remains stable",
+      "gameplay_constraints": [
+        "Do not block the existing Approach navigation corridor",
+        "Do not block the Ishibashiri Grab or Climbing entrance",
+        "Do not narrow the Basin combat dodge space",
+        "Do not change Approach distance, path points, Basin size, or collision gameplay contract"
+      ],
+      "ue_import_status": "NOT_RUN",
+      "visual_review_status": "NOT_RUN",
+      "blender_cleanup_status": "NOT_RUN",
+      "tripo_generation_status": "NOT_RUN"
+    },
+    {
+      "asset_id": "SM_Ishibashiri_FallenCedar_A",
+      "role": "damaged-grove fallen cedar and Ishibashiri passage trace",
+      "priority": 4,
+      "production_status": "spec_only",
+      "generator": "Tripo AI",
+      "target_engine": "UE5.6",
+      "source_file": null,
+      "prompt_file": "Prompts/FallenCedar_A.md",
+      "dimensions": {
+        "length_cm": [
+          1100,
+          1500
+        ],
+        "trunk_diameter_cm": [
+          80,
+          125
+        ],
+        "max_branch_reach_cm": 350,
+        "player_height_reference_cm": 172
+      },
+      "textures": [],
+      "texture_specification": "BaseColor, Normal, Roughness at 2048; Opacity/Mask only for retained foliage",
+      "material_policy": "1 bark plus 1 foliage slot maximum; share OldCedar materials",
+      "lods": [
+        {
+          "name": "LOD0",
+          "triangle_target_min": 22000,
+          "triangle_target_max": 38000,
+          "source_file": null
+        },
+        {
+          "name": "LOD1",
+          "triangle_target_min": 11000,
+          "triangle_target_max": 19000,
+          "source_file": null
+        },
+        {
+          "name": "LOD2",
+          "triangle_target_min": 4000,
+          "triangle_target_max": 7500,
+          "source_file": null
+        }
+      ],
+      "nanite": "UE RUNTIME DECISION",
+      "collision_policy": "simple capsule/box chain or low-poly custom proxy; route-facing placements may use NoCollision after UE review",
+      "pivot_policy": "one logical ground-contact point near the heavier root end; local X follows trunk length",
+      "gameplay_constraints": [
+        "Do not block the existing Approach navigation corridor",
+        "Do not block the Ishibashiri Grab or Climbing entrance",
+        "Do not narrow the Basin combat dodge space",
+        "Do not change Approach distance, path points, Basin size, or collision gameplay contract"
+      ],
+      "ue_import_status": "NOT_RUN",
+      "visual_review_status": "NOT_RUN",
+      "blender_cleanup_status": "NOT_RUN",
+      "tripo_generation_status": "NOT_RUN"
+    },
+    {
+      "asset_id": "SM_Ishibashiri_OldCedar_B",
+      "role": "secondary old cedar with distinct asymmetric silhouette",
+      "priority": 5,
+      "production_status": "spec_only",
+      "generator": "Tripo AI",
+      "target_engine": "UE5.6",
+      "source_file": null,
+      "prompt_file": "Prompts/OldCedar_B.md",
+      "dimensions": {
+        "height_cm": [
+          1600,
+          2200
+        ],
+        "crown_width_cm": [
+          400,
+          650
+        ],
+        "trunk_diameter_cm": [
+          75,
+          120
+        ],
+        "player_height_reference_cm": 172,
+        "placement_scale_range": [
+          0.85,
+          1.15
+        ]
+      },
+      "textures": [],
+      "texture_specification": "BaseColor, Normal, Roughness at 2048; Opacity/Mask only for foliage cards",
+      "material_policy": "same 2-slot maximum and shared materials as OldCedar_A",
+      "lods": [
+        {
+          "name": "LOD0",
+          "triangle_target_min": 28000,
+          "triangle_target_max": 45000,
+          "source_file": null
+        },
+        {
+          "name": "LOD1",
+          "triangle_target_min": 14000,
+          "triangle_target_max": 23000,
+          "source_file": null
+        },
+        {
+          "name": "LOD2",
+          "triangle_target_min": 5000,
+          "triangle_target_max": 9000,
+          "source_file": null
+        }
+      ],
+      "nanite": "UE RUNTIME DECISION",
+      "collision_policy": "simple trunk capsule(s) only",
+      "pivot_policy": "trunk base at ground contact, centered in XY",
+      "gameplay_constraints": [
+        "Do not block the existing Approach navigation corridor",
+        "Do not block the Ishibashiri Grab or Climbing entrance",
+        "Do not narrow the Basin combat dodge space",
+        "Do not change Approach distance, path points, Basin size, or collision gameplay contract"
+      ],
+      "ue_import_status": "NOT_RUN",
+      "visual_review_status": "NOT_RUN",
+      "blender_cleanup_status": "NOT_RUN",
+      "tripo_generation_status": "NOT_RUN"
+    },
+    {
+      "asset_id": "SM_Ishibashiri_Rock_B",
+      "role": "secondary fractured wet rock silhouette",
+      "priority": 6,
+      "production_status": "spec_only",
+      "generator": "Tripo AI",
+      "target_engine": "UE5.6",
+      "source_file": null,
+      "prompt_file": "Prompts/Rock_B.md",
+      "dimensions": {
+        "size_cm": {
+          "x": [
+            180,
+            320
+          ],
+          "y": [
+            160,
+            280
+          ],
+          "z": [
+            240,
+            420
+          ]
+        },
+        "player_height_reference_cm": 172,
+        "placement_scale_range": [
+          0.65,
+          1.8
+        ]
+      },
+      "textures": [],
+      "texture_specification": "BaseColor, Normal, Roughness at 2048; share with Rock_A",
+      "material_policy": "use Rock_A shared material wherever possible",
+      "lods": [
+        {
+          "name": "LOD0",
+          "triangle_target_min": 12000,
+          "triangle_target_max": 22000,
+          "source_file": null
+        },
+        {
+          "name": "LOD1",
+          "triangle_target_min": 6000,
+          "triangle_target_max": 11000,
+          "source_file": null
+        },
+        {
+          "name": "LOD2",
+          "triangle_target_min": 2000,
+          "triangle_target_max": 4500,
+          "source_file": null
+        }
+      ],
+      "nanite": "UE RUNTIME DECISION",
+      "collision_policy": "one or a small set of simple convex hulls; never per-poly collision",
+      "pivot_policy": "ground-contact center",
+      "gameplay_constraints": [
+        "Do not block the existing Approach navigation corridor",
+        "Do not block the Ishibashiri Grab or Climbing entrance",
+        "Do not narrow the Basin combat dodge space",
+        "Do not change Approach distance, path points, Basin size, or collision gameplay contract"
+      ],
+      "ue_import_status": "NOT_RUN",
+      "visual_review_status": "NOT_RUN",
+      "blender_cleanup_status": "NOT_RUN",
+      "tripo_generation_status": "NOT_RUN"
+    },
+    {
+      "asset_id": "SM_Ishibashiri_RitualPost_A",
+      "role": "plain aged wooden ritual stake shared by Approach and Basin",
+      "priority": 7,
+      "production_status": "spec_only",
+      "generator": "Tripo AI",
+      "target_engine": "UE5.6",
+      "source_file": null,
+      "prompt_file": "Prompts/RitualPost_A.md",
+      "dimensions": {
+        "size_cm": {
+          "x": [
+            18,
+            28
+          ],
+          "y": [
+            18,
+            28
+          ],
+          "z": [
+            150,
+            210
+          ]
+        },
+        "player_height_reference_cm": 172
+      },
+      "textures": [],
+      "texture_specification": "BaseColor, Normal, Roughness at 2048 maximum; atlas/shared wood candidate",
+      "material_policy": "1 aged wood material; cedar bark reuse only if visually credible",
+      "lods": [
+        {
+          "name": "LOD0",
+          "triangle_target_min": 5000,
+          "triangle_target_max": 9000,
+          "source_file": null
+        },
+        {
+          "name": "LOD1",
+          "triangle_target_min": 2500,
+          "triangle_target_max": 4500,
+          "source_file": null
+        },
+        {
+          "name": "LOD2",
+          "triangle_target_min": 800,
+          "triangle_target_max": 1800,
+          "source_file": null
+        }
+      ],
+      "nanite": "UE RUNTIME DECISION",
+      "collision_policy": "simple capsule or box",
+      "pivot_policy": "base center at ground contact",
+      "gameplay_constraints": [
+        "Do not block the existing Approach navigation corridor",
+        "Do not block the Ishibashiri Grab or Climbing entrance",
+        "Do not narrow the Basin combat dodge space",
+        "Do not change Approach distance, path points, Basin size, or collision gameplay contract"
+      ],
+      "ue_import_status": "NOT_RUN",
+      "visual_review_status": "NOT_RUN",
+      "blender_cleanup_status": "NOT_RUN",
+      "tripo_generation_status": "NOT_RUN"
+    },
+    {
+      "asset_id": "SM_Ishibashiri_OldRope_A",
+      "role": "modular old shimenawa/rope segment for stone, posts, or cedar",
+      "priority": 8,
+      "production_status": "spec_only",
+      "generator": "Tripo AI",
+      "target_engine": "UE5.6",
+      "source_file": null,
+      "prompt_file": "Prompts/OldRope_A.md",
+      "dimensions": {
+        "straight_length_cm": [
+          250,
+          400
+        ],
+        "rope_diameter_cm": [
+          5,
+          9
+        ],
+        "sag_cm": [
+          20,
+          55
+        ],
+        "spline_candidate": true
+      },
+      "textures": [],
+      "texture_specification": "BaseColor, Normal, Roughness at 2048 maximum; Opacity/Mask only for sparse frays",
+      "material_policy": "1 rope fiber material",
+      "lods": [
+        {
+          "name": "LOD0",
+          "triangle_target_min": 8000,
+          "triangle_target_max": 14000,
+          "source_file": null
+        },
+        {
+          "name": "LOD1",
+          "triangle_target_min": 4000,
+          "triangle_target_max": 7000,
+          "source_file": null
+        },
+        {
+          "name": "LOD2",
+          "triangle_target_min": 1200,
+          "triangle_target_max": 2800,
+          "source_file": null
+        }
+      ],
+      "nanite": "UE RUNTIME DECISION",
+      "collision_policy": "NoCollision",
+      "pivot_policy": "attachment-oriented: origin at end A, local X points to end B; preserve end sockets/markers in cleanup notes",
+      "gameplay_constraints": [
+        "Do not block the existing Approach navigation corridor",
+        "Do not block the Ishibashiri Grab or Climbing entrance",
+        "Do not narrow the Basin combat dodge space",
+        "Do not change Approach distance, path points, Basin size, or collision gameplay contract"
+      ],
+      "ue_import_status": "NOT_RUN",
+      "visual_review_status": "NOT_RUN",
+      "blender_cleanup_status": "NOT_RUN",
+      "tripo_generation_status": "NOT_RUN"
+    }
+  ]
+}
