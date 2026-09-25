@@ -31,11 +31,23 @@ def main():
     }
     for character, expected in expected_actions.items():
         baseline = B.ROOT / 'Art/Characters' / character / 'Rigged' / (character + '_Rigged.blend')
-        with bpy.data.libraries.load(str(baseline), link=False) as (src, _):
-            actual = B.required_baseline_actions(character, list(src.actions))
-        assert actual == expected
+        with bpy.data.libraries.load(str(baseline), link=False) as (src, dst):
+            required_names = tuple(B.required_baseline_actions(character, list(src.actions)))
+            dst.actions = list(required_names)
+        loaded_actions = [action for action in dst.actions if action]
+        loaded_names = [action.name for action in loaded_actions]
+        assert all(isinstance(name, str) for name in required_names)
+        assert list(required_names) == expected
+        assert len(loaded_actions) == len(expected)
+        assert loaded_names == expected
+        assert all(bpy.data.actions.get(name) is not None for name in required_names)
+        assert not [action.name for action in bpy.data.actions
+                    if any(action.name.startswith(name + '.') for name in required_names)]
         results.append({'stage': character + '_baseline_actions', 'status': 'pass',
-                        'required': len(expected), 'loaded': len(actual), 'actions': actual})
+                        'required': len(required_names), 'loaded': len(loaded_actions),
+                        'actions': loaded_names})
+        for action in loaded_actions:
+            bpy.data.actions.remove(action)
     with tempfile.TemporaryDirectory(prefix='intake-fixture-') as tmp:
         tmp = Path(tmp)
         bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -94,6 +106,14 @@ def main():
                 'artifact_sha256': P.sha(out)})
             rigged, rig_metrics, _ = B.prepare_rig(args)
             assert rigged.is_file() and rig_metrics['bone_count'] == 18
+            required_names = tuple(expected_actions['Shirotsura'])
+            loaded_actions = [bpy.data.actions.get(name) for name in required_names]
+            assert all(isinstance(name, str) for name in required_names)
+            assert all(action is not None for action in loaded_actions)
+            assert [action.name for action in loaded_actions] == list(required_names)
+            assert all(action.use_fake_user for action in loaded_actions)
+            assert not [action.name for action in bpy.data.actions
+                        if any(action.name.startswith(name + '.') for name in required_names)]
             rig = next(o for o in bpy.context.scene.objects if o.type == 'ARMATURE')
             body = B.meshes()[0]
             deform = B.verify_rig('Shirotsura', rig, body)
