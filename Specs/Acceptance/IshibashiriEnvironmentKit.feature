@@ -24,3 +24,16 @@
   シナリオ: 実機証拠がない状態を成功扱いしない
     前提 Windows UE 5.6.1、Blender、Tripoをこの工程で実行していない
     ならば UE Import、Visual Review、Before/After CaptureをNOT_RUNとして記録する
+
+  シナリオ: Tripo未契約でもFirst Adoption Batchだけを生成できる
+    前提 manifestのFirst Adoption Batchが3点に限定されている
+    もし Blender procedural fallbackを同じversionとcommitで実行する
+    ならば 固定seedでOldCedar_A、Rock_A、BoundaryStone_Aだけを生成する
+    かつ 外部texture、network、有料AI、外部3D API、Marketplace素材を使用しない
+    かつ Tripo generation statusをNOT_RUNのまま維持する
+
+  シナリオ: 未生成とUE未検証を成功扱いしない
+    前提 Blender executableが利用できず生成物が存在しない
+    ならば validatorはNOT_GENERATEDを返す
+    かつ 空のFBX、GLB、偽previewを作らない
+    かつ UE ImportとUE Visual ReviewをNOT_RUNとして記録する

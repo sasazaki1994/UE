@@ -96,7 +96,10 @@
       "ue_import_status": "NOT_RUN",
       "visual_review_status": "NOT_RUN",
       "blender_cleanup_status": "NOT_RUN",
-      "tripo_generation_status": "NOT_RUN"
+      "tripo_generation_status": "NOT_RUN",
+      "fallback_generator": "Blender procedural",
+      "fallback_source_file": "Tools/CreateIshibashiriEnvironmentKit.py",
+      "fallback_generation_status": "NOT_RUN"
     },
     {
       "asset_id": "SM_Ishibashiri_Rock_A",
@@ -163,7 +166,10 @@
       "ue_import_status": "NOT_RUN",
       "visual_review_status": "NOT_RUN",
       "blender_cleanup_status": "NOT_RUN",
-      "tripo_generation_status": "NOT_RUN"
+      "tripo_generation_status": "NOT_RUN",
+      "fallback_generator": "Blender procedural",
+      "fallback_source_file": "Tools/CreateIshibashiriEnvironmentKit.py",
+      "fallback_generation_status": "NOT_RUN"
     },
     {
       "asset_id": "SM_Ishibashiri_BoundaryStone_A",
@@ -230,7 +236,10 @@
       "ue_import_status": "NOT_RUN",
       "visual_review_status": "NOT_RUN",
       "blender_cleanup_status": "NOT_RUN",
-      "tripo_generation_status": "NOT_RUN"
+      "tripo_generation_status": "NOT_RUN",
+      "fallback_generator": "Blender procedural",
+      "fallback_source_file": "Tools/CreateIshibashiriEnvironmentKit.py",
+      "fallback_generation_status": "NOT_RUN"
     },
     {
       "asset_id": "SM_Ishibashiri_FallenCedar_A",
