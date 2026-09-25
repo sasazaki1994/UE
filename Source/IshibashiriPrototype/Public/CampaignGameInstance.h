@@ -51,6 +51,10 @@ public:
     static bool IsResumableChapter(ECampaignState Chapter);
 
     bool IsCampaignActive() const { return bCampaignActive; }
+    bool IsIshibashiriDemo() const { return bIshibashiriDemo; }
+    bool IsPersistenceEnabled() const { return bPersistenceEnabled; }
+    bool HasCompletedIshibashiriDemo() const { return bIshibashiriDemoCompleteLogged; }
+    int32 GetLastCardIndex() const;
 
     ECampaignState GetCampaignState() const { return State; }
 
@@ -76,6 +80,13 @@ public:
         bHasContinue = true;
         ContinueChapter = Chapter;
     }
+    void SetIshibashiriDemoForTest()
+    {
+        bCampaignActive = true;
+        bIshibashiriDemo = true;
+        bPersistenceEnabled = false;
+        State = ECampaignState::Title;
+    }
 #endif
 
 private:
@@ -85,7 +96,9 @@ private:
     void ResetChapterRuntime(UObject* WorldContext);
     UPROPERTY() ECampaignState State = ECampaignState::Title;
     bool bCampaignActive = false;
+    bool bIshibashiriDemo = false;
     bool bPersistenceEnabled = false;
+    bool bIshibashiriDemoCompleteLogged = false;
     bool bHasContinue = false;
     ECampaignState ContinueChapter = ECampaignState::Title;
     double CampaignStartSeconds = 0.0;

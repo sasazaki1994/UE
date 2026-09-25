@@ -210,4 +210,24 @@ bool FCampaignLifecycle::RunTest(const FString&)
     TestEqual(TEXT("Title through Ending reaches Completed"), C->GetCampaignState(), ECampaignState::Completed);
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FIshibashiriDemoLifecycle, "IshibashiriPrototype.Campaign.IshibashiriDemoLifecycle",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FIshibashiriDemoLifecycle::RunTest(const FString&)
+{
+    auto* C = NewObject<UCampaignGameInstance>();
+    C->SetIshibashiriDemoForTest();
+    TestTrue(TEXT("Demo is explicit"), C->IsIshibashiriDemo());
+    TestFalse(TEXT("Demo persistence is disabled"), C->IsPersistenceEnabled());
+    C->AdvanceCardChapter();
+    C->AdvanceCardChapter();
+    C->CompleteApproach();
+    TestTrue(TEXT("Ishibashiri completion enters short ending"), C->CompleteEncounter(ECampaignState::Ishibashiri));
+    TestEqual(TEXT("Demo Interlude1 has two cards"), C->GetLastCardIndex(), 1);
+    TestTrue(TEXT("Short ending returns to Title"), C->AdvanceCardChapter());
+    TestEqual(TEXT("Demo does not enter Fuchimatoi"), C->GetCampaignState(), ECampaignState::Title);
+    TestTrue(TEXT("Completion marker becomes eligible only after ending"), C->HasCompletedIshibashiriDemo());
+    return true;
+}
 #endif

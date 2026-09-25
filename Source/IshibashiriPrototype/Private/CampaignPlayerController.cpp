@@ -48,19 +48,24 @@ void ACampaignPlayerController::PlayerTick(float DeltaTime)
     FParse::Value(FCommandLine::Get(), TEXT("PrototypeTestRun="), RunId);
     AutoConfirmSeconds += DeltaTime;
     const auto* Campaign = GetGameInstance<UCampaignGameInstance>();
-    if (Campaign && Campaign->GetCampaignState() == ECampaignState::Completed)
+    const bool bDemoCompleted = Campaign && Campaign->IsIshibashiriDemo()
+        && Campaign->HasCompletedIshibashiriDemo() && Campaign->GetCampaignState() == ECampaignState::Title;
+    if (Campaign && (Campaign->GetCampaignState() == ECampaignState::Completed || bDemoCompleted))
     {
         if (!bCompleted && bCapture)
         {
-            const FString Dir = FPaths::ProjectSavedDir() / TEXT("Screenshots/Campaign") / RunId;
+            const FString Dir = FPaths::ProjectSavedDir()
+                / (bDemoCompleted ? TEXT("Screenshots/IshibashiriDemo") : TEXT("Screenshots/Campaign")) / RunId;
             IFileManager::Get().MakeDirectory(*Dir, true);
-            FScreenshotRequest::RequestScreenshot(Dir / TEXT("15-Completed.png"), false, false);
+            FScreenshotRequest::RequestScreenshot(Dir / (bDemoCompleted ? TEXT("14-ReturnToTitle.png") : TEXT("15-Completed.png")), false, false);
             bCompleted = true;
             AutoConfirmSeconds = 0.f;
             return;
         }
         if (bCompleted && AutoConfirmSeconds < .5f) return;
-        UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_E2E_PASS %s total_campaign_time=%.3f"), *RunId, Campaign->GetCampaignElapsedSeconds());
+        UE_LOG(LogTemp, Display, TEXT("%s %s total_campaign_time=%.3f"),
+            bDemoCompleted ? TEXT("ISHIBASHIRI_DEMO_E2E_PASS") : TEXT("CAMPAIGN_E2E_PASS"), *RunId,
+            Campaign->GetCampaignElapsedSeconds());
         FPlatformMisc::RequestExitWithStatus(false, 0);
         return;
     }
@@ -81,7 +86,11 @@ void ACampaignPlayerController::PlayerTick(float DeltaTime)
         }
         if (Name)
         {
-            const FString Dir = FPaths::ProjectSavedDir() / TEXT("Screenshots/Campaign") / RunId;
+            const FString Dir = FPaths::ProjectSavedDir()
+                / (Campaign->IsIshibashiriDemo() ? TEXT("Screenshots/IshibashiriDemo") : TEXT("Screenshots/Campaign")) / RunId;
+            if (Campaign->IsIshibashiriDemo() && Campaign->GetCampaignState() == ECampaignState::Interlude1)
+                Name = Campaign->GetLastCardIndex() == 1 && GetWorld()->GetAuthGameMode<ACampaignGameMode>()->GetCardIndex() == 0
+                    ? TEXT("12-DemoEnding1.png") : TEXT("13-DemoEnding2.png");
             IFileManager::Get().MakeDirectory(*Dir, true);
             FScreenshotRequest::RequestScreenshot(Dir / Name, false, false);
         }

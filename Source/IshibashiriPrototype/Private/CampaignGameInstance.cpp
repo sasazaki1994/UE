@@ -51,9 +51,11 @@ namespace
 void UCampaignGameInstance::Init()
 {
     Super::Init();
-    bCampaignActive = FParse::Param(FCommandLine::Get(), TEXT("Campaign"));
+    bIshibashiriDemo = FParse::Param(FCommandLine::Get(), TEXT("IshibashiriDemo"));
+    bCampaignActive = FParse::Param(FCommandLine::Get(), TEXT("Campaign")) || bIshibashiriDemo;
     FString TestRun;
-    bPersistenceEnabled = !FParse::Param(FCommandLine::Get(), TEXT("CampaignE2E"))
+    bPersistenceEnabled = bCampaignActive && !bIshibashiriDemo
+        && !FParse::Param(FCommandLine::Get(), TEXT("CampaignE2E"))
         && !FParse::Value(FCommandLine::Get(), TEXT("PrototypeTestRun="), TestRun);
     State = ECampaignState::Title;
     if (bCampaignActive && bPersistenceEnabled) LoadChapterSave();
@@ -64,6 +66,7 @@ void UCampaignGameInstance::Init()
 void UCampaignGameInstance::StartCampaign()
 {
     bCampaignActive = true;
+    bIshibashiriDemoCompleteLogged = false;
     State = ECampaignState::Prologue;
     CampaignStartSeconds = ChapterStartSeconds = FPlatformTime::Seconds();
     SaveChapter();
@@ -76,7 +79,18 @@ bool UCampaignGameInstance::AdvanceCardChapter()
     {
     case ECampaignState::Title: StartCampaign(); break;
     case ECampaignState::Prologue: State = ECampaignState::IshibashiriApproach; break;
-    case ECampaignState::Interlude1: State = ECampaignState::Fuchimatoi; break;
+    case ECampaignState::Interlude1:
+        if (bIshibashiriDemo)
+        {
+            State = ECampaignState::Title;
+            if (!bIshibashiriDemoCompleteLogged)
+            {
+                bIshibashiriDemoCompleteLogged = true;
+                UE_LOG(LogTemp, Display, TEXT("ISHIBASHIRI_DEMO_COMPLETE"));
+            }
+        }
+        else State = ECampaignState::Fuchimatoi;
+        break;
     case ECampaignState::Interlude2: State = ECampaignState::Minedaki; break;
     case ECampaignState::Interlude3: State = ECampaignState::Magatsune; break;
     case ECampaignState::Ending: State = ECampaignState::Completed; break;
@@ -88,6 +102,13 @@ bool UCampaignGameInstance::AdvanceCardChapter()
     else if (State != ECampaignState::Title && !bStartingFromTitle) SaveChapter();
     UE_LOG(LogTemp, Display, TEXT("CAMPAIGN_E2E %s chapter_start_time=%.3f"), CampaignStateName(State), GetCampaignElapsedSeconds());
     return true;
+}
+
+int32 UCampaignGameInstance::GetLastCardIndex() const
+{
+    if (State == ECampaignState::Prologue || State == ECampaignState::Ending) return 3;
+    if (State == ECampaignState::Interlude1) return bIshibashiriDemo ? 1 : 2;
+    return State == ECampaignState::Interlude3 ? 2 : 1;
 }
 
 bool UCampaignGameInstance::CompleteApproach()
