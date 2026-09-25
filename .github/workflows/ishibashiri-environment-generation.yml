@@ -1,0 +1,119 @@
+name: Ishibashiri environment first batch
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/ishibashiri-environment-generation.yml"
+      - "Tools/CreateIshibashiriEnvironmentKit.py"
+      - "Tools/VerifyIshibashiriEnvironmentKit.py"
+      - "Tools/ValidateIshibashiriEnvironmentArtifacts.py"
+      - "Art/Environment/Ishibashiri/manifest.json"
+      - "Tests/test_ishibashiri_environment_generation.py"
+      - "Specs/Acceptance/IshibashiriEnvironmentGeneration.feature"
+
+concurrency:
+  group: ishibashiri-environment-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  generate-and-validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      BLENDER_VERSION: 3.6.23
+      BLENDER_ARCHIVE: blender-3.6.23-linux-x64.tar.xz
+      BLENDER_RELEASE_URL: https://download.blender.org/release/Blender3.6
+      OUTPUT_DIR: Art/Environment/Ishibashiri/Generated
+      ARTIFACT_DIR: Artifacts/IshibashiriEnvironment/FirstBatch
+      LIBGL_ALWAYS_SOFTWARE: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run environment source-contract tests
+        run: |
+          python -m pip install pytest
+          python -m pytest Tests/test_ishibashiri_environment_generation.py -q
+
+      - name: Install headless runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y ca-certificates curl jq xz-utils xvfb libegl1 libgl1 libsm6 libx11-6 libxext6 libxi6 libxrender1 libxkbcommon0
+
+      - name: Download and verify official Blender archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/blender-download"
+          cd "$RUNNER_TEMP/blender-download"
+          curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --output "$BLENDER_ARCHIVE" "$BLENDER_RELEASE_URL/$BLENDER_ARCHIVE"
+          curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --output blender.sha256 "$BLENDER_RELEASE_URL/blender-$BLENDER_VERSION.sha256"
+          awk -v archive="$BLENDER_ARCHIVE" '$2 == archive || $2 == "*" archive { print }' blender.sha256 > archive.sha256
+          test "$(wc -l < archive.sha256)" -eq 1
+          sha256sum --check archive.sha256
+          tar -xJf "$BLENDER_ARCHIVE" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/blender-$BLENDER_VERSION-linux-x64" >> "$GITHUB_PATH"
+
+      - name: Generate exactly three fresh candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$OUTPUT_DIR" "$ARTIFACT_DIR"
+          mkdir -p "$OUTPUT_DIR" "$ARTIFACT_DIR/logs"
+          marker="$RUNNER_TEMP/ishibashiri-generation-start"
+          touch "$marker"
+          blender --version | tee "$ARTIFACT_DIR/blender-version.txt"
+          git rev-parse HEAD | tee "$ARTIFACT_DIR/source-commit.txt"
+          xvfb-run -a blender --background --factory-startup --python-exit-code 1 \
+            --python Tools/CreateIshibashiriEnvironmentKit.py 2>&1 | tee "$ARTIFACT_DIR/logs/generation.log"
+          for asset in SM_Ishibashiri_OldCedar_A SM_Ishibashiri_Rock_A SM_Ishibashiri_BoundaryStone_A; do
+            short="${asset#SM_Ishibashiri_}"
+            for suffix in .fbx .glb _report.json _preview.png; do
+              file="$OUTPUT_DIR/$short/$asset$suffix"
+              test -s "$file"
+              test "$file" -nt "$marker"
+            done
+          done
+          test -s "$OUTPUT_DIR/IshibashiriEnvironment_FirstBatch_ContactSheet.png"
+          test "$(find "$OUTPUT_DIR" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 3
+
+      - name: Verify manifest contracts
+        run: python Tools/VerifyIshibashiriEnvironmentKit.py | tee "$ARTIFACT_DIR/logs/verification.log"
+
+      - name: Round-trip FBX and GLB and validate previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SOURCE_COMMIT="$(git rev-parse HEAD)"
+          xvfb-run -a blender --background --factory-startup --python-exit-code 1 \
+            --python Tools/ValidateIshibashiriEnvironmentArtifacts.py 2>&1 | tee "$ARTIFACT_DIR/logs/roundtrip.log"
+          jq -e '.generation == "PASS" and .verification == "PASS" and .roundtrip == "PASS" and .ue_import == "NOT_RUN" and .visual_approval == "NOT_RUN"' \
+            "$OUTPUT_DIR/validation-summary.json"
+
+      - name: Package evidence and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          for short in OldCedar_A Rock_A BoundaryStone_A; do cp -a "$OUTPUT_DIR/$short" "$ARTIFACT_DIR/"; done
+          cp "$OUTPUT_DIR/IshibashiriEnvironment_FirstBatch_ContactSheet.png" "$OUTPUT_DIR/validation-summary.json" "$ARTIFACT_DIR/"
+          (cd "$ARTIFACT_DIR" && find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt)
+          test -s "$ARTIFACT_DIR/SHA256SUMS.txt"
+          (cd "$ARTIFACT_DIR" && sha256sum --check SHA256SUMS.txt)
+
+      # Candidates are artifacts only. Human review and Windows UE 5.6.1 validation
+      # are required before any generated binary may be adopted or committed.
+      - name: Upload Blender production candidate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ishibashiri-environment-first-batch-${{ github.run_id }}
+          path: ${{ env.ARTIFACT_DIR }}/
+          if-no-files-found: error
+          retention-days: 14
