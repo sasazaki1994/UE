@@ -93,5 +93,8 @@ def test_roundtrip_contract_checks_geometry_collision_and_previews():
     assert 'collision_name = "UCX_" + asset + "_00"' in source
     for check in ("NaN or Inf", "abnormal scale", "empty geometry", "not_single_colour"):
         assert check in source
+    for check in ("visual_object_names", "vertex_count", "triangle_count", "local_aabb", "world_aabb", "PREVIEW_"):
+        assert check in source
+    assert "TOLERANCE = 0.03" in source
     assert '"ue_import": "NOT_RUN"' in source
     assert '"visual_approval": "NOT_RUN"' in source

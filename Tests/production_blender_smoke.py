@@ -25,6 +25,17 @@ def add_shirotsura_fixture_provenance(body):
 
 def main():
     results = []
+    expected_actions = {
+        'Shirotsura': ['Idle', 'Walk', 'Run', 'Slash', 'Dodge', 'Climb', 'Hang', 'Grip', 'Jump', 'Death'],
+        'Ishibashiri': ['Idle', 'Walk', 'Charge', 'Buck', 'Calmed'],
+    }
+    for character, expected in expected_actions.items():
+        baseline = B.ROOT / 'Art/Characters' / character / 'Rigged' / (character + '_Rigged.blend')
+        with bpy.data.libraries.load(str(baseline), link=False) as (src, _):
+            actual = B.required_baseline_actions(character, list(src.actions))
+        assert actual == expected
+        results.append({'stage': character + '_baseline_actions', 'status': 'pass',
+                        'required': len(expected), 'loaded': len(actual), 'actions': actual})
     with tempfile.TemporaryDirectory(prefix='intake-fixture-') as tmp:
         tmp = Path(tmp)
         bpy.ops.wm.read_factory_settings(use_empty=True)

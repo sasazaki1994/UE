@@ -15,6 +15,14 @@ Feature: Ishibashiri first-batch Blender evidence
     And each export contains its named non-empty UCX collision proxy
     And each preview is a non-trivial image with a 172 cm scale reference
 
+  Scenario: Compare round trips against canonical geometry measurements
+    Given source metrics measured from evaluated mesh vertices rather than cached object bounds
+    When FBX and GLB are imported into separate clean Blender scenes
+    Then the validator records object transforms and local-space and world-space bounds
+    And visual object, vertex, and triangle counts match the generated candidate
+    And physical dimensions and non-empty collision geometry remain within 3 percent
+    And no PREVIEW object is present in either production export
+
   Scenario: Preserve the downstream review boundary
     Given Blender generation and round-trip checks pass
     When the evidence artifact is packaged with checksums
