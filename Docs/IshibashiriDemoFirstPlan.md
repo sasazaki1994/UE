@@ -1,6 +1,7 @@
 # 石走り編を最初の完成目標にする（制作方針・2026-09-24）
 
 > 実装された専用フロー、実行方法、保存隔離および未検証事項は [Ishibashiri Demo Flow](IshibashiriDemoFlow.md) を参照する。
+> Approach / Basin のPrimitiveを置換する8点の仕様、First Adoption Batch、およびTripo → Blender → UE受入手順は [Ishibashiri Minimal Production Environment Kit](Art/IshibashiriEnvironmentKit.md) を正本とする。
 
 基準: main `c54ad09f62eaed3633c116f90effbb74389245ab`。これは**制作範囲と着手順の決定**であり、体験版の実装・完成・UE実機検証を示す文書ではない。
 
