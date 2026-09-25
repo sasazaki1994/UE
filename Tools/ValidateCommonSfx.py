@@ -13,6 +13,11 @@ NAMES = ("BoundaryReading", "ArmWarning", "MountOpen", "ClingWarning",
          "KakonPurified", "EncounterCalmed")
 
 
+def review_status(value: str | None) -> str:
+    """Render review state without implying that automation performed it."""
+    return "NOT_RUN" if value == "not_performed" else str(value).upper()
+
+
 def inspect_wav(path: Path) -> dict[str, float | int]:
     with wave.open(str(path), "rb") as stream:
         channels, width, rate, frames = (stream.getnchannels(), stream.getsampwidth(),
@@ -38,7 +43,14 @@ def validate(base: Path = BASE) -> list[str]:
     if [event["name"] for event in events] != list(NAMES):
         raise ValueError("manifest events are missing or out of specification order")
     if any(event["status"] != "adopted" for event in events):
-        return ["BLOCKED: one or more roles are pending; no complete delivery claimed"]
+        return [
+            "PROVENANCE: BLOCKED — one or more roles are pending",
+            "WAV technical validation: NOT_RUN",
+            "preview: NOT_RUN",
+            f"human listening: {review_status(manifest.get('listening_review'))}",
+            f"UE import: {review_status(manifest.get('ue_import_review'))}",
+            "BLOCKED — EXTERNAL AUDIO SOURCES COULD NOT BE VERIFIED",
+        ]
     provenance = ("source_url", "author", "license", "license_url", "source_file", "edits")
     for event in events:
         if not all(event.get(field) for field in provenance) or event.get("redistribution_verified") is not True:
@@ -50,7 +62,13 @@ def validate(base: Path = BASE) -> list[str]:
     levels = [reports[name]["rms"] for name in NAMES]
     if max(levels) / min(levels) > 8:
         raise ValueError("individual RMS levels differ by more than 18 dB")
-    return [f"PASS: {name}: {reports[name]}" for name in (*NAMES, "CommonSfxPreview")]
+    return [
+        "provenance: OK",
+        *[f"WAV technical validation OK: {name}: {reports[name]}" for name in NAMES],
+        f"preview OK: {reports['CommonSfxPreview']}",
+        f"human listening: {review_status(manifest.get('listening_review'))}",
+        f"UE import: {review_status(manifest.get('ue_import_review'))}",
+    ]
 
 
 if __name__ == "__main__":

@@ -13,7 +13,12 @@ import ValidateCommonSfx as V
 
 class CommonSfxValidation(unittest.TestCase):
     def test_repository_truthfully_reports_incomplete_delivery(self):
-        self.assertEqual(V.validate(), ["BLOCKED: one or more roles are pending; no complete delivery claimed"])
+        report = V.validate()
+        self.assertIn("PROVENANCE: BLOCKED — one or more roles are pending", report)
+        self.assertIn("WAV technical validation: NOT_RUN", report)
+        self.assertIn("preview: NOT_RUN", report)
+        self.assertIn("human listening: NOT_RUN", report)
+        self.assertIn("UE import: NOT_RUN", report)
 
     def test_complete_delivery_is_decoded_and_checked(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -32,7 +37,24 @@ class CommonSfxValidation(unittest.TestCase):
                     output.setparams((1, 2, 48000, 4800, "NONE", "not compressed"))
                     output.writeframes(b"".join(struct.pack("<h", 4000 if index % 2 else -4000)
                                                 for index in range(4800)))
-            self.assertEqual(len(V.validate(base)), 7)
+            report = V.validate(base)
+            self.assertIn("provenance: OK", report)
+            self.assertTrue(any(line.startswith("preview OK:") for line in report))
+            self.assertIn("human listening: NOT_RUN", report)
+            self.assertIn("UE import: NOT_RUN", report)
+
+    def test_incomplete_license_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            manifest = json.loads((V.BASE / "manifest.json").read_text(encoding="utf-8"))
+            for event in manifest["events"]:
+                event.update(status="adopted", source_url="https://example.test/sound",
+                             author="fixture", license="CC0-1.0", source_file="fixture.wav",
+                             edits="unit-test fixture", redistribution_verified=True)
+            manifest["preview"] = "CommonSfxPreview.wav"
+            (base / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "incomplete provenance"):
+                V.validate(base)
 
     def test_clipping_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
