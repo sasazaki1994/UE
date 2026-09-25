@@ -6,6 +6,7 @@ param(
     [switch]$SkipBuild,
     [switch]$Capture,
     [switch]$Campaign,
+    [switch]$IshibashiriDemo,
     [switch]$Approach,
     [switch]$Basin,
     [switch]$Fuchimatoi,
@@ -142,8 +143,9 @@ function Ensure-Map {
 }
 
 try {
-    if (@(@($Campaign,$Approach,$Minedaki,$Magatsune,$Fuchimatoi) | Where-Object { $_ }).Count -gt 1) { throw 'Choose -Campaign, -Approach or one encounter.' }
-    if ($Campaign -and ($Basin -or $Recovery -or $Realtime -or $Onscreen -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Campaign cannot be combined with encounter/test scenario switches other than -Gamepad.' }
+    if (@(@($Campaign,$IshibashiriDemo,$Approach,$Minedaki,$Magatsune,$Fuchimatoi) | Where-Object { $_ }).Count -gt 1) { throw 'Choose -Campaign, -IshibashiriDemo, -Approach or one encounter.' }
+    $IsCampaignFlow = $Campaign -or $IshibashiriDemo
+    if ($IsCampaignFlow -and ($Basin -or $Recovery -or $Realtime -or $Onscreen -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw 'Campaign flows cannot be combined with encounter/test scenario switches other than -Gamepad.' }
     if ($Magatsune -and ($Basin -or $Recovery -or $Realtime -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Magatsune is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
     if ($Minedaki -and ($Fuchimatoi -or $Basin -or $Recovery -or $Realtime -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Minedaki is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
     if ($Onscreen -and !$Realtime) { throw '-Onscreen requires -Realtime.' }
@@ -151,7 +153,7 @@ try {
     if ($Recovery -and (!$Fuchimatoi -or $Action -ne 'Test')) { throw '-Recovery requires -Action Test -Fuchimatoi.' }
     if ($Fuchimatoi -and ($Basin -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw '-Fuchimatoi is a separate encounter. Use -Gamepad for its gamepad playthrough.' }
     $LaunchMap = '/Game/Maps/L_Prototype_01'
-    if ($Campaign) { $LaunchMap += '?game=/Script/IshibashiriPrototype.CampaignGameMode' }
+    if ($IsCampaignFlow) { $LaunchMap += '?game=/Script/IshibashiriPrototype.CampaignGameMode' }
     if ($Approach) { $LaunchMap += '?game=/Script/IshibashiriPrototype.IshibashiriApproachGameMode' }
     if ($Fuchimatoi) { $LaunchMap += '?game=/Script/IshibashiriPrototype.FuchimatoiGameMode' }
     if ($Minedaki) { $LaunchMap += '?game=/Script/IshibashiriPrototype.MinedakiGameMode' }
@@ -217,6 +219,7 @@ try {
             $PlayArguments += "-ProductionVisuals=$ProductionVisuals"
             if ($Basin) { $PlayArguments += '-BasinPrototype' }
             if ($Campaign) { $PlayArguments += '-Campaign' }
+            if ($IshibashiriDemo) { $PlayArguments += '-IshibashiriDemo' }
             if ($HighQuality) { $PlayArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             Invoke-Checked $EditorExe $PlayArguments
         }
@@ -235,6 +238,7 @@ try {
             if ($Minedaki) { $LogName = if ($Gamepad) { "MinedakiGamepad-$TestFPS.log" } else { "Minedaki-$TestFPS.log" } }
             if ($Magatsune) { $LogName = if ($Gamepad) { "MagatsuneGamepad-$TestFPS.log" } else { "Magatsune-$TestFPS.log" } }
             if ($Campaign) { $LogName = "Campaign-$TestFPS.log" }
+            if ($IshibashiriDemo) { $LogName = "IshibashiriDemo-$TestFPS.log" }
             if ($Recovery) { $LogName = if ($Gamepad) { "FuchimatoiRecoveryGamepad-$TestFPS.log" } else { "FuchimatoiRecovery-$TestFPS.log" } }
             if ($Realtime) { $LogName = "Realtime-$LogName" }
             if ($Onscreen) { $LogName = "Onscreen-$LogName" }
@@ -244,7 +248,7 @@ try {
             if ($Fuchimatoi) { $TestFlag = '-FuchimatoiTest' }
             if ($Minedaki) { $TestFlag = '-MinedakiTest' }
             if ($Magatsune) { $TestFlag = '-MagatsuneTest' }
-            if ($Campaign) { $TestFlag = '-CampaignE2E' }
+            if ($IsCampaignFlow) { $TestFlag = '-CampaignE2E' }
             if ($Approach) { $TestFlag = '-ApproachTest' }
             $TestArguments = @($ProjectFile, $LaunchMap, '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
             $TestArguments += "-ProductionVisuals=$ProductionVisuals"
@@ -253,6 +257,7 @@ try {
             if ($Magatsune -and $Gamepad) { $TestArguments += '-MagatsuneGamepad' }
             if ($Recovery) { $TestArguments += '-FuchimatoiRecovery' }
             if ($Campaign) { $TestArguments += '-Campaign'; if ($Gamepad) { $TestArguments += '-CampaignGamepad' } }
+            if ($IshibashiriDemo) { $TestArguments += '-IshibashiriDemo'; if ($Gamepad) { $TestArguments += '-CampaignGamepad' } }
             if ($Realtime) { $TestArguments += '-FuchimatoiRealtime' }
             if ($Basin) { $TestArguments += '-BasinPrototype' }
             if ($HighQuality) { $TestArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
@@ -278,14 +283,21 @@ try {
             if ($Minedaki) { $PassMarker = "MINEDAKI_TEST_PASS $RunId" }
             if ($Magatsune) { $PassMarker = "MAGATSUNE_TEST_PASS $RunId" }
             if ($Campaign) { $PassMarker = "CAMPAIGN_E2E_PASS $RunId" }
+            if ($IshibashiriDemo) { $PassMarker = "ISHIBASHIRI_DEMO_E2E_PASS $RunId" }
             if ($Approach) { $PassMarker = "APPROACH_TEST_PASS $RunId" }
             if (!(Select-String -LiteralPath $LogFile -SimpleMatch $PassMarker -Quiet)) {
                 throw "Smoke test did not report success for this run. Read $LogFile"
             }
-            if ($Campaign -and (Select-String -LiteralPath $LogFile -Pattern 'CAMPAIGN_E2E_FAIL|_TEST_FAIL|Result=\{Fail\}|Test Failed' -Quiet)) { throw "Campaign E2E reported a failure. Read $LogFile" }
+            if ($IsCampaignFlow -and (Select-String -LiteralPath $LogFile -Pattern 'CAMPAIGN_E2E_FAIL|ISHIBASHIRI_DEMO_E2E_FAIL|_TEST_FAIL|Result=\{Fail\}|Test Failed' -Quiet)) { throw "Campaign flow E2E reported a failure. Read $LogFile" }
             Write-Host "Test passed: $LogFile"
             if ($Realtime -and !(Select-String -LiteralPath $LogFile -SimpleMatch "FUCHIMATOI_PERF $RunId" -Quiet)) { throw "Realtime test did not record performance. Read $LogFile" }
             if ($Capture) {
+                if ($IshibashiriDemo) {
+                    $PlannedDemoShots = @('01-Title','02-Prologue','03-Approach','04-IshibashiriReveal','05-Charge','06-GroundGrab','07-Climbing','08-Kakon1','09-Kakon2','10-Kakon3','11-Calm','12-DemoEnding1','13-DemoEnding2','14-ReturnToTitle')
+                    Write-Host "Ishibashiri demo capture destination: Saved\Screenshots\IshibashiriDemo\$RunId"
+                    Write-Host "Capture contract: $($PlannedDemoShots -join ', ')"
+                    exit 0
+                }
                 if ($Campaign) {
                     $RequiredCampaignShots = @(
                         "Campaign\$RunId\01-Title.png", "Campaign\$RunId\02-Prologue.png",

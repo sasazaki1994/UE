@@ -17,7 +17,8 @@ void ACampaignGameMode::StartPlay()
     Super::StartPlay();
     if (auto* Campaign = GetGameInstance<UCampaignGameInstance>())
     {
-        if (!Campaign->IsCampaignActive() && FParse::Param(FCommandLine::Get(), TEXT("Campaign"))) Campaign->RestartCampaign();
+        if (!Campaign->IsCampaignActive() && (FParse::Param(FCommandLine::Get(), TEXT("Campaign"))
+            || FParse::Param(FCommandLine::Get(), TEXT("IshibashiriDemo")))) Campaign->RestartCampaign();
     }
 }
 
@@ -26,10 +27,9 @@ void ACampaignGameMode::ConfirmCard()
     UCampaignGameInstance* Campaign = GetGameInstance<UCampaignGameInstance>();
     if (!Campaign) return;
     const ECampaignState State = Campaign->GetCampaignState();
-    if (State == ECampaignState::Title && !NewGameConfirmation.RequestStart(Campaign->HasContinue())) { return; }
-    const int32 LastCard = State == ECampaignState::Prologue ? 3
-        : State == ECampaignState::Ending                    ? 3
-                                          : (State == ECampaignState::Interlude1 || State == ECampaignState::Interlude3 ? 2 : 1);
+    if (State == ECampaignState::Title && !NewGameConfirmation.RequestStart(
+        Campaign->IsPersistenceEnabled() && Campaign->HasContinue())) { return; }
+    const int32 LastCard = Campaign->GetLastCardIndex();
     if (State == ECampaignState::Title || State == ECampaignState::Completed || CardIndex >= LastCard)
     {
         if (Campaign->AdvanceCardChapter()) Campaign->TravelToCurrentChapter(this);

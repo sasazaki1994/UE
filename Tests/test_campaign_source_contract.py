@@ -33,8 +33,8 @@ def test_new_game_overwrite_requires_confirmation_without_blocking_continue():
     header = read("Source/IshibashiriPrototype/Public/CampaignGameMode.h")
     controller = read("Source/IshibashiriPrototype/Private/CampaignPlayerController.cpp")
     hud = read("Source/IshibashiriPrototype/Private/CampaignHUD.cpp")
-    assert "State == ECampaignState::Title && !NewGameConfirmation.RequestStart(Campaign->HasContinue())" in mode
-    assert "!NewGameConfirmation.RequestStart(Campaign->HasContinue())" in mode
+    assert "State == ECampaignState::Title && !NewGameConfirmation.RequestStart(" in mode
+    assert "Campaign->IsPersistenceEnabled() && Campaign->HasContinue()" in mode
     assert mode.index("NewGameConfirmation.RequestStart") < mode.index("Campaign->AdvanceCardChapter()")
     assert "ContinueCampaign()" in mode and "NewGameConfirmation.Cancel()" in mode
     assert "FCampaignNewGameConfirmation NewGameConfirmation" in header
