@@ -1,6 +1,7 @@
 #include "MinedakiPlayer.h"
 #include "MinedakiBoss.h"
 #include "MinedakiGameMode.h"
+#include "KakonActor.h"
 #include "GrabComponent.h"
 #include "StaminaComponent.h"
 #include "PlayerSenseComponent.h"

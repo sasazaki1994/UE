@@ -372,15 +372,29 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
     case EPhase::Win:
     {
         const EIshibashiriState State = Boss->GetState();
-        if (State == EIshibashiriState::Telegraph && LastBossState != static_cast<int32>(State) && Counters == 0)
-            Capture(TEXT("02-Telegraph"));
+        if (State == EIshibashiriState::Telegraph && LastBossState != static_cast<int32>(State))
+        {
+            // Give the boss a distant target before it locks the charge direction.
+            // Moving only after Charge begins can be too late when Tick carries
+            // the last telegraph step into the first charge step.
+            const FVector Inward = (-Boss->GetActorLocation()).GetSafeNormal2D();
+            const FVector BaitDirection = Inward.IsNearlyZero() ? FVector::ForwardVector : Inward;
+            const FVector Bait = Boss->GetActorLocation() + BaitDirection * 1200.f;
+            Player->GetCharacterMovement()->StopMovementImmediately();
+            Player->SetActorLocation(FVector(Bait.X, Bait.Y, 92.f), false, nullptr, ETeleportType::TeleportPhysics);
+            if (Counters == 0) Capture(TEXT("02-Telegraph"));
+        }
         if (State == EIshibashiriState::Charge)
         {
             if (LastBossState != static_cast<int32>(State))
             {
                 LockedDirection = Boss->GetChargeDirection();
                 // Move out of the committed path; a homing bug would now rotate the boss.
-                Player->SetActorLocation(FVector(0.f, 1000.f, 92.f), false, nullptr, ETeleportType::TeleportPhysics);
+                const FVector Side(-LockedDirection.Y, LockedDirection.X, 0.f);
+                const FVector LeftEscape = Boss->GetActorLocation() + Side * 1600.f;
+                const FVector RightEscape = Boss->GetActorLocation() - Side * 1600.f;
+                const FVector Escape = LeftEscape.SizeSquared2D() < RightEscape.SizeSquared2D() ? LeftEscape : RightEscape;
+                Player->SetActorLocation(FVector(Escape.X, Escape.Y, 92.f), false, nullptr, ETeleportType::TeleportPhysics);
             }
             else
             {
@@ -394,7 +408,11 @@ void APrototypeSmokeTest::Tick(float DeltaSeconds)
             {
                 const int32 Before = Boss->GetPosture();
                 AimAtBoss();
+                const bool bCounterAvailable = Boss->CanBeCountered();
                 Player->Attack();
+                if (Boss->GetPosture() != Before - 1)
+                    UE_LOG(LogTemp, Error, TEXT("SMOKE_COUNTER_DIAGNOSTIC available=%d health=%d feedback=%s"),
+                        bCounterAvailable, Player->GetHealth(), *Player->GetFeedback());
                 if (!Require(Boss->GetPosture() == Before - 1, TEXT("Real sword sweep damages the recovering boss"))) return;
                 ++Counters;
                 LastHealth = Boss->GetPosture();
