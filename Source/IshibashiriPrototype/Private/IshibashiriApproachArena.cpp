@@ -1,5 +1,6 @@
 #include "IshibashiriApproachArena.h"
 #include "PrimitiveAppearance.h"
+#include "Components/DirectionalLightComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -108,10 +109,28 @@ void AIshibashiriApproachArena::OnConstruction(const FTransform& T)
     RevealParts.Add(AddPrimitive(
         TEXT("DistantIshibashiriBack"), SphereMesh, RevealOrigin + FVector(0, 0, 700), FVector(11, 5, 5), FRotator(0, 90, 0), Moss));
     for (UPrimitiveComponent* C : RevealParts) C->SetVisibility(false);
+    // This chapter uses a blank map, so it needs its own movable daylight.
+    auto* Sun = NewObject<UDirectionalLightComponent>(this, TEXT("ApproachSun"));
+    Sun->SetupAttachment(Root);
+    Sun->SetMobility(EComponentMobility::Movable);
+    Sun->SetRelativeRotation(FRotator(-48, -32, 0));
+    Sun->SetIntensity(3.2f);
+    Sun->RegisterComponent();
+    Generated.Add(Sun);
+    auto* Fill = NewObject<UDirectionalLightComponent>(this, TEXT("ApproachFill"));
+    Fill->SetupAttachment(Root);
+    Fill->SetMobility(EComponentMobility::Movable);
+    Fill->SetRelativeRotation(FRotator(-25, 145, 0));
+    Fill->SetIntensity(1.1f);
+    Fill->SetLightColor(FLinearColor(.66f, .75f, 1.f));
+    Fill->SetCastShadows(false);
+    Fill->RegisterComponent();
+    Generated.Add(Fill);
     auto* Fog = NewObject<UExponentialHeightFogComponent>(this, TEXT("ApproachMist"));
     Fog->SetupAttachment(Root);
     Fog->SetRelativeLocation(FVector(55000, 0, -100));
     Fog->SetFogDensity(.009f);
+    Fog->SetFogInscatteringColor(FLinearColor(.34f, .39f, .42f));
     Fog->SetFogMaxOpacity(.16f);
     Fog->SetStartDistance(1500);
     Fog->RegisterComponent();

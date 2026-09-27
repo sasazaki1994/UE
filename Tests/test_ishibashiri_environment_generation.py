@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,6 +52,50 @@ def test_validator_distinguishes_not_generated(tmp_path):
     status, messages = module.validate(tmp_path)
     assert status == "NOT_GENERATED"
     assert messages
+
+
+def test_first_batch_reports_pair_one_render_mesh_with_its_ucx_collision():
+    spec = importlib.util.spec_from_file_location("kit_validator", VALIDATOR)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    specs = {item["asset_id"]: item for item in manifest()["assets"]}
+    first_batch = manifest()["first_adoption_batch"]
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        for asset in first_batch:
+            directory = root / asset.removeprefix("SM_Ishibashiri_")
+            directory.mkdir()
+            for suffix in (".fbx", ".glb", "_preview.png"):
+                (directory / (asset + suffix)).write_bytes(b"fixture")
+            ranges = module.dimension_ranges(specs[asset])
+            lod = specs[asset]["lods"][0]
+            report = {
+                "asset_id": asset,
+                "mesh_object_count": 1,
+                "visual_object_names": [asset],
+                "collision": {"name": "UCX_" + asset + "_00"},
+                "blender_version": "fixture",
+                "seed": 830194,
+                "dimensions_cm": {axis: (limits[0] + limits[1]) / 2 for axis, limits in ranges.items()},
+                "triangle_count": (lod["triangle_target_min"] + lod["triangle_target_max"]) // 2,
+                "material_count": 1,
+                "pivot": "ground",
+                "collision_status": "GENERATED",
+                "lod_status": {},
+                "generation_status": "BLENDER PRODUCTION CANDIDATE",
+                "ue_import_status": "NOT_RUN",
+                "ue_visual_review_status": "NOT_RUN",
+            }
+            (directory / (asset + "_report.json")).write_text(json.dumps(report), encoding="utf-8")
+        assert module.validate(root)[0] == "PASS"
+        cedar = first_batch[0]
+        report_path = root / cedar.removeprefix("SM_Ishibashiri_") / (cedar + "_report.json")
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        report["visual_object_names"] = ["Cedar_Trunk", "Cedar_Foliage"]
+        report_path.write_text(json.dumps(report), encoding="utf-8")
+        status, messages = module.validate(root)
+        assert status == "FAIL"
+        assert any("UCX collision" in message for message in messages)
 
 
 def test_generator_reports_ue_checks_as_not_run():

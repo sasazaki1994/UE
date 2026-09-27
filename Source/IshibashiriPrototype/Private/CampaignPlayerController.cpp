@@ -91,8 +91,15 @@ void ACampaignPlayerController::PlayerTick(float DeltaTime)
             if (Campaign->IsIshibashiriDemo() && Campaign->GetCampaignState() == ECampaignState::Interlude1)
                 Name = Campaign->GetLastCardIndex() == 1 && GetWorld()->GetAuthGameMode<ACampaignGameMode>()->GetCardIndex() == 0
                     ? TEXT("12-DemoEnding1.png") : TEXT("13-DemoEnding2.png");
-            IFileManager::Get().MakeDirectory(*Dir, true);
-            FScreenshotRequest::RequestScreenshot(Dir / Name, false, false);
+            if (!CapturedCards.Contains(Name))
+            {
+                IFileManager::Get().MakeDirectory(*Dir, true);
+                FScreenshotRequest::RequestScreenshot(Dir / Name, false, false);
+                CapturedCards.Add(Name);
+                // Let the current card render before the input advances or travels.
+                AutoConfirmSeconds = 0.f;
+                return;
+            }
         }
     }
     const FKey Key = bGamepad ? EKeys::Gamepad_FaceButton_Left : EKeys::LeftMouseButton;

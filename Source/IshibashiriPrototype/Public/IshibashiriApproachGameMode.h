@@ -19,12 +19,16 @@ public:
     APrototypePlayer* GetPlayer() const{return Player;}
 private:
     void EnterBasin();
+    void CaptureDemoShot(const TCHAR* Name);
     UPROPERTY() TObjectPtr<AIshibashiriApproachArena> Arena;
     UPROPERTY() TObjectPtr<APrototypePlayer> Player;
     UPROPERTY() TObjectPtr<AActor> SenseTarget;
     bool bTransitioning=false;
     bool bAutomationDriving=false;
     bool bStandaloneApproachTest=false;
+    bool bDemoCapture=false;
+    bool bApproachShot=false;
+    bool bRevealShot=false;
     int32 AutomationPoint=1;
     float AutomationElapsed=0.f;
     float AutomationTimeout=0.f;

@@ -54,6 +54,8 @@ Retryは既存Actorを再Spawnせず、Player、Grab、Stamina、Boss/Body trans
 | Keyboard 60/30, Gamepad 60, Capture | `Prototype.ps1 -Action Test -Minedaki ...` | 未検証: 同上 |
 | 石走り / 淵纏いRegression | 指定の各 `Prototype.ps1 -Action Test` | 未検証: 同上 |
 
+2026-09-27のWindows UE 5.6.1追試では、`ShakeWarning` が `IsWallMoving()` から漏れて壁登り時計が停止する問題を修正した。`Prototype.ps1 -Action Test -Minedaki -SkipBuild -TestFPS 60` は2周・Recoveryを含めてPASS、`IshibashiriPrototype.Nushi.Minedaki.ActionLifecycle` Automationも1件PASS。通常Campaignの60 FPS入力E2Eも石走り専用Demo Review Gateの回帰項目でPASSした。上表は元の変更環境での記録として残す。
+
 既存の `Docs/MinedakiCaptures/` は旧1/3 Runの画像であり、実行していない新Runを装って置換していない。UE 5.6.1環境で `-Capture` を実行すると、Toolsが要求する16枚（Ground Grab、Phase1 wall climb、First Shake、Kakon1、Phase2 transition、Arm route、Kakon2、Phase3 transition、Final Route、Final Cling、Kakon3、Calm、Victory、Fall、Recovery、Retry）を検証する。Capture要求を同一frameで上書きしないよう、Calm/Victory/RetryおよびFinal Routeを別frameに分離した。
 
 ## 未検証・残る弱点

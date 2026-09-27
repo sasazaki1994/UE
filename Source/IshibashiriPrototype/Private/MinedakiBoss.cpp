@@ -143,7 +143,8 @@ bool AMinedakiBoss::IsSliceComplete() const { return GetNushiProgressComponent()
 bool AMinedakiBoss::IsWallMoving() const
 {
     return ActionState == EMinedakiActionState::PreparingClimb || ActionState == EMinedakiActionState::ClimbingWall ||
-        ActionState == EMinedakiActionState::Shaking || ActionState == EMinedakiActionState::LedgeTransition;
+        ActionState == EMinedakiActionState::ShakeWarning || ActionState == EMinedakiActionState::Shaking ||
+        ActionState == EMinedakiActionState::LedgeTransition;
 }
 
 bool AMinedakiBoss::IsBodyTransitioning() const

@@ -44,15 +44,15 @@ Test runnerは既存Campaign E2Eの入力driver（Approachと石走り攻略）�
 13. `13-DemoEnding2.png`
 14. `14-ReturnToTitle.png`
 
-runnerとカード側には専用保存先、終了カード、Title復帰の取得処理を用意した。Approachおよび戦闘中の全候補を実描画で取得できるか、画像が意味する瞬間と一致するかはWindows実機ゲートで確認する。今回PNGを生成済みとは扱わない。
+runnerとカード側に加え、Approachと戦闘driverも専用保存先へ撮影する。2026-09-27のWindows実機ゲートでは同一RunIdの14枚を生成し、Title、接近路、遠景の初見、戦闘、鎮静、2枚の結末、Title復帰を目視確認した。接近路には空マップ用の照明を追加し、高画質では露出安定後に撮影する。画像はローカルのgit追跡対象外の `Artifacts/IshibashiriDemoReviewGate/20260927T044550Z-06eb097c52ff/screenshots/` に保存されている。
 
 ## 検証状態と未検証事項
 
 - Python source-contract / Narrative contract / Gameplay contract: Linux上で実行する。
-- UE Build / UHT / Runtime / Visual / Input / Screenshot: **NOT_RUN — WINDOWS UE 5.6.1 REQUIRED**。
+- UE Build / UHT / Runtime / Capture / 模擬Gamepad / Package: 2026-09-27のローカルゲートで **PASS**。実機の物理Gamepadと人間の初見プレイは未検証。
 - 実機では最初に、保存済み通常Campaignが不変であること、Titleからの全入力、3/3→Calm→Completed→2カード→Titleの順序、ログが1回だけであること、Fuchimatoiがspawnしないことを確認する。
 - Captureは上記14場面の存在、内容、順序を同じRunIdで確認する。静的検査は画像の実在や視覚品質を証明しない。
 
 ## 専用Review Gate
 
-Windows + UE 5.6.1でのBuild、Demo E2E matrix、14場面Capture、HighQuality実証、Save/Retry/Sense、通常Campaign最小Regression、およびPackage可否は [Ishibashiri Demo Review Gate](IshibashiriDemoReviewGate.md) の1コマンドで判定する。現時点の実機結果はNOT_RUNである。
+Windows + UE 5.6.1でのBuild、Demo E2E matrix、14場面Capture、HighQuality実証、Save/Retry/Sense、通常Campaign最小Regression、およびPackage可否は [Ishibashiri Demo Review Gate](IshibashiriDemoReviewGate.md) の1コマンドで判定する。2026-09-27のローカル実行結果と制限は同資料を参照する。

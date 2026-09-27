@@ -38,6 +38,10 @@ def validate(root=GENERATED):
             continue
         spec = specs[asset]
         if report.get("asset_id") != asset: errors.append(f"{asset}: asset_id mismatch")
+        if report.get("mesh_object_count") != 1 or report.get("visual_object_names") != [asset]:
+            errors.append(f"{asset}: render mesh must be named {asset} for UCX collision")
+        if report.get("collision", {}).get("name") != "UCX_" + asset + "_00":
+            errors.append(f"{asset}: UCX collision name does not match render mesh")
         for key in ("blender_version", "seed", "dimensions_cm", "triangle_count", "material_count",
                     "pivot", "collision_status", "lod_status", "generation_status"):
             if key not in report: errors.append(f"{asset}: required report field {key} missing")

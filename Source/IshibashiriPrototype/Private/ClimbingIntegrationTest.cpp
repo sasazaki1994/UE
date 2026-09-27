@@ -37,6 +37,7 @@ void AClimbingIntegrationTest::BeginPlay()
     bClimbingIK=FParse::Param(FCommandLine::Get(),TEXT("ClimbingIKTest"));
     bGrabMotionWarp=FParse::Param(FCommandLine::Get(),TEXT("GrabMotionWarpTest"));
     bCampaignE2E=FParse::Param(FCommandLine::Get(),TEXT("CampaignE2E"));
+    bDemoCapture=bCampaignE2E && bCapture && FParse::Param(FCommandLine::Get(),TEXT("IshibashiriDemo"));
     bGamepad|=FParse::Param(FCommandLine::Get(),TEXT("CampaignGamepad"));
     Mode=GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Check(Mode && Mode->GetPlayer() && Mode->GetBoss(),TEXT("Encounter spawned"))) return;
@@ -190,12 +191,20 @@ void AClimbingIntegrationTest::SetupGrab(bool bResetEncounter,int32 ResumePhase)
 }
 void AClimbingIntegrationTest::Shot(const TCHAR* Name)
 {
-    if (!bCapture) return;
+    if (!bCapture || bDemoCapture) return;
     FString Dir = bGrabMotionWarp
         ? FPaths::ProjectSavedDir()/TEXT("Screenshots/GrabMotionWarp")/RunId
         : bClimbingIK
         ? FPaths::ProjectSavedDir()/TEXT("Screenshots/ClimbingIK")/RunId/TEXT("After")
         : FPaths::ProjectSavedDir()/TEXT("Screenshots/Climbing")/RunId;
+    IFileManager::Get().MakeDirectory(*Dir,true);
+    FScreenshotRequest::RequestScreenshot(Dir/(FString(Name)+TEXT(".png")),false,false);
+}
+
+void AClimbingIntegrationTest::DemoShot(const TCHAR* Name)
+{
+    if (!bDemoCapture || CompletedRoutes != 0) return;
+    const FString Dir = FPaths::ProjectSavedDir()/TEXT("Screenshots/IshibashiriDemo")/RunId;
     IFileManager::Get().MakeDirectory(*Dir,true);
     FScreenshotRequest::RequestScreenshot(Dir/(FString(Name)+TEXT(".png")),false,false);
 }
@@ -266,6 +275,11 @@ void AClimbingIntegrationTest::Tick(float Dt)
     }
     auto P=Mode->GetPlayer();auto B=Mode->GetBoss();auto C=P->GetClimbing();
     if(bCampaignE2E){bSawCampaignCharge|=B->GetState()==EIshibashiriState::Charge;bSawCampaignDodge|=P->IsDodging();}
+    if (bDemoCapture && !bDemoChargeShot && B->GetState()==EIshibashiriState::Charge)
+    {
+        DemoShot(TEXT("05-Charge"));
+        bDemoChargeShot=true;
+    }
     // Both Sense holds must pass through the real input bindings at least once
     // so the review gate's senseReset evidence exists in every climbing run.
     bSawBoundarySense|=P->GetSense()->IsBoundarySenseActive();
@@ -320,7 +334,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
         {
             if (!Check(FVector::Dist(P->GetActorLocation(),Entry)<C->GrabRange,
                 TEXT("Campaign foreleg approach reaches the grab range"))) return;
-            Hold(EKeys::W,false);Shot(TEXT("01-Ground"));Tap(EKeys::Q);Tap(EKeys::F);Tap(EKeys::E);Next(2);
+            Hold(EKeys::W,false);Shot(TEXT("01-Ground"));DemoShot(TEXT("06-GroundGrab"));Tap(EKeys::Q);Tap(EKeys::F);Tap(EKeys::E);Next(2);
         }
         break;
     }
@@ -360,6 +374,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
         {
             if (!Check(C->IsClimbing() && C->GetNode()==0,TEXT("E mounts from ground after movement input"))) return;
             if (bClimbingIK) Shot(TEXT("01-Grab"));
+            DemoShot(TEXT("07-Climbing"));
             BeforeBoss=B->GetActorLocation(); B->SetActorTickEnabled(true);
             Hold(EKeys::E,true);Hold(EKeys::W,true);Next(3);
         } break;
@@ -412,6 +427,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
                 && B->GetNushiState()==ENushiState::Active
                 && Mode->GetEncounterManager()->GetEncounterState()==ENushiEncounterState::Running,
                 TEXT("Normal gameplay uses shared progress 1/3 and Running lifecycle"))) return;
+            DemoShot(TEXT("08-Kakon1"));
             Tap(EKeys::LeftMouseButton);Next(11);
         } break;
     case 11:
@@ -430,12 +446,19 @@ void AClimbingIntegrationTest::Tick(float Dt)
         if (Time>.6f)
         {
             if (!Check(B->GetPurifiedCount()==2,TEXT("Summit core purified after braced climbing"))) return;
+            DemoShot(TEXT("09-Kakon2"));
             Hold(EKeys::W,true);Next(16);
         } break;
     case 16:
         if (C->GetNode()==8 && !C->IsMoving()) { Hold(EKeys::W,false);Next(17); } break;
     case 17:
-        if (!B->IsBucking() && Time>.6f) { Tap(EKeys::LeftMouseButton);Next(18); } break;
+        if (!B->IsBucking() && Time>.6f)
+        {
+            if (bDemoCapture && CompletedRoutes==0) { DemoShot(TEXT("10-Kakon3")); Next(28); }
+            else { Tap(EKeys::LeftMouseButton);Next(18); }
+        } break;
+    case 28:
+        if (Time>.3f) { Tap(EKeys::LeftMouseButton);Next(18); } break;
     case 18:
         if (Time>.6f)
         {
@@ -444,11 +467,15 @@ void AClimbingIntegrationTest::Tick(float Dt)
                 && B->GetNushiState()==ENushiState::Calm
                 && Mode->GetEncounterManager()->GetEncounterState()==ENushiEncounterState::Completed,
                 TEXT("Three Kakon propagate through Progress, Calm, Completed and Victory"))) return;
+            if (bDemoCapture && CompletedRoutes==0) DemoShot(TEXT("11-Calm"));
             ++CompletedRoutes;
             Shot(TEXT("05-Victory"));
             if(bCampaignE2E&&CompletedRoutes>=2){if(!Check(bSawCampaignCharge&&bSawCampaignDodge,TEXT("Campaign ground approach includes Charge and Dodge input")))return;Hold(EKeys::F,true);UE_LOG(LogTemp,Display,TEXT("CLIMB_TEST_PASS %s routes=2 retry=1 sense=boundary,corruption"),*RunId);bFinished=true;FApp::SetUseFixedTimeStep(false);}
+            else if (bDemoCapture && CompletedRoutes==1) Next(29);
             else {Tap(EKeys::R);++Retries;Next(19);}
         } break;
+    case 29:
+        if (Time>.35f) { Tap(EKeys::R);++Retries;Next(19); } break;
     case 19:
         if (Time>.3f)
         {
