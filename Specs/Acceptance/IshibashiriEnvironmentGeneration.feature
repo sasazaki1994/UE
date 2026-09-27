@@ -43,3 +43,10 @@ Feature: Ishibashiri first-batch Blender evidence
     When the evidence artifact is packaged with checksums
     Then UE import, UE runtime, and visual approval remain NOT_RUN
     And no generated binary is committed automatically
+
+  Scenario: Import collision-named candidates before replacing blockout meshes
+    Given each first-batch FBX contains one visual mesh and its matching UCX mesh
+    When the Unreal import validation script imports the three FBX files
+    Then each Static Mesh reports simple collision geometry
+    And the assets are saved under /Game/Environment/Ishibashiri
+    And the Approach uses those assets when present and retains blockout fallbacks when absent

@@ -34,6 +34,9 @@ void AIshibashiriApproachGameMode::StartPlay()
     Player = GetWorld()->SpawnActor<APrototypePlayer>(
         APrototypePlayer::StaticClass(), FTransform(FRotator::ZeroRotator, Arena->GetPlayerStart()), P);
     SenseTarget = GetWorld()->SpawnActor<ATargetPoint>(ATargetPoint::StaticClass(), Arena->GetBasinGate(), FRotator::ZeroRotator);
+    ensureAlwaysMsgf(!SenseTarget || (SenseTarget->GetRootComponent()
+            && SenseTarget->GetActorLocation().Equals(Arena->GetBasinGate(), 1.f)),
+        TEXT("Approach Sense target must own the basin-gate transform; never fall back to world origin"));
     APlayerController* Controller = UGameplayStatics::GetPlayerController(this, 0);
     if (!Player || !Controller)
     {

@@ -41,6 +41,9 @@ private:
     UPROPERTY() TObjectPtr<USceneComponent> Root;
     UPROPERTY() TObjectPtr<UStaticMesh> CubeMesh;
     UPROPERTY() TObjectPtr<UStaticMesh> SphereMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> CedarMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> RockMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> BoundaryStoneMesh;
     UPROPERTY() TObjectPtr<UMaterialInterface> BaseMaterial;
     UPROPERTY(Transient) TArray<TObjectPtr<UActorComponent>> Generated;
     UPROPERTY(Transient) TArray<TObjectPtr<UPrimitiveComponent>> RevealParts;

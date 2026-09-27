@@ -7,6 +7,7 @@
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UObject/ConstructorHelpers.h"
+#include "UObject/UObjectGlobals.h"
 
 AIshibashiriApproachArena::AIshibashiriApproachArena()
 {
@@ -19,6 +20,12 @@ AIshibashiriApproachArena::AIshibashiriApproachArena()
         TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
     CubeMesh = Cube.Object;
     SphereMesh = Sphere.Object;
+    // The checked-in map remains runnable before the external FBX intake.  Once
+    // the validated assets are imported by ImportIshibashiriEnvironmentKit.py,
+    // these soft package locations replace the corresponding blockouts.
+    CedarMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Environment/Ishibashiri/SM_Ishibashiri_OldCedar_A.SM_Ishibashiri_OldCedar_A"), nullptr, LOAD_NoWarn);
+    RockMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Environment/Ishibashiri/SM_Ishibashiri_Rock_A.SM_Ishibashiri_Rock_A"), nullptr, LOAD_NoWarn);
+    BoundaryStoneMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Environment/Ishibashiri/SM_Ishibashiri_BoundaryStone_A.SM_Ishibashiri_BoundaryStone_A"), nullptr, LOAD_NoWarn);
     BaseMaterial = Material.Object;
     // 1.31 km of bends; at the 6 m/s walking speed this is about three minutes without stopping.
     PathPoints = {{0, 0, 0}, {11000, 0, 0}, {20500, 6500, 100}, {30500, 8500, 180}, {39500, 1000, 260}, {49000, -6500, 300},
@@ -46,9 +53,11 @@ UStaticMeshComponent* AIshibashiriApproachArena::AddPrimitive(const TCHAR* Name,
     C->SetRelativeRotation(Rotation);
     C->SetCollisionEnabled(bCollision ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
     if (bCollision) C->SetCollisionProfileName(TEXT("BlockAll"));
-    C->SetMaterial(0, BaseMaterial);
+    const bool bBlockoutMesh = MeshAsset == CubeMesh || MeshAsset == SphereMesh;
+    if (bBlockoutMesh) C->SetMaterial(0, BaseMaterial);
     C->RegisterComponent();
-    if (auto* M = C->CreateDynamicMaterialInstance(0)) SetPrimitiveColor(M, Color);
+    if (bBlockoutMesh)
+        if (auto* M = C->CreateDynamicMaterialInstance(0)) SetPrimitiveColor(M, Color);
     Generated.Add(C);
     return C;
 }
@@ -56,6 +65,12 @@ UStaticMeshComponent* AIshibashiriApproachArena::AddPrimitive(const TCHAR* Name,
 void AIshibashiriApproachArena::AddTree(const TCHAR* Name, const FVector& L, float H, bool bFallen)
 {
     const FRotator R = bFallen ? FRotator(0, 25, 88) : FRotator(0, 0, 0);
+    if (CedarMesh)
+    {
+        const float UniformScale = H / 2100.f;
+        AddPrimitive(Name, CedarMesh, L, FVector(UniformScale), R, FLinearColor::White, true);
+        return;
+    }
     AddPrimitive(*FString::Printf(TEXT("%sTrunk"), Name), CubeMesh, L + FVector(0, 0, bFallen ? 70 : H * .5f),
         FVector(.55f, .55f, H / 100.f), R, FLinearColor(.075f, .052f, .035f), true);
     if (!bFallen)
@@ -81,13 +96,14 @@ void AIshibashiriApproachArena::OnConstruction(const FTransform& T)
         for (int32 S : {-1, 1})
         {
             const FVector P = (A + B) * .5f + Side * (S * (1250 + (I % 3) * 260));
-            AddPrimitive(*FString::Printf(TEXT("Cliff%02d_%d"), I, S), SphereMesh, P + FVector(0, 0, 420),
+            AddPrimitive(*FString::Printf(TEXT("Cliff%02d_%d"), I, S), RockMesh ? RockMesh.Get() : SphereMesh.Get(), P + FVector(0, 0, 420),
                 FVector(9 + (I % 2) * 3, 6, 7 + (I % 3)), FRotator(I * 3, I * 19, S * 7), I % 3 ? Rock : Moss, true);
             AddTree(*FString::Printf(TEXT("OldTree%02d_%d"), I, S), P + Side * (S * 650), 760 + (I % 4) * 90);
         }
     }
     // Broken warning stone, weathered rope/pillars, restrained black cracks, and the damage trail.
-    AddPrimitive(TEXT("BoundaryStone"), CubeMesh, PathPoints[3] + FVector(-300, 700, 150), FVector(1.0f, .45f, 3.1f), FRotator(0, -18, 13),
+    AddPrimitive(TEXT("BoundaryStone"), BoundaryStoneMesh ? BoundaryStoneMesh.Get() : CubeMesh.Get(), PathPoints[3] + FVector(-300, 700, 150),
+        BoundaryStoneMesh ? FVector(1.f) : FVector(1.0f, .45f, 3.1f), FRotator(0, -18, 13),
         Bone, true);
     for (int32 S : {-1, 1})
         AddPrimitive(*FString::Printf(TEXT("RitualPost%d"), S), CubeMesh, PathPoints[3] + FVector(700, S * 900, 240),

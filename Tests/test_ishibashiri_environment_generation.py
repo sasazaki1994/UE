@@ -8,6 +8,7 @@ MANIFEST = ROOT / "Art/Environment/Ishibashiri/manifest.json"
 GENERATOR = ROOT / "Tools/CreateIshibashiriEnvironmentKit.py"
 VALIDATOR = ROOT / "Tools/VerifyIshibashiriEnvironmentKit.py"
 ROUNDTRIP = ROOT / "Tools/ValidateIshibashiriEnvironmentArtifacts.py"
+UE_IMPORTER = ROOT / "Tools/ImportIshibashiriEnvironmentKit.py"
 WORKFLOW = ROOT / ".github/workflows/ishibashiri-environment-generation.yml"
 
 
@@ -164,3 +165,15 @@ def test_contact_sheet_has_three_separate_labelled_panels_and_exact_validation()
     for label in ("Dimensions:", "Triangles:"):
         assert label in generator
     assert '(contact["width"], contact["height"]) != (1800, 720)' in validator
+
+
+def test_ue_importer_requires_ucx_collision_before_saving_first_batch():
+    source = UE_IMPORTER.read_text(encoding="utf-8")
+    assert 'DESTINATION = "/Game/Environment/Ishibashiri"' in source
+    assert "options.static_mesh_import_data.combine_meshes = True" in source
+    assert "options.static_mesh_import_data.auto_generate_collision = False" in source
+    assert "get_simple_collision_count(mesh)" in source
+    assert "if collision_count < 1:" in source
+    assert "unreal.EditorAssetLibrary.save_asset" in source
+    for asset in manifest()["first_adoption_batch"]:
+        assert asset in source
