@@ -45,4 +45,6 @@ private:
     int32 CardIndex = 0;
     // Title-world-only UI state; never serialized as campaign progress.
     FCampaignNewGameConfirmation NewGameConfirmation;
+    // OpenLevel runs on the next engine tick. Ignore further input in this world.
+    bool bChapterTravelPending = false;
 };

@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_only_required_engine_plugins_are_enabled():
-    project = json.loads((ROOT / "IshibashiriPrototype.uproject").read_text())
+    project = json.loads((ROOT / "IshibashiriPrototype.uproject").read_text(encoding="utf-8"))
     enabled = {p["Name"] for p in project["Plugins"] if p.get("Enabled")}
     assert {"ControlRig", "FullBodyIK"} <= enabled
     assert "MotionWarping" in enabled
@@ -13,8 +13,8 @@ def test_only_required_engine_plugins_are_enabled():
 
 
 def test_real_authored_bone_names_are_used():
-    rig = (ROOT / "Tools/RigCharacterModels.py").read_text()
-    runtime = (ROOT / "Source/IshibashiriPrototype/Private/PrototypePlayer.cpp").read_text()
+    rig = (ROOT / "Tools/RigCharacterModels.py").read_text(encoding="utf-8")
+    runtime = (ROOT / "Source/IshibashiriPrototype/Private/PrototypePlayer.cpp").read_text(encoding="utf-8")
     for bone in ("root", "pelvis", "spine", "chest"):
         assert f"'{bone}'" in rig
     assert "bone('hand_'+s" in rig
@@ -24,10 +24,10 @@ def test_real_authored_bone_names_are_used():
 
 
 def test_full_route_preserves_authored_nodes_and_has_local_targets():
-    boss = (ROOT / "Source/IshibashiriPrototype/Private/IshibashiriBoss.cpp").read_text()
-    climbing = (ROOT / "Source/IshibashiriPrototype/Private/ColossusClimbingComponent.cpp").read_text()
+    boss = (ROOT / "Source/IshibashiriPrototype/Private/IshibashiriBoss.cpp").read_text(encoding="utf-8")
+    climbing = (ROOT / "Source/IshibashiriPrototype/Private/ColossusClimbingComponent.cpp").read_text(encoding="utf-8")
     assert "Node >= 0 && (Destination == INDEX_NONE || Destination >= 0)" in climbing
     assert "Frame.TransformPosition(Anchor + Offset)" in climbing
     assert boss.count("{-270,-215,65}") == 1
-    assert "IKBlendInSeconds" in (ROOT / "Source/IshibashiriPrototype/Public/ColossusClimbingComponent.h").read_text()
-    assert "IKBlendOutSeconds" in (ROOT / "Source/IshibashiriPrototype/Public/ColossusClimbingComponent.h").read_text()
+    assert "IKBlendInSeconds" in (ROOT / "Source/IshibashiriPrototype/Public/ColossusClimbingComponent.h").read_text(encoding="utf-8")
+    assert "IKBlendOutSeconds" in (ROOT / "Source/IshibashiriPrototype/Public/ColossusClimbingComponent.h").read_text(encoding="utf-8")

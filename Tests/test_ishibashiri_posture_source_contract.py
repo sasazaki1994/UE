@@ -1,11 +1,11 @@
 from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
-HEADER = (ROOT / "Source/IshibashiriPrototype/Public/IshibashiriBoss.h").read_text()
-BOSS = (ROOT / "Source/IshibashiriPrototype/Private/IshibashiriBoss.cpp").read_text()
-PLAYER = (ROOT / "Source/IshibashiriPrototype/Private/PrototypePlayer.cpp").read_text()
-CLIMB = (ROOT / "Source/IshibashiriPrototype/Private/ColossusClimbingComponent.cpp").read_text()
-HUD = (ROOT / "Source/IshibashiriPrototype/Private/PrototypeHUD.cpp").read_text()
+HEADER = (ROOT / "Source/IshibashiriPrototype/Public/IshibashiriBoss.h").read_text(encoding="utf-8")
+BOSS = (ROOT / "Source/IshibashiriPrototype/Private/IshibashiriBoss.cpp").read_text(encoding="utf-8")
+PLAYER = (ROOT / "Source/IshibashiriPrototype/Private/PrototypePlayer.cpp").read_text(encoding="utf-8")
+CLIMB = (ROOT / "Source/IshibashiriPrototype/Private/ColossusClimbingComponent.cpp").read_text(encoding="utf-8")
+HUD = (ROOT / "Source/IshibashiriPrototype/Private/PrototypeHUD.cpp").read_text(encoding="utf-8")
 
 
 def test_posture_is_local_and_body_health_victory_is_removed():
@@ -49,7 +49,7 @@ def test_sense_and_feedback_describe_posture_not_damage():
 def test_shared_three_kakon_completion_remains_the_only_gameplay_completion():
     assert "Kakon->Purify()" in BOSS
     assert "CalmNushi" not in BOSS[BOSS.index("bool AIshibashiriBoss::TryPurifyCore") :]
-    assert "OnEncounterCompleted.AddUniqueDynamic" in (ROOT / "Source/IshibashiriPrototype/Private/PrototypeGameMode.cpp").read_text()
-    spec = (ROOT / "Specs/Acceptance/ColossusClimbing.feature").read_text()
+    assert "OnEncounterCompleted.AddUniqueDynamic" in (ROOT / "Source/IshibashiriPrototype/Private/PrototypeGameMode.cpp").read_text(encoding="utf-8")
+    spec = (ROOT / "Specs/Acceptance/ColossusClimbing.feature").read_text(encoding="utf-8")
     assert "地上斬撃と部分浄化では勝利しない" in spec
     assert "Mount Windowを逃す" in spec

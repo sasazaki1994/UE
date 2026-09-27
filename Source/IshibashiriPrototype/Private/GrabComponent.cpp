@@ -8,10 +8,16 @@ UGrabComponent::UGrabComponent()
     PrimaryComponentTick.TickGroup = TG_PostPhysics;
 }
 
+void UGrabComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Release();
+    Super::EndPlay(EndPlayReason);
+}
+
 bool UGrabComponent::TryGrab(AActor* Candidate, float MaximumDistance)
 {
     ACharacter* Character = Cast<ACharacter>(GetOwner());
-    if (IsGrabbing() || !Character || !IsValid(Candidate)
+    if (IsGrabbing() || !IsValid(Character) || !IsValid(Candidate) || Candidate == Character
         || FVector::Dist(Character->GetActorLocation(), Candidate->GetActorLocation()) > MaximumDistance)
         return false;
 
@@ -33,8 +39,8 @@ void UGrabComponent::Release()
     AActor* PreviousTarget = GrabTarget;
     bGrabbing = false;
     GrabTarget = nullptr;
-    if (PreviousTarget) RemoveTickPrerequisiteActor(PreviousTarget);
-    if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+    if (IsValid(PreviousTarget)) RemoveTickPrerequisiteActor(PreviousTarget);
+    if (ACharacter* Character = Cast<ACharacter>(GetOwner()); IsValid(Character))
     {
         Character->GetCharacterMovement()->ClearAccumulatedForces();
         Character->GetCharacterMovement()->StopMovementImmediately();

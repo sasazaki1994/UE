@@ -23,6 +23,7 @@ class ISHIBASHIRIPROTOTYPE_API UColossusClimbingComponent : public UActorCompone
 public:
     UColossusClimbingComponent();
     virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void TickComponent(float Dt, ELevelTick Type, FActorComponentTickFunction* Tick) override;
     void GrabPressed();
     void GrabReleased();
@@ -30,7 +31,7 @@ public:
     void Reset();
     void SetInput(float Forward, float Right) { ForwardInput = Forward; RightInput = Right; }
     bool TryPurify();
-    bool IsClimbing() const { return Boss != nullptr; }
+    bool IsClimbing() const;
     bool IsGrabWarping() const { return bGrabWarping; }
     bool IsFallbackGrabApproach() const { return bFallbackGrabApproach; }
     bool IsMoving() const { return Destination != INDEX_NONE; }
@@ -65,6 +66,7 @@ public:
     UPROPERTY(EditAnywhere, Category="Climbing|IK", meta=(ClampMin="0.01")) float IKBlendInSeconds = .22f;
     UPROPERTY(EditAnywhere, Category="Climbing|IK", meta=(ClampMin="0.01")) float IKBlendOutSeconds = .16f;
 private:
+    friend class FRouteClimbingLifecycleTest;
     void UpdateIK(float Dt);
     bool StartGrabWarp(AIshibashiriBoss* Candidate);
     void StartFallbackGrabApproach(AIshibashiriBoss* Candidate);

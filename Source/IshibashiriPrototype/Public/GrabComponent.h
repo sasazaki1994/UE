@@ -15,6 +15,7 @@ class ISHIBASHIRIPROTOTYPE_API UGrabComponent : public UActorComponent
 
 public:
     UGrabComponent();
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     bool TryGrab(AActor* Candidate, float MaximumDistance);
     void Release();

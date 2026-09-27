@@ -25,7 +25,7 @@ void UStaminaComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyCh
 
 void UStaminaComponent::ConsumeStamina(float Amount)
 {
-    if (Amount < 0.0f)
+    if (!FMath::IsFinite(Amount) || Amount < 0.0f)
     {
         return;
     }
@@ -35,7 +35,7 @@ void UStaminaComponent::ConsumeStamina(float Amount)
 
 void UStaminaComponent::RestoreStamina(float Amount)
 {
-    if (Amount < 0.0f)
+    if (!FMath::IsFinite(Amount) || Amount < 0.0f)
     {
         return;
     }
@@ -55,6 +55,11 @@ void UStaminaComponent::ResetStamina()
 
 void UStaminaComponent::SetMaxStamina(float NewMaxStamina)
 {
+    if (!FMath::IsFinite(NewMaxStamina))
+    {
+        return;
+    }
+
     MaxStamina = FMath::Max(0.0f, NewMaxStamina);
     SetCurrentStamina(CurrentStamina);
 }
@@ -63,7 +68,9 @@ void UStaminaComponent::SetCurrentStamina(float NewStamina)
 {
     const float PreviousStamina = CurrentStamina;
     const float ClampedStamina = FMath::Clamp(NewStamina, 0.0f, MaxStamina);
-    if (FMath::IsNearlyEqual(PreviousStamina, ClampedStamina))
+    // Small changes still matter at zero and when the maximum is lowered.
+    // Ignoring a near-equal value can leave stamina positive or above its maximum.
+    if (PreviousStamina == ClampedStamina)
     {
         return;
     }
