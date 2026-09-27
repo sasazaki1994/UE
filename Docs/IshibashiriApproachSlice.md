@@ -29,6 +29,8 @@ Its 13 points form occluded beats rather than a visible corridor: entrance → r
 
 No audio files were invented. Audio locations log `NOT_IMPLEMENTED — AUDIO ASSET REQUIRED`.
 
+The boundary warning is measured from its rendered glyph bounds rather than positioned with a fixed offset. It is centered inside the viewport safe margin, scales down when necessary, and uses a dark translucent panel with a restrained cyan edge so foliage cannot erase the text. This is presentation-only and does not change the trigger or its four-second lifetime.
+
 ## Sense support
 
 The existing `UPlayerSenseComponent` is reused. Boundary Sense receives one available `ATargetPoint` at the basin gate; its scene root owns the requested transform rather than silently resolving to world origin, so `Q / LT` strengthens while approaching. Startup asserts that the target remains at the gate. Held Corruption Sense moves from `QUIET` to `TRANSITION` after the trail and `DANGER` near the basin. Chapter travel retains the existing `ResetSense()` path.

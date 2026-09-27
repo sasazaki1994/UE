@@ -50,3 +50,11 @@ def test_approach_prefers_validated_environment_assets_with_fallbacks():
     assert "RockMesh ? RockMesh.Get() : SphereMesh.Get()" in arena
     assert "BoundaryStoneMesh ? BoundaryStoneMesh.Get() : CubeMesh.Get()" in arena
     assert "if (bBlockoutMesh) C->SetMaterial" in arena
+
+def test_approach_warning_subtitle_is_centered_and_viewport_safe():
+    hud = read("Source/IshibashiriPrototype/Private/IshibashiriApproachHUD.cpp")
+    assert "GetTextSize(S, TextWidth, TextHeight" in hud
+    assert "AvailableWidth / FMath::Max(1.f, TextWidth)" in hud
+    assert "(Canvas->ClipX - PanelWidth) * .5f" in hud
+    assert "DrawRect(FLinearColor(.01f, .015f, .018f, .82f)" in hud
+    assert "DrawLine(PanelX, PanelY, PanelX + PanelWidth" in hud
