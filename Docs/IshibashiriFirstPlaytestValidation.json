@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "status": "NOT_RUN",
+  "sourceSha": null,
+  "package": null,
+  "packageSha256": null,
+  "participant": {
+    "wasInvolvedInDevelopment": null
+  },
+  "input": {
+    "kind": null,
+    "deviceModel": null
+  },
+  "viewport": null,
+  "qualityMode": null,
+  "consent": {
+    "notes": null,
+    "screen": null,
+    "audio": null
+  },
+  "startedAt": null,
+  "endedAt": null,
+  "results": {
+    "completedWithoutCoaching": null,
+    "returnedToTitleAfterTwoEndingCards": null,
+    "understoodCalmRatherThanDeath": null
+  },
+  "beats": [
+    {"name": "Title / Prologue", "observed": false, "firstUnderstoodAt": null, "failures": 0, "coaching": false, "observation": null},
+    {"name": "Approach / boundary", "observed": false, "firstUnderstoodAt": null, "failures": 0, "coaching": false, "observation": null},
+    {"name": "Charge / dodge", "observed": false, "firstUnderstoodAt": null, "failures": 0, "coaching": false, "observation": null},
+    {"name": "Recover / counter", "observed": false, "firstUnderstoodAt": null, "failures": 0, "coaching": false, "observation": null},
+    {"name": "Kneel / Grab", "observed": false, "firstUnderstoodAt": null, "failures": 0, "coaching": false, "observation": null},
+    {"name": "Route / Cling / rest", "observed": false, "firstUnderstoodAt": null, "failures": 0, "coaching": false, "observation": null},
+    {"name": "Kakon 1 / 2 / 3", "observed": false, "firstUnderstoodAt": null, "failures": 0, "coaching": false, "observation": null},
+    {"name": "Calm / ending / Title", "observed": false, "firstUnderstoodAt": null, "failures": 0, "coaching": false, "observation": null}
+  ],
+  "participantReportedBlockers": [],
+  "proposedSmallestChange": null,
+  "evidenceLocation": null
+}

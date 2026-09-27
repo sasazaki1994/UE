@@ -68,3 +68,15 @@ def test_completion_marker_exists_only_at_demo_interlude_exit():
     instance = read("Source/IshibashiriPrototype/Private/CampaignGameInstance.cpp")
     assert "bIshibashiriDemoCompleteLogged" in instance
     assert "case ECampaignState::Interlude1:" in instance
+
+
+def test_first_playtest_keeps_human_evidence_separate_from_automation():
+    acceptance = read("Specs/Acceptance/IshibashiriDemo.feature")
+    protocol = read("Docs/IshibashiriFirstPlaytest.md")
+    assert "初見プレイは自動E2Eと分離して評価する" in acceptance
+    assert "初見プレイをNOT_RUN" in acceptance
+    assert "Status: **READY / HUMAN PLAYTEST NOT_RUN**" in protocol
+    assert "Source SHA / Package / Package SHA-256:" in protocol
+    assert "Completed without coaching: YES / NO / NOT_RUN" in protocol
+    assert "人間の記録が作成されるまでは結果を **NOT_RUN**" in protocol
+    assert "ValidateIshibashiriFirstPlaytest.py" in protocol
