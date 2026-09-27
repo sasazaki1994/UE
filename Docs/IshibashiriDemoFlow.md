@@ -50,6 +50,7 @@ runnerとカード側に加え、Approachと戦闘driverも専用保存先へ撮
 
 - Python source-contract / Narrative contract / Gameplay contract: Linux上で実行する。
 - UE Build / UHT / Runtime / Capture / 模擬Gamepad / Package: 2026-09-27のローカルゲートで **PASS**。実機の物理Gamepadと人間の初見プレイは未検証。
+- 次に行う単一作業は、現在のPackageを開発に参加していない1人が無説明で完走できるか観察すること。手順、記録項目、介入条件と変更境界は [石走り編 初見プレイ検証](IshibashiriFirstPlaytest.md) を正本とし、記録がない間は `NOT_RUN` を維持する。
 - 実機では最初に、保存済み通常Campaignが不変であること、Titleからの全入力、3/3→Calm→Completed→2カード→Titleの順序、ログが1回だけであること、Fuchimatoiがspawnしないことを確認する。
 - Captureは上記14場面の存在、内容、順序を同じRunIdで確認する。静的検査は画像の実在や視覚品質を証明しない。
 

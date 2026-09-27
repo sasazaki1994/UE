@@ -44,6 +44,10 @@ Buildが失敗した場合は直ちにFAILとして終了し、Gameplayには進
 
 Control Rigは **BLOCKED / OPTIONAL QUALITY GATE** として完成度改善項目に残す。asset不在をRuntime PASSとは扱わない一方、それだけを理由にDemo Packageを永久にblockしない。
 
+## 次の手動Gate
+
+自動Gateが通った現在、次に解消する最大の不確実性は初見理解である。[石走り編 初見プレイ検証](IshibashiriFirstPlaytest.md) に従い、開発に参加していない1人へ同じSHAのPackageを無説明で渡し、最初に詰まるbeatを記録する。人間の記録がない限り、この項目は **NOT_RUN** であり、自動E2E、模擬Gamepad、CaptureからPASSを推定しない。物理ゲームパッドを使用した場合だけ、その機器名と結果を物理入力の証拠として扱う。
+
 ## Package条件とVerdict
 
 上記11個の必須Gateがすべて `PASS` の場合だけ `Prototype.ps1 -Action Package` を実行する。GameplayまたはPackage失敗は `FAIL`、必須実行が残れば `PARTIAL`、全必須GateとPackage成功は `PASS`、DryRunまたは利用不能環境では `NOT_RUN`。Python testの成功だけでRuntime `PASS` にはしない。
