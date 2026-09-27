@@ -20,4 +20,5 @@ private:
     void CancelNewGameConfirmation();
     float AutoConfirmSeconds = 0.f;
     bool bCompleted = false;
+    TSet<FString> CapturedCards;
 };

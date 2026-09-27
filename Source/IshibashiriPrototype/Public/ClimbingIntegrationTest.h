@@ -22,6 +22,7 @@ private:
     void WalkTo(const FVector& Position, float StopDistance);
     bool Check(bool Condition, const TCHAR* Description);
     void Shot(const TCHAR* Name);
+    void DemoShot(const TCHAR* Name);
     void TickGrabMotionWarp(float Dt);
     UPROPERTY() TObjectPtr<APrototypeGameMode> Mode;
     TSet<FKey> Held;
@@ -43,6 +44,8 @@ private:
     bool bClimbingIK = false;
     bool bGrabMotionWarp = false;
     bool bCampaignE2E = false;
+    bool bDemoCapture = false;
+    bool bDemoChargeShot = false;
     bool bSawCampaignCharge = false;
     bool bSawCampaignDodge = false;
     bool bSawBoundarySense = false;

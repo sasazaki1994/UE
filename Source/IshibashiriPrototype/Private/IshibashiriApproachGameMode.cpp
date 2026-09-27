@@ -8,6 +8,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "InputCoreTypes.h"
 #include "InputKeyEventArgs.h"
+#include "Engine/TargetPoint.h"
+#include "HAL/FileManager.h"
+#include "Misc/Paths.h"
+#include "UnrealClient.h"
 #include "Misc/App.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
@@ -29,7 +33,7 @@ void AIshibashiriApproachGameMode::StartPlay()
     P.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     Player = GetWorld()->SpawnActor<APrototypePlayer>(
         APrototypePlayer::StaticClass(), FTransform(FRotator::ZeroRotator, Arena->GetPlayerStart()), P);
-    SenseTarget = GetWorld()->SpawnActor<AActor>(AActor::StaticClass(), Arena->GetBasinGate(), FRotator::ZeroRotator);
+    SenseTarget = GetWorld()->SpawnActor<ATargetPoint>(ATargetPoint::StaticClass(), Arena->GetBasinGate(), FRotator::ZeroRotator);
     APlayerController* Controller = UGameplayStatics::GetPlayerController(this, 0);
     if (!Player || !Controller)
     {
@@ -42,6 +46,8 @@ void AIshibashiriApproachGameMode::StartPlay()
     const bool bCampaignE2E = FParse::Param(FCommandLine::Get(), TEXT("CampaignE2E"));
     bStandaloneApproachTest = FParse::Param(FCommandLine::Get(), TEXT("ApproachTest")) && !bCampaignE2E;
     bAutomationDriving = bStandaloneApproachTest || bCampaignE2E;
+    bDemoCapture = bCampaignE2E && FParse::Param(FCommandLine::Get(), TEXT("IshibashiriDemo"))
+        && FParse::Param(FCommandLine::Get(), TEXT("PrototypeCapture"));
     if (bAutomationDriving)
     {
         FParse::Value(FCommandLine::Get(), TEXT("PrototypeTestRun="), RunId);
@@ -83,12 +89,29 @@ void AIshibashiriApproachGameMode::Tick(float Dt)
                 if (FVector::Dist2D(Goal, Player->GetActorLocation()) < 500) ++AutomationPoint;
             }
     }
+    if (bDemoCapture && !bApproachShot && GetWorld()->GetTimeSeconds() >= 2.f)
+    {
+        CaptureDemoShot(TEXT("03-Approach"));
+        bApproachShot = true;
+    }
     Arena->ObservePlayer(Player->GetActorLocation());
+    if (bDemoCapture && !bRevealShot && Arena->IsRevealVisible())
+    {
+        CaptureDemoShot(TEXT("04-IshibashiriReveal"));
+        bRevealShot = true;
+    }
     if (Player->GetSense()->IsCorruptionSenseActive())
         Player->GetSense()->SetCorruptionWarning(Arena->GetStage() >= 4 ? ECorruptionWarning::Danger
                 : Arena->GetStage() >= 2                                ? ECorruptionWarning::Transition
                                                                         : ECorruptionWarning::None);
     if (Arena->IsGateReached()) EnterBasin();
+}
+
+void AIshibashiriApproachGameMode::CaptureDemoShot(const TCHAR* Name)
+{
+    const FString Dir = FPaths::ProjectSavedDir() / TEXT("Screenshots/IshibashiriDemo") / RunId;
+    IFileManager::Get().MakeDirectory(*Dir, true);
+    FScreenshotRequest::RequestScreenshot(Dir / (FString(Name) + TEXT(".png")), false, false);
 }
 
 void AIshibashiriApproachGameMode::EnterBasin()

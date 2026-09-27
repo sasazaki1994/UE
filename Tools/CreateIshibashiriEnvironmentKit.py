@@ -347,6 +347,19 @@ def generate(asset, builder, manifest_asset):
         "Moss": procedural_material("Moss", (.09,.14,.065), .95, 11, .2),
     }
     visual, collision = builder(mats)
+    # UE associates UCX_<render mesh name>_00 with one render mesh object.
+    # Join the cedar's trunk, branches, roots and foliage while keeping their
+    # material slots and world-space geometry. The rock and stone are renamed.
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in visual: obj.select_set(True)
+    bpy.context.view_layer.objects.active = visual[0]
+    if len(visual) > 1:
+        bpy.ops.object.join()
+    visual = [bpy.context.view_layer.objects.active]
+    visual[0].name = asset
+    visual[0].data.name = asset
+    if collision.name != "UCX_" + asset + "_00":
+        raise RuntimeError("collision does not match render mesh name: " + collision.name)
     dimensions, vertices, triangles = geometry_metrics(visual)
     collision_dimensions, collision_vertices, collision_triangles = geometry_metrics([collision])
     directory = OUTPUT / asset.removeprefix("SM_Ishibashiri_")

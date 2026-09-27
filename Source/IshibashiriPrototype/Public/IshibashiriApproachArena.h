@@ -45,7 +45,7 @@ private:
     UPROPERTY(Transient) TArray<TObjectPtr<UActorComponent>> Generated;
     UPROPERTY(Transient) TArray<TObjectPtr<UPrimitiveComponent>> RevealParts;
     TArray<FVector> PathPoints;
-    FVector RevealOrigin=FVector(70400,8500,2100);
+    FVector RevealOrigin=FVector(81500,8500,2100);
     float RevealElapsed=0.f;
     float SubtitleRemaining=0.f;
     float PathLengthMeters=0.f;

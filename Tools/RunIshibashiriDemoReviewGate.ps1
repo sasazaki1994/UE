@@ -86,9 +86,21 @@ try {
     )
     if($DryRun){ foreach($Step in $Plan){$null=Invoke-Gate $Step[0] $Step[1] $Step[2]}; $Reasons.dryRun='Planning only; no build, Unreal process, screenshot, or package was started.'; Save-Summary 'NOT_RUN'; Write-Host "DryRun only: all gates NOT_RUN. Evidence: $EvidenceRoot"; exit 0 }
     if(!$Environment.isWindows){$Reasons.environment='WINDOWS UE 5.6.1 REQUIRED'; Save-Summary 'NOT_RUN'; exit 2}
-    $Resolved=if($EngineRoot){[IO.Path]::GetFullPath($EngineRoot)}else{Join-Path $env:ProgramFiles 'Epic Games\UE_5.6'}; $Environment.engineRoot=$Resolved
-    $VersionFile=Join-Path $Resolved 'Engine\Build\Build.version'; if(Test-Path $VersionFile){$V=Get-Content $VersionFile -Raw|ConvertFrom-Json;$Environment.ueVersion="$($V.MajorVersion).$($V.MinorVersion).$($V.PatchVersion)"}
-    if($Environment.ueVersion -ne '5.6.1'){$Reasons.environment='Exact UE 5.6.1 is required';Save-Summary 'NOT_RUN';exit 2}
+    $Candidates=if($EngineRoot){@($EngineRoot)}elseif($env:UE_ROOT){@($env:UE_ROOT)}else{@(
+        (Join-Path $env:USERPROFILE 'UnrealEngine\UE_5.6'),
+        (Join-Path $env:ProgramFiles 'Epic Games\UE_5.6'))}
+    $Resolved=$null
+    foreach($Candidate in $Candidates){
+        $Candidate=[IO.Path]::GetFullPath($Candidate)
+        $VersionFile=Join-Path $Candidate 'Engine\Build\Build.version'
+        if(!(Test-Path -LiteralPath $VersionFile) -or !(Test-Path -LiteralPath (Join-Path $Candidate 'Engine\Build\BatchFiles\Build.bat'))){continue}
+        $V=Get-Content -LiteralPath $VersionFile -Raw|ConvertFrom-Json
+        $Version="$($V.MajorVersion).$($V.MinorVersion).$($V.PatchVersion)"
+        if($Version -eq '5.6.1'){$Resolved=$Candidate;$Environment.ueVersion=$Version;break}
+    }
+    if(!$Resolved){$Reasons.environment='UE 5.6.1 not found in -EngineRoot, UE_ROOT, user install, or Epic Games install';Save-Summary 'NOT_RUN';exit 2}
+    $Environment.engineRoot=$Resolved
+    $EngineRoot=$Resolved
     $Results.build=Invoke-Gate 'build' 'logs' @('-Action','Build')
     if($Results.build -ne 'PASS'){Save-Summary 'FAIL';exit 1}
     $Results.demo60=Invoke-Gate 'demo60' 'demo' @('-Action','Test','-IshibashiriDemo','-SkipBuild','-TestFPS','60')

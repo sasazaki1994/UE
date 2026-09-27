@@ -82,6 +82,8 @@ def import_and_validate(asset, suffix, report):
     if len(collisions) != 1:
         fail(f"{asset} {suffix}: expected collision {collision_name}, got {[o.name for o in meshes]}")
     visual = [obj for obj in meshes if not obj.name.startswith("UCX_")]
+    if len(visual) != 1 or visual[0].name != asset:
+        fail(f"{asset} {suffix}: UCX collision requires one visible mesh named {asset}; got {[o.name for o in visual]}")
     expected_names = set(report["visual_object_names"])
     actual_names = {obj.name for obj in visual}
     if actual_names != expected_names:

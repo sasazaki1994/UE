@@ -2,7 +2,9 @@
 
 ## 目的
 
-`Tools/RunIshibashiriDemoReviewGate.ps1` は、Windows + Unreal Engine **5.6.1** で石走り専用Demoを1コマンドでBuildからPackage可否まで判定し、同一SHAのEvidenceを保存するためのゲートである。静的テストやDryRunは実ゲームの成功を意味しない。現時点のUE Runtime、PNG、Packageは **NOT_RUN — WINDOWS UE 5.6.1 REQUIRED**。
+`Tools/RunIshibashiriDemoReviewGate.ps1` は、Windows + Unreal Engine **5.6.1** で石走り専用Demoを1コマンドでBuildからPackage可否まで判定し、Evidenceを保存するためのゲートである。静的テストやDryRunは実ゲームの成功を意味しない。
+
+2026-09-27、ローカルWindowsのUE 5.6.1でゲートを実行し、Build、Demo 60/30 FPS、模擬Gamepad、通常・HighQualityの14枚Capture、完走、Save隔離、Retry、Sense reset、通常Campaign回帰、Packageの全結果が **PASS** となった。Evidenceはローカルのgit追跡対象外の `Artifacts/IshibashiriDemoReviewGate/20260927T044550Z-06eb097c52ff/` にある。高画質の接近路カットは露出安定後に撮影し、画像で視認性を確認した。生成PackageのexeでもNullRHIの入力E2Eを実行し、`Artifacts/IshibashiriDemoReviewGate/20260927T044550Z-06eb097c52ff/package/PackagedIshibashiriDemo-60.log` に完走を確認した。この実行はHEAD `06eb097c52ff` を基点とする**未コミットの作業ツリー**で行ったため、summaryの`sourceSha`だけでは検証した変更内容を再現できない。実機の物理ゲームパッド操作、人間の初見プレイ、Blender生成環境素材のUE取込はこのゲートの結果に含まれない。
 
 ## Full Review Gateとの違い
 

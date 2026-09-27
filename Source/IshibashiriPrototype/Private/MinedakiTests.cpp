@@ -71,7 +71,7 @@ bool FMinedakiLifecycle::RunTest(const FString& Parameters)
         TestEqual(TEXT("Invalid delta is ignored"), B->GetClimbTime(), 0.f);
         const FTransform Relative = P->GetGrab()->GetRelativeGrabTransform();
         float PeakPitch = 0;
-        bool SawWall = false, SawShake = false, SawLedge = false;
+        bool SawWall = false, SawWarning = false, SawShake = false, SawLedge = false;
         for (int32 Frame = 0; Frame < FPS * 13; ++Frame)
         {
             B->AdvanceWallClimb(1.f / FPS);
@@ -84,10 +84,12 @@ bool FMinedakiLifecycle::RunTest(const FString& Parameters)
             }
             PeakPitch = FMath::Max(PeakPitch, static_cast<float>(B->GetBodyRoot()->GetRelativeRotation().Pitch));
             SawWall |= B->GetActionState() == EMinedakiActionState::ClimbingWall;
+            SawWarning |= B->GetActionState() == EMinedakiActionState::ShakeWarning;
             SawShake |= B->GetActionState() == EMinedakiActionState::Shaking;
             SawLedge |= B->GetActionState() == EMinedakiActionState::LedgeTransition;
         }
-        TestTrue(TEXT("All climb stages and seventy-degree pitch observed"), SawWall && SawShake && SawLedge && PeakPitch >= 69);
+        TestTrue(TEXT("Warning advances to shake, ledge, and seventy-degree pitch"),
+            SawWall && SawWarning && SawShake && SawLedge && PeakPitch >= 69);
         TestEqual(TEXT("Upper platform reached exactly once"), B->Telemetry.UpperReached, 1);
         TestEqual(TEXT("Shake occurs exactly once"), B->Telemetry.Shakes, 1);
         TestTrue(TEXT("Boss moved up twenty meters"), FMath::IsNearlyEqual(B->GetActorLocation().Z, 2000., .01));
