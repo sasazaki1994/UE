@@ -31,7 +31,11 @@ No audio files were invented. Audio locations log `NOT_IMPLEMENTED — AUDIO ASS
 
 ## Sense support
 
-The existing `UPlayerSenseComponent` is reused. Boundary Sense receives one available, non-gameplay target at the basin gate, so `Q / LT` strengthens while approaching. Held Corruption Sense moves from `QUIET` to `TRANSITION` after the trail and `DANGER` near the basin. Chapter travel retains the existing `ResetSense()` path.
+The existing `UPlayerSenseComponent` is reused. Boundary Sense receives one available `ATargetPoint` at the basin gate; its scene root owns the requested transform rather than silently resolving to world origin, so `Q / LT` strengthens while approaching. Startup asserts that the target remains at the gate. Held Corruption Sense moves from `QUIET` to `TRANSITION` after the trail and `DANGER` near the basin. Chapter travel retains the existing `ResetSense()` path.
+
+## First-batch environment intake
+
+The generator now exports exactly one render mesh named after each asset and a matching `UCX_<render mesh>_00`. `Tools/ImportIshibashiriEnvironmentKit.py` imports the three generated FBX files with automatic collision disabled, rejects any mesh with no recognized simple collision, and only then saves it under `/Game/Environment/Ishibashiri`. Approach construction prefers those three package paths for cedars, rocks, and the boundary stone, while retaining Engine Basic Shape fallbacks so a source checkout without generated binaries is still runnable. Generated binaries and imported `.uasset` evidence are not present in this Linux checkout; UE import/collision and visual placement remain runtime gates rather than claimed results.
 
 ## Transition and retry
 
@@ -55,6 +59,6 @@ No Windows UE 5.6.1 runtime is installed in this container, so screenshots were 
 - **Runtime status: UNVERIFIED.** C++ compilation, 60/30 FPS traversal, Campaign E2E, visuals, collisions, gate travel, and screenshots require Windows UE 5.6.1.
 - Audio and subtle tree/camera reactions are hook-only.
 - The distant figure is intentionally a blockout proxy, not an imported Tripo model.
-- Production replacement priorities: terrain surface; cliff/rock and cedar/fallen-tree kits; boundary stone, rope and ritual posts; footprint/corruption decals; fog; Ishibashiri LOD silhouette; rumble/tree audio; brief camera impulse.
+- Production replacement priorities after the first-batch UE gate: terrain surface; fallen-tree variant, rope and ritual posts; footprint/corruption decals; fog; Ishibashiri LOD silhouette; rumble/tree audio; brief camera impulse.
 
 Final source-only verdict: **SOURCE IMPLEMENTED — UE RUNTIME UNVERIFIED**.

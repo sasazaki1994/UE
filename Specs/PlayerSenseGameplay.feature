@@ -14,6 +14,13 @@ Feature: Player-driven sensing
     When the player holds Boundary Sense
     Then that target is excluded from the reading
 
+  Scenario: Approach guidance resolves the basin entrance actor location
+    Given the Approach has spawned its basin entrance target with a scene root
+    When the player holds Boundary Sense while walking from the entrance to the basin
+    Then the reading direction points from the player to the basin entrance
+    And the reading strength increases near the basin entrance
+    But the world origin is not used as the target location
+
   Scenario Outline: Corruption warnings retain encounter meaning
     Given the encounter reports <state>
     When the player holds Corruption Sense
