@@ -24,6 +24,7 @@ void ACampaignGameMode::StartPlay()
 
 void ACampaignGameMode::ConfirmCard()
 {
+    if (bChapterTravelPending) return;
     UCampaignGameInstance* Campaign = GetGameInstance<UCampaignGameInstance>();
     if (!Campaign) return;
     const ECampaignState State = Campaign->GetCampaignState();
@@ -32,7 +33,11 @@ void ACampaignGameMode::ConfirmCard()
     const int32 LastCard = Campaign->GetLastCardIndex();
     if (State == ECampaignState::Title || State == ECampaignState::Completed || CardIndex >= LastCard)
     {
-        if (Campaign->AdvanceCardChapter()) Campaign->TravelToCurrentChapter(this);
+        if (Campaign->AdvanceCardChapter())
+        {
+            bChapterTravelPending = true;
+            Campaign->TravelToCurrentChapter(this);
+        }
         return;
     }
     ++CardIndex;
@@ -40,9 +45,11 @@ void ACampaignGameMode::ConfirmCard()
 
 void ACampaignGameMode::ContinueSavedCampaign()
 {
+    if (bChapterTravelPending) return;
     UCampaignGameInstance* Campaign = GetGameInstance<UCampaignGameInstance>();
     if (Campaign && Campaign->ContinueCampaign())
     {
+        bChapterTravelPending = true;
         NewGameConfirmation.Cancel();
         Campaign->TravelToCurrentChapter(this);
     }

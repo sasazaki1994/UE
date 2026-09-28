@@ -23,7 +23,7 @@ bool UColossusClimbingComponent::IsIKVerticalSlice() const
 {
     // Every authored route hold is creature-local. The optional Control Rig can
     // therefore keep contact from foreleg through both shoulders and the back.
-    return Boss && Node >= 0 && (Destination == INDEX_NONE || Destination >= 0);
+    return IsValid(Boss) && Node >= 0 && (Destination == INDEX_NONE || Destination >= 0);
 }
 
 void UColossusClimbingComponent::UpdateIK(float Dt)
@@ -31,7 +31,7 @@ void UColossusClimbingComponent::UpdateIK(float Dt)
     const float Desired = IsIKVerticalSlice() ? (IsResting() && !Boss->IsBucking() ? .82f : 1.f) : 0.f;
     const float Seconds = Desired > IKWeight ? IKBlendInSeconds : IKBlendOutSeconds;
     IKWeight = FMath::FInterpConstantTo(IKWeight, Desired, Dt, 1.f / FMath::Max(.01f, Seconds));
-    if (!Boss) return;
+    if (!IsValid(Boss)) return;
 
     // Authored against the actual Shirotsura rig. Values remain in the creature
     // component's local frame, so walking, turning and buck rotation carry them.
@@ -59,19 +59,28 @@ void UColossusClimbingComponent::BeginPlay()
     Super::BeginPlay();
     Player = Cast<APrototypePlayer>(GetOwner());
 }
+void UColossusClimbingComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Reset();
+    Super::EndPlay(EndPlayReason);
+}
+bool UColossusClimbingComponent::IsClimbing() const
+{
+    return IsValid(Boss) && Node != INDEX_NONE;
+}
 bool UColossusClimbingComponent::IsResting() const
 {
-    return Boss && Destination == INDEX_NONE && Boss->IsRestNode(Node);
+    return IsClimbing() && Destination == INDEX_NONE && Boss->IsRestNode(Node);
 }
 void UColossusClimbingComponent::GrabPressed()
 {
     bGripHeld = true;
     // A second press during the warp must not fall through StartGrabWarp's
     // "already warping" refusal into the legacy snap below.
-    if (!Player || Boss || bGrabWarping || Stamina < MinimumGrabStamina || Player->IsDodging() || Player->IsAttacking()) return;
+    if (!IsValid(Player) || Boss || bGrabWarping || Stamina < MinimumGrabStamina || Player->IsDodging() || Player->IsAttacking()) return;
     APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     AIshibashiriBoss* Candidate = Mode ? Mode->GetBoss() : nullptr;
-    if (!Mode || !Mode->IsEncounterActive() || !Candidate) return;
+    if (!Mode || !Mode->IsEncounterActive() || !IsValid(Candidate)) return;
     if (!Candidate->CanMount()) return;
     if (FVector::Dist(Player->GetActorLocation(), Candidate->GetClimbPosition(0)) > GrabRange) return;
     if (Candidate->GetState() == EIshibashiriState::Charge) return;
@@ -98,7 +107,7 @@ FTransform UColossusClimbingComponent::MakeGrabWarpTarget(const AIshibashiriBoss
 
 bool UColossusClimbingComponent::StartGrabWarp(AIshibashiriBoss* Candidate)
 {
-    if (!Player || !IsValid(Candidate) || !Candidate->CanMount() || bGrabWarping) return false;
+    if (!IsValid(Player) || !IsValid(Candidate) || !Candidate->CanMount() || bGrabWarping) return false;
     const FTransform Target = MakeGrabWarpTarget(Candidate);
     GrabWarpStartDistance = FVector::Dist(Player->GetActorLocation(), Target.GetLocation());
     GrabWarpStartAngle = FacingAngle(Player, Target);
@@ -164,8 +173,8 @@ void UColossusClimbingComponent::CancelGrabWarp(const TCHAR* Reason)
     bFallbackGrabApproach = false;
     GrabWarpBoss = nullptr;
     GrabWarpElapsed = GrabWarpDuration = 0.f;
-    if (Previous) RemoveTickPrerequisiteActor(Previous);
-    if (Player)
+    if (IsValid(Previous)) RemoveTickPrerequisiteActor(Previous);
+    if (IsValid(Player))
     {
         if (bWasFallback && IsValid(Previous)) Player->GetCapsuleComponent()->IgnoreActorWhenMoving(Previous, false);
         if (UMotionWarpingComponent* Warping = Player->GetMotionWarping()) Warping->RemoveWarpTarget(GrabWarpTargetName);
@@ -216,7 +225,7 @@ void UColossusClimbingComponent::CompleteGrabWarp()
 void UColossusClimbingComponent::UpdateGrabWarp(float Dt)
 {
     if (!bGrabWarping) return;
-    if (!Player || !IsValid(GrabWarpBoss) || Player->GetHealth() <= 0)
+    if (!IsValid(Player) || !IsValid(GrabWarpBoss) || Player->GetHealth() <= 0)
     {
         CancelGrabWarp(TEXT("InvalidParticipant")); return;
     }
@@ -257,15 +266,22 @@ void UColossusClimbingComponent::UpdateGrabWarp(float Dt)
 void UColossusClimbingComponent::Detach(bool bJump)
 {
     if (bGrabWarping) { CancelGrabWarp(TEXT("Detach")); return; }
-    if (!Boss || !Player) return;
+    // Node survives a destroyed target being nulled by GC, so it also records
+    // whether this component still owns the character's disabled movement.
+    const bool bWasClimbing = Boss != nullptr || Node != INDEX_NONE;
     AIshibashiriBoss* OldBoss = Boss;
-    const FVector Away = (Player->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D();
-    RemoveTickPrerequisiteActor(Boss);
+    const bool bTargetValid = IsValid(OldBoss);
+    const FVector Away = bTargetValid && IsValid(Player)
+        ? (Player->GetActorLocation() - OldBoss->GetActorLocation()).GetSafeNormal2D() : FVector::ZeroVector;
+    if (bTargetValid) RemoveTickPrerequisiteActor(OldBoss);
     Boss = nullptr; Node = Destination = INDEX_NONE; Progress = 0.f; bGripHeld = false;
-    Player->GetCapsuleComponent()->IgnoreActorWhenMoving(OldBoss, false);
+    if (!bWasClimbing || !IsValid(Player)) return;
+    if (bTargetValid) Player->GetCapsuleComponent()->IgnoreActorWhenMoving(OldBoss, false);
+    Player->GetCharacterMovement()->ClearAccumulatedForces();
+    Player->GetCharacterMovement()->StopMovementImmediately();
     Player->GetCharacterMovement()->SetMovementMode(MOVE_Falling);
     Player->GetCharacterMovement()->bOrientRotationToMovement = true;
-    if (bJump) Player->LaunchCharacter(Away * 650.f + FVector(0,0,380), true, true);
+    if (bJump && bTargetValid) Player->LaunchCharacter(Away * 650.f + FVector(0,0,380), true, true);
 }
 void UColossusClimbingComponent::Reset()
 {
@@ -275,12 +291,15 @@ void UColossusClimbingComponent::Reset()
 }
 bool UColossusClimbingComponent::TryPurify()
 {
-    return Boss && IsResting() && Boss->TryPurifyCore(Player->GetActorLocation());
+    return IsValid(Player) && IsResting() && Boss->TryPurifyCore(Player->GetActorLocation());
 }
 void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActorComponentTickFunction* Tick)
 {
     Super::TickComponent(Dt, Type, Tick);
-    if (!Player) return;
+    if (!IsValid(Player)) return;
+    // Release before IK or encounter checks: a target may be destroyed while
+    // the encounter is ending, or its reflected pointer may already be null.
+    if ((Boss || Node != INDEX_NONE) && !IsValid(Boss)) Detach(false);
     UpdateIK(Dt);
     UpdateGrabWarp(Dt);
     if (bGrabWarping) return;
@@ -288,7 +307,6 @@ void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActor
     if (!Mode || !Mode->IsEncounterActive()) return;
     if (!IsValid(Boss))
     {
-        if (Boss) Reset();
         if (!Player->GetCharacterMovement()->IsFalling()) Stamina = FMath::Min(100.f, Stamina+GroundRecoveryPerSecond*Dt);
         return;
     }
@@ -328,7 +346,7 @@ void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActor
 }
 FString UColossusClimbingComponent::GetHint() const
 {
-    if (!Boss) return TEXT("Break posture, then E / RB near the gold foreleg or horn hold during KNEEL");
+    if (!IsClimbing()) return TEXT("Break posture, then E / RB near the gold foreleg or horn hold during KNEEL");
     if (Boss->IsBucking() || Boss->IsBuckWarning()) return TEXT("HOLD E / RB - brace for the shake! Movement pauses during the shake.");
     if (Node == 5) return TEXT("W / LS up: summit | D / LS right: right-shoulder core | S: descend | Space / A: detach");
     if (Node == 10) return TEXT("W: shoulder core | A / S: main route");

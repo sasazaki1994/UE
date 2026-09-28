@@ -2,11 +2,37 @@
 #include "CampaignSaveGame.h"
 #include "CampaignGameMode.h"
 #include "PlayerSenseComponent.h"
+#include "Engine/Engine.h"
+#include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/Guid.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
+namespace
+{
+    struct FCampaignCardWorld
+    {
+        UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+        UCampaignGameInstance* Campaign = NewObject<UCampaignGameInstance>();
+        ACampaignGameMode* Mode;
+
+        FCampaignCardWorld()
+        {
+            GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+            World->SetGameInstance(Campaign);
+            Mode = World->SpawnActor<ACampaignGameMode>();
+        }
+
+        ~FCampaignCardWorld()
+        {
+            // These tests inspect deferred travel without ticking it or loading a map.
+            World->DestroyWorld(false);
+            GEngine->DestroyWorldContext(World);
+        }
+    };
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FCampaignOrder, "IshibashiriPrototype.Campaign.CampaignOrder", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -165,6 +191,49 @@ bool FCampaignNewGameConfirmationTest::RunTest(const FString&)
     TestTrue(TEXT("Second consecutive input starts"), Confirmation.RequestStart(true));
     Confirmation.Cancel(); // Continue uses the same reset without blocking its action.
     TestFalse(TEXT("Continue clears transient confirmation"), Confirmation.IsPending());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCampaignPendingTravelInput, "IshibashiriPrototype.Campaign.PendingTravelIgnoresInput",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FCampaignPendingTravelInput::RunTest(const FString&)
+{
+    {
+        FCampaignCardWorld F;
+        F.Mode->ConfirmCard();
+        TestEqual(TEXT("Start selects Prologue"), F.Campaign->GetCampaignState(), ECampaignState::Prologue);
+        TestFalse(TEXT("Start queues map travel"), GEngine->GetWorldContextFromWorldChecked(F.World).TravelURL.IsEmpty());
+        F.Mode->ConfirmCard();
+        TestEqual(TEXT("A second start input cannot advance cards before Prologue loads"), F.Mode->GetCardIndex(), 0);
+    }
+    {
+        FCampaignCardWorld F;
+        F.Campaign->SetContinueForTest(ECampaignState::Ending);
+        F.Mode->ContinueSavedCampaign();
+        for (int32 Index = 0; Index < 5; ++Index) F.Mode->ConfirmCard();
+        TestEqual(TEXT("Confirm input cannot skip a chapter queued by Continue"), F.Campaign->GetCampaignState(), ECampaignState::Ending);
+        TestEqual(TEXT("Continued cards have not been read in the Title world"), F.Mode->GetCardIndex(), 0);
+    }
+    {
+        FCampaignCardWorld F;
+        F.Campaign->SetCampaignStateForTest(ECampaignState::Ending);
+        for (int32 Index = 0; Index < 4; ++Index) F.Mode->ConfirmCard();
+        TestEqual(TEXT("Reading Ending queues Completed"), F.Campaign->GetCampaignState(), ECampaignState::Completed);
+        F.Mode->ConfirmCard();
+        TestEqual(TEXT("Extra input cannot skip the Completed screen"), F.Campaign->GetCampaignState(), ECampaignState::Completed);
+    }
+    {
+        FCampaignCardWorld F;
+        F.Campaign->SetCampaignStateForTest(ECampaignState::Completed);
+        // A failed checkpoint deletion can leave Continue available after completion.
+        F.Campaign->SetContinueForTest(ECampaignState::Minedaki);
+        F.Mode->ConfirmCard();
+        TestEqual(TEXT("Completed queues Title"), F.Campaign->GetCampaignState(), ECampaignState::Title);
+        F.Mode->ContinueSavedCampaign();
+        F.Mode->ConfirmCard();
+        TestEqual(TEXT("Title must load before accepting start or continue"), F.Campaign->GetCampaignState(), ECampaignState::Title);
+    }
     return true;
 }
 
