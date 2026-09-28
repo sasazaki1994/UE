@@ -167,3 +167,15 @@ No free climbing, open world, boss HP/death, new weapon, skill tree, GAS, Motion
 7. Replace Production `VICTORY` and permanent counters/instructions according to the HUD spec; add first-use prompt policy.
 
 These are bounded changes to existing state/data paths. Everything else in this specification is tuning, presentation/asset replacement, or evidence collection.
+
+### 14.1 Shake / purification implementation boundary
+
+The pre-change source used `RiderTime` modulo 12 seconds as the sole shake clock and
+purified a Kakon synchronously inside the input handler.  The scoped implementation
+therefore keeps the existing route, Cling, stamina, recovery and Retry paths, but makes
+two timing boundaries explicit: a 6.0-second minimum first-shake gate, and a pending
+0.53-second purification which commits once at swing completion.  While that pending
+operation and its 1.5-second post-completion protection are active, the shake clock is
+paused rather than merely hidden.  Pausing preserves warning-before-shake ordering when
+a protected interval overlaps either boundary.  Inputs during an active shake or an
+existing pending purification are rejected without changing Kakon state or count.

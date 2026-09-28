@@ -287,7 +287,7 @@ void UColossusClimbingComponent::Reset()
 {
     if (bGrabWarping) CancelGrabWarp(TEXT("Reset"));
     Detach(false); Stamina = 100.f; ForwardInput = RightInput = InputDelay = UnsafeBuckTime = 0.f;
-    LastSafeNode = INDEX_NONE;
+    LastSafeNode = INDEX_NONE; PendingPurificationCore = INDEX_NONE; PurificationRemaining = 0.f;
     bGripHeld = false; IKWeight = 0.f; IKTargets = FClimbingIKTargets();
 }
 
@@ -338,7 +338,11 @@ void UColossusClimbingComponent::RecoverFromFall(const TCHAR* Reason)
 }
 bool UColossusClimbingComponent::TryPurify()
 {
-    return IsValid(Player) && IsResting() && Boss->TryPurifyCore(Player->GetActorLocation());
+    if (!IsValid(Player) || !IsResting() || PendingPurificationCore != INDEX_NONE || Boss->IsBucking()) return false;
+    PendingPurificationCore = Boss->BeginPurifyCore(Player->GetActorLocation(), PurificationDuration);
+    if (PendingPurificationCore == INDEX_NONE) return false;
+    PurificationRemaining = PurificationDuration;
+    return true;
 }
 void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActorComponentTickFunction* Tick)
 {
@@ -350,6 +354,16 @@ void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActor
     UpdateIK(Dt);
     UpdateGrabWarp(Dt);
     if (bGrabWarping) return;
+    if (PendingPurificationCore != INDEX_NONE)
+    {
+        PurificationRemaining = FMath::Max(0.f, PurificationRemaining - Dt);
+        if (PurificationRemaining <= 0.f)
+        {
+            const int32 Core = PendingPurificationCore;
+            PendingPurificationCore = INDEX_NONE;
+            if (IsValid(Boss)) Boss->CompletePurifyCore(Core);
+        }
+    }
     const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Mode || !Mode->IsEncounterActive()) return;
     if (!IsValid(Boss))

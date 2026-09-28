@@ -49,7 +49,7 @@ def test_sense_and_feedback_describe_posture_not_damage():
 
 def test_shared_three_kakon_completion_remains_the_only_gameplay_completion():
     assert "Kakon->Purify()" in BOSS
-    assert "CalmNushi" not in BOSS[BOSS.index("bool AIshibashiriBoss::TryPurifyCore") :]
+    assert "CalmNushi" not in BOSS[BOSS.index("int32 AIshibashiriBoss::BeginPurifyCore") :]
     assert "OnEncounterCompleted.AddUniqueDynamic" in (ROOT / "Source/IshibashiriPrototype/Private/PrototypeGameMode.cpp").read_text(encoding="utf-8")
     spec = (ROOT / "Specs/Acceptance/ColossusClimbing.feature").read_text(encoding="utf-8")
     assert "地上斬撃と部分浄化では勝利しない" in spec

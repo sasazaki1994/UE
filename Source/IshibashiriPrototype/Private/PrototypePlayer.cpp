@@ -436,9 +436,14 @@ void APrototypePlayer::Attack()
     if (Climbing->IsClimbing())
     {
         if (!Climbing->IsResting()) return;
+        if (!Climbing->TryPurify())
+        {
+            ShowFeedback(TEXT("Purification unavailable - wait for a safe opening"));
+            return;
+        }
         AttackRemaining = AttackDuration;
         AttackCooldownRemaining = AttackCooldown;
-        ShowFeedback(Climbing->TryPurify() ? TEXT("PURIFIED - corruption removed") : TEXT("No unpurified core in reach"));
+        ShowFeedback(TEXT("PURIFYING - hold position"));
         ShirotsuraVisual->PlayOneShot(EShirotsuraVisualState::Slash, AttackDuration);
         return;
     }

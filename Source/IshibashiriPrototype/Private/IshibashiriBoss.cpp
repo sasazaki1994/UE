@@ -243,12 +243,14 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
     const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Mode || !Mode->IsEncounterActive() || !IsValid(Target)) return;
     VisualTime += DeltaSeconds;
+    const bool bShakeClockPaused = ShakeImmunityRemaining > 0.f;
     ShakeImmunityRemaining = FMath::Max(0.f, ShakeImmunityRemaining - DeltaSeconds);
     for (float& Remaining : PurifyPresentationRemaining)
         Remaining = FMath::Max(0.f, Remaining - DeltaSeconds);
     if (Target->IsGrabbing() && !Target->GetClimbing()->IsGrabWarping())
     {
-        RiderTime = Target->GetClimbing()->IsClimbing() ? RiderTime + DeltaSeconds : 0.f;
+        RiderTime = Target->GetClimbing()->IsClimbing()
+            ? RiderTime + (bShakeClockPaused ? 0.f : DeltaSeconds) : 0.f;
         // Continue moving under the rider. Turn inward before the full model
         // reaches the arena edge, instead of aiming at the rider on our back.
         if (GetActorLocation().Size2D() > Mode->ArenaHalfExtent-900.f)
@@ -445,7 +447,7 @@ bool AIshibashiriBoss::IsBucking() const
 {
     if (ShakeImmunityRemaining > 0.f) return false;
     const float Period = FMath::Max(1.f, BuckPeriod);
-    return RiderTime > 0.f && FMath::Fmod(RiderTime, Period) >= Period - FMath::Min(BuckDuration, Period);
+    return RiderTime >= FirstBuckDelay && FMath::Fmod(RiderTime, Period) >= Period - FMath::Min(BuckDuration, Period);
 }
 bool AIshibashiriBoss::IsBuckWarning() const
 {
@@ -503,20 +505,30 @@ void AIshibashiriBoss::HandleNushiStateChanged()
         UpdateCreatureAnimation();
     }
 }
-bool AIshibashiriBoss::TryPurifyCore(const FVector& Position)
+int32 AIshibashiriBoss::BeginPurifyCore(const FVector& Position, float CompletionDelay)
 {
     APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
-    if (!Mode || !Mode->IsEncounterActive() || !Target || !Target->GetClimbing()->IsResting() || IsBucking()) return false;
+    if (!Mode || !Mode->IsEncounterActive() || !Target || !Target->GetClimbing()->IsResting() || IsBucking()) return INDEX_NONE;
     for (int32 I=0; I<CoreKakons.Num(); ++I)
     {
         AKakonActor* Kakon = GetCoreKakon(I);
-        if (Kakon && FVector::Dist(Position,Kakon->GetActorLocation()) < 170.f && Kakon->Purify())
+        if (Kakon && I == GetPurifiedCount() && Kakon->GetState() != EKakonState::Purified
+            && FVector::Dist(Position,Kakon->GetActorLocation()) < 170.f)
         {
-            UpdateCreatureAnimation();
-            return true;
+            GrantShakeImmunity(FMath::Max(0.f, CompletionDelay));
+            return I;
         }
     }
-    return false;
+    return INDEX_NONE;
+}
+
+bool AIshibashiriBoss::CompletePurifyCore(int32 CoreIndex)
+{
+    AKakonActor* Kakon = GetCoreKakon(CoreIndex);
+    if (!Kakon || CoreIndex != GetPurifiedCount() || !Kakon->Purify()) return false;
+    GrantShakeImmunity(PostPurifyShakeDelay);
+    UpdateCreatureAnimation();
+    return true;
 }
 
 void AIshibashiriBoss::NotifyMounted()
