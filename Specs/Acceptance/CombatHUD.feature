@@ -4,7 +4,9 @@
 
   シナリオアウトライン: 通常HUDは攻略に必要な情報だけを表示する
     前提 <encounter> を -DebugGuidance なしで開始している
-    ならば HUDは危険の予告、GrabまたはCling操作、Stamina、禍根浄化数、落下Recovery案内、Retryを状況に応じて表示する
+    ならば HUDは危険の予告、GrabまたはCling操作、Stamina、禍根浄化数、落下Recovery案内、Retryを必要な状況だけ表示する
+    かつ 石走りでは数値Staminaと禍根浄化数を常時表示せず、浄化直後だけ禍根1/3、2/3、3/3を表示する
+    かつ Boss HPとVictoryを本番画面へ表示しない
     かつ primitive encounter、内部State、Phase、Route Node番号、倍率、計測値を表示しない
     かつ 峰抱きの経路案内は内部Node番号ではなく次の行動を短文で示す
 
