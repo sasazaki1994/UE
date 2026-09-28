@@ -287,7 +287,54 @@ void UColossusClimbingComponent::Reset()
 {
     if (bGrabWarping) CancelGrabWarp(TEXT("Reset"));
     Detach(false); Stamina = 100.f; ForwardInput = RightInput = InputDelay = UnsafeBuckTime = 0.f;
+    LastSafeNode = INDEX_NONE;
     bGripHeld = false; IKWeight = 0.f; IKTargets = FClimbingIKTargets();
+}
+
+bool UColossusClimbingComponent::IsUsableRecoveryLocation(const FVector& Location) const
+{
+    return !Location.ContainsNaN() && FMath::IsFinite(Location.X) && FMath::IsFinite(Location.Y)
+        && FMath::IsFinite(Location.Z) && Location.SizeSquared() < FMath::Square(WORLD_MAX * .5f);
+}
+
+void UColossusClimbingComponent::RecoverFromFall(const TCHAR* Reason)
+{
+    AIshibashiriBoss* RecoveryBoss = Boss;
+    if (!IsValid(Player) || !IsValid(RecoveryBoss)) { Detach(false); return; }
+
+    Stamina = FMath::Clamp(FallRecoveryStamina, 0.f, 100.f);
+    UnsafeBuckTime = 0.f;
+    RecoveryBoss->GrantShakeImmunity(FallShakeImmunity);
+
+    // A reached authored rest is authoritative and moves with Ishibashiri.
+    // Recover directly onto it so purified Kakon and route order are untouched.
+    const FVector SafeLedge = LastSafeNode != INDEX_NONE ? RecoveryBoss->GetClimbPosition(LastSafeNode) : FVector::ZeroVector;
+    if (LastSafeNode != INDEX_NONE && RecoveryBoss->IsRestNode(LastSafeNode) && IsUsableRecoveryLocation(SafeLedge))
+    {
+        Node = LastSafeNode;
+        Destination = INDEX_NONE;
+        Progress = 0.f;
+        InputDelay = .18f;
+        Player->GetCharacterMovement()->StopMovementImmediately();
+        Player->GetCharacterMovement()->DisableMovement();
+        Player->SetActorLocation(SafeLedge, false, nullptr, ETeleportType::TeleportPhysics);
+        UE_LOG(LogTemp, Display, TEXT("CLIMB_FALL_RECOVERY reason=%s safe_node=%d stamina=%.0f"), Reason, LastSafeNode, Stamina);
+        return;
+    }
+
+    // Before the first safe ledge, return to the authored foreleg. If that
+    // transform is corrupt, the encounter spawn is a stable final fallback;
+    // never leave the pawn falling at an indeterminate transform.
+    FVector Recovery = RecoveryBoss->GetClimbPosition(0);
+    APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
+    if (!IsUsableRecoveryLocation(Recovery) && Mode) Recovery = Mode->GetPlayerRecoverySpawn().GetLocation();
+    if (!IsUsableRecoveryLocation(Recovery)) Recovery = IsUsableRecoveryLocation(Player->GetActorLocation()) ? Player->GetActorLocation() : FVector::ZeroVector;
+    Detach(false);
+    Player->SetActorLocation(Recovery, false, nullptr, ETeleportType::TeleportPhysics);
+    Player->GetCharacterMovement()->StopMovementImmediately();
+    Player->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+    RecoveryBoss->BeginFallRecoveryWindow(FallRegrabWindow);
+    UE_LOG(LogTemp, Display, TEXT("CLIMB_FALL_RECOVERY reason=%s foreleg=1 stamina=%.0f regrab=%.1f"), Reason, Stamina, FallRegrabWindow);
 }
 bool UColossusClimbingComponent::TryPurify()
 {
@@ -316,7 +363,11 @@ void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActor
     if (Buck) Drain = bGripHeld ? BracedBuckDrainPerSecond : UnbracedBuckDrainPerSecond;
     Stamina = FMath::Clamp(Stamina-Drain*Dt, 0.f, 100.f);
     UnsafeBuckTime = Buck && !bGripHeld ? UnsafeBuckTime+Dt : 0.f;
-    if (Stamina <= 0.f || UnsafeBuckTime > UnbracedBuckTolerance) { Detach(); return; }
+    if (Stamina <= 0.f || UnsafeBuckTime > UnbracedBuckTolerance)
+    {
+        RecoverFromFall(Stamina <= 0.f ? TEXT("Stamina") : TEXT("Shake"));
+        return;
+    }
     InputDelay = FMath::Max(0.f, InputDelay-Dt);
     if (Destination == INDEX_NONE && InputDelay <= 0.f && !Buck && !Player->IsAttacking())
     {
@@ -334,11 +385,12 @@ void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActor
         if (Progress >= 1.f)
         {
             Node = Destination; Destination = INDEX_NONE; InputDelay = .18f;
+            if (Boss->IsRestNode(Node)) LastSafeNode = Node;
         }
     }
     FHitResult Hit;
     Player->SetActorLocation(Position,true,&Hit);
-    if (Hit.bBlockingHit && Hit.GetActor() != Boss) { Detach(); return; }
+    if (Hit.bBlockingHit && Hit.GetActor() != Boss) { RecoverFromFall(TEXT("BlockedRoute")); return; }
     FVector Facing = Destination != INDEX_NONE ? Boss->GetClimbPosition(Destination)-Position
         : Boss->GetActorLocation()-Position;
     Facing.Z = 0;

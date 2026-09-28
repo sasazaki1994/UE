@@ -23,7 +23,8 @@ def test_only_recover_counter_and_kneel_mount_window():
     assert "!bChargeHitPlayer && !bCounterUsed && Posture > 0" in HEADER
     assert "MountWindowDuration = 5.f" in HEADER
     assert "case EIshibashiriState::Kneel" in BOSS
-    assert "Posture = MaxPosture;" in BOSS
+    kneel_tick = BOSS[BOSS.index("case EIshibashiriState::Kneel:", BOSS.index("void AIshibashiriBoss::Tick")) :]
+    assert "Posture = 1;" in kneel_tick
     assert "GrabMarker->SetVisibility(DisplayState == EIshibashiriState::Kneel)" in BOSS
     assert "CorruptionBulges" in HEADER + BOSS
 
