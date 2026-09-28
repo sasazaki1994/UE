@@ -28,7 +28,6 @@ def test_normal_hud_does_not_use_development_labels():
 
 def test_variable_hud_rows_size_the_background():
     expected_line_counts = {
-        "PrototypeHUD.cpp": "2 + (bCampaign ? 1 : 0) + SenseLines + (bDebugGuidance ? 2 : 0) + (Player && !Player->GetFeedback().IsEmpty() ? 1 : 0)",
         "FuchimatoiHUD.cpp": "4+SenseLines+(bDebugGuidance?2:0)+(bRecoveryBehindCamera?1:0)",
         "MinedakiHUD.cpp": "4 + SenseLines + (bDebugGuidance ? 2 : 0)",
         "MagatsuneHUD.cpp": "4 + SenseLines + (bDebugGuidance ? 1 : 0)",
@@ -53,3 +52,38 @@ def test_required_player_guidance_remains_available():
     ))
     for label in ("STAMINA", "KAKON", "HOLD E / RB", "RECOVERY", "Retry"):
         assert label in combined
+
+
+def test_ishibashiri_production_hud_is_contextual_and_non_numeric():
+    text = source("PrototypeHUD.cpp")
+    production = text[:text.index("if (bDebugGuidance)")]
+    assert "MAGAHARAI / ISHIBASHIRI" not in production
+    assert 'TEXT("STAMINA' not in production
+    assert 'TEXT("KAKON' not in production
+    assert "bShowStamina = Player->IsGrabbing()" in production
+    assert "Stamina / 100.f" in production
+    assert "PurificationNoticeRemaining = 1.5f" in production
+    assert 'TEXT("禍根 %d/%d")' in production
+
+
+def test_ishibashiri_first_use_prompts_are_queued_by_context():
+    text = source("PrototypeHUD.cpp")
+    prompt_block = text[text.index("FString Prompt;"):text.index("if (!Prompt.IsEmpty())")]
+    # One else-if queue means no two context cards can be selected in a frame.
+    assert prompt_block.count("else if") == 4
+    assert "!bSawDodge" in prompt_block and "EIshibashiriState::Telegraph" in prompt_block
+    assert "!bSawCounter" in prompt_block and "CanBeCountered()" in prompt_block
+    assert "!bSawGrab" in prompt_block and "CanMount()" in prompt_block
+    assert "!bSawCling" in prompt_block and "IsBuckWarning" not in prompt_block
+    assert "bBuckWarning" in prompt_block
+    assert "!bSawPurify" in prompt_block and "bPurifiableCoreNear" in prompt_block
+
+
+def test_ishibashiri_result_and_debug_information_are_separated():
+    text = source("PrototypeHUD.cpp")
+    assert 'TEXT("VICTORY' not in text
+    assert 'TEXT("石走りは鎮まった / Encounter Completed")' in text
+    assert 'TEXT("R / Y - Retry encounter")' in text
+    debug = text[text.index("if (bDebugGuidance)"):]
+    for label in ("DEBUG GUIDANCE", "HP %d/%d", "POSTURE", "STATE", "STAMINA %.1f/100", "ROUTE", "SHAKE"):
+        assert label in debug
