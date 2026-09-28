@@ -41,7 +41,8 @@ public:
     FTransform GetClimbFrame() const;
     int32 GetClimbNeighbor(int32 Node, int32 Direction) const;
     bool IsRestNode(int32 Node) const { return Node >= 3; }
-    bool TryPurifyCore(const FVector& Position);
+    int32 BeginPurifyCore(const FVector& Position, float CompletionDelay);
+    bool CompletePurifyCore(int32 CoreIndex);
     bool IsBucking() const;
     bool IsBuckWarning() const;
     void BeginFallRecoveryWindow(float Duration);
@@ -68,6 +69,8 @@ public:
     UPROPERTY(EditAnywhere, Category="Climbing", meta=(ClampMin="1")) float BuckPeriod = 12.f;
     UPROPERTY(EditAnywhere, Category="Climbing", meta=(ClampMin="0")) float BuckWarningDuration = 2.f;
     UPROPERTY(EditAnywhere, Category="Climbing", meta=(ClampMin="0.1")) float BuckDuration = 2.f;
+    UPROPERTY(EditAnywhere, Category="Climbing", meta=(ClampMin="0")) float FirstBuckDelay = 6.f;
+    UPROPERTY(EditAnywhere, Category="Climbing", meta=(ClampMin="0")) float PostPurifyShakeDelay = 1.5f;
 
 protected:
     virtual void BeginPlay() override;

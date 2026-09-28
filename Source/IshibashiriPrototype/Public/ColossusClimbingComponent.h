@@ -68,6 +68,7 @@ public:
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="0.1", ClampMax="1")) float FallbackApproachSeconds = .48f;
     UPROPERTY(EditAnywhere, Category="Climbing|IK", meta=(ClampMin="0.01")) float IKBlendInSeconds = .22f;
     UPROPERTY(EditAnywhere, Category="Climbing|IK", meta=(ClampMin="0.01")) float IKBlendOutSeconds = .16f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Purification", meta=(ClampMin="0.01")) float PurificationDuration = .53f;
 private:
     friend class FRouteClimbingLifecycleTest;
     friend class FRouteClimbingRecoveryTest;
@@ -90,6 +91,8 @@ private:
     float RightInput = 0.f;
     float InputDelay = 0.f;
     float UnsafeBuckTime = 0.f;
+    float PurificationRemaining = 0.f;
+    int32 PendingPurificationCore = INDEX_NONE;
     int32 LastSafeNode = INDEX_NONE;
     bool bGripHeld = false;
     bool bGrabWarping = false;
