@@ -139,4 +139,43 @@ bool FGenericGrabLifecycleTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FRouteClimbingRecoveryTest,
+    "IshibashiriPrototype.Climbing.FallRecovery",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FRouteClimbingRecoveryTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+    World->InitializeActorsForPlay(FURL());
+    APrototypePlayer* Player = World->SpawnActor<APrototypePlayer>();
+    AIshibashiriBoss* Boss = World->SpawnActor<AIshibashiriBoss>();
+    Player->DispatchBeginPlay();
+    Boss->DispatchBeginPlay();
+    UColossusClimbingComponent* Climbing = Player->GetClimbing();
+
+    Climbing->Boss = Boss;
+    Climbing->Node = 6;
+    Climbing->LastSafeNode = 5;
+    Climbing->Stamina = 0.f;
+    Player->GetCharacterMovement()->DisableMovement();
+    Player->GetCapsuleComponent()->IgnoreActorWhenMoving(Boss, true);
+    Climbing->RecoverFromFall(TEXT("AutomationStamina"));
+    TestTrue(TEXT("Safe-ledged recovery remains mounted"), Climbing->IsClimbing());
+    TestEqual(TEXT("Nearest reached safe node is restored"), Climbing->GetNode(), 5);
+    TestEqual(TEXT("Fall restores exactly half stamina"), Climbing->GetStamina(), 50.f);
+    TestTrue(TEXT("Recovery suppresses an otherwise active shake"), !Boss->IsBucking());
+
+    Climbing->LastSafeNode = INDEX_NONE;
+    Climbing->RecoverFromFall(TEXT("AutomationShake"));
+    TestFalse(TEXT("No-ledged recovery returns to ground"), Climbing->IsClimbing());
+    TestTrue(TEXT("Foreleg recovery reopens mount"), Boss->CanMount());
+    TestEqual(TEXT("Foreleg recovery window is six seconds"), Boss->GetStateTimeRemaining(), 6.f);
+    TestEqual(TEXT("Foreleg recovery retains half stamina"), Climbing->GetStamina(), 50.f);
+
+    World->DestroyWorld(false);
+    GEngine->DestroyWorldContext(World);
+    return true;
+}
+
 #endif

@@ -193,6 +193,7 @@ void AIshibashiriBoss::ResetNushi()
     VisualTime = 0.f;
     PurifyPresentationRemaining.Init(0.f, CoreMarkers.Num());
     RiderTime = 0.f; AnimationIndex = INDEX_NONE;
+    ShakeImmunityRemaining = 0.f;
     for (int32 I=0; I<CoreMarkers.Num(); ++I)
     {
         CoreMarkers[I]->SetVisibility(true);
@@ -242,6 +243,7 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
     const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Mode || !Mode->IsEncounterActive() || !IsValid(Target)) return;
     VisualTime += DeltaSeconds;
+    ShakeImmunityRemaining = FMath::Max(0.f, ShakeImmunityRemaining - DeltaSeconds);
     for (float& Remaining : PurifyPresentationRemaining)
         Remaining = FMath::Max(0.f, Remaining - DeltaSeconds);
     if (Target->IsGrabbing() && !Target->GetClimbing()->IsGrabWarping())
@@ -317,7 +319,9 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
         case EIshibashiriState::Kneel:
             if (StateTimeRemaining <= 0.f)
             {
-                Posture = MaxPosture;
+                // Missing the mount should not discard all three learned
+                // counters. One valid Recover counter opens the window again.
+                Posture = 1;
                 EnterState(EIshibashiriState::Chase);
             }
             break;
@@ -439,15 +443,31 @@ int32 AIshibashiriBoss::GetClimbNeighbor(int32 Node, int32 Direction) const
 }
 bool AIshibashiriBoss::IsBucking() const
 {
+    if (ShakeImmunityRemaining > 0.f) return false;
     const float Period = FMath::Max(1.f, BuckPeriod);
     return RiderTime > 0.f && FMath::Fmod(RiderTime, Period) >= Period - FMath::Min(BuckDuration, Period);
 }
 bool AIshibashiriBoss::IsBuckWarning() const
 {
+    if (ShakeImmunityRemaining > 0.f) return false;
     const float Period = FMath::Max(1.f, BuckPeriod);
     const float BuckStart = Period - FMath::Min(BuckDuration, Period);
     const float Phase = FMath::Fmod(RiderTime, Period);
     return RiderTime > 0.f && Phase >= FMath::Max(0.f, BuckStart - BuckWarningDuration) && Phase < BuckStart;
+}
+
+void AIshibashiriBoss::GrantShakeImmunity(float Duration)
+{
+    ShakeImmunityRemaining = FMath::Max(ShakeImmunityRemaining, FMath::Max(0.f, Duration));
+}
+
+void AIshibashiriBoss::BeginFallRecoveryWindow(float Duration)
+{
+    if (GetState() == EIshibashiriState::Calmed) return;
+    Posture = 0;
+    EnterState(EIshibashiriState::Kneel);
+    StateTimeRemaining = FMath::Max(0.f, Duration);
+    GrantShakeImmunity(3.f);
 }
 int32 AIshibashiriBoss::GetPurifiedCount() const
 {

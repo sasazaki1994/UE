@@ -1,7 +1,7 @@
 # 石走り編 Final Gameplay Specification
 
-Status: **DESIGN LOCK / source deltas identified / human first-play NOT_RUN**  
-Baseline: local `main` merge `316d79f014130c1919b1f035c25526db57cb9c31` (2026-09-28). `git fetch https://github.com/sasazaki1994/UE.git main` was attempted on 2026-09-28 UTC and rejected by the environment proxy (HTTP 403); remote freshness is therefore **UNVERIFIED**.
+Status: **DESIGN LOCK / scoped recovery deltas implemented / human first-play NOT_RUN**
+Baseline: local fetched `main` merge `a2d697b9d6593456b84da8905301b2cf257903e3` (2026-09-28). `git ls-remote https://github.com/sasazaki1994/UE.git refs/heads/main` was attempted on 2026-09-28 UTC and rejected by the environment proxy (HTTP 403); remote freshness is therefore **UNVERIFIED** beyond the checked-in `FETCH_HEAD`.
 
 ## 1. Evidence boundary and product intent
 
@@ -85,7 +85,7 @@ First-play checks: whether node 5 is understood within 10 s, wrong-direction att
 | No Cling | 50/s and detach after 0.70 s | The meaningful rule is **0.70 s grace then fall**. Retain the drain internally, but do not present both rules to players. |
 | Depletion | detach and outward/up launch | Fall after a clear exhausted cue; never instant-kill. |
 
-**Fall/recovery target:** current Ishibashiri source has no checkpoint recovery anchor: it detaches into world physics; falling below Z -500 ends the encounter and Retry resets everything. Production must minimally place the player on the nearest previously reached safe ledge (or ground foreleg recovery point if none), preserve purified Kakon, restore **50 stamina**, grant **3.0 s shake immunity**, and reopen Grab for **6.0 s**. If world geometry cannot provide that landing within 2 s, teleport/fade to the recovery point; do not make the player repeat ground posture. A manual R/Y Retry remains a full encounter reset (position, posture, Kakon and stamina).
+**Fall/recovery target / SOURCE:** the scoped recovery implementation places the player on the nearest previously reached safe ledge (or ground foreleg recovery point if none), preserves purified Kakon, restores **50 stamina**, grants **3.0 s shake immunity**, and reopens Grab for **6.0 s**. It uses the stable encounter spawn if a route/foreleg transform is invalid, rather than leaving the pawn in a fall/re-grab loop. If world geometry cannot provide that landing within 2 s, teleport/fade to the recovery point; do not make the player repeat ground posture. A manual R/Y Retry remains a full encounter reset (position, posture, Kakon and stamina).
 
 First-play checks: warning noticed before shake, Cling held intentionally, stamina inspected before leaving a rest, no unexplained fall, and recovery-to-control ≤5 s.
 
@@ -158,11 +158,11 @@ No free climbing, open world, boss HP/death, new weapon, skill tree, GAS, Motion
 
 ## 14. Minimal source changes required before Production gate
 
-1. Change Kneel timeout from posture 3 to posture 1.
+1. **Implemented:** change Kneel timeout from posture 3 to posture 1.
 2. Add a second generous horn/head activation volume while resolving both starts to node 0; tune Grab to 300 cm/120°, add 0.25 s buffer and contextual prompt.
 3. Make Kakon/route presentation Sense- or context-gated; remove always-current marker from normal play.
 4. Replace “all nodes ≥3 rest” with authored meaningful rest flags.
-5. Add local fall recovery preserving Kakon, 50 stamina, 3 s shake immunity and a 6 s re-grab opportunity.
+5. **Implemented:** add local fall recovery preserving Kakon, 50 stamina, 3 s shake immunity and a 6 s re-grab opportunity, with an encounter-spawn fallback for invalid anchors.
 6. Delay first shake after mount; defer shake during purification and for 1.5 s after it.
 7. Replace Production `VICTORY` and permanent counters/instructions according to the HUD spec; add first-use prompt policy.
 

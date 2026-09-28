@@ -44,6 +44,8 @@ public:
     bool TryPurifyCore(const FVector& Position);
     bool IsBucking() const;
     bool IsBuckWarning() const;
+    void BeginFallRecoveryWindow(float Duration);
+    void GrantShakeImmunity(float Duration);
     int32 GetPurifiedCount() const;
     int32 GetCoreKakonCount() const { return CoreKakons.Num(); }
     AKakonActor* GetCoreKakon(int32 Index) const;
@@ -97,6 +99,7 @@ private:
     UPROPERTY(VisibleAnywhere) TArray<TObjectPtr<UChildActorComponent>> CoreKakons;
     FTransform EncounterSpawn;
     float RiderTime = 0.f;
+    float ShakeImmunityRemaining = 0.f;
     int32 AnimationIndex = INDEX_NONE;
     EIshibashiriState State = EIshibashiriState::Chase;
     int32 Posture = 3;

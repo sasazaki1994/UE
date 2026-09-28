@@ -58,6 +58,9 @@ public:
     UPROPERTY(EditAnywhere, Category="Climbing|Stamina", meta=(ClampMin="0")) float UnbracedBuckDrainPerSecond = 50.f;
     // Seconds of shaking without holding Grab before the rider is thrown off.
     UPROPERTY(EditAnywhere, Category="Climbing|Stamina", meta=(ClampMin="0")) float UnbracedBuckTolerance = .70f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Recovery", meta=(ClampMin="0", ClampMax="100")) float FallRecoveryStamina = 50.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Recovery", meta=(ClampMin="0")) float FallShakeImmunity = 3.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Recovery", meta=(ClampMin="0.1")) float FallRegrabWindow = 6.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1")) float MaximumWarpDistance = 240.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1", ClampMax="179")) float MaximumWarpAngle = 100.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1")) float CompletionDistanceTolerance = 35.f;
@@ -67,6 +70,7 @@ public:
     UPROPERTY(EditAnywhere, Category="Climbing|IK", meta=(ClampMin="0.01")) float IKBlendOutSeconds = .16f;
 private:
     friend class FRouteClimbingLifecycleTest;
+    friend class FRouteClimbingRecoveryTest;
     void UpdateIK(float Dt);
     bool StartGrabWarp(AIshibashiriBoss* Candidate);
     void StartFallbackGrabApproach(AIshibashiriBoss* Candidate);
@@ -74,6 +78,8 @@ private:
     void CancelGrabWarp(const TCHAR* Reason);
     void CompleteGrabWarp();
     FTransform MakeGrabWarpTarget(const AIshibashiriBoss* Candidate) const;
+    void RecoverFromFall(const TCHAR* Reason);
+    bool IsUsableRecoveryLocation(const FVector& Location) const;
     UPROPERTY() TObjectPtr<APrototypePlayer> Player;
     UPROPERTY() TObjectPtr<AIshibashiriBoss> Boss;
     int32 Node = INDEX_NONE;
@@ -84,6 +90,7 @@ private:
     float RightInput = 0.f;
     float InputDelay = 0.f;
     float UnsafeBuckTime = 0.f;
+    int32 LastSafeNode = INDEX_NONE;
     bool bGripHeld = false;
     bool bGrabWarping = false;
     bool bFallbackGrabApproach = false;

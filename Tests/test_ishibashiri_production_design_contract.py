@@ -14,7 +14,7 @@ def test_final_design_documents_and_acceptance_exist():
     camera = read("Docs/IshibashiriCameraSpec.md")
     acceptance = read("Specs/Acceptance/IshibashiriProductionDesign.feature")
 
-    assert "316d79f014130c1919b1f035c25526db57cb9c31" in gameplay
+    assert "a2d697b9d6593456b84da8905301b2cf257903e3" in gameplay
     assert "remote freshness is therefore **UNVERIFIED**" in gameplay
     assert "1,311 m" in gameplay and "3–4 min median" in gameplay
     assert "15 m/s" in gameplay and "1.65 s" in gameplay and "5.0 s Kneel" in gameplay
@@ -47,6 +47,6 @@ def test_locked_values_are_traceable_to_current_source():
 def test_production_target_deltas_are_not_claimed_as_implemented():
     gameplay = read("Docs/IshibashiriFinalGameplaySpec.md")
     assert "only **one** start is implemented" in gameplay
-    assert "has no checkpoint recovery anchor" in gameplay
+    assert "scoped recovery implementation places the player" in gameplay
     assert "required HUD/presentation delta" in gameplay
     assert "Minimal source changes required before Production gate" in gameplay

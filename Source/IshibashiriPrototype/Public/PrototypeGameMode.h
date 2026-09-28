@@ -33,6 +33,7 @@ public:
     ANushiEncounterManager* GetEncounterManager() const { return EncounterManager; }
     bool IsBasinPrototype() const { return bBasinPrototype; }
     ABasinPrototypeArena* GetBasinArena() const { return BasinArena; }
+    FTransform GetPlayerRecoverySpawn() const { return PlayerSpawn(); }
 
     UPROPERTY(EditAnywhere, Category="Arena", meta=(ClampMin="1200")) float ArenaHalfExtent = 4000.f;
 
