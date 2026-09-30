@@ -1,3 +1,4 @@
+import ast
 import importlib.util
 import json
 import tempfile
@@ -169,11 +170,35 @@ def test_contact_sheet_has_three_separate_labelled_panels_and_exact_validation()
 
 def test_ue_importer_requires_ucx_collision_before_saving_first_batch():
     source = UE_IMPORTER.read_text(encoding="utf-8")
-    assert 'DESTINATION = "/Game/Environment/Ishibashiri"' in source
-    assert "options.static_mesh_import_data.combine_meshes = True" in source
-    assert "options.static_mesh_import_data.auto_generate_collision = False" in source
-    assert "get_simple_collision_count(mesh)" in source
-    assert "if collision_count < 1:" in source
-    assert "unreal.EditorAssetLibrary.save_asset" in source
-    for asset in manifest()["first_adoption_batch"]:
-        assert asset in source
+    tree = ast.parse(source)
+    constants = {
+        statement.targets[0].id: ast.literal_eval(statement.value)
+        for statement in tree.body
+        if isinstance(statement, ast.Assign) and isinstance(statement.targets[0], ast.Name)
+        and statement.targets[0].id in ("DESTINATION", "ASSETS")
+    }
+    assert constants["DESTINATION"] == "/Game/Environment/Ishibashiri"
+    assert tuple("SM_Ishibashiri_" + name for name in constants["ASSETS"]) == tuple(manifest()["first_adoption_batch"])
+    importer = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "import_mesh")
+    settings = next(node for node in importer.body if isinstance(node, ast.Assign)
+                    and ast.unparse(node.value) == "options.static_mesh_import_data")
+    alias = settings.targets[0].id
+    assignments = {
+        ast.unparse(target): node.value
+        for node in ast.walk(importer) if isinstance(node, ast.Assign)
+        for target in node.targets
+    }
+    assert ast.literal_eval(assignments[alias + ".combine_meshes"]) is True
+    assert ast.literal_eval(assignments[alias + ".auto_generate_collision"]) is False
+    assert ast.literal_eval(assignments[alias + ".one_convex_hull_per_ucx"]) is True
+    assert ast.unparse(assignments["name"]) == "'SM_Ishibashiri_' + short_name"
+    assert ast.unparse(assignments["collision_count"]) == "EDITOR.get_simple_collision_count(mesh)"
+    # A stricter exactly-one hull gate replaced the old nonzero check. Keep the
+    # failure branch and ordering explicit; changing its message cannot hide it.
+    guard = next(node for node in importer.body if isinstance(node, ast.If)
+                 and ast.unparse(node.test) == "collision_count != 1")
+    assert any(isinstance(node, ast.Raise) for node in guard.body)
+    final_saves = [node for node in ast.walk(importer) if isinstance(node, ast.Call)
+                   and ast.unparse(node.func) == "unreal.EditorAssetLibrary.save_loaded_asset"
+                   and node.args and ast.unparse(node.args[0]) == "mesh"]
+    assert final_saves and all(node.lineno > guard.end_lineno for node in final_saves)

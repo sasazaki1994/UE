@@ -1,4 +1,5 @@
 #include "IshibashiriBoss.h"
+#include "CommonSfxSubsystem.h"
 #include "ProductionVisuals.h"
 #include "KakonActor.h"
 #include "NushiProgressComponent.h"
@@ -216,7 +217,10 @@ void AIshibashiriBoss::EnterState(EIshibashiriState NewState)
         StateTimeRemaining = ChaseDuration;
         ChaseTimeElapsed = 0.f;
         break;
-    case EIshibashiriState::Telegraph: StateTimeRemaining = TelegraphDuration; break;
+    case EIshibashiriState::Telegraph:
+        StateTimeRemaining = TelegraphDuration;
+        if (auto* Audio = UCommonSfxSubsystem::Get(this)) Audio->Play(ECommonSfx::ArmWarning, this, GetActorLocation());
+        break;
     case EIshibashiriState::Charge:
         StateTimeRemaining = MaxChargeDuration;
         bChargeHitPlayer = false;
@@ -232,6 +236,7 @@ void AIshibashiriBoss::EnterState(EIshibashiriState NewState)
     case EIshibashiriState::Kneel:
         StateTimeRemaining = MountWindowDuration;
         bMountCommitted = false;
+        if (auto* Audio = UCommonSfxSubsystem::Get(this)) Audio->Play(ECommonSfx::MountOpen, this, GetActorLocation());
         break;
     case EIshibashiriState::Calmed: StateTimeRemaining = 0.f; break;
     }
@@ -249,8 +254,11 @@ void AIshibashiriBoss::Tick(float DeltaSeconds)
         Remaining = FMath::Max(0.f, Remaining - DeltaSeconds);
     if (Target->IsGrabbing() && !Target->GetClimbing()->IsGrabWarping())
     {
+        const bool bWasWarning = IsBuckWarning();
         RiderTime = Target->GetClimbing()->IsClimbing()
             ? RiderTime + (bShakeClockPaused ? 0.f : DeltaSeconds) : 0.f;
+        if (!bWasWarning && IsBuckWarning())
+            if (auto* Audio = UCommonSfxSubsystem::Get(this)) Audio->Play(ECommonSfx::ClingWarning, this, GetActorLocation());
         // Continue moving under the rider. Turn inward before the full model
         // reaches the arena edge, instead of aiming at the rider on our back.
         if (GetActorLocation().Size2D() > Mode->ArenaHalfExtent-900.f)
@@ -498,6 +506,7 @@ void AIshibashiriBoss::HandleNushiStateChanged()
 {
     if (GetNushiState() == ENushiState::Calm)
     {
+        if (auto* Audio = UCommonSfxSubsystem::Get(this)) Audio->PlayOnce(ECommonSfx::EncounterCalmed, this, GetActorLocation());
         StateTimeRemaining = 0.f;
         // Completion stops encounter ticking immediately, so commit the quiet
         // presentation in the state callback rather than waiting for Tick.

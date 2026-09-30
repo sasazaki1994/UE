@@ -16,6 +16,9 @@ param(
     [switch]$Realtime,
     [switch]$Onscreen,
     [switch]$HighQuality,
+    [switch]$PrimitiveEnvironment,
+    [switch]$EnvironmentReview,
+    [switch]$Audio,
     [ValidateSet(0, 1)][int]$ProductionVisuals = 0,
     [switch]$BasinScenario,
     [switch]$Playthrough,
@@ -143,6 +146,10 @@ function Ensure-Map {
 }
 
 try {
+    if ($EnvironmentReview -and ($Action -ne 'Test' -or !$Capture -or ($Approach -eq $Basin) -or $Campaign -or $IshibashiriDemo -or $Fuchimatoi -or $Minedaki -or $Magatsune -or $Camera -or $Climbing -or $ClimbingGamepad -or $ClimbingIK -or $GrabMotionWarp -or $Grab -or $LocalClimbing -or $Gamepad -or $Playthrough -or $BasinScenario -or $Recovery -or $Realtime)) {
+        throw '-EnvironmentReview requires Test -Capture and exactly one of -Approach / -Basin, without another test scenario.'
+    }
+    if ($Audio -and ($Action -ne 'Test' -or !$Capture)) { throw '-Audio requires Test -Capture for rendered cue validation.' }
     if (@(@($Campaign,$IshibashiriDemo,$Approach,$Minedaki,$Magatsune,$Fuchimatoi) | Where-Object { $_ }).Count -gt 1) { throw 'Choose -Campaign, -IshibashiriDemo, -Approach or one encounter.' }
     $IsCampaignFlow = $Campaign -or $IshibashiriDemo
     if ($IsCampaignFlow -and ($Basin -or $Recovery -or $Realtime -or $Onscreen -or $BasinScenario -or $Playthrough -or $Camera -or $Grab -or $Climbing -or $ClimbingIK -or $GrabMotionWarp -or $LocalClimbing -or $ClimbingGamepad)) { throw 'Campaign flows cannot be combined with encounter/test scenario switches other than -Gamepad.' }
@@ -163,7 +170,7 @@ try {
     if ($BasinScenario -and !$Basin) { throw '-BasinScenario requires -Basin.' }
     if ($TestSeconds -gt 0 -and !$Playthrough) { throw '-TestSeconds requires -Playthrough.' }
     if ($Capture -and (($Gamepad -and !$Fuchimatoi -and !$Minedaki -and !$Magatsune) -or $Grab -or $LocalClimbing)) { throw '-Capture requires route climbing, smoke or playthrough tests.' }
-    if ($Capture -and $Approach) { throw '-Approach has no screenshot set yet (see Docs/IshibashiriApproachSlice.md); run it without -Capture.' }
+    if ($Capture -and $Approach -and !$EnvironmentReview) { throw '-Approach capture requires -EnvironmentReview.' }
     if ($TestTimeoutSeconds -gt 0 -and $Action -ne 'Test') { throw '-TestTimeoutSeconds requires -Action Test.' }
     $ResolvedEngine = Find-Engine
     $BuildTool = Join-Path $ResolvedEngine 'Engine\Build\BatchFiles\Build.bat'
@@ -217,6 +224,7 @@ try {
             # This is the visible game explicitly requested by the Play action.
             $PlayArguments = @($ProjectFile, $LaunchMap, '-game', '-windowed', '-ResX=1280', '-ResY=800', '-NoSplash')
             $PlayArguments += "-ProductionVisuals=$ProductionVisuals"
+            if ($PrimitiveEnvironment) { $PlayArguments += '-PrimitiveEnvironment' }
             if ($Basin) { $PlayArguments += '-BasinPrototype' }
             if ($Campaign) { $PlayArguments += '-Campaign' }
             if ($IshibashiriDemo) { $PlayArguments += '-IshibashiriDemo' }
@@ -226,6 +234,7 @@ try {
         'Editor' {
             $EditorArguments = @($ProjectFile, $LaunchMap)
             $EditorArguments += "-ProductionVisuals=$ProductionVisuals"
+            if ($PrimitiveEnvironment) { $EditorArguments += '-PrimitiveEnvironment' }
             if ($Basin) { $EditorArguments += '-BasinPrototype' }
             if ($HighQuality) { $EditorArguments += @('-d3d12', '-sm6', '-ExecCmds=r.DynamicGlobalIlluminationMethod 1,r.ReflectionMethod 1,r.Shadow.Virtual.Enable 1,r.VolumetricFog 1,r.BloomQuality 4,r.DefaultFeature.AutoExposure 1') }
             Invoke-Checked $EditorExe $EditorArguments
@@ -242,6 +251,7 @@ try {
             if ($Recovery) { $LogName = if ($Gamepad) { "FuchimatoiRecoveryGamepad-$TestFPS.log" } else { "FuchimatoiRecovery-$TestFPS.log" } }
             if ($Realtime) { $LogName = "Realtime-$LogName" }
             if ($Onscreen) { $LogName = "Onscreen-$LogName" }
+            if ($EnvironmentReview) { $LogName = 'EnvironmentReview-' + $(if ($Approach) { 'Approach' } else { 'Basin' }) + '-' + $(if ($PrimitiveEnvironment) { 'Before' } else { 'After' }) + '.log' }
             $LogFile = Join-Path $LogDir $LogName
             $RunId = [guid]::NewGuid().ToString('N')
             $TestFlag = if ($BasinScenario) { '-BasinPlaythroughTest' } elseif ($Camera) { '-PrototypeCameraTest' } elseif ($Gamepad) { '-PrototypeGamepadTest' } elseif ($Climbing -or $ClimbingGamepad -or $ClimbingIK -or $GrabMotionWarp) { '-ClimbingTest' } elseif ($LocalClimbing) { '-PrototypeClimbingTest' } elseif ($Grab) { '-PrototypeGrabTest' } elseif ($Playthrough) { '-PrototypePlaythrough' } else { '-PrototypeSmokeTest' }
@@ -250,7 +260,10 @@ try {
             if ($Magatsune) { $TestFlag = '-MagatsuneTest' }
             if ($IsCampaignFlow) { $TestFlag = '-CampaignE2E' }
             if ($Approach) { $TestFlag = '-ApproachTest' }
-            $TestArguments = @($ProjectFile, $LaunchMap, '-game', '-nosound', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
+            if ($EnvironmentReview) { $TestFlag = '-EnvironmentReview' }
+            $TestArguments = @($ProjectFile, $LaunchMap, '-game', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
+            if (!$Audio) { $TestArguments += '-nosound' }
+            if ($PrimitiveEnvironment) { $TestArguments += '-PrimitiveEnvironment' }
             $TestArguments += "-ProductionVisuals=$ProductionVisuals"
             if ($Fuchimatoi -and $Gamepad) { $TestArguments += '-FuchimatoiGamepad' }
             if ($Minedaki -and $Gamepad) { $TestArguments += '-MinedakiGamepad' }
@@ -285,6 +298,7 @@ try {
             if ($Campaign) { $PassMarker = "CAMPAIGN_E2E_PASS $RunId" }
             if ($IshibashiriDemo) { $PassMarker = "ISHIBASHIRI_DEMO_E2E_PASS $RunId" }
             if ($Approach) { $PassMarker = "APPROACH_TEST_PASS $RunId" }
+            if ($EnvironmentReview) { $PassMarker = "ENVIRONMENT_REVIEW_PASS $RunId" }
             if (!(Select-String -LiteralPath $LogFile -SimpleMatch $PassMarker -Quiet)) {
                 throw "Smoke test did not report success for this run. Read $LogFile"
             }
@@ -292,6 +306,16 @@ try {
             Write-Host "Test passed: $LogFile"
             if ($Realtime -and !(Select-String -LiteralPath $LogFile -SimpleMatch "FUCHIMATOI_PERF $RunId" -Quiet)) { throw "Realtime test did not record performance. Read $LogFile" }
             if ($Capture) {
+                if ($EnvironmentReview) {
+                    $Names = if ($Approach) { @('01-ApproachEntrance','02-CedarEnclosure','03-BoundaryClearing','04-DamagedGrove','05-RevealGap') } else { @('06-BasinEntrance','07-BasinWide') }
+                    $EnvironmentDir = Join-Path $ProjectRoot "Saved\Screenshots\EnvironmentReview\$RunId"
+                    foreach ($Name in $Names) {
+                        $Shot = Get-Item -LiteralPath (Join-Path $EnvironmentDir "$Name.png") -ErrorAction Stop
+                        if ($Shot.Length -lt 100) { throw "Screenshot is empty: $($Shot.FullName)" }
+                    }
+                    Write-Host "Arranged visual review (not gameplay evidence): $EnvironmentDir"
+                    exit 0
+                }
                 if ($IshibashiriDemo) {
                     $PlannedDemoShots = @('01-Title','02-Prologue','03-Approach','04-IshibashiriReveal','05-Charge','06-GroundGrab','07-Climbing','08-Kakon1','09-Kakon2','10-Kakon3','11-Calm','12-DemoEnding1','13-DemoEnding2','14-ReturnToTitle')
                     $DemoCaptureDir = Join-Path $ProjectRoot "Saved\Screenshots\IshibashiriDemo\$RunId"

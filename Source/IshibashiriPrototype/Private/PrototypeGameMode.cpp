@@ -1,4 +1,6 @@
 #include "PrototypeGameMode.h"
+#include "CommonSfxSubsystem.h"
+#include "EnvironmentReviewCapture.h"
 #include "CampaignGameInstance.h"
 #include "PrototypeHUD.h"
 #include "PrototypePlayer.h"
@@ -96,7 +98,9 @@ void APrototypeGameMode::StartPlay()
     RetryEncounter();
     UE_LOG(LogTemp, Display, TEXT("Ishibashiri: arena ready. WASD/Left Stick move, Mouse/Right Stick camera, E/RB grab."));
 #if !UE_BUILD_SHIPPING
-    if (FParse::Param(FCommandLine::Get(), TEXT("BasinPlaythroughTest")))
+    if (FParse::Param(FCommandLine::Get(), TEXT("EnvironmentReview")))
+        GetWorld()->SpawnActor<AEnvironmentReviewCapture>();
+    else if (FParse::Param(FCommandLine::Get(), TEXT("BasinPlaythroughTest")))
         GetWorld()->SpawnActor<ABasinPlaythroughTest>();
     else if (FParse::Param(FCommandLine::Get(), TEXT("ClimbingTest")) || FParse::Param(FCommandLine::Get(), TEXT("CampaignE2E")))
         GetWorld()->SpawnActor<AClimbingIntegrationTest>();
@@ -117,6 +121,7 @@ void APrototypeGameMode::StartPlay()
 void APrototypeGameMode::RetryEncounter()
 {
     if (!Player || !Boss || !EncounterManager) return;
+    if (auto* Audio = UCommonSfxSubsystem::Get(this)) Audio->Reset();
     if (auto* Campaign=GetGameInstance<UCampaignGameInstance>()) Campaign->NotifyEncounterRetry(ECampaignState::Ishibashiri);
     if (BasinArena) BasinArena->SetCalmPresentation(false);
     GetWorldTimerManager().ClearTimer(CampaignAdvanceTimer);

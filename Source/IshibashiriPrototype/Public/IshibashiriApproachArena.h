@@ -9,7 +9,7 @@ class UPrimitiveComponent;
 class USceneComponent;
 class UStaticMesh;
 
-/** Self-contained primitive blockout for the quiet, non-combat walk to Ishibashiri. */
+/** Quiet forest approach with optional environment art and stable blockout collision. */
 UCLASS(NotBlueprintable)
 class ISHIBASHIRIPROTOTYPE_API AIshibashiriApproachArena : public AActor
 {
@@ -41,10 +41,11 @@ private:
     UPROPERTY() TObjectPtr<USceneComponent> Root;
     UPROPERTY() TObjectPtr<UStaticMesh> CubeMesh;
     UPROPERTY() TObjectPtr<UStaticMesh> SphereMesh;
+    UPROPERTY() TObjectPtr<UMaterialInterface> BaseMaterial;
     UPROPERTY() TObjectPtr<UStaticMesh> CedarMesh;
     UPROPERTY() TObjectPtr<UStaticMesh> RockMesh;
-    UPROPERTY() TObjectPtr<UStaticMesh> BoundaryStoneMesh;
-    UPROPERTY() TObjectPtr<UMaterialInterface> BaseMaterial;
+    UPROPERTY() TObjectPtr<UStaticMesh> BoundaryMesh;
+    UPROPERTY() TObjectPtr<UMaterialInterface> GroundMaterial;
     UPROPERTY(Transient) TArray<TObjectPtr<UActorComponent>> Generated;
     UPROPERTY(Transient) TArray<TObjectPtr<UPrimitiveComponent>> RevealParts;
     TArray<FVector> PathPoints;

@@ -6,6 +6,7 @@
 #include "ColossusClimbingComponent.h"
 #include "GrabComponent.h"
 #include "PlayerSenseComponent.h"
+#include "CommonSfxSubsystem.h"
 #include "KakonActor.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimInstance.h"
@@ -506,6 +507,7 @@ void APrototypePlayer::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
     PresentationTime += FMath::Max(0.f, DeltaSeconds);
     UpdateSenseFromBoss();
+    if (auto* Audio = UCommonSfxSubsystem::Get(this)) Audio->UpdateSense(Sense);
     UpdateAnimation();
     UpdateClimbingIK();
     // Presentation keeps decaying after Victory/Defeat so the last feedback line

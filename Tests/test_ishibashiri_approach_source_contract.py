@@ -12,7 +12,8 @@ def test_approach_is_self_contained_with_primitive_fallbacks():
     for item in ("WetEarth", "BoundaryStone", "RitualPost", "GiantFootprint", "GougedRock", "ShatteredCedar", "CorruptionCrack"):
         assert item in source
     assert "/Engine/BasicShapes/" in source
-    assert source.count("/Game/Environment/Ishibashiri/") == 3
+    assert source.count("IshibashiriEnvironment::Load<UStaticMesh>") == 3
+    assert "CubeMesh" in source and "SphereMesh" in source
 
 def test_reveal_is_once_non_combat_and_three_seconds():
     source = read("Source/IshibashiriPrototype/Private/IshibashiriApproachArena.cpp")
@@ -44,11 +45,14 @@ def test_approach_sense_target_owns_the_basin_gate_transform():
 
 def test_approach_prefers_validated_environment_assets_with_fallbacks():
     arena = read("Source/IshibashiriPrototype/Private/IshibashiriApproachArena.cpp")
+    helper = read("Source/IshibashiriPrototype/Private/IshibashiriEnvironment.h")
     for asset in ("SM_Ishibashiri_OldCedar_A", "SM_Ishibashiri_Rock_A", "SM_Ishibashiri_BoundaryStone_A"):
-        assert "/Game/Environment/Ishibashiri/" + asset in arena
-    assert "CedarMesh ?" not in arena  # tree replacement has an explicit early-return fallback
-    assert "RockMesh ? RockMesh.Get() : SphereMesh.Get()" in arena
-    assert "BoundaryStoneMesh ? BoundaryStoneMesh.Get() : CubeMesh.Get()" in arena
+        assert asset in arena
+    assert 'TEXT("/Game/Environment/Ishibashiri/")' in helper
+    assert "if (CedarMesh && !bFallen)" in arena
+    assert "SphereMesh, P + FVector" in arena
+    assert 'AddPrimitive(TEXT("BoundaryStone"), CubeMesh' in arena
+    assert "IshibashiriEnvironment::Visual" in arena
     assert "if (bBlockoutMesh) C->SetMaterial" in arena
 
 def test_approach_warning_subtitle_is_centered_and_viewport_safe():

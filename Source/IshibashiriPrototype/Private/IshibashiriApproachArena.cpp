@@ -1,6 +1,9 @@
 #include "IshibashiriApproachArena.h"
 #include "PrimitiveAppearance.h"
+#include "IshibashiriEnvironment.h"
 #include "Components/DirectionalLightComponent.h"
+#include "Components/SkyLightComponent.h"
+#include "Components/SkyAtmosphereComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -20,12 +23,6 @@ AIshibashiriApproachArena::AIshibashiriApproachArena()
         TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
     CubeMesh = Cube.Object;
     SphereMesh = Sphere.Object;
-    // The checked-in map remains runnable before the external FBX intake.  Once
-    // the validated assets are imported by ImportIshibashiriEnvironmentKit.py,
-    // these soft package locations replace the corresponding blockouts.
-    CedarMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Environment/Ishibashiri/SM_Ishibashiri_OldCedar_A.SM_Ishibashiri_OldCedar_A"), nullptr, LOAD_NoWarn);
-    RockMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Environment/Ishibashiri/SM_Ishibashiri_Rock_A.SM_Ishibashiri_Rock_A"), nullptr, LOAD_NoWarn);
-    BoundaryStoneMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Environment/Ishibashiri/SM_Ishibashiri_BoundaryStone_A.SM_Ishibashiri_BoundaryStone_A"), nullptr, LOAD_NoWarn);
     BaseMaterial = Material.Object;
     // 1.31 km of bends; at the 6 m/s walking speed this is about three minutes without stopping.
     PathPoints = {{0, 0, 0}, {11000, 0, 0}, {20500, 6500, 100}, {30500, 8500, 180}, {39500, 1000, 260}, {49000, -6500, 300},
@@ -59,20 +56,32 @@ UStaticMeshComponent* AIshibashiriApproachArena::AddPrimitive(const TCHAR* Name,
     if (bBlockoutMesh)
         if (auto* M = C->CreateDynamicMaterialInstance(0)) SetPrimitiveColor(M, Color);
     Generated.Add(C);
+    if (MeshAsset == SphereMesh && RockMesh && (FString(Name).StartsWith(TEXT("Cliff")) || FString(Name) == TEXT("GougedRock")))
+    {
+        C->SetVisibility(false);
+        const FVector Size = Scale * 100.f;
+        Generated.Add(IshibashiriEnvironment::Visual(this, Root, *FString::Printf(TEXT("%sArt"), Name), RockMesh,
+            Location - Rotation.RotateVector(FVector(0, 0, Size.Z * .5f)), IshibashiriEnvironment::Fit(RockMesh, Size), Rotation));
+    }
+    else if ((FString(Name).StartsWith(TEXT("WetEarth")) || FString(Name).StartsWith(TEXT("ForestGround"))) && GroundMaterial)
+        C->SetMaterial(0, GroundMaterial);
     return C;
 }
 
 void AIshibashiriApproachArena::AddTree(const TCHAR* Name, const FVector& L, float H, bool bFallen)
 {
     const FRotator R = bFallen ? FRotator(0, 25, 88) : FRotator(0, 0, 0);
-    if (CedarMesh)
+    auto* Trunk = AddPrimitive(*FString::Printf(TEXT("%sTrunk"), Name), CubeMesh, L + FVector(0, 0, bFallen ? 70 : H * .5f),
+        FVector(.55f, .55f, H / 100.f), R, FLinearColor(.075f, .052f, .035f), true);
+    if (CedarMesh && !bFallen)
     {
-        const float UniformScale = H / 2100.f;
-        AddPrimitive(Name, CedarMesh, L, FVector(UniformScale), R, FLinearColor::White, true);
+        Trunk->SetVisibility(false);
+        const float ArtHeight = 1800.f + H * .32f;
+        const float S = ArtHeight / FMath::Max(1.f, CedarMesh->GetBounds().BoxExtent.Z * 2.f);
+        Generated.Add(IshibashiriEnvironment::Visual(this, Root, *FString::Printf(TEXT("%sArt"), Name), CedarMesh,
+            L, FVector(S), FRotator(0, FCrc::StrCrc32(Name) % 360, 0)));
         return;
     }
-    AddPrimitive(*FString::Printf(TEXT("%sTrunk"), Name), CubeMesh, L + FVector(0, 0, bFallen ? 70 : H * .5f),
-        FVector(.55f, .55f, H / 100.f), R, FLinearColor(.075f, .052f, .035f), true);
     if (!bFallen)
         AddPrimitive(*FString::Printf(TEXT("%sCrown"), Name), SphereMesh, L + FVector(0, 0, H * .82f), FVector(3.8f, 3.4f, 4.8f),
             FRotator::ZeroRotator, FLinearColor(.07f, .11f, .055f));
@@ -82,6 +91,12 @@ void AIshibashiriApproachArena::OnConstruction(const FTransform& T)
 {
     Super::OnConstruction(T);
     ClearGenerated();
+    CedarMesh = IshibashiriEnvironment::Load<UStaticMesh>(TEXT("SM_Ishibashiri_OldCedar_A"));
+    RockMesh = IshibashiriEnvironment::Load<UStaticMesh>(TEXT("SM_Ishibashiri_Rock_A"));
+    BoundaryMesh = IshibashiriEnvironment::Load<UStaticMesh>(TEXT("SM_Ishibashiri_BoundaryStone_A"));
+    GroundMaterial = IshibashiriEnvironment::Load<UMaterialInterface>(TEXT("M_Ishibashiri_Ground"));
+    UE_LOG(LogTemp, Display, TEXT("ENVIRONMENT_KIT approach cedar=%d rock=%d boundary=%d ground=%d"),
+        CedarMesh != nullptr, RockMesh != nullptr, BoundaryMesh != nullptr, GroundMaterial != nullptr);
     const FLinearColor Soil(.20f, .15f, .10f), Rock(.12f, .13f, .13f), Moss(.12f, .18f, .09f), Bone(.58f, .52f, .40f),
         Vermilion(.35f, .055f, .025f), Corruption(.008f, .006f, .009f);
     for (int32 I = 0; I < PathPoints.Num() - 1; ++I)
@@ -92,19 +107,32 @@ void AIshibashiriApproachArena::OnConstruction(const FTransform& T)
         constexpr float RoadEndOverlap = 50.f;
         AddPrimitive(*FString::Printf(TEXT("WetEarth%02d"), I), CubeMesh, (A + B) * .5f + FVector(0, 0, -42),
             FVector((D.Size() + 2.f * RoadEndOverlap) / 100.f, 18.f, 1.f), D.Rotation(), Soil, true);
+        AddPrimitive(*FString::Printf(TEXT("ForestGround%02d"), I), CubeMesh, (A + B) * .5f + FVector(0, 0, -80),
+            FVector((D.Size() + 200.f) / 100.f, 70.f, 1.f), D.Rotation(), Soil, false);
         const FVector Side = FVector::CrossProduct(D.GetSafeNormal(), FVector::UpVector);
         for (int32 S : {-1, 1})
         {
             const FVector P = (A + B) * .5f + Side * (S * (1250 + (I % 3) * 260));
-            AddPrimitive(*FString::Printf(TEXT("Cliff%02d_%d"), I, S), RockMesh ? RockMesh.Get() : SphereMesh.Get(), P + FVector(0, 0, 420),
+            AddPrimitive(*FString::Printf(TEXT("Cliff%02d_%d"), I, S), SphereMesh, P + FVector(0, 0, 420),
                 FVector(9 + (I % 2) * 3, 6, 7 + (I % 3)), FRotator(I * 3, I * 19, S * 7), I % 3 ? Rock : Moss, true);
             AddTree(*FString::Printf(TEXT("OldTree%02d_%d"), I, S), P + Side * (S * 650), 760 + (I % 4) * 90);
+            // Close gaps between the old landmarks while leaving the full 18 m walking corridor open.
+            for (int32 TIndex = 1; TIndex <= 4; ++TIndex)
+            {
+                const FVector TreeBase = FMath::Lerp(A, B, TIndex / 5.f) + Side * (S * (2000.f + (TIndex % 2) * 380.f));
+                AddTree(*FString::Printf(TEXT("Forest%02d_%d_%d"), I, S, TIndex), TreeBase, 680.f + TIndex * 95.f);
+            }
         }
     }
     // Broken warning stone, weathered rope/pillars, restrained black cracks, and the damage trail.
-    AddPrimitive(TEXT("BoundaryStone"), BoundaryStoneMesh ? BoundaryStoneMesh.Get() : CubeMesh.Get(), PathPoints[3] + FVector(-300, 700, 150),
-        BoundaryStoneMesh ? FVector(1.f) : FVector(1.0f, .45f, 3.1f), FRotator(0, -18, 13),
+    auto* Boundary = AddPrimitive(TEXT("BoundaryStone"), CubeMesh, PathPoints[3] + FVector(-300, 700, 150), FVector(1.0f, .45f, 3.1f), FRotator(0, -18, 13),
         Bone, true);
+    if (BoundaryMesh)
+    {
+        Boundary->SetVisibility(false);
+        Generated.Add(IshibashiriEnvironment::Visual(this, Root, TEXT("BoundaryStoneArt"), BoundaryMesh,
+            PathPoints[3] + FVector(-300, 700, 0), FVector(1.f), FRotator(0, -18, 0)));
+    }
     for (int32 S : {-1, 1})
         AddPrimitive(*FString::Printf(TEXT("RitualPost%d"), S), CubeMesh, PathPoints[3] + FVector(700, S * 900, 240),
             FVector(.22f, .22f, 4.8f), FRotator(0, 0, S * 5), Vermilion, true);
@@ -131,6 +159,7 @@ void AIshibashiriApproachArena::OnConstruction(const FTransform& T)
     Sun->SetMobility(EComponentMobility::Movable);
     Sun->SetRelativeRotation(FRotator(-48, -32, 0));
     Sun->SetIntensity(3.2f);
+    Sun->SetAtmosphereSunLight(true);
     Sun->RegisterComponent();
     Generated.Add(Sun);
     auto* Fill = NewObject<UDirectionalLightComponent>(this, TEXT("ApproachFill"));
@@ -151,6 +180,12 @@ void AIshibashiriApproachArena::OnConstruction(const FTransform& T)
     Fog->SetStartDistance(1500);
     Fog->RegisterComponent();
     Generated.Add(Fog);
+    auto* Atmosphere = NewObject<USkyAtmosphereComponent>(this, TEXT("ApproachSky"));
+    Atmosphere->SetupAttachment(Root); Atmosphere->RegisterComponent(); Generated.Add(Atmosphere);
+    auto* Sky = NewObject<USkyLightComponent>(this, TEXT("ApproachAmbient"));
+    Sky->SetupAttachment(Root); Sky->SetMobility(EComponentMobility::Movable);
+    Sky->SetIntensity(.65f); Sky->SetLightColor(FLinearColor(.68f, .78f, .85f));
+    Sky->RegisterComponent(); Generated.Add(Sky);
 }
 
 void AIshibashiriApproachArena::SetStage(int32 NewStage)
