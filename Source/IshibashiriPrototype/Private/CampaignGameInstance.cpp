@@ -276,6 +276,7 @@ void UCampaignGameInstance::ResetChapterRuntime(UObject* ChapterWorldContext)
 void UCampaignGameInstance::TravelToCurrentChapter(UObject* ChapterWorldContext)
 {
     ResetChapterRuntime(ChapterWorldContext);
-    const FString Options = FString::Printf(TEXT("game=%s"), GameModeFor(State));
+    FString Options = FString::Printf(TEXT("game=%s"), GameModeFor(State));
+    if (bIshibashiriDemo && State == ECampaignState::Ishibashiri) Options += TEXT("?BasinPrototype");
     UGameplayStatics::OpenLevel(ChapterWorldContext, CampaignMap, true, Options);
 }

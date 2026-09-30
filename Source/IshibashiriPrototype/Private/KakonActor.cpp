@@ -1,4 +1,5 @@
 #include "KakonActor.h"
+#include "CommonSfxSubsystem.h"
 #include "Components/SceneComponent.h"
 
 AKakonActor::AKakonActor()
@@ -30,12 +31,14 @@ bool AKakonActor::Purify()
     if (State != EKakonState::Exposed) return false;
 
     State = EKakonState::Purified;
+    if (auto* Audio = UCommonSfxSubsystem::Get(this)) Audio->PlayOnce(ECommonSfx::KakonPurified, this, GetActorLocation());
     OnPurified.Broadcast(this);
     return true;
 }
 
 void AKakonActor::ResetKakon()
 {
+    if (auto* Audio = UCommonSfxSubsystem::Get(this)) Audio->ForgetSource(this);
     CurrentShellHealth = FMath::Max(0.f, MaxShellHealth);
     State = CurrentShellHealth > 0.f ? EKakonState::Covered : EKakonState::Exposed;
 }

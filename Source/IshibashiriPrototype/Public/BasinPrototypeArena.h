@@ -9,7 +9,7 @@ class USceneComponent;
 class UStaticMesh;
 class UPrimitiveComponent;
 
-/** Deterministic, primitive-only staging terrain selected with -BasinPrototype. */
+/** Deterministic basin with optional environment art and unchanged combat collision. */
 UCLASS(NotBlueprintable)
 class ISHIBASHIRIPROTOTYPE_API ABasinPrototypeArena : public AActor
 {
@@ -46,6 +46,10 @@ private:
     UPROPERTY() TObjectPtr<UStaticMesh> CubeMesh;
     UPROPERTY() TObjectPtr<UStaticMesh> SphereMesh;
     UPROPERTY() TObjectPtr<UMaterialInterface> BaseMaterial;
+    UPROPERTY() TObjectPtr<UStaticMesh> CedarMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> RockMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> BoundaryMesh;
+    UPROPERTY() TObjectPtr<UMaterialInterface> GroundMaterial;
     UPROPERTY(Transient) TArray<TObjectPtr<UActorComponent>> GeneratedComponents;
     UPROPERTY(Transient) TObjectPtr<UPrimitiveComponent> BasinFloor;
     int32 VisualRockCount = 0;

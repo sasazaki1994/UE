@@ -1,10 +1,12 @@
 #include "BasinPrototypeArena.h"
 #include "PrimitiveAppearance.h"
+#include "IshibashiriEnvironment.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/SkyAtmosphereComponent.h"
+#include "Components/SkyLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -30,6 +32,14 @@ void ABasinPrototypeArena::ClearGeneratedComponents()
 
 void ABasinPrototypeArena::AddTree(const TCHAR* Name, const FVector& Location, float Height, float Width)
 {
+    if (CedarMesh)
+    {
+        const float S = (1800.f + Height * .3f) / FMath::Max(1.f, CedarMesh->GetBounds().BoxExtent.Z * 2.f);
+        GeneratedComponents.Add(IshibashiriEnvironment::Visual(this, Root, Name, CedarMesh, Location,
+            FVector(S), FRotator(0, FCrc::StrCrc32(Name) % 360, 0)));
+        ++TreeCount;
+        return;
+    }
     AddAccent(*FString::Printf(TEXT("%sTrunk"),Name),Location+FVector(0,0,Height*.5f),
         FVector(Width/100.f,Width/100.f,Height/100.f),FRotator::ZeroRotator,FLinearColor(.075f,.052f,.035f));
     AddRock(*FString::Printf(TEXT("%sCrown"),Name),Location+FVector(0,0,Height*.82f),
@@ -62,6 +72,7 @@ void ABasinPrototypeArena::AddFloor()
     Floor->SetRelativeScale3D(FVector((ClearingHalfExtent * 2.f + 600.f) / 100.f, (ClearingHalfExtent * 2.f + 600.f) / 100.f, 1.f));
     Floor->SetCollisionProfileName(TEXT("BlockAll")); Floor->SetMaterial(0, BaseMaterial); Floor->RegisterComponent();
     if (UMaterialInstanceDynamic* Mat = Floor->CreateDynamicMaterialInstance(0)) SetPrimitiveColor(Mat, FLinearColor(.25f,.23f,.19f));
+    if (GroundMaterial) Floor->SetMaterial(0, GroundMaterial);
     GeneratedComponents.Add(Floor);
     BasinFloor = Floor;
 }
@@ -69,6 +80,14 @@ void ABasinPrototypeArena::AddFloor()
 void ABasinPrototypeArena::AddRock(const TCHAR* Name, const FVector& Location, const FVector& Scale,
     const FRotator& Rotation, const FLinearColor& Color)
 {
+    if (RockMesh && !FString(Name).EndsWith(TEXT("Crown")))
+    {
+        const FVector Size = Scale * 100.f;
+        GeneratedComponents.Add(IshibashiriEnvironment::Visual(this, Root, Name, RockMesh,
+            Location - Rotation.RotateVector(FVector(0, 0, Size.Z * .5f)), IshibashiriEnvironment::Fit(RockMesh, Size), Rotation));
+        ++VisualRockCount;
+        return;
+    }
     UStaticMeshComponent* Rock = NewObject<UStaticMeshComponent>(this, Name);
     Rock->SetupAttachment(Root); Rock->SetStaticMesh(SphereMesh); Rock->SetRelativeLocation(Location);
     Rock->SetRelativeRotation(Rotation); Rock->SetRelativeScale3D(Scale); Rock->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -88,7 +107,25 @@ void ABasinPrototypeArena::AddBoundary(const TCHAR* Name, const FVector& Locatio
 
 void ABasinPrototypeArena::OnConstruction(const FTransform& Transform)
 {
-    Super::OnConstruction(Transform); ClearGeneratedComponents(); AddFloor();
+    Super::OnConstruction(Transform); ClearGeneratedComponents();
+    CedarMesh = IshibashiriEnvironment::Load<UStaticMesh>(TEXT("SM_Ishibashiri_OldCedar_A"));
+    RockMesh = IshibashiriEnvironment::Load<UStaticMesh>(TEXT("SM_Ishibashiri_Rock_A"));
+    BoundaryMesh = IshibashiriEnvironment::Load<UStaticMesh>(TEXT("SM_Ishibashiri_BoundaryStone_A"));
+    GroundMaterial = IshibashiriEnvironment::Load<UMaterialInterface>(TEXT("M_Ishibashiri_Ground"));
+    AddFloor();
+    // Decorative ground under the outer cedars; the playable floor stays unchanged.
+    auto* ForestGround = NewObject<UStaticMeshComponent>(this, TEXT("BasinForestGround"));
+    ForestGround->SetupAttachment(Root); ForestGround->SetStaticMesh(CubeMesh);
+    ForestGround->SetRelativeLocation(FVector(0, 0, -80));
+    ForestGround->SetRelativeScale3D(FVector((ClearingHalfExtent * 2.f + 4000.f) / 100.f,
+        (ClearingHalfExtent * 2.f + 4000.f) / 100.f, 1.f));
+    ForestGround->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    ForestGround->SetMaterial(0, GroundMaterial ? GroundMaterial.Get() : BaseMaterial.Get());
+    ForestGround->RegisterComponent(); GeneratedComponents.Add(ForestGround);
+    if (!GroundMaterial)
+        if (auto* Mat = ForestGround->CreateDynamicMaterialInstance(0)) SetPrimitiveColor(Mat, FLinearColor(.20f, .15f, .10f));
+    UE_LOG(LogTemp, Display, TEXT("ENVIRONMENT_KIT basin cedar=%d rock=%d boundary=%d ground=%d"),
+        CedarMesh != nullptr, RockMesh != nullptr, BoundaryMesh != nullptr, GroundMaterial != nullptr);
     const float H = ClearingHalfExtent;
     // Eight overlapping collision slabs form a gap-free octagon. Visual rocks sit outside
     // their inner faces, keeping the playable 80 m clearing open and the camera sweep useful.
@@ -132,6 +169,15 @@ void ABasinPrototypeArena::OnConstruction(const FTransform& Transform)
     const FVector Trees[]={{-2500,-1900,0},{-2050,2050,0},{850,-2550,0},{1750,2300,0},{2850,-1450,0},{3100,1050,0}};
     for(int32 I=0;I<UE_ARRAY_COUNT(Trees);++I)
         AddTree(*FString::Printf(TEXT("OldCedar%02d"),I),Trees[I],720.f+(I%3)*110.f,34.f+(I%2)*7.f);
+    for (int32 I = 0; I < 20; ++I)
+    {
+        const float Yaw = I * 18.f + 7.f;
+        AddTree(*FString::Printf(TEXT("PerimeterCedar%02d"), I), FRotator(0, Yaw, 0).Vector() * (H + 1150.f),
+            740.f + (I % 4) * 90.f, 40.f);
+    }
+    if (BoundaryMesh)
+        GeneratedComponents.Add(IshibashiriEnvironment::Visual(this, Root, TEXT("BasinBoundaryStoneArt"), BoundaryMesh,
+            FVector(-H + 100.f, 700.f, 0.f), FVector(1.f), FRotator(0, 80, 0)));
 
     UDirectionalLightComponent* Sun = NewObject<UDirectionalLightComponent>(this,TEXT("BasinSun"));
     Sun->SetupAttachment(Root); Sun->SetRelativeRotation(FRotator(-48,-32,0)); Sun->SetIntensity(3.2f); Sun->SetMobility(EComponentMobility::Movable); Sun->RegisterComponent(); GeneratedComponents.Add(Sun);
@@ -151,4 +197,7 @@ void ABasinPrototypeArena::OnConstruction(const FTransform& Transform)
     // Physically based aerial perspective is useful in both profiles; expensive lighting is selected by the launcher.
     USkyAtmosphereComponent* Atmosphere = NewObject<USkyAtmosphereComponent>(this,TEXT("BasinSkyAtmosphere"));
     Atmosphere->SetupAttachment(Root); Atmosphere->RegisterComponent(); GeneratedComponents.Add(Atmosphere);
+    auto* Sky = NewObject<USkyLightComponent>(this, TEXT("BasinAmbient"));
+    Sky->SetupAttachment(Root); Sky->SetMobility(EComponentMobility::Movable); Sky->SetIntensity(.65f);
+    Sky->SetLightColor(FLinearColor(.70f,.78f,.85f)); Sky->RegisterComponent(); GeneratedComponents.Add(Sky);
 }

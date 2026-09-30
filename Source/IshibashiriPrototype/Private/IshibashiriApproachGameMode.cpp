@@ -1,4 +1,5 @@
 #include "IshibashiriApproachGameMode.h"
+#include "EnvironmentReviewCapture.h"
 #include "IshibashiriApproachArena.h"
 #include "IshibashiriApproachHUD.h"
 #include "CampaignGameInstance.h"
@@ -65,6 +66,9 @@ void AIshibashiriApproachGameMode::StartPlay()
         AutomationTimeout = FMath::Max(120.f, Arena->GetPathLengthMeters() / 6.f * 3.f);
         Controller->InputKey(FInputKeyEventArgs::CreateSimulated(EKeys::W, IE_Pressed, 1.f));
     }
+#if !UE_BUILD_SHIPPING
+    if (FParse::Param(FCommandLine::Get(), TEXT("EnvironmentReview"))) GetWorld()->SpawnActor<AEnvironmentReviewCapture>();
+#endif
     UE_LOG(LogTemp, Display, TEXT("APPROACH_READY path_m=%.1f expected_minutes=3-5 combat=false"), Arena->GetPathLengthMeters());
 }
 
