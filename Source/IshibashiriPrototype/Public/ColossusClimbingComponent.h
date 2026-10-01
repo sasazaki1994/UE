@@ -47,8 +47,11 @@ public:
     const FClimbingIKTargets& GetIKTargets() const { return IKTargets; }
     AIshibashiriBoss* GetBoss() const { return Boss; }
     FString GetHint() const;
+    float GetGrabDistance(const AIshibashiriBoss* Candidate) const;
+    const FString& GetGrabFeedback() const { return GrabFeedback; }
     UPROPERTY(EditAnywhere, Category="Climbing") float ClimbSpeed = 190.f;
-    UPROPERTY(EditAnywhere, Category="Climbing") float GrabRange = 240.f;
+    UPROPERTY(EditAnywhere, Category="Climbing", meta=(ClampMin="1", Units="cm")) float GrabRange = 300.f;
+    UPROPERTY(EditAnywhere, Category="Climbing", meta=(ClampMin="0", Units="s")) float GrabBufferSeconds = .25f;
     // Stamina is 0-100. Rates are per second; positive drains, negative restores.
     UPROPERTY(EditAnywhere, Category="Climbing|Stamina", meta=(ClampMin="0", ClampMax="100")) float MinimumGrabStamina = 25.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Stamina", meta=(ClampMin="0")) float GroundRecoveryPerSecond = 18.f;
@@ -61,8 +64,8 @@ public:
     UPROPERTY(EditAnywhere, Category="Climbing|Recovery", meta=(ClampMin="0", ClampMax="100")) float FallRecoveryStamina = 50.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Recovery", meta=(ClampMin="0")) float FallShakeImmunity = 3.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Recovery", meta=(ClampMin="0.1")) float FallRegrabWindow = 6.f;
-    UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1")) float MaximumWarpDistance = 240.f;
-    UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1", ClampMax="179")) float MaximumWarpAngle = 100.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1")) float MaximumWarpDistance = 300.f;
+    UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1", ClampMax="179")) float MaximumWarpAngle = 120.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1")) float CompletionDistanceTolerance = 35.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="1", ClampMax="90")) float CompletionAngleTolerance = 18.f;
     UPROPERTY(EditAnywhere, Category="Climbing|Motion Warp", meta=(ClampMin="0.1", ClampMax="1")) float FallbackApproachSeconds = .48f;
@@ -72,6 +75,10 @@ public:
 private:
     friend class FRouteClimbingLifecycleTest;
     friend class FRouteClimbingRecoveryTest;
+    friend class FGrabAssistTest;
+    bool TryStartGrab(AIshibashiriBoss* Candidate);
+    void UpdateBufferedGrab(float Dt);
+    void ClearGrabRequest();
     void UpdateIK(float Dt);
     bool StartGrabWarp(AIshibashiriBoss* Candidate);
     void StartFallbackGrabApproach(AIshibashiriBoss* Candidate);
@@ -95,6 +102,10 @@ private:
     int32 PendingPurificationCore = INDEX_NONE;
     int32 LastSafeNode = INDEX_NONE;
     bool bGripHeld = false;
+    TWeakObjectPtr<AIshibashiriBoss> BufferedGrabBoss;
+    float GrabBufferRemaining = 0.f;
+    FString GrabFeedback;
+    float GrabFeedbackRemaining = 0.f;
     bool bGrabWarping = false;
     bool bFallbackGrabApproach = false;
     float GrabWarpElapsed = 0.f;
