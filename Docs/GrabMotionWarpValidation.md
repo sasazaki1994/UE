@@ -26,7 +26,7 @@ Asset未設定時は警告を記録して従来route mountへfallbackする。�
 
 Target名は`IshibashiriGrab`。新しいhold座標は追加せず、位置は毎frame `AIshibashiriBoss::GetClimbPosition(0)`、向きはその位置からboss actor中心への水平方向とする。`GetClimbPosition`自体がCreature component localの既存Route[0]をcomponent transformでworldへ変換するため、歩行、旋回、軽い上下動に追従し、Grab開始時world座標へ固定されない。
 
-既存GrabRange=240 cmを維持し、MaximumWarpDistance=240 cm、MaximumWarpAngle=100度。完了許容は位置35 cm/角度18度で、超過時はnodeへsnapせずcancelする。180度吸着をしない。開始distance/angle/durationと完了errorはlogへ記録する。数値はRuntime比較後に調整する暫定値である。
+2026-10-01の前脚Grab補助ではGrabRange=300 cm、MaximumWarpDistance=300 cm、MaximumWarpAngle=120度を使用する。距離はboss中心ではなく既存node 0へのworld距離、角度は既存の取り付き姿勢とのyaw差である。完了許容は位置35 cm/角度18度を維持し、超過時はnodeへsnapせずcancelする。180度吸着をしない。開始distance/angle/durationと完了errorはlogへ記録する。実機での操作感は未検証である。
 
 ## Gameplay hand-off / FBIK
 
@@ -53,3 +53,13 @@ Montage / AnimBPが無い通常プレイでも、Grab成立直後にnode 0へ瞬
 - 専用Root Motion clip、Montage、AnimBPはartist/editor作業待ち。存在しないassetを生成済みとは扱わない。
 - 35 cm/18度とnotify時刻はcaptureで足滑り、手の貫通、camera clippingを見て確定する。
 - 今回はnode 1以降、自由登攀、全身Skeleton/Camera redesignへ展開しない。
+
+## 2026-10-02 source update: foreleg Grab assistance
+
+対象は前脚の既存node 0だけである。膝つき中かつnode 0から300 cm以内の失敗したE / RB入力は、同じ石走りを対象に0.25秒だけ保持する。向き直りや動作終了によってその間に開始条件を満たせば、再度押さずに既存の接近動作へ進む。残り時間を減らしてから再判定するため、期限切れの入力で遅れて取り付くことはない。ボタンを離してもしがみつき状態だけが解除され、この短い取り付き入力は取り消さない。
+
+範囲外や膝つき前の押下は予約しない。保持中に対象が交代・消失した場合、膝つきが終了した場合、範囲を離れた場合、Encounterが終了した場合、死亡、Detach、Resetでは予約を破棄する。予約が次の膝つき、再挑戦、新しい対象に持ち越されることはない。短い失敗理由を表示し、膝つき中の操作ヒントはboss中心ではなくnode 0から400 cm以内で表示する。400 cmは案内を始める距離であり、300 cmの取り付き範囲を広げない。
+
+**角・頭からの第二入口は未実装。** 現在の生成モデルの角上の点`(-261,-531,185)` cmとRoute[0]の`(-270,-215,65)` cmは、同じモデル座標系で約338 cm離れている。その点を開始地点にすると300 cmの接近上限を超える。第二の印だけを追加して取り付けると案内せず、頭の姿勢または途中の接近動作を設計・実機確認する後続作業として残す。11地点Route、休息点、戦闘タイミングは今回の対象外である。
+
+Windows UE 5.6 Editorビルド、`IshibashiriPrototype.Climbing.GrabAssist` Automation（300 cm/120度の境界、0.25秒の期限、Reset/死亡/対象変更、30/60/120 FPS fixture）、入力駆動の登攀E2E（30/60 FPS）、Python回帰185件は **PASS**。60 FPS描画Captureでは前脚の操作案内と安全棚への復帰場面を目視した。ログは `Saved/Logs/GrabAssistAutomation-20261002-rerun.log` と `Saved/Logs/ClimbingTest-{30,60}.log`、画像は `Saved/Screenshots/Climbing/c63fd77aee13484190818c4acd69078f/` にある。自動入力と固定fixtureの証拠であり、物理gamepad・初見プレイ・専用Montage/Root Motionの接触品質は **NOT_RUN**。
