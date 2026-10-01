@@ -1,4 +1,5 @@
 #include "MagatsunePlayer.h"
+#include "KakonActor.h"
 #include "MagatsuneBoss.h"
 #include "MagatsuneGameMode.h"
 #include "GrabComponent.h"
