@@ -510,7 +510,8 @@ void AClimbingIntegrationTest::Tick(float Dt)
     case 23:
         if (!C->IsClimbing())
         {
-            if (!Check(C->GetStamina()<1.f,TEXT("Exhausted stamina forces detachment"))) return;
+            if (!Check(FMath::IsNearlyEqual(C->GetStamina(), C->FallRecoveryStamina, 1.f)
+                && B->CanMount(), TEXT("Exhaustion returns to the foreleg with half stamina and a re-grab window"))) return;
             SetupGrab(true,24);
         } break;
     case 24:
@@ -518,10 +519,12 @@ void AClimbingIntegrationTest::Tick(float Dt)
     case 25:
         if (C->GetNode()==3 && !C->IsMoving()) { Hold(EKeys::W,false);Hold(EKeys::E,false);Next(26); } break;
     case 26:
-        if (!C->IsClimbing())
+        if (C->IsClimbing() && C->GetNode()==3 && !B->IsBucking()
+            && C->GetStamina()>=C->FallRecoveryStamina
+            && C->GetStamina()<C->FallRecoveryStamina+2.f && Time>1.f)
         {
-            if (!Check(B->IsBucking() && C->GetStamina()>0,TEXT("Unbraced shaking throws rider off before exhaustion"))) return;
-            if (!bClimbingIK) Shot(TEXT("06-ThrownOff"));
+            if (!Check(C->IsResting(),TEXT("Unbraced shaking recovers on the last reached safe ledge"))) return;
+            if (!bClimbingIK) Shot(TEXT("06-SafeLedgeRecovery"));
             Next(27);
         } break;
     case 27:
