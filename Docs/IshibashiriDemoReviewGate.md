@@ -30,8 +30,9 @@ Buildが失敗した場合は直ちにFAILとして終了し、Gameplayには進
 
 ## 必須Gateと成功証拠
 
-`build`, `demo60`, `demo30`, `demoGamepad`, `demoCapture`, `demoHighQuality`, `demoCompletion`, `saveIsolation`, `retry`, `senseReset`, `normalCampaignRegression` がPackage前の必須Gateで、`package` は独立結果である。初期値はすべて `NOT_RUN`。
+`build`, `grabAssistAutomation`, `demo60`, `demo30`, `demoGamepad`, `demoCapture`, `demoHighQuality`, `demoCompletion`, `saveIsolation`, `retry`, `senseReset`, `normalCampaignRegression` がPackage前の必須Gateで、`package` は独立結果である。初期値はすべて `NOT_RUN`。
 
+- `grabAssistAutomation` はUE Automation Test `IshibashiriPrototype.Climbing.GrabAssist` を `UnrealEditor-Cmd.exe` から実行し、Automation logの `Test Completed. Result={Success}` と `**** TEST COMPLETE. EXIT CODE: 0 ****` の両方を要求する。300 cm / 120°の境界、0.25秒buffer、解除条件、30/60/120 FPS fixtureをDemo E2Eとは独立に固定する。
 - 各Demo E2Eはexit codeだけでなく `ISHIBASHIRI_DEMO_E2E_PASS <RunId>` を `Prototype.ps1` が要求する。
 - 完走は石走り開始、3禍根・Calm・Encounter Completedの内部check後にだけ出る `CLIMB_TEST_PASS`、Interlude1、`ISHIBASHIRI_DEMO_COMPLETE`、Title復帰、E2E PASSをログで要求する。
 - Save隔離はDemo E2E完走を要求したうえで、Demo evidence内に `CAMPAIGN_SAVED`、`CAMPAIGN_CONTINUE`、`CAMPAIGN_SAVE_CLEAR_FAILED` が一つもないことを要求する。ソース契約ではDemo modeがload前からpersistenceを無効化することも別途固定する。
@@ -77,3 +78,7 @@ package/
 ```
 
 予定する8コマンドを順番付きで表示し、Build、Unreal process、Screenshot、Packageは一切起動しない。全GateとVerdictは `NOT_RUN` のままであり、DryRun成功をRuntime成功として扱わない。
+
+## GitHub Actionsからの実行
+
+`.github/workflows/ishibashiri-demo-review-gate.yml` は `workflow_dispatch` 専用で、`self-hosted / Windows / UE5.6` runner上からこのDemo Review Gateを実行する。通常のpushやPRごとには自動実行せず、UE実機検証を行うタイミングだけ手動起動する。Evidenceは `ishibashiri-demo-review-gate-<run_id>-<attempt>` artifactとして30日保持する。
