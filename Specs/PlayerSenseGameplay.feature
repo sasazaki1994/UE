@@ -36,6 +36,13 @@ Feature: Player-driven sensing
     Then stamina recovery is 50 percent while held and for 2 seconds after release
     And maximum stamina and health are unchanged
 
+  Scenario: Ishibashiri applies arm risk only to natural recovery
+    Given the player is using Ishibashiri's route-climbing stamina
+    When Corruption Sense is held or its 2 second release tail is active
+    Then ground and safe-ledge natural recovery are 50 percent
+    And hang drain, buck drain, and fixed fall recovery are unchanged
+    But Boundary Sense alone leaves natural recovery at 100 percent
+
   Scenario: Retry clears sensing
     When the encounter is retried
     Then both senses, the risk timer, warning, and cached target are cleared

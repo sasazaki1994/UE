@@ -64,6 +64,16 @@ bool FCorruptionSenseWarningRiskReset::RunTest(const FString&)
     AActor* P = W->SpawnActor<AActor>();
     auto* S = NewObject<UPlayerSenseComponent>(P);
     S->RegisterComponent();
+    TestEqual(TEXT("normal recovery"), S->GetRecoveryMultiplier(), 1.f);
+    S->BeginBoundarySense();
+    TestEqual(TEXT("boundary sense does not penalize recovery"), S->GetRecoveryMultiplier(), 1.f);
+    S->EndBoundarySense();
+    S->BeginCorruptionSense();
+    TestEqual(TEXT("held corruption sense halves recovery"), S->GetRecoveryMultiplier(), .5f);
+    S->EndCorruptionSense();
+    TestEqual(TEXT("release tail halves recovery"), S->GetRecoveryMultiplier(), .5f);
+    S->TickComponent(2.01f, LEVELTICK_All, nullptr);
+    TestEqual(TEXT("release tail expires"), S->GetRecoveryMultiplier(), 1.f);
     for (ECorruptionWarning V : {ECorruptionWarning::Danger, ECorruptionWarning::Transition, ECorruptionWarning::Safe})
     {
         S->BeginCorruptionSense();
@@ -71,7 +81,7 @@ bool FCorruptionSenseWarningRiskReset::RunTest(const FString&)
         TestEqual(TEXT("warning passed through"), S->GetCorruptionWarning(), V);
         S->EndCorruptionSense();
     }
-    TestEqual(TEXT("held/tail recovery penalty"), S->GetRecoveryMultiplier(), .5f);
+    TestEqual(TEXT("repeated release restores risk tail"), S->GetRecoveryMultiplier(), .5f);
     S->TickComponent(2.01f, LEVELTICK_All, nullptr);
     TestEqual(TEXT("risk expires"), S->GetRecoveryMultiplier(), 1.f);
     S->BeginBoundarySense();

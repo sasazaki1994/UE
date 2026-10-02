@@ -1,5 +1,6 @@
 #include "ColossusClimbingComponent.h"
 #include "PrototypePlayer.h"
+#include "PlayerSenseComponent.h"
 #include "IshibashiriBoss.h"
 #include "PrototypeGameMode.h"
 #include "Components/CapsuleComponent.h"
@@ -432,14 +433,16 @@ void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActor
     }
     const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (!Mode || !Mode->IsEncounterActive()) return;
+    const float RecoveryMultiplier = Player->GetSense()->GetRecoveryMultiplier();
     if (!IsValid(Boss))
     {
-        if (!Player->GetCharacterMovement()->IsFalling()) Stamina = FMath::Min(100.f, Stamina+GroundRecoveryPerSecond*Dt);
+        if (!Player->GetCharacterMovement()->IsFalling())
+            Stamina = FMath::Min(100.f, Stamina + GroundRecoveryPerSecond * RecoveryMultiplier * Dt);
         return;
     }
     const bool Buck = Boss->IsBucking();
     const bool Rest = IsResting();
-    float Drain = Rest ? -LedgeRecoveryPerSecond : HangDrainPerSecond;
+    float Drain = Rest ? -LedgeRecoveryPerSecond * RecoveryMultiplier : HangDrainPerSecond;
     if (Buck) Drain = bGripHeld ? BracedBuckDrainPerSecond : UnbracedBuckDrainPerSecond;
     Stamina = FMath::Clamp(Stamina-Drain*Dt, 0.f, 100.f);
     UnsafeBuckTime = Buck && !bGripHeld ? UnsafeBuckTime+Dt : 0.f;

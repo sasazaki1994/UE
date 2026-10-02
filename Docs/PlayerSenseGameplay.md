@@ -39,7 +39,7 @@ The HUD shows only `CORRUPTION SENSE: DANGER / SAFE / TRANSITION / QUIET`. The a
 
 ## Risk and stamina
 
-The sole risk is a recovery multiplier. Recovery is 50% while Corruption Sense is held and for 2 seconds after release, then returns to 100%. Fuchimatoi, Minedaki and Magatsune multiply their existing restore calls at the player call site, leaving `UStaminaComponent`'s public contract, maximum stamina, health, consumption, and delegates unchanged. Ishibashiri still uses its older route-climbing scalar stamina rather than `UStaminaComponent`; integrating that legacy recovery call is listed as unverified/deferred rather than changing the shared component contract in this slice.
+The sole risk is a recovery multiplier. Recovery is 50% while Corruption Sense is held and for 2 seconds after release, then returns to 100%. Fuchimatoi, Minedaki and Magatsune multiply their existing restore calls at the player call site. Ishibashiri reads the same multiplier from its player-owned sense component for ground and safe-ledge natural recovery in its legacy route-climbing scalar stamina path. Hang/Buck drain and fixed fall recovery remain unchanged. These integrations leave `UStaminaComponent`'s public contract, maximum stamina, health, consumption, and delegates unchanged.
 
 ## Debug guidance compatibility
 
@@ -58,6 +58,6 @@ Debug log events use `PLAYER_SENSE`: `sword_start`, `sword_end duration`, `stron
 ## Not yet validated / limitations
 
 - UE 5.6.1 Build, Automation, keyboard, simulated gamepad and encounter regressions require Windows + UE and have not been run in the Linux Codex container.
-- Ishibashiri's legacy `UColossusClimbingComponent` recovery is not yet multiplied by arm risk.
+- Ishibashiri's legacy `UColossusClimbingComponent` recovery is source-integrated with arm risk; UE runtime validation is `NOT_RUN`.
 - Corruption warning categories refresh continuously, but encounter-authored lead-time values, VFX, audio and haptics remain future work.
 - A full input-driven “sense, navigate, cling, purify, victory” automation playthrough is not added in this minimal source slice.
