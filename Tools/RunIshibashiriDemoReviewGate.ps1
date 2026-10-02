@@ -14,11 +14,11 @@ if (!$SourceSha) { $SourceSha = 'UNKNOWN' }
 $Stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
 if (!$EvidenceRoot) { $EvidenceRoot = Join-Path $ProjectRoot "Artifacts\IshibashiriDemoReviewGate\$Stamp-$($SourceSha.Substring(0,[Math]::Min(12,$SourceSha.Length)))" }
 $EvidenceRoot = [IO.Path]::GetFullPath($EvidenceRoot)
-foreach ($Folder in @('logs','screenshots','performance','demo','campaign-regression','package')) {
+foreach ($Folder in @('logs','screenshots','performance','automation','demo','campaign-regression','package')) {
     New-Item -ItemType Directory -Force -Path (Join-Path $EvidenceRoot $Folder) | Out-Null
 }
 $Results = [ordered]@{
-    build='NOT_RUN'; demo60='NOT_RUN'; demo30='NOT_RUN'; demoGamepad='NOT_RUN'
+    build='NOT_RUN'; grabAssistAutomation='NOT_RUN'; demo60='NOT_RUN'; demo30='NOT_RUN'; demoGamepad='NOT_RUN'
     demoCapture='NOT_RUN'; demoHighQuality='NOT_RUN'; demoCompletion='NOT_RUN'
     saveIsolation='NOT_RUN'; retry='NOT_RUN'; senseReset='NOT_RUN'
     normalCampaignRegression='NOT_RUN'; package='NOT_RUN'
@@ -28,7 +28,7 @@ $Reasons = [ordered]@{}
 $Environment = [ordered]@{
     timestampUtc=$Stamp; sourceSha=$SourceSha; platform=[Environment]::OSVersion.VersionString
     powershell=$PSVersionTable.PSVersion.ToString(); isWindows=($env:OS -eq 'Windows_NT')
-    engineRoot=$null; ueVersion=$null; projectFile=(Join-Path $ProjectRoot 'IshibashiriPrototype.uproject')
+    engineRoot=$null; ueVersion=$null; unrealEditorCmd=$null; projectFile=(Join-Path $ProjectRoot 'IshibashiriPrototype.uproject')
 }
 
 function Write-Json([object]$Value,[string]$Path) { $Value | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $Path -Encoding UTF8 }
@@ -72,6 +72,49 @@ function Invoke-Gate([string]$Name,[string]$Area,[string[]]$Arguments) {
 function Get-EvidenceText([string[]]$Names) {
     (($Names | ForEach-Object { $Path=Join-Path $EvidenceRoot "logs\$_.stdout.log"; if(Test-Path $Path){Get-Content $Path}; $Path=Join-Path $EvidenceRoot "logs\$_.stderr.log"; if(Test-Path $Path){Get-Content $Path}; Get-ChildItem (Join-Path $EvidenceRoot 'demo') -File -Recurse -ErrorAction SilentlyContinue | Where-Object Name -like '*.log' | Get-Content -ErrorAction SilentlyContinue }) -join "`n")
 }
+function Invoke-AutomationGate([string]$Name,[string]$TestName) {
+    $ReportDir=Join-Path $EvidenceRoot "automation\$Name"
+    $LogPath=Join-Path $EvidenceRoot "logs\$Name-automation.log"
+    $Stdout=Join-Path $EvidenceRoot "logs\$Name.stdout.log"; $Stderr=Join-Path $EvidenceRoot "logs\$Name.stderr.log"
+    $EditorCmd=if($Environment.unrealEditorCmd){$Environment.unrealEditorCmd}else{'<UnrealEditor-Cmd.exe>'}
+    $Command="& `"$EditorCmd`" `"$($Environment.projectFile)`" -unattended -nop4 -nosplash -NullRHI -ExecCmds=`"Automation RunTest $TestName;Quit`" -ReportExportPath=`"$ReportDir`" -abslog=`"$LogPath`""
+    $Expected=@("logs/$Name.stdout.log","logs/$Name.stderr.log","logs/$Name-automation.log","automation/$Name/index.json")
+    if($DryRun){
+        $Runs.Add([ordered]@{name=$Name;command=$Command;startTime=$null;exitCode=$null;stdout="logs/$Name.stdout.log";stderr="logs/$Name.stderr.log";expectedArtifact=$Expected;actualArtifact=@();result='NOT_RUN'})
+        Write-Host "[$($Runs.Count)] $Command"
+        return 'NOT_RUN'
+    }
+    New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
+    $Started=Get-Date
+    $Args=@(
+        $Environment.projectFile,
+        '-unattended','-nop4','-nosplash','-NullRHI',
+        "-ExecCmds=Automation RunTest $TestName;Quit",
+        "-ReportExportPath=$ReportDir",
+        "-abslog=$LogPath"
+    )
+    $QuotedArgs=($Args|ForEach-Object{'"'+($_-replace '"','\"')+'"'}) -join ' '
+    $Process=Start-Process -FilePath $Environment.unrealEditorCmd -ArgumentList $QuotedArgs -Wait -PassThru -RedirectStandardOutput $Stdout -RedirectStandardError $Stderr
+    $Actual=[Collections.Generic.List[string]]::new()
+    foreach($Path in @($Stdout,$Stderr,$LogPath)){
+        if(Test-Path -LiteralPath $Path){$Actual.Add($Path.Substring($EvidenceRoot.Length).TrimStart('\','/').Replace('\','/'))}
+    }
+    if(Test-Path -LiteralPath $ReportDir){
+        Get-ChildItem -LiteralPath $ReportDir -File -Recurse | ForEach-Object {
+            $Actual.Add($_.FullName.Substring($EvidenceRoot.Length).TrimStart('\','/').Replace('\','/'))
+        }
+    }
+    $LogText=if(Test-Path -LiteralPath $LogPath){Get-Content -LiteralPath $LogPath -Raw}else{''}
+    $EscapedTest=[regex]::Escape($TestName)
+    $Succeeded=$Process.ExitCode -eq 0 `
+        -and $LogText -match "Test Completed\. Result=\{Success\}\..*Path=\{$EscapedTest\}" `
+        -and $LogText -match "\*\*\*\* TEST COMPLETE\. EXIT CODE: 0 \*\*\*\*"
+    $Result=if($Succeeded){'PASS'}else{'FAIL'}
+    if(!$Succeeded){$Reasons[$Name]="Automation test '$TestName' did not produce both Success and TEST COMPLETE EXIT CODE 0 evidence."}
+    $Runs.Add([ordered]@{name=$Name;command=$Command;startTime=$Started.ToUniversalTime().ToString('o');exitCode=$Process.ExitCode;stdout="logs/$Name.stdout.log";stderr="logs/$Name.stderr.log";expectedArtifact=$Expected;actualArtifact=@($Actual);result=$Result})
+    return $Result
+}
+
 
 try {
     $Plan = @(
@@ -84,7 +127,12 @@ try {
         @('normalCampaignRegression','campaign-regression',@('-Action','Test','-Campaign','-SkipBuild','-TestFPS','60')),
         @('package','package',@('-Action','Package'))
     )
-    if($DryRun){ foreach($Step in $Plan){$null=Invoke-Gate $Step[0] $Step[1] $Step[2]}; $Reasons.dryRun='Planning only; no build, Unreal process, screenshot, or package was started.'; Save-Summary 'NOT_RUN'; Write-Host "DryRun only: all gates NOT_RUN. Evidence: $EvidenceRoot"; exit 0 }
+    if($DryRun){
+        $null=Invoke-Gate $Plan[0][0] $Plan[0][1] $Plan[0][2]
+        $null=Invoke-AutomationGate 'grabAssistAutomation' 'IshibashiriPrototype.Climbing.GrabAssist'
+        for($I=1;$I -lt $Plan.Count;$I++){$Step=$Plan[$I];$null=Invoke-Gate $Step[0] $Step[1] $Step[2]}
+        $Reasons.dryRun='Planning only; no build, Unreal process, screenshot, Automation test, or package was started.'; Save-Summary 'NOT_RUN'; Write-Host "DryRun only: all gates NOT_RUN. Evidence: $EvidenceRoot"; exit 0
+    }
     if(!$Environment.isWindows){$Reasons.environment='WINDOWS UE 5.6.1 REQUIRED'; Save-Summary 'NOT_RUN'; exit 2}
     $Candidates=if($EngineRoot){@($EngineRoot)}elseif($env:UE_ROOT){@($env:UE_ROOT)}else{@(
         (Join-Path $env:USERPROFILE 'UnrealEngine\UE_5.6'),
@@ -93,16 +141,19 @@ try {
     foreach($Candidate in $Candidates){
         $Candidate=[IO.Path]::GetFullPath($Candidate)
         $VersionFile=Join-Path $Candidate 'Engine\Build\Build.version'
-        if(!(Test-Path -LiteralPath $VersionFile) -or !(Test-Path -LiteralPath (Join-Path $Candidate 'Engine\Build\BatchFiles\Build.bat'))){continue}
+        if(!(Test-Path -LiteralPath $VersionFile) -or !(Test-Path -LiteralPath (Join-Path $Candidate 'Engine\Build\BatchFiles\Build.bat')) -or !(Test-Path -LiteralPath (Join-Path $Candidate 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'))){continue}
         $V=Get-Content -LiteralPath $VersionFile -Raw|ConvertFrom-Json
         $Version="$($V.MajorVersion).$($V.MinorVersion).$($V.PatchVersion)"
         if($Version -eq '5.6.1'){$Resolved=$Candidate;$Environment.ueVersion=$Version;break}
     }
     if(!$Resolved){$Reasons.environment='UE 5.6.1 not found in -EngineRoot, UE_ROOT, user install, or Epic Games install';Save-Summary 'NOT_RUN';exit 2}
     $Environment.engineRoot=$Resolved
+    $Environment.unrealEditorCmd=Join-Path $Resolved 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
     $EngineRoot=$Resolved
     $Results.build=Invoke-Gate 'build' 'logs' @('-Action','Build')
     if($Results.build -ne 'PASS'){Save-Summary 'FAIL';exit 1}
+    $Results.grabAssistAutomation=Invoke-AutomationGate 'grabAssistAutomation' 'IshibashiriPrototype.Climbing.GrabAssist'
+    if($Results.grabAssistAutomation -ne 'PASS'){Save-Summary 'FAIL';exit 1}
     $Results.demo60=Invoke-Gate 'demo60' 'demo' @('-Action','Test','-IshibashiriDemo','-SkipBuild','-TestFPS','60')
     $Results.demo30=Invoke-Gate 'demo30' 'demo' @('-Action','Test','-IshibashiriDemo','-SkipBuild','-TestFPS','30')
     $Results.demoGamepad=Invoke-Gate 'demoGamepad' 'demo' @('-Action','Test','-IshibashiriDemo','-Gamepad','-SkipBuild','-TestFPS','60')
@@ -118,7 +169,7 @@ try {
     $HqText=Get-EvidenceText @('demoHighQuality'); $HqEvidence=$HqText -match 'D3D12' -and $HqText -match 'SM6|PCD3D_SM6' -and $HqText -match 'DynamicGlobalIlluminationMethod[^\r\n]*1|Lumen.*GI' -and $HqText -match 'ReflectionMethod[^\r\n]*1|Lumen.*Reflection' -and $HqText -match 'Shadow.Virtual.Enable[^\r\n]*1|Virtual Shadow Map'
     $Results.demoHighQuality=if($HqRun -eq 'FAIL'){'FAIL'}elseif($HqEvidence){'PASS'}else{$Reasons.demoHighQuality='D3D12, SM6, Lumen GI, Lumen Reflections, and Virtual Shadow Maps require actual log evidence';'FAIL'}
     $Results.normalCampaignRegression=Invoke-Gate 'normalCampaignRegression' 'campaign-regression' @('-Action','Test','-Campaign','-SkipBuild','-TestFPS','60')
-    $Required=@('build','demo60','demo30','demoGamepad','demoCapture','demoHighQuality','demoCompletion','saveIsolation','retry','senseReset','normalCampaignRegression')
+    $Required=@('build','grabAssistAutomation','demo60','demo30','demoGamepad','demoCapture','demoHighQuality','demoCompletion','saveIsolation','retry','senseReset','normalCampaignRegression')
     if(!($Required|Where-Object{$Results[$_] -ne 'PASS'})){$Results.package=Invoke-Gate 'package' 'package' @('-Action','Package');if($Results.package -eq 'PASS' -and (Test-Path (Join-Path $ProjectRoot 'Artifacts\Windows'))){Copy-Item (Join-Path $ProjectRoot 'Artifacts\Windows') (Join-Path $EvidenceRoot 'package') -Recurse -Force}}
     $Reasons.controlRig='BLOCKED / OPTIONAL QUALITY GATE — absence never fabricates runtime PASS and does not block demo packaging.'
     $Verdict=if($Results.Values -contains 'FAIL'){'FAIL'}elseif($Results.Values -contains 'NOT_RUN'){'PARTIAL'}else{'PASS'};Save-Summary $Verdict;Write-Host "Evidence: $EvidenceRoot";if($Verdict -eq 'PASS'){exit 0}else{exit 1}
