@@ -1,5 +1,5 @@
 {
-  "source_commit": "7b0eae27b1d8ead1dcaec9281df0412861059426",
+  "source_commit": "08f06928f79b38072867d7b856cf3d51bec3c869",
   "sha256": {
     "Source/IshibashiriPrototype/Private/PrototypePlayer.cpp": "1fe64e3bc79ba624fb2c303285092ef599aec53d17bef982f57402cbf60b7966",
     "Source/IshibashiriPrototype/Private/IshibashiriBoss.cpp": "5eb889e1fe437eaaea6159f1c3a569ccd8e66a3d5db3bf1df2edc1f23efe26ab",
@@ -8,7 +8,7 @@
     "Source/IshibashiriPrototype/Private/ColossusClimbingComponent.cpp": "4a3614a0782fa5886c93e6826eeda1a9dd7f5b8cfca6fd1b3b05e6832eb68fca",
     "Source/IshibashiriPrototype/Private/GrabComponent.cpp": "37e6abcf65a98eb68cfc00fe29b31f474c5551bc0529bcd95fca046f5601f437",
     "Source/IshibashiriPrototype/Private/StaminaComponent.cpp": "4310e7c9b389af7b152d3013cf1bc815c8aef37eeeb0a5884133b5370f8c678a",
-    "Source/IshibashiriPrototype/Private/CampaignGameInstance.cpp": "e9e2aabb9d962bd3e51f8e49a75f1c70ab1b4164532e48283f89a5c09aee397f",
+    "Source/IshibashiriPrototype/Private/CampaignGameInstance.cpp": "f700cb10f8e9fe1a2e91b6710458291b127ca657639f86af6bb424841523c465",
     "Source/IshibashiriPrototype/Private/CampaignGameMode.cpp": "6e910e97de4afb0f1335fa3454c6410bed9c77960fee7a7f10ca9bbe420b585f",
     "Source/IshibashiriPrototype/Private/NushiStateComponent.cpp": "60a8d8ce69c465e0360088735db6cfe6c27a773cd46c456d3998b2220ec4e1b4",
     "Source/IshibashiriPrototype/Private/NushiProgressComponent.cpp": "57d5a60bba6d74c018b8cd6a31e123423de75a82329c751f3c94dc2d6f06452b",

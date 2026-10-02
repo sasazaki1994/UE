@@ -25,10 +25,30 @@
     かつ 禍根、スタミナ、Boss PhaseはGameModeの初期値になる
     かつ 穢れ段階はAdvancedのままである
 
-  シナリオ: 自動入力テストは通常の保存領域を変更しない
-    前提 続きから再開できる保存データがある
-    もし Campaign E2Eを実行する
-    ならば テストの進行は通常の保存データを上書きしない
+  シナリオ: 保存は互換な章境界だけを再開候補にする
+    前提 MagabaraiCampaignに保存データがある
+    もし Titleで保存データを読み込む
+    ならば 現行versionのPrologueからEndingまでの章だけContinueできる
+    かつ 未知version、Title、CompletedはContinueできない
+
+  シナリオ: Completedで保存を削除する
+    前提 Endingを読み終える直前にContinue可能な保存データがある
+    もし CampaignがCompletedへ入る
+    ならば MagabaraiCampaignの保存データを削除する
+    かつ 削除成功後はTitleへ戻ってもContinueを表示しない
+    かつ 削除失敗で保存データが残る場合はContinueなしとして成功扱いしない
+
+  シナリオアウトライン: 自動実行は通常の保存領域を読み書きしない
+    前提 続きから再開できる通常の保存データがある
+    もし <起動指定> で実行する
+    ならば 初期化時に通常の保存データを読み込まない
+    かつ 章境界またはCompletedで通常の保存データを書込みまたは削除しない
+
+    例:
+      | 起動指定 |
+      | -IshibashiriDemo |
+      | -CampaignE2E |
+      | -PrototypeTestRun=contract |
 
   シナリオ: 保存があるTitleで新規開始を確認する
     前提 続きから再開できる保存データがある
