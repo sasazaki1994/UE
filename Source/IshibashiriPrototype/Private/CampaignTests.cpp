@@ -277,6 +277,10 @@ bool FCampaignLifecycle::RunTest(const FString&)
     C->CompleteEncounter(ECampaignState::Magatsune);
     C->AdvanceCardChapter();
     TestEqual(TEXT("Title through Ending reaches Completed"), C->GetCampaignState(), ECampaignState::Completed);
+    TestTrue(TEXT("Completed returns to Title"), C->AdvanceCardChapter());
+    TestEqual(TEXT("Completed screen returns to Title"), C->GetCampaignState(), ECampaignState::Title);
+    TestTrue(TEXT("A new campaign can start after completion"), C->AdvanceCardChapter());
+    TestEqual(TEXT("Restarted campaign begins at Prologue"), C->GetCampaignState(), ECampaignState::Prologue);
     return true;
 }
 
