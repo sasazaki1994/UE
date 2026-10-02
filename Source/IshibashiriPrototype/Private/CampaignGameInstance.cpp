@@ -183,6 +183,7 @@ void UCampaignGameInstance::SaveChapter()
     if (!bPersistenceEnabled || !bCampaignActive || !IsResumableChapter(State)) return;
     UCampaignSaveGame* Save = Cast<UCampaignSaveGame>(UGameplayStatics::CreateSaveGameObject(UCampaignSaveGame::StaticClass()));
     if (!Save) return;
+    Save->Version = UCampaignSaveGame::CurrentVersion;
     Save->Chapter = State;
     if (!UGameplayStatics::SaveGameToSlot(Save, CampaignSaveSlot, 0))
     {

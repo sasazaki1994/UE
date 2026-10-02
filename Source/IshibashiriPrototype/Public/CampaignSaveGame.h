@@ -12,6 +12,6 @@ class ISHIBASHIRIPROTOTYPE_API UCampaignSaveGame : public USaveGame
     GENERATED_BODY()
 public:
     static constexpr int32 CurrentVersion = 1;
-    UPROPERTY(SaveGame) int32 Version = 1;
+    UPROPERTY(SaveGame) int32 Version = CurrentVersion;
     UPROPERTY(SaveGame) ECampaignState Chapter = ECampaignState::Prologue;
 };

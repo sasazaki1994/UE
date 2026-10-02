@@ -36,7 +36,7 @@ R / Yは従来どおり各GameModeの `RetryEncounter` を呼ぶ。Retry通知�
 
 ## 保存と再開
 
-`UCampaignSaveGame` は版数と `ECampaignState` の章境界だけを `MagabaraiCampaign` slotへ保存する。カード送り、接近章の出口、Encounter完了時に更新し、現在の章でRetryしても保存状態は変えない。再開は現在章のGameModeを通常どおり生成するため、禍根、体力、スタミナ、Grab、Senseを初期値へ戻す。TitleとCompleted、不明な版数・章は再開候補にしない。`-CampaignE2E` と実行固有 `-PrototypeTestRun` がある自動攻略では保存を読み書きしない。
+`UCampaignSaveGame` は版数と `ECampaignState` の章境界だけを `MagabaraiCampaign` slotへ保存する。カード送り、接近章の出口、Encounter完了時に更新し、現在の章でRetryしても保存状態は変えない。再開は現在章のGameModeを通常どおり生成するため、禍根、体力、スタミナ、Grab、Senseを初期値へ戻す。TitleとCompleted、不明な版数・章は再開候補にしない。Endingを読み終えてCompletedへ入ると保存を削除し、削除に成功した場合だけContinue候補を消す。削除に失敗してslotが残る場合は再読込して、残存Saveを成功扱いで隠さない。`-IshibashiriDemo`、`-CampaignE2E`、実行固有の `-PrototypeTestRun` がある自動攻略では、初期化時のSave読込より先にPersistenceを無効化し、通常Saveを読み書きしない。
 
 ## Sense Resetと遷移安全性
 
