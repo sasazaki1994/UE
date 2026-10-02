@@ -11,7 +11,7 @@ def script() -> str:
 def test_dedicated_runner_and_all_independent_results_exist():
     text = script()
     assert RUNNER.exists()
-    for gate in ("build", "demo60", "demo30", "demoGamepad", "demoCapture", "demoHighQuality",
+    for gate in ("build", "grabAssistAutomation", "demo60", "demo30", "demoGamepad", "demoCapture", "demoHighQuality",
                  "demoCompletion", "saveIsolation", "retry", "senseReset",
                  "normalCampaignRegression", "package"):
         assert f"{gate}='NOT_RUN'" in text
@@ -43,7 +43,7 @@ def test_demo_matrix_capture_hq_and_minimal_campaign_are_exact():
 def test_package_requires_every_demo_gate():
     text = script()
     major = next(line for line in text.splitlines() if line.strip().startswith("$Required=@("))
-    for gate in ("build", "demo60", "demo30", "demoGamepad", "demoCapture", "demoHighQuality",
+    for gate in ("build", "grabAssistAutomation", "demo60", "demo30", "demoGamepad", "demoCapture", "demoHighQuality",
                  "demoCompletion", "saveIsolation", "retry", "senseReset", "normalCampaignRegression"):
         assert f"'{gate}'" in major
     assert "if(!($Required|Where-Object{$Results[$_] -ne 'PASS'}))" in text
@@ -51,14 +51,22 @@ def test_package_requires_every_demo_gate():
 
 def test_dry_run_never_starts_a_process_and_leaves_all_not_run():
     text = script()
-    dry = text[text.index("if($DryRun){ foreach($Step"):text.index("if(!$Environment.isWindows)")]
+    marker = "$null=Invoke-Gate $Plan[0][0]"
+    marker_at = text.index(marker)
+    start = text.rfind("if($DryRun){", 0, marker_at)
+    dry = text[start:text.index("if(!$Environment.isWindows)", marker_at)]
     assert "Start-Process" not in dry
+    assert "Invoke-AutomationGate 'grabAssistAutomation' 'IshibashiriPrototype.Climbing.GrabAssist'" in dry
     assert "Save-Summary 'NOT_RUN'" in dry
     assert "all gates NOT_RUN" in dry
 
 
 def test_runtime_contracts_require_markers_not_only_exit_zero():
     text = script()
+    assert "Automation RunTest $TestName;Quit" in text
+    assert "Test Completed\\. Result=\\{Success\\}" in text
+    assert "TEST COMPLETE\\. EXIT CODE: 0" in text
+    assert "$Results.grabAssistAutomation=Invoke-AutomationGate" in text
     assert "ISHIBASHIRI_DEMO_E2E_PASS" in text
     assert "CAMPAIGN_SAVED|CAMPAIGN_CONTINUE|CAMPAIGN_SAVE_CLEAR_FAILED" in text
     assert "CLIMB_TEST_PASS" in text
@@ -72,7 +80,7 @@ def test_evidence_has_sha_commands_streams_and_artifacts():
     for value in ("sourceSha=$SourceSha", "command=$Command", "startTime=", "exitCode=",
                   "stdout=", "stderr=", "expectedArtifact=", "actualArtifact=", "result="):
         assert value in text
-    for folder in ("'logs'", "'screenshots'", "'performance'", "'demo'", "'campaign-regression'", "'package'"):
+    for folder in ("'logs'", "'screenshots'", "'performance'", "'automation'", "'demo'", "'campaign-regression'", "'package'"):
         assert folder in text
 
 
