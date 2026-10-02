@@ -2,20 +2,20 @@
 
 ## Scope and information contract
 
-This change applies the short-text policy in `Docs/Design/04-InformationDesign.md` to Ishibashiri, Fuchimatoi, Minedaki, and Magatsune. Normal play keeps Kakon progress, stamina, danger anticipation, contextual Grab/Cling instructions, fall recovery, active Sense feedback, and Retry. The current combat font remains English-only because Japanese glyph rendering has not been validated.
+This change applies the short-text policy in `Docs/Design/04-InformationDesign.md` to Ishibashiri, Fuchimatoi, Minedaki, and Magatsune. Normal play keeps transient Kakon progress, contextual non-numeric stamina, danger anticipation, one contextual Grab/Cling/Purify/Recovery instruction, active Sense feedback, and defeat-only Retry. The current combat font's Japanese glyph rendering still requires runtime validation.
 
 Implementation-facing labels are opt-in through `-DebugGuidance`. State/phase labels, route node numbers, recovery multipliers, height, cling time, shake/fall/recovery counters, HP/posture, and broad control telemetry are not part of the normal HUD. Minedaki route guidance names the next physical action instead of exposing node numbers.
 
-No new UI framework is introduced. Each Canvas HUD counts its optional Sense/debug rows and sizes its existing translucent background using the same draw scale. Fuchimatoi also counts the extra recovery direction row shown when the gold beacon is behind the camera. This prevents optional rows from extending below a fixed-height panel while keeping the existing immediate-mode drawing path.
+No new UI framework is introduced. Each Canvas HUD keeps its existing immediate-mode drawing path, draws status cues only when their context is active, and maintains encounter-local presentation memory for the 1.5-second purification notice.
 
 ## Before / after comparison
 
 | Encounter | Normal display before | Normal display after | `-DebugGuidance` after |
 |---|---|---|---|
-| Ishibashiri | Short normal summary, but a fixed panel could be overrun by optional rows | Required status and contextual guidance in a row-counted panel | HP, posture, state/time, and broad controls remain available |
-| Fuchimatoi | `primitive encounter`, action state, HP, coil percentage, route node, and recovery multiplier always visible | Kakon/stamina, danger, Grab/Cling, recovery, purification, and Retry guidance | State, HP, coil, route node, and recovery multiplier |
-| Minedaki | State, route node, open-node limit, height, and telemetry always visible | Kakon/stamina, danger, route action, Grab/Cling, recovery, and Retry guidance | State, node/open limit, height, cling time, shake/fall/recovery counters, and multiplier |
-| Magatsune | Phase/route already gated; recovery multiplier was normally visible and the panel height was fixed | Kakon/stamina, danger, Grab/Cling, recovery, purification, and Retry guidance | Phase and route node |
+| Ishibashiri | Contextual prompts, stamina, and purification notice | Adds active-only Sense feedback and a shorter Calm result | HP, posture, state/time, route, numeric progress/stamina, and broad controls remain available |
+| Fuchimatoi | Permanent title, numeric Kakon/stamina, route prose, and controls | One prompt, contextual stamina, transient progress, active Sense, recovery marker, and concise result | State, HP, coil, route node, recovery multiplier, exact resources, and controls |
+| Minedaki | Permanent title, numeric Kakon/stamina, long route prose, and controls | One prompt, contextual stamina, transient progress, active Sense, recovery, and concise Calm | State, node/open limit, exact resources, height, cling time, counters, multiplier, and controls |
+| Magatsune | Permanent title, numeric Kakon/stamina, phase prose, and controls | One prompt, contextual stamina, transient progress, active Sense, recovery, and concise Calm | Phase, route node, exact resources, telemetry, multiplier, and controls |
 
 ## Validation boundary
 

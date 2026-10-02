@@ -34,7 +34,7 @@ def test_kakon_debug_and_normal_presentations_are_split():
     assert "PurifyPresentationRemaining[I]=.35f" in boss
     hud = source("Source/IshibashiriPrototype/Private/PrototypeHUD.cpp")
     assert "bDebugGuidance" in hud
-    assert "bShowStamina = Player->IsGrabbing()" in hud
+    assert "bShowStamina =" in hud and "Player->IsGrabbing()" in hud
     assert 'TEXT("禍根 %d/%d")' in hud
     assert 'TEXT("STAMINA %.1f/100 | KAKON %d/%d' in hud
 

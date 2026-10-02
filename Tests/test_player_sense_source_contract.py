@@ -43,4 +43,4 @@ def test_required_automation_cases_and_hud_labels_exist():
         assert name in tests
     hud = "".join(text(f"Source/IshibashiriPrototype/Private/{name}HUD.cpp") for name in ("Prototype", "Fuchimatoi", "Minedaki", "Magatsune"))
     assert "BOUNDARY SENSE" in hud
-    assert "CORRUPTION SENSE" in hud
+    assert "GetCorruptionWarningLabel()" in hud
