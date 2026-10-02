@@ -62,9 +62,9 @@ void APrototypeHUD::DrawHUD()
     {
         const FVector Origin = Player->GetActorLocation() + FVector(0.f, 0.f, 15.f);
         FVector2D ScreenOrigin, ScreenTip;
-        if (PlayerOwner->ProjectWorldLocationToScreen(Origin, ScreenOrigin)
-            && PlayerOwner->ProjectWorldLocationToScreen(Origin + Player->GetAttackIndicatorDirection() * Player->AttackReach, ScreenTip)
-            && !ScreenOrigin.Equals(ScreenTip, 1.f))
+        if (PlayerOwner->ProjectWorldLocationToScreen(Origin, ScreenOrigin) &&
+            PlayerOwner->ProjectWorldLocationToScreen(Origin + Player->GetAttackIndicatorDirection() * Player->AttackReach, ScreenTip) &&
+            !ScreenOrigin.Equals(ScreenTip, 1.f))
         {
             const FVector2D Along = (ScreenTip - ScreenOrigin).GetSafeNormal();
             const FVector2D Across(-Along.Y, Along.X);
@@ -81,13 +81,14 @@ void APrototypeHUD::DrawHUD()
     }
 
     // Stamina is a non-numeric survival cue in Production and appears only while relevant.
-    const bool bShowStamina = Player->IsGrabbing() && (Stamina < 90.f || bBuckWarning || Boss->IsBucking() || FullStaminaTailRemaining > 0.f);
+    const bool bShowStamina =
+        Player->IsGrabbing() && (Stamina < 90.f || bBuckWarning || Boss->IsBucking() || FullStaminaTailRemaining > 0.f);
     if (bShowStamina)
     {
         const float W = 230.f * Scale;
         DrawRect(FLinearColor(0.f, 0.f, 0.f, .72f), Margin, Margin, W, 20.f * Scale);
-        DrawRect(Stamina < 25.f ? FLinearColor(.95f, .22f, .12f) : FLinearColor(.82f, .68f, .22f),
-            Margin + 3.f * Scale, Margin + 3.f * Scale, (W - 6.f * Scale) * Stamina / 100.f, 14.f * Scale);
+        DrawRect(Stamina < 25.f ? FLinearColor(.95f, .22f, .12f) : FLinearColor(.82f, .68f, .22f), Margin + 3.f * Scale,
+            Margin + 3.f * Scale, (W - 6.f * Scale) * Stamina / 100.f, 14.f * Scale);
     }
 
     FString Prompt;
@@ -97,45 +98,52 @@ void APrototypeHUD::DrawHUD()
         for (int32 I = 0; I < Boss->GetCoreKakonCount(); ++I)
         {
             const AKakonActor* Kakon = Boss->GetCoreKakon(I);
-            bPurifiableCoreNear |= Kakon && Kakon->GetState() != EKakonState::Purified
-                && FVector::Dist(Player->GetActorLocation(), Kakon->GetActorLocation()) < 170.f;
+            bPurifiableCoreNear |= Kakon && Kakon->GetState() != EKakonState::Purified &&
+                FVector::Dist(Player->GetActorLocation(), Kakon->GetActorLocation()) < 170.f;
         }
     }
     if (ButtonPrompts != EHUDButtonPromptMode::Off && Mode->IsEncounterActive())
     {
         const bool bAlways = ButtonPrompts == EHUDButtonPromptMode::Always;
-        if ((bAlways || !bSawDodge) && Boss->GetState() == EIshibashiriState::Telegraph)
-            Prompt = TEXT("Shift / B  回避");
-        else if ((bAlways || !bSawCounter) && Boss->CanBeCountered())
-            Prompt = TEXT("今だ: LMB / X  反撃");
-        else if (!Player->IsGrabbing() && Boss->CanMount() && Climbing->GetGrabDistance(Boss) <= 400.f
-            && (bAlways || !bSawGrab))
+        if ((bAlways || !bSawDodge) && Boss->GetState() == EIshibashiriState::Telegraph) Prompt = TEXT("Shift / B  回避");
+        else if ((bAlways || !bSawCounter) && Boss->CanBeCountered()) Prompt = TEXT("今だ: LMB / X  反撃");
+        else if (!Player->IsGrabbing() && Boss->CanMount() && Climbing->GetGrabDistance(Boss) <= 400.f && (bAlways || !bSawGrab))
             Prompt = TEXT("E / RB  取り付く");
-        else if ((bAlways || !bSawCling) && Player->IsGrabbing() && bBuckWarning)
-            Prompt = TEXT("E / RB  長押し");
-        else if ((bAlways || !bSawPurify) && Player->IsGrabbing()
-            && bPurifiableCoreNear)
-            Prompt = TEXT("LMB / X  浄化");
+        else if ((bAlways || !bSawCling) && Player->IsGrabbing() && bBuckWarning) Prompt = TEXT("E / RB  長押し");
+        else if ((bAlways || !bSawPurify) && Player->IsGrabbing() && bPurifiableCoreNear) Prompt = TEXT("LMB / X  浄化");
     }
     // An unsuccessful action still needs a response when button hints are off.
     // Reuse the same single card, without adding another input instruction.
-    if (Mode->IsEncounterActive() && !Player->IsGrabbing() && Boss->CanMount()
-        && Climbing->GetGrabDistance(Boss) <= 400.f && !Climbing->GetGrabFeedback().IsEmpty())
+    if (Mode->IsEncounterActive() && !Player->IsGrabbing() && Boss->CanMount() && Climbing->GetGrabDistance(Boss) <= 400.f &&
+        !Climbing->GetGrabFeedback().IsEmpty())
         Prompt = Climbing->GetGrabFeedback();
     if (!Prompt.IsEmpty())
     {
         const float W = FMath::Min(430.f * Scale, Canvas->ClipX - Margin * 2.f);
         const float Left = (Canvas->ClipX - W) * .5f;
         DrawRect(FLinearColor(0.f, 0.f, 0.f, .76f), Left, Canvas->ClipY - 82.f * Scale, W, 48.f * Scale);
-        DrawText(Prompt, FLinearColor(.95f, .88f, .62f), Left + 18.f * Scale, Canvas->ClipY - 70.f * Scale,
-            GEngine->GetMediumFont(), Scale, false);
+        DrawText(Prompt, FLinearColor(.95f, .88f, .62f), Left + 18.f * Scale, Canvas->ClipY - 70.f * Scale, GEngine->GetMediumFont(), Scale,
+            false);
     }
 
     if (PurificationNoticeRemaining > 0.f)
     {
         const FString Notice = FString::Printf(TEXT("禍根 %d/%d"), Boss->GetPurifiedCount(), Boss->GetCoreKakonCount());
-        DrawText(Notice, FLinearColor(.95f, .82f, .42f), Canvas->ClipX * .5f - 62.f * Scale,
-            Canvas->ClipY * .23f, GEngine->GetMediumFont(), 1.15f * Scale, false);
+        DrawText(Notice, FLinearColor(.95f, .82f, .42f), Canvas->ClipX * .5f - 62.f * Scale, Canvas->ClipY * .23f, GEngine->GetMediumFont(),
+            1.15f * Scale, false);
+    }
+
+    float SenseY = bShowStamina ? Margin + 32.f * Scale : Margin;
+    if (Player->GetSense()->IsBoundarySenseActive())
+    {
+        DrawText(FString::Printf(TEXT("BOUNDARY SENSE: %s"), *Player->GetSense()->GetBoundaryStrengthLabel()), FLinearColor(.3f, .9f, 1.f),
+            Margin, SenseY, GEngine->GetMediumFont(), Scale, false);
+        SenseY += 25.f * Scale;
+    }
+    if (Player->GetSense()->IsCorruptionSenseActive())
+    {
+        DrawText(Player->GetSense()->GetCorruptionWarningLabel(), FLinearColor(1.f, .35f, .55f), Margin, SenseY, GEngine->GetMediumFont(),
+            Scale, false);
     }
 
     if (bDebugGuidance)
@@ -153,10 +161,13 @@ void APrototypeHUD::DrawHUD()
             Boss->GetPosture(), Boss->MaxPosture, *Boss->GetStateLabel(), Boss->GetStateTimeRemaining()));
         DebugLine(FString::Printf(TEXT("STAMINA %.1f/100 | KAKON %d/%d | ROUTE %d -> %d | GRIP %s | SHAKE %s"), Stamina,
             Boss->GetPurifiedCount(), Boss->GetCoreKakonCount(), Climbing->GetNode(), Climbing->GetDestination(),
-            Climbing->IsGripping() ? TEXT("ON") : TEXT("OFF"), Boss->IsBucking() ? TEXT("ACTIVE") : bBuckWarning ? TEXT("WARNING") : TEXT("OFF")));
-        DebugLine(FString::Printf(TEXT("SENSE Boundary=%s %s | Arm=%s %s"), Player->GetSense()->IsBoundarySenseActive() ? TEXT("ON") : TEXT("OFF"),
-            *Player->GetSense()->GetBoundaryStrengthLabel(), Player->GetSense()->IsCorruptionSenseActive() ? TEXT("ON") : TEXT("OFF"),
-            *Player->GetSense()->GetCorruptionWarningLabel()));
+            Climbing->IsGripping() ? TEXT("ON") : TEXT("OFF"),
+            Boss->IsBucking()  ? TEXT("ACTIVE")
+                : bBuckWarning ? TEXT("WARNING")
+                               : TEXT("OFF")));
+        DebugLine(FString::Printf(TEXT("SENSE Boundary=%s %s | Arm=%s %s"),
+            Player->GetSense()->IsBoundarySenseActive() ? TEXT("ON") : TEXT("OFF"), *Player->GetSense()->GetBoundaryStrengthLabel(),
+            Player->GetSense()->IsCorruptionSenseActive() ? TEXT("ON") : TEXT("OFF"), *Player->GetSense()->GetCorruptionWarningLabel()));
         DebugLine(TEXT("Move WASD/LS | Camera Mouse/RS | Attack LMB/X | Dodge Shift/B | Grab E/RB | Retry R/Y"));
     }
 
@@ -167,9 +178,8 @@ void APrototypeHUD::DrawHUD()
         const float Left = (Canvas->ClipX - W) * .5f;
         const float Top = Canvas->ClipY * .43f;
         DrawRect(FLinearColor(0.f, 0.f, 0.f, .88f), Left, Top, W, (bCalmed ? 100.f : 150.f) * Scale);
-        DrawText(bCalmed ? TEXT("石走りは鎮まった / Encounter Completed") : TEXT("DEFEAT"),
-            bCalmed ? FLinearColor(.82f, .78f, .57f) : FLinearColor::Red, Left + 24.f * Scale, Top + 24.f * Scale,
-            GEngine->GetMediumFont(), 1.2f * Scale, false);
+        DrawText(bCalmed ? TEXT("石走りは鎮まった") : TEXT("DEFEAT"), bCalmed ? FLinearColor(.82f, .78f, .57f) : FLinearColor::Red,
+            Left + 24.f * Scale, Top + 24.f * Scale, GEngine->GetMediumFont(), 1.2f * Scale, false);
         if (!bCalmed)
             DrawText(TEXT("R / Y - Retry encounter"), FLinearColor::White, Left + 24.f * Scale, Top + 82.f * Scale,
                 GEngine->GetMediumFont(), Scale, false);

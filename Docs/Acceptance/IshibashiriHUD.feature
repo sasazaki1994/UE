@@ -37,7 +37,7 @@ Feature: 石走り編デモの通常プレイ HUD
 
   Scenario: 鎮静と敗北を区別する
     When 石走りが生きたまま鎮まる
-    Then 「石走りは鎮まった / Encounter Completed」を表示する
+    Then 「石走りは鎮まった」を表示する
     And 「VICTORY」と Retry 案内を表示しない
     When プレイヤーが敗北する
     Then 「DEFEAT」と Retry 案内を表示する

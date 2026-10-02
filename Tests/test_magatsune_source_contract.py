@@ -44,4 +44,5 @@ def test_living_terrain_presentation_keeps_gameplay_authority():
     assert "GrabFrame, RouteMarkers and" in boss and "authoritative MovingRoot" in boss
     assert "AdvancePresentation(Dt)" in boss and "NotifyPurificationPresentation()" in boss
     assert "VInterpTo" in player and "FInterpTo" in player
-    assert "IsDebugGuidanceEnabled()" in hud and 'TEXT("DEBUG Phase=%s | Route=%d/12")' in hud
+    assert "IsDebugGuidanceEnabled()" in hud and 'TEXT("DEBUG / MAGATSUNE")' in hud
+    assert "Phase=%s" in hud and "RouteNode=%d/12" in hud

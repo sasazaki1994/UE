@@ -26,31 +26,27 @@ def test_normal_hud_does_not_use_development_labels():
     assert "NEXT ROUTE <= NODE" not in minedaki
 
 
-def test_variable_hud_rows_size_the_background():
-    expected_line_counts = {
-        "FuchimatoiHUD.cpp": "4+SenseLines+(bDebugGuidance?2:0)+(bRecoveryBehindCamera?1:0)",
-        "MinedakiHUD.cpp": "4 + SenseLines + (bDebugGuidance ? 2 : 0)",
-        "MagatsuneHUD.cpp": "4 + SenseLines + (bDebugGuidance ? 1 : 0)",
-    }
-    for name, line_count in expected_line_counts.items():
+def test_later_encounters_use_contextual_non_numeric_stamina():
+    for name in ("FuchimatoiHUD.cpp", "MinedakiHUD.cpp", "MagatsuneHUD.cpp"):
         text = source(name)
-        assert f"LineCount = {line_count}" in text or f"LineCount={line_count}" in text
-        assert "SenseLines" in text
+        assert "bShowStamina = Player->IsMounted()" in text
+        assert "Stamina / MaxStamina" in text
+        assert 'TEXT("STAMINA' not in text[:text.index("if (bDebugGuidance)")]
 
 
-def test_fuchimatoi_counts_offscreen_recovery_guidance():
+def test_fuchimatoi_keeps_world_recovery_guidance_concise():
     text = source("FuchimatoiHUD.cpp")
-    assert "bRecoveryBehindCamera=Boss->IsRecoveryUnlocked()" in text
-    assert "Project(Boss->GetRecoveryAnchor()->GetActorLocation()).Z<=0" in text
-    assert "(bRecoveryBehindCamera?1:0)" in text
-    assert "Gold beacon is behind the camera - turn to find it" in text
+    assert "Boss->IsRecoveryUnlocked()" in text
+    assert "Boss->GetRecoveryAnchor()->GetActorLocation()" in text
+    assert 'DrawText(TEXT("RETURN")' in text
+    assert "behind the camera" not in text
 
 
 def test_required_player_guidance_remains_available():
     combined = "\n".join(source(name) for name in (
         "PrototypeHUD.cpp", "FuchimatoiHUD.cpp", "MinedakiHUD.cpp", "MagatsuneHUD.cpp"
     ))
-    for label in ("STAMINA", "KAKON", "HOLD E / RB", "RECOVERY", "Retry"):
+    for label in ("Stamina", "Kakon", "E / RB  HOLD", "RETURN", "Retry"):
         assert label in combined
 
 
@@ -60,7 +56,7 @@ def test_ishibashiri_production_hud_is_contextual_and_non_numeric():
     assert "MAGAHARAI / ISHIBASHIRI" not in production
     assert 'TEXT("STAMINA' not in production
     assert 'TEXT("KAKON' not in production
-    assert "bShowStamina = Player->IsGrabbing()" in production
+    assert "bShowStamina =" in production and "Player->IsGrabbing()" in production
     assert "Stamina / 100.f" in production
     assert "PurificationNoticeRemaining = 1.5f" in production
     assert 'TEXT("禍根 %d/%d")' in production
@@ -82,7 +78,7 @@ def test_ishibashiri_first_use_prompts_are_queued_by_context():
 def test_ishibashiri_result_and_debug_information_are_separated():
     text = source("PrototypeHUD.cpp")
     assert 'TEXT("VICTORY' not in text
-    assert 'TEXT("石走りは鎮まった / Encounter Completed")' in text
+    assert 'TEXT("石走りは鎮まった")' in text
     assert 'TEXT("R / Y - Retry encounter")' in text
     debug = text[text.index("if (bDebugGuidance)"):]
     for label in ("DEBUG GUIDANCE", "HP %d/%d", "POSTURE", "STATE", "STAMINA %.1f/100", "ROUTE", "SHAKE"):
