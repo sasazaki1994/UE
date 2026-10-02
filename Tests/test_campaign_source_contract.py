@@ -77,3 +77,15 @@ def test_campaign_launcher_and_documentation_are_present():
     assert "-CampaignE2E" in script
     assert "CAMPAIGN_E2E_PASS" in script
     assert "-Action Play -Campaign" in read("README.md")
+
+
+def test_completed_returns_to_title_and_allows_new_campaign_start():
+    tests = read("Source/IshibashiriPrototype/Private/CampaignTests.cpp")
+    source = read("Source/IshibashiriPrototype/Private/CampaignGameInstance.cpp")
+    assert 'TestTrue(TEXT("Completed returns to Title"), C->AdvanceCardChapter())' in tests
+    assert 'TestEqual(TEXT("Completed screen returns to Title"), C->GetCampaignState(), ECampaignState::Title)' in tests
+    assert 'TestTrue(TEXT("A new campaign can start after completion"), C->AdvanceCardChapter())' in tests
+    assert 'TestEqual(TEXT("Restarted campaign begins at Prologue"), C->GetCampaignState(), ECampaignState::Prologue)' in tests
+    completed_case = source.index("case ECampaignState::Completed: State = ECampaignState::Title; break;")
+    start_case = source.index("case ECampaignState::Title: StartCampaign(); break;")
+    assert completed_case >= 0 and start_case >= 0
