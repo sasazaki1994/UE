@@ -53,11 +53,13 @@ On a charge hit, Player HP loses one of three points; at zero the encounter ends
 
 ## 4. Grab start
 
-**Current:** the route system has one authoritative node (`Route[0]`) and one gold `ForelegGrabMarker`; range and warp distance are 240 cm, angle 100°, completion tolerance 35 cm/18°, with a 0.48 s visible fallback when the montage is absent. Some older prose says “foreleg or horn,” but source does not provide two independent route starts. Therefore only **one** start is implemented.
+**Current / SOURCE (2026-10-01):** the route system has one authoritative node (`Route[0]`) and one gold `ForelegGrabMarker`; range and maximum warp distance are 300 cm, yaw tolerance is 120°, and completion tolerance remains 35 cm/18°, with a 0.48 s visible fallback when the montage is absent. A failed press during Kneel and within the primary range is buffered for 0.25 s for that same boss, with short feedback. The contextual prompt uses distance to node 0, appearing within 400 cm. Some older prose says “foreleg or horn,” but source does not provide two independent route starts. Therefore only **one** start is implemented. Current-change runtime verification remains **NOT_RUN**.
 
 **Final:** retain **two generous authored activation volumes**—front leg (primary) and lowered horn/head (secondary)—both resolving to route node 0 and the same fixed route. They are alternatives, not two routes. During Kneel only, contaminated seams converge to a restrained warm-gold glint; gold is retained as a brief affordance, not a permanent collectible beacon. Within 4 m show `E / RB 取り付く` (first time, or always when button prompts are enabled). Accept input within **300 cm**, **120°**, and warp/assist at most 300 cm; never require sub-metre manual alignment. Face correction is part of the short approach animation. A failed press inside the activation volume stays buffered for 0.25 s and gives feedback; it does not consume the window.
 
-This needs a small second-volume/range/prompt change. No free climb, physics grab, or new animation is required. First-play gate: at least 90% of players who reach either highlighted hold and press Grab mount on that press; record press distance, facing and timeout cause.
+**Scoped implementation boundary:** primary range, facing tolerance, short input buffer and node-relative prompt are implemented. Buffered intent is checked only before expiry and is cleared on range exit, target change/loss, Kneel end, encounter end, death, Detach and Reset; releasing the button does not discard the tap. It never reserves an input made before Kneel or outside range. The existing montage/fallback handoff still resolves to node 0 and never starts beyond the 300 cm warp limit.
+
+**Remaining geometry work:** the secondary horn/head volume is deferred. The authored horn point `(-261,-531,185)` cm in `Tools/CreateCharacterModels.py` is approximately 338 cm from `Route[0] = (-270,-215,65)` cm before any approach clearance. It cannot be advertised as an independent entry while preserving the current direct-to-node-0, maximum-300-cm approach. A second radius check clipped to the same primary range would not create a second usable entry. Author and validate a lowered-head placement or an intermediate approach before implementing that target; no second marker or route is added in this substep. First-play gate for the completed design: at least 90% of players who reach either highlighted hold and press Grab mount on that press; record press distance, facing and timeout cause. For current source, evaluate the primary foreleg only.
 
 ## 5. Fixed climbing route
 
@@ -159,7 +161,7 @@ No free climbing, open world, boss HP/death, new weapon, skill tree, GAS, Motion
 ## 14. Minimal source changes required before Production gate
 
 1. **Implemented:** change Kneel timeout from posture 3 to posture 1.
-2. Add a second generous horn/head activation volume while resolving both starts to node 0; tune Grab to 300 cm/120°, add 0.25 s buffer and contextual prompt.
+2. **Primary entry implemented:** Grab to 300 cm/120°, a 0.25 s buffer bound to the current Kneel/boss, and a contextual prompt within 400 cm of node 0. **Remaining:** a second horn/head activation volume needs authored placement or an intermediate approach; current horn geometry exceeds the 300 cm direct warp limit (§4).
 3. Make Kakon/route presentation Sense- or context-gated; remove always-current marker from normal play.
 4. Replace “all nodes ≥3 rest” with authored meaningful rest flags.
 5. **Implemented:** add local fall recovery preserving Kakon, 50 stamina, 3 s shake immunity and a 6 s re-grab opportunity, with an encounter-spawn fallback for invalid anchors.

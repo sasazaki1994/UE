@@ -4,6 +4,7 @@
 #include "Engine/World.h"
 #include "HAL/IConsoleManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/PackageName.h"
 #include "PlayerSenseComponent.h"
 #include "Sound/SoundAttenuation.h"
 #include "Sound/SoundWave.h"
@@ -24,7 +25,13 @@ UCommonSfxSubsystem::UCommonSfxSubsystem()
     // Native hard references make the six SoundWaves discoverable by the cooker.
     for (const TCHAR* Name : Names)
     {
-        const FString Path = FString::Printf(TEXT("/Game/Audio/CommonSfx/%s.%s"), Name, Name);
+        const FString Package = FString::Printf(TEXT("/Game/Audio/CommonSfx/%s"), Name);
+        if (!FPackageName::DoesPackageExist(Package))
+        {
+            Sounds.Add(nullptr);
+            continue;
+        }
+        const FString Path = Package + TEXT(".") + Name;
         ConstructorHelpers::FObjectFinderOptional<USoundWave> Sound(*Path);
         Sounds.Add(Sound.Get());
     }

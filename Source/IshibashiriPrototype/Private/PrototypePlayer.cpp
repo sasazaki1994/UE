@@ -367,12 +367,13 @@ void APrototypePlayer::BeginGrab()
         Climbing->GrabPressed();
         return;
     }
-    if (GrabComponent->IsGrabbing() || IsDodging()) return;
+    if (GrabComponent->IsGrabbing()) return;
     if (bUseRouteClimbing)
     {
         Climbing->GrabPressed();
         return;
     }
+    if (IsDodging()) return;
     const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     if (Mode && GrabComponent->TryGrab(Mode->GetBoss(), GrabDistance)) ShowFeedback(TEXT("GRABBING"));
 }

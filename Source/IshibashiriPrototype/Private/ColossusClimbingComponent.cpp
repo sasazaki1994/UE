@@ -75,20 +75,84 @@ bool UColossusClimbingComponent::IsResting() const
 void UColossusClimbingComponent::GrabPressed()
 {
     bGripHeld = true;
-    // A second press during the warp must not fall through StartGrabWarp's
-    // "already warping" refusal into the legacy snap below.
-    if (!IsValid(Player) || Boss || bGrabWarping || Stamina < MinimumGrabStamina || Player->IsDodging() || Player->IsAttacking()) return;
+    // Cling and repeated presses during an accepted approach do not queue a mount.
+    if (!IsValid(Player) || Boss || bGrabWarping) return;
+    ClearGrabRequest();
     APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
     AIshibashiriBoss* Candidate = Mode ? Mode->GetBoss() : nullptr;
-    if (!Mode || !Mode->IsEncounterActive() || !IsValid(Candidate)) return;
+    if (!Mode || !Mode->IsEncounterActive() || !IsValid(Candidate)
+        || !Player->bUseRouteClimbing || Player->GetHealth() <= 0) return;
     if (!Candidate->CanMount()) return;
-    if (FVector::Dist(Player->GetActorLocation(), Candidate->GetClimbPosition(0)) > GrabRange) return;
-    if (Candidate->GetState() == EIshibashiriState::Charge) return;
+    if (GetGrabDistance(Candidate) > FMath::Min(GrabRange, MaximumWarpDistance)) return;
+    if (TryStartGrab(Candidate)) return;
+
+    // Preserve this press only for the current nearby Kneel. Holding the button
+    // cannot renew it, or cause a later charge cycle to mount automatically.
+    BufferedGrabBoss = Candidate;
+    GrabBufferRemaining = FMath::Max(0.f, GrabBufferSeconds);
+    GrabFeedbackRemaining = .75f;
+    GrabFeedback = Stamina < MinimumGrabStamina ? TEXT("スタミナの回復を待つ")
+        : FacingAngle(Player, MakeGrabWarpTarget(Candidate)) > MaximumWarpAngle ? TEXT("金色の印へ向き直る")
+        : TEXT("姿勢を整えて取り付く");
+    UE_LOG(LogTemp, Display, TEXT("GRAB_BUFFERED distance=%.1f angle=%.1f seconds=%.3f"),
+        GetGrabDistance(Candidate), FacingAngle(Player, MakeGrabWarpTarget(Candidate)), GrabBufferRemaining);
+}
+
+float UColossusClimbingComponent::GetGrabDistance(const AIshibashiriBoss* Candidate) const
+{
+    return IsValid(Player) && IsValid(Candidate)
+        ? FVector::Dist(Player->GetActorLocation(), Candidate->GetClimbPosition(0)) : MAX_flt;
+}
+
+bool UColossusClimbingComponent::TryStartGrab(AIshibashiriBoss* Candidate)
+{
+    if (!IsValid(Player) || !IsValid(Candidate) || !Candidate->CanMount()
+        || Boss || Player->IsGrabbing() || !Player->bUseRouteClimbing || Player->GetHealth() <= 0
+        || Stamina < MinimumGrabStamina || Player->IsDodging() || Player->IsAttacking()
+        || Player->GetCharacterMovement()->IsFalling()) return false;
     const FTransform WarpTarget = MakeGrabWarpTarget(Candidate);
-    if (FVector::Dist(Player->GetActorLocation(), WarpTarget.GetLocation()) > MaximumWarpDistance
-        || FacingAngle(Player, WarpTarget) > MaximumWarpAngle) return;
-    if (StartGrabWarp(Candidate)) return;
-    StartFallbackGrabApproach(Candidate);
+    if (GetGrabDistance(Candidate) > FMath::Min(GrabRange, MaximumWarpDistance)
+        || FacingAngle(Player, WarpTarget) > MaximumWarpAngle) return false;
+    ClearGrabRequest();
+    if (!StartGrabWarp(Candidate)) StartFallbackGrabApproach(Candidate);
+    return true;
+}
+
+void UColossusClimbingComponent::ClearGrabRequest()
+{
+    BufferedGrabBoss.Reset();
+    GrabBufferRemaining = 0.f;
+    GrabFeedback.Empty();
+    GrabFeedbackRemaining = 0.f;
+}
+
+void UColossusClimbingComponent::UpdateBufferedGrab(float Dt)
+{
+    const APrototypeGameMode* Mode = GetWorld()->GetAuthGameMode<APrototypeGameMode>();
+    if (!Mode || !Mode->IsEncounterActive() || !IsValid(Player) || Player->GetHealth() <= 0
+        || !Player->bUseRouteClimbing || Player->IsGrabbing())
+    {
+        ClearGrabRequest();
+        return;
+    }
+    GrabFeedbackRemaining = FMath::Max(0.f, GrabFeedbackRemaining - FMath::Max(0.f, Dt));
+    if (GrabFeedbackRemaining <= 0.f) GrabFeedback.Empty();
+    if (GrabBufferRemaining <= 0.f) return;
+    AIshibashiriBoss* Candidate = BufferedGrabBoss.Get();
+    if (!IsValid(Candidate) || Mode->GetBoss() != Candidate || !Candidate->CanMount()
+        || GetGrabDistance(Candidate) > FMath::Min(GrabRange, MaximumWarpDistance))
+    {
+        ClearGrabRequest();
+        return;
+    }
+    // Expire before checking eligibility so a long frame cannot replay stale input.
+    GrabBufferRemaining = FMath::Max(0.f, GrabBufferRemaining - FMath::Max(0.f, Dt));
+    if (GrabBufferRemaining <= 0.f)
+    {
+        BufferedGrabBoss.Reset();
+        return;
+    }
+    TryStartGrab(Candidate);
 }
 
 void UColossusClimbingComponent::GrabReleased()
@@ -265,6 +329,7 @@ void UColossusClimbingComponent::UpdateGrabWarp(float Dt)
 }
 void UColossusClimbingComponent::Detach(bool bJump)
 {
+    ClearGrabRequest();
     if (bGrabWarping) { CancelGrabWarp(TEXT("Detach")); return; }
     // Node survives a destroyed target being nulled by GC, so it also records
     // whether this component still owns the character's disabled movement.
@@ -351,6 +416,7 @@ void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActor
     // Release before IK or encounter checks: a target may be destroyed while
     // the encounter is ending, or its reflected pointer may already be null.
     if ((Boss || Node != INDEX_NONE) && !IsValid(Boss)) Detach(false);
+    UpdateBufferedGrab(Dt);
     UpdateIK(Dt);
     UpdateGrabWarp(Dt);
     if (bGrabWarping) return;
@@ -412,7 +478,7 @@ void UColossusClimbingComponent::TickComponent(float Dt, ELevelTick Type, FActor
 }
 FString UColossusClimbingComponent::GetHint() const
 {
-    if (!IsClimbing()) return TEXT("Break posture, then E / RB near the gold foreleg or horn hold during KNEEL");
+    if (!IsClimbing()) return TEXT("Break posture, then E / RB near the gold foreleg hold during KNEEL");
     if (Boss->IsBucking() || Boss->IsBuckWarning()) return TEXT("HOLD E / RB - brace for the shake! Movement pauses during the shake.");
     if (Node == 5) return TEXT("W / LS up: summit | D / LS right: right-shoulder core | S: descend | Space / A: detach");
     if (Node == 10) return TEXT("W: shoulder core | A / S: main route");

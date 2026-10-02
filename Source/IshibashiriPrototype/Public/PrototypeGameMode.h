@@ -38,6 +38,7 @@ public:
     UPROPERTY(EditAnywhere, Category="Arena", meta=(ClampMin="1200")) float ArenaHalfExtent = 4000.f;
 
 private:
+    friend class FGrabAssistTest;
     UFUNCTION()
     void HandleEncounterCompleted();
     void AdvanceCampaign();

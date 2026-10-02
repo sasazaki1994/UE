@@ -39,7 +39,7 @@ void APrototypeHUD::DrawHUD()
 
     if (Player->IsDodging()) bSawDodge = true;
     if (Boss->GetPosture() < PreviousPosture) bSawCounter = true;
-    if (Player->IsGrabbing()) bSawGrab = true;
+    if (Climbing->IsClimbing()) bSawGrab = true;
     if (Boss->GetPurifiedCount() > PreviousPurifiedCount)
     {
         PreviousPurifiedCount = Boss->GetPurifiedCount();
@@ -108,8 +108,8 @@ void APrototypeHUD::DrawHUD()
             Prompt = TEXT("Shift / B  回避");
         else if ((bAlways || !bSawCounter) && Boss->CanBeCountered())
             Prompt = TEXT("今だ: LMB / X  反撃");
-        else if ((bAlways || !bSawGrab) && Boss->CanMount()
-            && FVector::Dist(Player->GetActorLocation(), Boss->GetActorLocation()) <= 400.f)
+        else if (!Player->IsGrabbing() && Boss->CanMount() && Climbing->GetGrabDistance(Boss) <= 400.f
+            && (bAlways || !bSawGrab))
             Prompt = TEXT("E / RB  取り付く");
         else if ((bAlways || !bSawCling) && Player->IsGrabbing() && bBuckWarning)
             Prompt = TEXT("E / RB  長押し");
@@ -117,6 +117,11 @@ void APrototypeHUD::DrawHUD()
             && bPurifiableCoreNear)
             Prompt = TEXT("LMB / X  浄化");
     }
+    // An unsuccessful action still needs a response when button hints are off.
+    // Reuse the same single card, without adding another input instruction.
+    if (Mode->IsEncounterActive() && !Player->IsGrabbing() && Boss->CanMount()
+        && Climbing->GetGrabDistance(Boss) <= 400.f && !Climbing->GetGrabFeedback().IsEmpty())
+        Prompt = Climbing->GetGrabFeedback();
     if (!Prompt.IsEmpty())
     {
         const float W = FMath::Min(430.f * Scale, Canvas->ClipX - Margin * 2.f);
