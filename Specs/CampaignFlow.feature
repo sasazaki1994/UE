@@ -85,6 +85,13 @@
     もし 各GameModeのRetryEncounterが共通Retry通知を通ってEncounterをリセットする
     ならば Campaign Chapterと穢れ段階は変わらない
 
+  シナリオ: Victory表示中のRetryは古い章遷移を取り消す
+    前提 4つのうちいずれかのEncounterがCompletedとなりVictoryを表示している
+    もし 2秒のCampaign遷移待機中にRetryする
+    ならば 予約済みのCampaignAdvanceTimerは取り消される
+    かつ Campaign Chapterは変わらずEncounterが再開する
+    かつ 単体起動ではCampaign遷移を予約しない
+
   シナリオ: 単体起動はEncounterから穢れ段階を決める
     前提 Campaignが無効でGameInstanceの章初期値がTitleである
     ならば 石走りと淵纏いはEarlyになる

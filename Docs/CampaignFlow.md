@@ -23,7 +23,7 @@
 
 各GameModeは自身の `ANushiEncounterManager::OnEncounterCompleted` を検知する。Completed後は既存Victory HUDを2秒表示してから、Campaignへ現在Encounterと一致する完了だけを通知する。通知先は次のInterlude（禍津根のみEnding）。別Encounterや重複通知は拒否される。
 
-R / Yは従来どおり各GameModeの `RetryEncounter` だけを呼ぶ。Campaignへの通知がないためChapterは進まず、Progress、Grab/Cling、Stamina、camera、telemetryを既存Reset処理で初期化する。
+R / Yは従来どおり各GameModeの `RetryEncounter` を呼ぶ。Retry通知は穢れ段階の維持にだけ使い、Campaign Chapterは進めない。各GameModeは予約済みの `CampaignAdvanceTimer` をclearしてからEncounterをReset・再Startするため、Victory表示の2秒間にRetryしても古い予約で次章へ遷移しない。Progress、Grab/Cling、Stamina、camera、telemetryは既存Reset処理で初期化する。
 
 ## カード仕様
 
