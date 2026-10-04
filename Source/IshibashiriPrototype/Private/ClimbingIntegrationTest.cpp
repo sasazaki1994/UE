@@ -132,7 +132,9 @@ bool AClimbingIntegrationTest::DriveMountWindow(float Dt)
     if (State==EIshibashiriState::Chase || (State==EIshibashiriState::Recover && !B->CanBeCountered()))
     {
         Hold(EKeys::A,false);Hold(EKeys::D,false);
-        const FVector Bait=B->GetActorLocation()+(-B->GetActorLocation()).GetSafeNormal2D()*850.f;
+        // Bait from the player's own side. A world-origin reference flips when the
+        // boss crosses the basin centre and walks the player into the next charge.
+        const FVector Bait=B->GetActorLocation()+(P->GetActorLocation()-B->GetActorLocation()).GetSafeNormal2D()*850.f;
         WalkTo(Bait,70.f);
     }
     else if (State==EIshibashiriState::Telegraph)
