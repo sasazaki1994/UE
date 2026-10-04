@@ -1,3 +1,5 @@
+import ast
+import re
 from pathlib import Path
 
 
@@ -62,7 +64,7 @@ def test_standalone_encounters_pass_their_stage_authority():
 def test_material_setup_is_shirotsura_only_and_idempotent_by_tag():
     source = (ROOT / "Tools/ApplyRiggedMaterials.py").read_text(encoding="utf-8")
     assert "name=='Shirotsura'" in source
-    assert "label=='09 • petrified corruption'" in source
+    assert "slot_role(label)=='petrified corruption'" in source
     assert "ShirotsuraCorruptionIntensity" in source
     # UE 5.6 Python has no expression listing; tagged nodes come from a pre-reconnect graph snapshot.
     assert "get_all_material_expressions" not in source
@@ -79,10 +81,41 @@ def test_face_neck_mask_uses_source_object_provenance_and_is_optional_until_rege
     assert "ob.name.startswith(('Head_under_mask','Neck_anatomy'))" in rig
     assert "T_Shirotsura_FaceNeckMask.png" in rig
     assert "mask_path.exists()" in materials
-    assert "label=='05 • exposed right hand'" in materials
+    assert "slot_role(label)=='exposed right hand'" in materials
     assert "SHIROTSURA_FACE_NECK_MASK" in materials
     assert "A zero mask must be an exact pass-through" in materials
-    assert 'FName(TEXT("05 • exposed right hand"))' in runtime
+    assert 'TEXT("exposed right hand")' in runtime
+
+
+def imported_slot_names(asset):
+    # Non-ASCII FNames are stored as UTF-16 at either byte alignment.
+    data = (ROOT / asset).read_bytes()
+    text = data.decode("utf-16-le", errors="ignore") + data[1:].decode("utf-16-le", errors="ignore")
+    return set(re.findall(r"\d\d_•_[a-z_]+?(?=DiffSpecFunc|[^a-z_]|$)", text))
+
+
+def tool_slot_role():
+    tree = ast.parse((ROOT / "Tools/ApplyRiggedMaterials.py").read_text(encoding="utf-8"))
+    function = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "slot_role")
+    namespace = {}
+    exec(compile(ast.Module(body=[function], type_ignores=[]), "slot_role", "exec"), namespace)
+    return namespace["slot_role"]
+
+
+def test_corruption_roles_match_imported_shirotsura_slots():
+    slots = imported_slot_names("Content/Characters/Rigged/Shirotsura/SK_Shirotsura.uasset")
+    slot_role = tool_slot_role()
+    roles = {slot_role(slot) for slot in slots}
+    assert "petrified corruption" in roles
+    assert "exposed right hand" in roles
+    assert slot_role("09 • petrified corruption") == "petrified corruption"
+    runtime = (PRIVATE / "ShirotsuraVisualComponent.cpp").read_text(encoding="utf-8")
+    assert 'Replace(TEXT("_"), TEXT(" "))' in runtime
+    assert 'Role.Find(TEXT("•"))' in runtime
+    assert 'TEXT("petrified corruption")' in runtime
+    assert "Mesh->GetMaterialSlotNames()" in runtime
+    # Section numbers changed between model revisions; matching must not depend on them.
+    assert not re.search(r'TEXT\("\d\d', runtime)
 
 
 def test_no_gameplay_or_extra_appearance_state_was_added():

@@ -68,3 +68,10 @@
 4. ランタイムは左腕と共有 skin の各 slot を独立に検査し、同じ既存 `Early=.28` / `Advanced=1.0` 値を、parameter が実在する slot にだけ設定する。このため未再生成 asset、別 mesh、slot 欠落でも右手や仮面へ無条件の色変更は行わない。
 
 現在チェックイン済みの PNG / FBX / `.uasset` は再生成していないため、顔・首用 mask 素材は **PENDING_ASSET_REGENERATION**、顔・首の見た目は **NOT_COMPLETE** である。モデル、skeleton、animation clip、能力、Campaign 章順は変更していない。Blender ベイク、UE C++ build、Automation、Early / Advanced の同一カメラ描画比較はこの環境では **NOT_RUN** であり、実装完了の根拠にはしていない。
+
+## 左腕 slot 照合の修正（2026-10-04）
+
+- 上表の `09 • petrified corruption` / `05 • exposed right hand` は旧モデルの表記である。現行 `SK_Shirotsura` の slot は FBX 経由で `09_•_petrified_corruption` / `13_•_exposed_right_hand` となり、固定文字列の照合が一致せず、実行時は `SHIROTSURA_CORRUPTION_UNSUPPORTED` だった。
+- `ApplyRiggedMaterials.py` と `ShirotsuraVisualComponent.cpp` は、番号と区切りを除いた役割名で照合する。左腕の `M_Baked_9` を `CHARACTER_ASSET_FILTER=Shirotsura` で再生成し、`ShirotsuraCorruptionIntensity`（既定値 1.0）を持たせた。
+- 検証（Windows / UE 5.6.1）: Build **PASS**。smoke test（石走り）は本体 **PASS** で `SHIROTSURA_CORRUPTION_APPLIED stage=Early`、`-Magatsune` は **PASS** で `stage=Advanced` を確認した。FaceNeckMask PNG は未生成のため、素手 slot には graph を作らず値も設定しない（従来どおり）。
+- 既存キャプチャは遠景で左腕の色差を判別できないため、Early / Advanced の近接描画比較は **NOT_RUN**。
