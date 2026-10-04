@@ -2,6 +2,8 @@
 
 The Approach and Basin arenas load these assets by name from `/Game/Environment/Ishibashiri/` through `IshibashiriEnvironment::Load`. `-PrimitiveEnvironment` still forces the primitive fallback. All visual meshes are NoCollision; the hidden primitives keep gameplay collision.
 
+The normal Campaign Ishibashiri encounter opens `PrototypeGameMode` without `?BasinPrototype`, so it fights in the legacy 80 m square arena. `APrototypeArenaDressing` dresses that arena with the same kit: the ground material on the floor, a two-row rock rim outside the hidden walls, a cedar circle, ferns, fallen cedars, sky atmosphere and distant haze. The floor and wall blocks keep their positions and `BlockAll` collision.
+
 | UE asset | Poly Haven source | License |
 | --- | --- | --- |
 | `SM_Ishibashiri_OldCedar_A` | `fir_tree_01` (object `fir_tree_01_a_LOD0`) | CC0 1.0 |
@@ -48,3 +50,4 @@ The Approach reveal silhouette reuses the existing rigged `SK_Ishibashiri` with 
 - Captures inspected for the Approach and Basin review cameras: no black spikes on cedars and ground tiling is uniform.
 - Props, variants and decals (same day): UE import PASS (cedar B LOD 321395 / 98715 / 37126 / 19533), Build PASS, both captures exit 0 with every `ENVIRONMENT_KIT` flag = 1, `pytest` 212 passed, gameplay contract digests match. Captures show posts with rope, footprint and crack decals, cedar/rock variants, stepping stones and the rigged reveal silhouette.
 - NOT_RUN: frame-rate measurement, interactive play in the game window, hardware input, human visual approval.
+- Campaign arena dressing (same day): Build PASS; smoke test body PASS with every `ENVIRONMENT_KIT arena` flag = 1 (exit 1 is the existing `04-Victory.png` lookup); `-Climbing` and `-Grab` PASS; `-PrimitiveEnvironment` smoke PASS with all flags = 0 and the original blockout. The distant cedars read sparse at 60–90 m; frame rate, Campaign E2E and human visual approval are NOT_RUN.
