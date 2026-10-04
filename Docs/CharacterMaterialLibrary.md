@@ -173,10 +173,11 @@ UE 5.6 Python には material expression の列挙APIがない（`get_all_materi
 は存在しない）。再適用時は接続を張り替える前に各 material property から辿れる
 node を記録し、tag で再利用する。
 
-既知の別件として、現行 slot 名は `09_•_petrified_corruption` のように underscore
-区切りであり、腐食段階の `label=='09 • petrified corruption'` 判定は一致しない。
-実行時は `SHIROTSURA_CORRUPTION_UNSUPPORTED` が出ており、この変更前から
-`ShirotsuraCorruptionIntensity` は material に存在しない。
+FBX 経由の slot 名は `09_•_petrified_corruption` のように underscore 区切りで、
+section 番号もモデル改訂で変わっている（素手は現行 `13_•_exposed_right_hand`）。
+腐食段階の slot は `ApplyRiggedMaterials.py` の `slot_role` と
+`ShirotsuraVisualComponent.cpp` の `SlotRole` で、番号と区切りを除いた役割名
+（`petrified corruption` / `exposed right hand`）で照合する。
 
 検証（2026-10-04、UE 5.6.1）: smoke test は PASS し、同一カメラの
 `07-BossCamera` を 2026-09-26 の撮影と比べて、石走りの胴に剛毛の凹凸が、牙に岩肌が

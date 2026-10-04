@@ -196,6 +196,10 @@ def detail_textures(key,cache):
     cache[key]=tuple(pair)
     return cache[key]
 
+def slot_role(label):
+    """FBX imports '09 • petrified corruption' as '09_•_petrified_corruption'; numbering varies by model."""
+    return label.replace('_',' ').split('•',1)[-1].strip()
+
 def surface_detail(name,label):
     words=label.replace('_',' ')
     return next((spec for keyword,spec in SURFACE_DETAIL[name] if keyword in words),None)
@@ -304,9 +308,9 @@ def apply_character_materials(name, dest, folder, replace_existing=True):
             sample.set_editor_property('sampler_type',unreal.MaterialSamplerType.SAMPLERTYPE_COLOR if kind=='BaseColor' else (unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL if kind=='Normal' else unreal.MaterialSamplerType.SAMPLERTYPE_MASKS))
             lib.connect_material_property(sample,'R' if kind=='Roughness' else 'RGB',prop)
             samples[kind]=sample
-            if name=='Shirotsura' and label=='09 • petrified corruption' and kind=='BaseColor':
+            if name=='Shirotsura' and slot_role(label)=='petrified corruption' and kind=='BaseColor':
                 configure_shirotsura_corruption(mat,sample)
-            if name=='Shirotsura' and label=='05 • exposed right hand' and kind=='BaseColor' and 'FaceNeckMask' in textures:
+            if name=='Shirotsura' and slot_role(label)=='exposed right hand' and kind=='BaseColor' and 'FaceNeckMask' in textures:
                 mask=expression(mat,unreal.MaterialExpressionTextureSample,-450,120,
                     unreal.MaterialProperty.MP_BASE_COLOR,'SHIROTSURA_FACE_NECK_MASK')
                 mask.set_editor_property('texture',textures['FaceNeckMask'])

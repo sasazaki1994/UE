@@ -1,5 +1,6 @@
 #include "ShirotsuraVisualComponent.h"
 #include "ProductionVisuals.h"
+#include "Algo/AnyOf.h"
 #include "Animation/AnimSequence.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -11,6 +12,16 @@ namespace
     const TCHAR* const ClipNames[] = {TEXT("Idle"), TEXT("Walk"), TEXT("Run"), TEXT("Slash"), TEXT("Dodge"), TEXT("Climb"), TEXT("Hang"),
         TEXT("Grip"), TEXT("Jump"), TEXT("Death")};
     static_assert(UE_ARRAY_COUNT(ClipNames) == static_cast<int32>(EShirotsuraVisualState::Count));
+
+    // FBX import turns "09 • petrified corruption" into "09_•_petrified_corruption",
+    // and the section numbers have changed between model revisions.
+    FString SlotRole(FName SlotName)
+    {
+        FString Role = SlotName.ToString().Replace(TEXT("_"), TEXT(" "));
+        const int32 Bullet = Role.Find(TEXT("•"));
+        if (Bullet != INDEX_NONE) Role.RightChopInline(Bullet + 1);
+        return Role.TrimStartAndEnd();
+    }
 }
 
 UShirotsuraVisualComponent::UShirotsuraVisualComponent() { PrimaryComponentTick.bCanEverTick = true; }
@@ -73,15 +84,14 @@ void UShirotsuraVisualComponent::ApplyCorruptionAppearance()
     // The arm has a dedicated section. The shared skin section is eligible only
     // after its material has the authored face/neck mask parameter; legacy
     // assets therefore keep the right hand unchanged instead of guessing UVs.
-    static const FName CorruptionSlots[] = {
-        FName(TEXT("09 • petrified corruption")),
-        FName(TEXT("05 • exposed right hand"))
-    };
+    static const TCHAR* const CorruptionRoles[] = {TEXT("petrified corruption"), TEXT("exposed right hand")};
     static const FName IntensityParameter(TEXT("ShirotsuraCorruptionIntensity"));
-    for (const FName& CorruptionSlot : CorruptionSlots)
+    const TArray<FName> SlotNames = Mesh->GetMaterialSlotNames();
+    for (int32 SlotIndex = 0; SlotIndex < SlotNames.Num(); ++SlotIndex)
     {
-        const int32 SlotIndex = Mesh->GetMaterialIndex(CorruptionSlot);
-        if (SlotIndex == INDEX_NONE) continue;
+        const FName CorruptionSlot = SlotNames[SlotIndex];
+        const FString Role = SlotRole(CorruptionSlot);
+        if (!Algo::AnyOf(CorruptionRoles, [&Role](const TCHAR* Candidate) { return Role == Candidate; })) continue;
         UMaterialInterface* Source = Mesh->GetMaterial(SlotIndex);
         float ExistingValue = 0.f;
         if (!Source || !Source->GetScalarParameterValue(FMaterialParameterInfo(IntensityParameter), ExistingValue)) continue;
