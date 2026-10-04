@@ -42,6 +42,7 @@ The Approach reveal silhouette reuses the existing rigged `SK_Ishibashiri` with 
 - Needle geometry (4.07M source triangles) is thinned to 400k at LOD0; kept needle islands are enlarged to hold the crown silhouette. Islands on the opaque stem strip of the twig atlas are not enlarged.
 - Only the trunk is decimated. Branch tubes are kept intact because collapsing them produces flat dark fins.
 - LOD1–LOD3 are authored in Blender and imported with `import_lod`; engine LOD reduction turns alpha needles into opaque spikes.
+- Each LOD keeps fewer needle cards and grows them by `sqrt(LOD0 cards / kept cards)`, so the crown keeps the LOD0 card area. With the earlier fixed 1.6× scale, LOD3 kept about 5% of that area and the untouched branch tubes read as bare dead trees in the Campaign arena, where every cedar is 60 m or more away. The prepare report records the card scale per LOD.
 - Dead-branch cards are dropped because the 1k glTF ships no cutout map for them.
 
 ## Verification (2026-10-04)
@@ -51,3 +52,4 @@ The Approach reveal silhouette reuses the existing rigged `SK_Ishibashiri` with 
 - Props, variants and decals (same day): UE import PASS (cedar B LOD 321395 / 98715 / 37126 / 19533), Build PASS, both captures exit 0 with every `ENVIRONMENT_KIT` flag = 1, `pytest` 212 passed, gameplay contract digests match. Captures show posts with rope, footprint and crack decals, cedar/rock variants, stepping stones and the rigged reveal silhouette.
 - NOT_RUN: frame-rate measurement, interactive play in the game window, hardware input, human visual approval.
 - Campaign arena dressing (same day): Build PASS; smoke test body PASS with every `ENVIRONMENT_KIT arena` flag = 1 (exit 1 is the existing `04-Victory.png` lookup); `-Climbing` and `-Grab` PASS; `-PrimitiveEnvironment` smoke PASS with all flags = 0 and the original blockout. The distant cedars read sparse at 60–90 m; frame rate, Campaign E2E and human visual approval are NOT_RUN.
+- Distant cedar coverage (same day): Blender prepare and UE import PASS (cedar A LOD 434068 / 135846 / 65213 / 40582, cedar B 321395 / 98715 / 43124 / 24534). In the smoke `01-Dodge` capture, non-sky pixels in the top tenth of the frame (cedar crowns above the rock rim) rose from 5372 to 9984. `-EnvironmentReview -Basin|-Approach -Capture` PASS; mid-distance crowns are fuller and LOD0 cedars are unchanged. Alpha-coverage mip scaling on the twig mask was also tried and lowered the same count (9984 to 6969), so it is not used. Frame rate and human visual approval are NOT_RUN.
