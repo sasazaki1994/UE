@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
@@ -59,6 +60,18 @@ def test_dry_run_never_starts_a_process_and_leaves_all_not_run():
     assert "Invoke-AutomationGate 'grabAssistAutomation' 'IshibashiriPrototype.Climbing.GrabAssist'" in dry
     assert "Save-Summary 'NOT_RUN'" in dry
     assert "all gates NOT_RUN" in dry
+
+
+def test_automation_success_marker_matches_the_ue56_log_line():
+    text = script()
+    start = text.index('$LogText -match "Test Completed')
+    pattern = text[start + len('$LogText -match "') : text.index('" `', start)]
+    pattern = pattern.replace("$EscapedTest", re.escape("IshibashiriPrototype.Climbing.GrabAssist"))
+    success = ("LogAutomationController: Display: Test Completed. Result={Success} Name={GrabAssist} "
+               "Path={IshibashiriPrototype.Climbing.GrabAssist}")
+    assert re.search(pattern, success)
+    assert not re.search(pattern, success.replace("{Success}", "{Fail}"))
+    assert not re.search(pattern, success.replace("Climbing.GrabAssist}", "Climbing.Other}"))
 
 
 def test_runtime_contracts_require_markers_not_only_exit_zero():
