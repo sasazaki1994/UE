@@ -145,3 +145,42 @@ blender --background --factory-startup --python Tools/ValidateCharacterPBRBake.p
 非退化UVを検証する。この作業環境にはBlender実行ファイルがないため、スクリプトは未実行で
 比較画像と `validation-result.json` は未生成である。Pythonテスト／構文検査とBlender実描画を
 混同せず、Blender 3.6系で上記コマンドを完走してから描画検証成功とする。
+
+## 2026-10-04 UE側 CC0 微細面ディテール層
+
+2048px atlas 1枚を全身で共有するため、全長12 mの石走りでは atlas へ焼き込んでも
+解像度が上がらない。そこで atlas・骨・15クリップ・登攀点・禍根座標・コリジョンを
+変えず、UE material に繰り返しディテールを重ねる。`PBRDetailUV` は約85 m/UV
+（白面約6 m/UV）の細かい島に分かれており継ぎ目が出るため使わない。代わりに
+Pre-Skinned Position/Normal を Vertex Interpolator 経由で三平面投影し、模様が
+アニメーション中も体表に固定されるようにした（`MF_CharacterTriplanarDetail`）。
+
+素材は Poly Haven CC0 の rock_face、lichen_rock、mossy_rock、japanese_cedar_bark、
+thatch_roof_angled、rough_linen、denim_fabric、fine_grained_wood の1k版
+（出典・作者・SHA-256 は `Art/Characters/Detail/sources.json`）と、手続き生成の
+剛毛 normal である。BaseColor は彩度を40%に落とし平均0.5へ正規化した乗算値として
+保存し、atlas の配色と明るさを保つ。適用先と粒度は `ApplyRiggedMaterials.py` の
+`SURFACE_DETAIL` に slot 名で定義し、腐食・亀裂・素手・紐・刃・鉱物の slot には
+適用しない。生成物がない環境では従来の atlas 表示のまま動く。
+
+```bash
+python Tools/FetchCharacterDetailTextures.py
+blender --background --factory-startup --python Tools/PrepareCharacterDetailTextures.py
+UnrealEditor-Cmd IshibashiriPrototype.uproject -ExecutePythonScript=<ApplyRiggedMaterials.main を呼び quit_editor する wrapper> -unattended -nullrhi
+```
+
+UE 5.6 Python には material expression の列挙APIがない（`get_all_material_expressions`
+は存在しない）。再適用時は接続を張り替える前に各 material property から辿れる
+node を記録し、tag で再利用する。
+
+既知の別件として、現行 slot 名は `09_•_petrified_corruption` のように underscore
+区切りであり、腐食段階の `label=='09 • petrified corruption'` 判定は一致しない。
+実行時は `SHIROTSURA_CORRUPTION_UNSUPPORTED` が出ており、この変更前から
+`ShirotsuraCorruptionIntensity` は material に存在しない。
+
+検証（2026-10-04、UE 5.6.1）: smoke test は PASS し、同一カメラの
+`07-BossCamera` を 2026-09-26 の撮影と比べて、石走りの胴に剛毛の凹凸が、牙に岩肌が
+出たことを確認した。環境レビュー（Approach）も PASS した。IshibashiriDemo と
+BasinScenario は地上フェーズで FAIL するが、変更前の material と
+`-PrimitiveEnvironment` でも同じ FAIL が再現するため、この変更とは無関係である。
+白面の布・面の近接画質、登攀中の見え方、60 FPS 計測は NOT_RUN。

@@ -1,0 +1,283 @@
+{
+  "provider": "Poly Haven",
+  "license": "CC0 1.0",
+  "license_url": "https://polyhaven.com/license",
+  "cache": "Saved/ModelDownloads/PolyHaven",
+  "sources": [
+    {
+      "asset_id": "rock_face",
+      "type": "texture",
+      "target": "Ishibashiri granite",
+      "resolution": "1k",
+      "files": [
+        {
+          "map": "diff",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_face/rock_face_diff_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/rock_face/rock_face_diff_1k.jpg",
+          "size": 732721,
+          "sha256": "cce4b50517161264bdef196f5e247e328ca3739083cd6044ad3cc54d88cb82e2"
+        },
+        {
+          "map": "nor_gl",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_face/rock_face_nor_gl_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/rock_face/rock_face_nor_gl_1k.jpg",
+          "size": 1139857,
+          "sha256": "e2682e1286c8b6aca7e01ba7b8fe1726cb6606042b9ee70d097aa67470d410ef"
+        },
+        {
+          "map": "arm",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_face/rock_face_arm_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/rock_face/rock_face_arm_1k.jpg",
+          "size": 458661,
+          "sha256": "3a0fce8658ba2bac6690f68e79630c16e004f1676c1588ef4d54906fc3907616"
+        }
+      ],
+      "name": "Rock Face",
+      "authors": {
+        "Greg Zaal": "Photography",
+        "Dario Barresi": "Processing"
+      },
+      "page": "https://polyhaven.com/a/rock_face"
+    },
+    {
+      "asset_id": "lichen_rock",
+      "type": "texture",
+      "target": "Ishibashiri dry lichen",
+      "resolution": "1k",
+      "files": [
+        {
+          "map": "diff",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/lichen_rock/lichen_rock_diff_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/lichen_rock/lichen_rock_diff_1k.jpg",
+          "size": 1070311,
+          "sha256": "780128a5757920a7e30c50042e8975e8333ef4ae5809b30bb5be6a2f9fec3ec5"
+        },
+        {
+          "map": "nor_gl",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/lichen_rock/lichen_rock_nor_gl_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/lichen_rock/lichen_rock_nor_gl_1k.jpg",
+          "size": 1259569,
+          "sha256": "a3510a296030a1e312ef589a872ae416f2d23203a7b7c0c9e3646e8109c6a61c"
+        },
+        {
+          "map": "arm",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/lichen_rock/lichen_rock_arm_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/lichen_rock/lichen_rock_arm_1k.jpg",
+          "size": 802718,
+          "sha256": "10b16d185c2ff5f4ac3894f2d3aec2a959c0d34766f8e5445ff1d10d7170aae9"
+        }
+      ],
+      "name": "Lichen Rock",
+      "authors": {
+        "Rico Cilliers": "All"
+      },
+      "page": "https://polyhaven.com/a/lichen_rock"
+    },
+    {
+      "asset_id": "mossy_rock",
+      "type": "texture",
+      "target": "Ishibashiri moss cushion",
+      "resolution": "1k",
+      "files": [
+        {
+          "map": "diff",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_rock/mossy_rock_diff_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/mossy_rock/mossy_rock_diff_1k.jpg",
+          "size": 1124438,
+          "sha256": "4dbf37f1b0465c9c8914213163923be159716f5b97fb6946437b6c5e143ef540"
+        },
+        {
+          "map": "nor_gl",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_rock/mossy_rock_nor_gl_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/mossy_rock/mossy_rock_nor_gl_1k.jpg",
+          "size": 995727,
+          "sha256": "232cdd6a9fdfd01bb8bb1f8f604c53dbca79fa0d3d7995edf85c9945757aa8df"
+        },
+        {
+          "map": "arm",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_rock/mossy_rock_arm_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/mossy_rock/mossy_rock_arm_1k.jpg",
+          "size": 926941,
+          "sha256": "1c1b8da603c93e863ccb68a8f4fcc6ff02774b83d9a6e9422c7d4aa77397b6a3"
+        }
+      ],
+      "name": "Mossy Rock",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "page": "https://polyhaven.com/a/mossy_rock"
+    },
+    {
+      "asset_id": "japanese_cedar_bark",
+      "type": "texture",
+      "target": "Ishibashiri blighted root",
+      "resolution": "1k",
+      "files": [
+        {
+          "map": "diff",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/japanese_cedar_bark/japanese_cedar_bark_diff_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/japanese_cedar_bark/japanese_cedar_bark_diff_1k.jpg",
+          "size": 1371666,
+          "sha256": "fa240510e9ef127a8979ebd63628950abdc048a1e091d8a1611c86bbe2c6cda4"
+        },
+        {
+          "map": "nor_gl",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/japanese_cedar_bark/japanese_cedar_bark_nor_gl_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/japanese_cedar_bark/japanese_cedar_bark_nor_gl_1k.jpg",
+          "size": 2053757,
+          "sha256": "7302db344bcd63f3a2eb2bd2321377798c54831b0ff691de44315509db83962e"
+        },
+        {
+          "map": "arm",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/japanese_cedar_bark/japanese_cedar_bark_arm_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/japanese_cedar_bark/japanese_cedar_bark_arm_1k.jpg",
+          "size": 1461095,
+          "sha256": "da72b85bf5261647d987c17385f71d11be37ef59ca8fa721a882b525be535dae"
+        }
+      ],
+      "name": "Japanese Cedar Bark",
+      "authors": {
+        "Charlotte Baglioni": "All"
+      },
+      "page": "https://polyhaven.com/a/japanese_cedar_bark"
+    },
+    {
+      "asset_id": "thatch_roof_angled",
+      "type": "texture",
+      "target": "Ishibashiri weathered straw, Shirotsura rice straw",
+      "resolution": "1k",
+      "files": [
+        {
+          "map": "diff",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/thatch_roof_angled/thatch_roof_angled_diff_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/thatch_roof_angled/thatch_roof_angled_diff_1k.jpg",
+          "size": 860319,
+          "sha256": "ad84b9bf0a826c6e573f4bac09a0b96f33aec673a7e31cdd360667dc355f3599"
+        },
+        {
+          "map": "nor_gl",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/thatch_roof_angled/thatch_roof_angled_nor_gl_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/thatch_roof_angled/thatch_roof_angled_nor_gl_1k.jpg",
+          "size": 1278796,
+          "sha256": "073e2b374f2477605e23a1054e605de5268a012d2701865040d4551816b70d06"
+        },
+        {
+          "map": "arm",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/thatch_roof_angled/thatch_roof_angled_arm_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/thatch_roof_angled/thatch_roof_angled_arm_1k.jpg",
+          "size": 848888,
+          "sha256": "c953702de5afbae44cc975bd9867d0e4bbd4a33718b6789d8ecb692734999bc3"
+        }
+      ],
+      "name": "Thatch Roof Angled",
+      "authors": {
+        "Rob Tuytel": "Processing",
+        "Dimitrios Savva": "Photography"
+      },
+      "page": "https://polyhaven.com/a/thatch_roof_angled"
+    },
+    {
+      "asset_id": "rough_linen",
+      "type": "texture",
+      "target": "Ishibashiri paper offerings, Shirotsura unbleached linen",
+      "resolution": "1k",
+      "files": [
+        {
+          "map": "diff",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rough_linen/rough_linen_diff_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/rough_linen/rough_linen_diff_1k.jpg",
+          "size": 835801,
+          "sha256": "04897d7611d7390ddf5b2c6f7273f448dfc48341fdbd1f4f207fa30b331d7f57"
+        },
+        {
+          "map": "nor_gl",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rough_linen/rough_linen_nor_gl_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/rough_linen/rough_linen_nor_gl_1k.jpg",
+          "size": 916843,
+          "sha256": "e2402166d1a489f7414814e69e1836ab672aa24e30bec2d41fea356f81687e53"
+        },
+        {
+          "map": "arm",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rough_linen/rough_linen_arm_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/rough_linen/rough_linen_arm_1k.jpg",
+          "size": 1191393,
+          "sha256": "e1ca6b51ed62834063253e08f8f2e23836aa00d72675b960ddd8e608d9f0c7e6"
+        }
+      ],
+      "name": "Rough Linen",
+      "authors": {
+        "colormass": "Photography",
+        "Rico Cilliers": "Processing"
+      },
+      "page": "https://polyhaven.com/a/rough_linen"
+    },
+    {
+      "asset_id": "denim_fabric",
+      "type": "texture",
+      "target": "Shirotsura indigo work cloth and repairs",
+      "resolution": "1k",
+      "files": [
+        {
+          "map": "diff",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/denim_fabric/denim_fabric_diff_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/denim_fabric/denim_fabric_diff_1k.jpg",
+          "size": 886486,
+          "sha256": "d6d0254e2c90768482b0be8cfdc16e18117acc92bad00d406fd4b9be24facdec"
+        },
+        {
+          "map": "nor_gl",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/denim_fabric/denim_fabric_nor_gl_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/denim_fabric/denim_fabric_nor_gl_1k.jpg",
+          "size": 474669,
+          "sha256": "de0e9c5ed5cce7dacd50a67be16c6d8b8dc036907638e3702729c2f60296094e"
+        },
+        {
+          "map": "arm",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/denim_fabric/denim_fabric_arm_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/denim_fabric/denim_fabric_arm_1k.jpg",
+          "size": 223457,
+          "sha256": "2f46deb1894bff05a9416f89ecdc42a33d8f879f5152d18b2e2dc3b6b675eb8e"
+        }
+      ],
+      "name": "Denim Fabric",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "page": "https://polyhaven.com/a/denim_fabric"
+    },
+    {
+      "asset_id": "fine_grained_wood",
+      "type": "texture",
+      "target": "Shirotsura aged whitewood mask",
+      "resolution": "1k",
+      "files": [
+        {
+          "map": "diff",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/fine_grained_wood/fine_grained_wood_col_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/fine_grained_wood/fine_grained_wood_diff_1k.jpg",
+          "size": 336305,
+          "sha256": "d171f45ef01bc6e239b00dfaa4961bcd27f7d8e93e3962da3bd3d0ce703d802c"
+        },
+        {
+          "map": "nor_gl",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/fine_grained_wood/fine_grained_wood_nor_gl_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/fine_grained_wood/fine_grained_wood_nor_gl_1k.jpg",
+          "size": 193626,
+          "sha256": "ba95eadc009818e161d0f753191f1bacc3fc861e593be0bc6d82b437f9ec8044"
+        },
+        {
+          "map": "arm",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/fine_grained_wood/fine_grained_wood_arm_1k.jpg",
+          "path": "Saved/ModelDownloads/PolyHaven/fine_grained_wood/fine_grained_wood_arm_1k.jpg",
+          "size": 247999,
+          "sha256": "3928796cc98b380cd254dc67e9246e60027ef349edb5f75033cc6f3b34572450"
+        }
+      ],
+      "name": "Fine Grained Wood",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "page": "https://polyhaven.com/a/fine_grained_wood"
+    }
+  ]
+}
