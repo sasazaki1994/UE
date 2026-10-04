@@ -7,6 +7,7 @@
 class APrototypePlayer;
 class AIshibashiriBoss;
 class UStaticMesh;
+class UStaticMeshComponent;
 class UMaterialInterface;
 class ABasinPrototypeArena;
 class ANushiEncounterManager;
@@ -44,7 +45,7 @@ private:
     void AdvanceCampaign();
 
     void CreateArena();
-    void CreateBlock(const FString& Name, const FVector& Position, const FVector& Scale, const FLinearColor& Color);
+    UStaticMeshComponent* CreateBlock(const FString& Name, const FVector& Position, const FVector& Scale, const FLinearColor& Color);
     FTransform PlayerSpawn() const;
     FTransform BossSpawn() const;
 

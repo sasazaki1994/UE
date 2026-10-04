@@ -15,6 +15,7 @@
 #include "PrimitiveAppearance.h"
 #include "BasinPrototypeArena.h"
 #include "BasinPlaythroughTest.h"
+#include "PrototypeArenaDressing.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/PointLightComponent.h"
@@ -159,10 +160,10 @@ void APrototypeGameMode::Tick(float DeltaSeconds)
     if (IsEncounterActive() && Player && Player->GetActorLocation().Z < -500.f) FinishEncounter(false);
 }
 
-void APrototypeGameMode::CreateBlock(const FString& Name, const FVector& Position, const FVector& Scale, const FLinearColor& Color)
+UStaticMeshComponent* APrototypeGameMode::CreateBlock(const FString& Name, const FVector& Position, const FVector& Scale, const FLinearColor& Color)
 {
     AStaticMeshActor* Block = GetWorld()->SpawnActor<AStaticMeshActor>(Position, FRotator::ZeroRotator);
-    if (!Block) return;
+    if (!Block) return nullptr;
     UStaticMeshComponent* Mesh = Block->GetStaticMeshComponent();
     Mesh->SetMobility(EComponentMobility::Movable);
     Mesh->SetStaticMesh(CubeMesh);
@@ -173,17 +174,21 @@ void APrototypeGameMode::CreateBlock(const FString& Name, const FVector& Positio
     if (UMaterialInstanceDynamic* Material = Mesh->CreateDynamicMaterialInstance(0))
         SetPrimitiveColor(Material, Color);
     Block->Tags.Add(FName(*Name));
+    return Mesh;
 }
 
 void APrototypeGameMode::CreateArena()
 {
     const float H = ArenaHalfExtent;
-    CreateBlock(TEXT("ArenaFloor"), FVector(0.f, 0.f, -50.f), FVector((H * 2.f + 200.f) / 100.f, (H * 2.f + 200.f) / 100.f, 1.f), FLinearColor(0.26f, 0.29f, 0.25f));
+    UStaticMeshComponent* Floor = CreateBlock(TEXT("ArenaFloor"), FVector(0.f, 0.f, -50.f), FVector((H * 2.f + 200.f) / 100.f, (H * 2.f + 200.f) / 100.f, 1.f), FLinearColor(0.26f, 0.29f, 0.25f));
     const FLinearColor WallColor(0.33f, 0.36f, 0.38f);
-    CreateBlock(TEXT("WestWall"), FVector(-H - 50.f, 0.f, 200.f), FVector(1.f, (H * 2.f + 200.f) / 100.f, 4.f), WallColor);
-    CreateBlock(TEXT("EastWall"), FVector(H + 50.f, 0.f, 200.f), FVector(1.f, (H * 2.f + 200.f) / 100.f, 4.f), WallColor);
-    CreateBlock(TEXT("SouthWall"), FVector(0.f, -H - 50.f, 200.f), FVector((H * 2.f) / 100.f, 1.f, 4.f), WallColor);
-    CreateBlock(TEXT("NorthWall"), FVector(0.f, H + 50.f, 200.f), FVector((H * 2.f) / 100.f, 1.f, 4.f), WallColor);
+    const TArray<UPrimitiveComponent*> Walls = {
+        CreateBlock(TEXT("WestWall"), FVector(-H - 50.f, 0.f, 200.f), FVector(1.f, (H * 2.f + 200.f) / 100.f, 4.f), WallColor),
+        CreateBlock(TEXT("EastWall"), FVector(H + 50.f, 0.f, 200.f), FVector(1.f, (H * 2.f + 200.f) / 100.f, 4.f), WallColor),
+        CreateBlock(TEXT("SouthWall"), FVector(0.f, -H - 50.f, 200.f), FVector((H * 2.f) / 100.f, 1.f, 4.f), WallColor),
+        CreateBlock(TEXT("NorthWall"), FVector(0.f, H + 50.f, 200.f), FVector((H * 2.f) / 100.f, 1.f, 4.f), WallColor)};
+    if (APrototypeArenaDressing* Dressing = GetWorld()->SpawnActor<APrototypeArenaDressing>())
+        Dressing->Dress(H, Floor, Walls);
 
     ADirectionalLight* Sun = GetWorld()->SpawnActor<ADirectionalLight>(FVector(0.f, 0.f, 1200.f), FRotator(-55.f, -30.f, 0.f));
     if (Sun)
@@ -199,6 +204,9 @@ void APrototypeGameMode::CreateArena()
         SoftFill->GetLightComponent()->SetIntensity(1.1f);
         SoftFill->GetLightComponent()->SetLightColor(FLinearColor(.66f,.75f,1.f));
         SoftFill->GetLightComponent()->SetCastShadows(false);
+        // Only the sun may drive the dressing's sky atmosphere; two index-0 sun lights conflict.
+        if (auto* SoftFillLight = Cast<UDirectionalLightComponent>(SoftFill->GetLightComponent()))
+            SoftFillLight->SetAtmosphereSunLight(false);
     }
     if (Fill)
     {
