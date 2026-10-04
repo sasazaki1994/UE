@@ -36,6 +36,7 @@ private:
     UStaticMeshComponent* AddPrimitive(const TCHAR* Name,UStaticMesh* Mesh,const FVector& Location,
         const FVector& Scale,const FRotator& Rotation,const FLinearColor& Color,bool bCollision=false);
     void AddTree(const TCHAR* Name,const FVector& Location,float Height,bool bFallen=false);
+    void AddGroundDressing();
     void SetStage(int32 NewStage);
 
     UPROPERTY() TObjectPtr<USceneComponent> Root;
@@ -45,7 +46,15 @@ private:
     UPROPERTY() TObjectPtr<UStaticMesh> CedarMesh;
     UPROPERTY() TObjectPtr<UStaticMesh> RockMesh;
     UPROPERTY() TObjectPtr<UStaticMesh> BoundaryMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> FallenCedarMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> FernMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> CedarBMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> RockBMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> RitualPostMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> RopeMesh;
     UPROPERTY() TObjectPtr<UMaterialInterface> GroundMaterial;
+    UPROPERTY() TObjectPtr<UMaterialInterface> FootprintDecal;
+    UPROPERTY() TObjectPtr<UMaterialInterface> CrackDecal;
     UPROPERTY(Transient) TArray<TObjectPtr<UActorComponent>> Generated;
     UPROPERTY(Transient) TArray<TObjectPtr<UPrimitiveComponent>> RevealParts;
     TArray<FVector> PathPoints;

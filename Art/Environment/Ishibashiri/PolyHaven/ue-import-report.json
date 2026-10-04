@@ -1,0 +1,177 @@
+{
+  "status": "PASS",
+  "engine_version": "5.6.1-44394996+++UE5+Release-5.6",
+  "license": "CC0 1.0 (Poly Haven)",
+  "static_meshes": [
+    {
+      "asset": "/Game/Environment/Ishibashiri/SM_Ishibashiri_OldCedar_A.SM_Ishibashiri_OldCedar_A",
+      "source": "fir_tree_01",
+      "dimensions_cm": [
+        653.6055297851562,
+        640.0029907226562,
+        1893.63330078125
+      ],
+      "material_slots": [
+        "Twig",
+        "Branch",
+        "Trunk"
+      ],
+      "lod_triangles": [
+        434068,
+        135846,
+        55213,
+        32582
+      ],
+      "nanite": false
+    },
+    {
+      "asset": "/Game/Environment/Ishibashiri/SM_Ishibashiri_OldCedar_B.SM_Ishibashiri_OldCedar_B",
+      "source": "fir_tree_01",
+      "dimensions_cm": [
+        561.2857666015625,
+        604.8185424804688,
+        1406.2022705078125
+      ],
+      "material_slots": [
+        "Twig",
+        "Branch",
+        "Trunk"
+      ],
+      "lod_triangles": [
+        321395,
+        98715,
+        37126,
+        19533
+      ],
+      "nanite": false
+    },
+    {
+      "asset": "/Game/Environment/Ishibashiri/SM_Ishibashiri_Rock_A.SM_Ishibashiri_Rock_A",
+      "source": "rock_moss_set_01",
+      "dimensions_cm": [
+        223.76324462890625,
+        336.88043212890625,
+        147.26980590820312
+      ],
+      "material_slots": [
+        "Rock"
+      ],
+      "lod_triangles": [
+        11000,
+        5500,
+        2200
+      ],
+      "nanite": false
+    },
+    {
+      "asset": "/Game/Environment/Ishibashiri/SM_Ishibashiri_Rock_B.SM_Ishibashiri_Rock_B",
+      "source": "rock_moss_set_01",
+      "dimensions_cm": [
+        212.76292419433594,
+        196.47412872314453,
+        176.8319854736328
+      ],
+      "material_slots": [
+        "Rock"
+      ],
+      "lod_triangles": [
+        10589,
+        5294,
+        2118
+      ],
+      "nanite": false
+    },
+    {
+      "asset": "/Game/Environment/Ishibashiri/SM_Ishibashiri_FallenCedar_A.SM_Ishibashiri_FallenCedar_A",
+      "source": "dead_tree_trunk",
+      "dimensions_cm": [
+        1220.38037109375,
+        110.88853073120117,
+        116.13809204101562
+      ],
+      "material_slots": [
+        "Bark"
+      ],
+      "lod_triangles": [
+        25449,
+        10180,
+        3818
+      ],
+      "nanite": false
+    },
+    {
+      "asset": "/Game/Environment/Ishibashiri/SM_Ishibashiri_Fern_A.SM_Ishibashiri_Fern_A",
+      "source": "fern_02",
+      "dimensions_cm": [
+        98.97473526000977,
+        89.36897659301758,
+        42.76947021484375
+      ],
+      "material_slots": [
+        "Fern"
+      ],
+      "lod_triangles": [
+        2384
+      ],
+      "nanite": false
+    },
+    {
+      "asset": "/Game/Environment/Ishibashiri/SM_Ishibashiri_RitualPost_A.SM_Ishibashiri_RitualPost_A",
+      "source": "Blender procedural (CreateIshibashiriPropKit.py)",
+      "dimensions_cm": [
+        24.710824966430664,
+        24.760425567626953,
+        322.0
+      ],
+      "material_slots": [
+        "Wood"
+      ],
+      "lod_triangles": [
+        8454
+      ],
+      "nanite": false
+    },
+    {
+      "asset": "/Game/Environment/Ishibashiri/SM_Ishibashiri_OldRope_A.SM_Ishibashiri_OldRope_A",
+      "source": "Blender procedural (CreateIshibashiriPropKit.py)",
+      "dimensions_cm": [
+        1603.1943497657776,
+        22.114709854125977,
+        145.3998556137085
+      ],
+      "material_slots": [
+        "Rope",
+        "Paper"
+      ],
+      "lod_triangles": [
+        20792
+      ],
+      "nanite": false
+    },
+    {
+      "asset": "/Game/Environment/Ishibashiri/SM_Ishibashiri_SteppingStone_A.SM_Ishibashiri_SteppingStone_A",
+      "source": "Blender procedural (CreateIshibashiriPropKit.py)",
+      "dimensions_cm": [
+        315.5526428222656,
+        124.01845169067383,
+        13.525331497192383
+      ],
+      "material_slots": [
+        "Stone"
+      ],
+      "lod_triangles": [
+        1278
+      ],
+      "nanite": false
+    }
+  ],
+  "surface_materials": [
+    "/Game/Environment/Ishibashiri/M_Ishibashiri_Ground.M_Ishibashiri_Ground",
+    "/Game/Environment/Ishibashiri/M_Ishibashiri_BoundaryStone.M_Ishibashiri_BoundaryStone"
+  ],
+  "decal_materials": [
+    "/Game/Environment/Ishibashiri/D_Ishibashiri_Footprint_A.D_Ishibashiri_Footprint_A",
+    "/Game/Environment/Ishibashiri/D_Ishibashiri_CorruptionCrack_A.D_Ishibashiri_CorruptionCrack_A"
+  ],
+  "runtime_visual_review": "SEE Docs"
+}
