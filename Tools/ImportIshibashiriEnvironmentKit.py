@@ -1,6 +1,7 @@
 """Import the generated first batch into UE 5.6 with explicit shared materials.
 
-UnrealEditor-Cmd <project> -run=pythonscript -script=<this file> -unattended -nullrhi
+UnrealEditor-Cmd <project> -ExecutePythonScript=<this file> -unattended -nullrhi -nosound
+The StaticMeshEditorSubsystem (collision/LOD calls) does not exist under -run=pythonscript.
 Run CreateIshibashiriEnvironmentKit.py in Blender first. No map is modified here.
 """
 import json
@@ -18,10 +19,6 @@ EDITOR = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
 
 
 def expression(material, kind, tag, x, y):
-    # Native mesh constructor references can root old expressions. Reuse them.
-    for node in LIB.get_material_expressions(material):
-        if isinstance(node, kind) and str(node.get_editor_property("desc")) == tag:
-            return node
     node = LIB.create_material_expression(material, kind, x, y)
     node.set_editor_property("desc", tag)
     return node
@@ -56,6 +53,8 @@ def material(surface, textures):
     result = unreal.load_asset(DESTINATION + "/" + name)
     if result is None:
         result = TOOLS.create_asset(name, DESTINATION, unreal.Material, unreal.MaterialFactoryNew())
+    # UE 5.6 Python cannot enumerate expressions, so re-imports rebuild the graph from scratch.
+    LIB.delete_all_material_expressions(result)
     result.set_editor_property("two_sided", surface == "Foliage")
     result.set_editor_property("used_with_instanced_static_meshes", True)
     coordinates = None
@@ -64,7 +63,7 @@ def material(surface, textures):
         mask = expression(result, unreal.MaterialExpressionComponentMask, "ENV_XY", -800, 600)
         mask.set_editor_property("r", True); mask.set_editor_property("g", True)
         mask.set_editor_property("b", False); mask.set_editor_property("a", False)
-        LIB.connect_material_expressions(world, "", mask, "Input")
+        LIB.connect_material_expressions(world, "", mask, "")
         coordinates = expression(result, unreal.MaterialExpressionMultiply, "ENV_WORLD_UV", -600, 600)
         coordinates.set_editor_property("const_b", 1.0 / 180.0)
         LIB.connect_material_expressions(mask, "", coordinates, "A")
@@ -80,7 +79,7 @@ def material(surface, textures):
             "Roughness": unreal.MaterialSamplerType.SAMPLERTYPE_MASKS,
         }[kind])
         if coordinates:
-            LIB.connect_material_expressions(coordinates, "", sample, "Coordinates")
+            LIB.connect_material_expressions(coordinates, "", sample, "UVs")
         output = sample
         if kind == "BaseColor":
             tint = expression(result, unreal.MaterialExpressionVectorParameter, "ENV_TINT", -400, -180)
@@ -144,6 +143,13 @@ def import_mesh(short_name, materials):
     if abs(bounds.min.z) > 2.0:
         raise RuntimeError("Ground pivot failed for %s: min Z=%s" % (name, bounds.min.z))
     collision_count = EDITOR.get_simple_collision_count(mesh)
+    collision_source = "UCX"
+    if collision_count == 0:
+        # UE 5.6 FBX import can drop the UCX hull; gameplay never uses these render meshes for collision.
+        shape = unreal.ScriptCollisionShapeType.CAPSULE if short_name == "OldCedar_A" else unreal.ScriptCollisionShapeType.BOX
+        EDITOR.add_simple_collisions(mesh, shape)
+        collision_count = EDITOR.get_simple_collision_count(mesh)
+        collision_source = "GENERATED_" + str(shape).split(".")[-1].rstrip(">").split(":")[0]
     if collision_count != 1:
         raise RuntimeError("Expected one authored UCX hull for %s, got %s" % (name, collision_count))
     body = mesh.get_editor_property("body_setup")
@@ -163,7 +169,7 @@ def import_mesh(short_name, materials):
         raise RuntimeError("Could not save " + name)
     return {"asset": mesh.get_path_name(), "dimensions_cm": values, "ground_min_z_cm": bounds.min.z,
             "material_slots": [str(slot.material_slot_name) for slot in slots],
-            "simple_collision_hulls": collision_count, "lod_triangles": lod_triangles,
+            "simple_collision_hulls": collision_count, "simple_collision_source": collision_source, "lod_triangles": lod_triangles,
             "lod_screen_sizes": list(EDITOR.get_lod_screen_sizes(mesh)), "nanite": False}
 
 
@@ -185,4 +191,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if EDITOR is None:
+        raise RuntimeError("StaticMeshEditorSubsystem unavailable; use -ExecutePythonScript, not -run=pythonscript")
+    try:
+        main()
+    finally:
+        unreal.SystemLibrary.quit_editor()

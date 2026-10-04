@@ -1,0 +1,109 @@
+{
+  "status": "PASS",
+  "engine_version": "5.6.1-44394996+++UE5+Release-5.6",
+  "destination": "/Game/Environment/Ishibashiri",
+  "static_meshes": [
+    {
+      "asset": "/Game/Environment/Ishibashiri/SM_Ishibashiri_OldCedar_A.SM_Ishibashiri_OldCedar_A",
+      "dimensions_cm": [
+        533.5225372314453,
+        528.880859375,
+        2110.90966796875
+      ],
+      "ground_min_z_cm": 0.0,
+      "material_slots": [
+        "Bark",
+        "Foliage"
+      ],
+      "simple_collision_hulls": 1,
+      "simple_collision_source": "UCX",
+      "lod_triangles": [
+        43444,
+        21722,
+        8689
+      ],
+      "lod_screen_sizes": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nanite": false
+    },
+    {
+      "asset": "/Game/Environment/Ishibashiri/SM_Ishibashiri_Rock_A.SM_Ishibashiri_Rock_A",
+      "dimensions_cm": [
+        411.2142639160156,
+        276.7683563232422,
+        204.21180725097656
+      ],
+      "ground_min_z_cm": 0.0,
+      "material_slots": [
+        "WetRock"
+      ],
+      "simple_collision_hulls": 1,
+      "simple_collision_source": "GENERATED_BOX",
+      "lod_triangles": [
+        5120,
+        2560,
+        1024
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.44999998807907104,
+        0.1599999964237213
+      ],
+      "nanite": false
+    },
+    {
+      "asset": "/Game/Environment/Ishibashiri/SM_Ishibashiri_BoundaryStone_A.SM_Ishibashiri_BoundaryStone_A",
+      "dimensions_cm": [
+        78.78421020507812,
+        53.39999771118164,
+        190.5
+      ],
+      "ground_min_z_cm": 0.0,
+      "material_slots": [
+        "BoundaryStone"
+      ],
+      "simple_collision_hulls": 1,
+      "simple_collision_source": "GENERATED_BOX",
+      "lod_triangles": [
+        14700,
+        7350,
+        2940
+      ],
+      "lod_screen_sizes": [
+        1.0,
+        0.44999998807907104,
+        0.1599999964237213
+      ],
+      "nanite": false
+    }
+  ],
+  "texture_resolution": 1024,
+  "textures": [
+    "/Game/Environment/Ishibashiri/T_Ishibashiri_Bark_BaseColor.T_Ishibashiri_Bark_BaseColor",
+    "/Game/Environment/Ishibashiri/T_Ishibashiri_Bark_Normal.T_Ishibashiri_Bark_Normal",
+    "/Game/Environment/Ishibashiri/T_Ishibashiri_Bark_Roughness.T_Ishibashiri_Bark_Roughness",
+    "/Game/Environment/Ishibashiri/T_Ishibashiri_Foliage_BaseColor.T_Ishibashiri_Foliage_BaseColor",
+    "/Game/Environment/Ishibashiri/T_Ishibashiri_Foliage_Normal.T_Ishibashiri_Foliage_Normal",
+    "/Game/Environment/Ishibashiri/T_Ishibashiri_Foliage_Roughness.T_Ishibashiri_Foliage_Roughness",
+    "/Game/Environment/Ishibashiri/T_Ishibashiri_WetRock_BaseColor.T_Ishibashiri_WetRock_BaseColor",
+    "/Game/Environment/Ishibashiri/T_Ishibashiri_WetRock_Normal.T_Ishibashiri_WetRock_Normal",
+    "/Game/Environment/Ishibashiri/T_Ishibashiri_WetRock_Roughness.T_Ishibashiri_WetRock_Roughness",
+    "/Game/Environment/Ishibashiri/T_Ishibashiri_Ground_BaseColor.T_Ishibashiri_Ground_BaseColor",
+    "/Game/Environment/Ishibashiri/T_Ishibashiri_Ground_Normal.T_Ishibashiri_Ground_Normal",
+    "/Game/Environment/Ishibashiri/T_Ishibashiri_Ground_Roughness.T_Ishibashiri_Ground_Roughness"
+  ],
+  "materials": [
+    "/Game/Environment/Ishibashiri/M_Ishibashiri_Bark.M_Ishibashiri_Bark",
+    "/Game/Environment/Ishibashiri/M_Ishibashiri_Foliage.M_Ishibashiri_Foliage",
+    "/Game/Environment/Ishibashiri/M_Ishibashiri_WetRock.M_Ishibashiri_WetRock",
+    "/Game/Environment/Ishibashiri/M_Ishibashiri_BoundaryStone.M_Ishibashiri_BoundaryStone",
+    "/Game/Environment/Ishibashiri/M_Ishibashiri_Ground.M_Ishibashiri_Ground"
+  ],
+  "ground_mapping": "world XY / 180cm",
+  "lod_visual_review": "RUNTIME_REVIEW_REQUIRED",
+  "runtime_navigation": "PARENT_REVIEW_REQUIRED",
+  "human_first_play": "NOT_RUN"
+}

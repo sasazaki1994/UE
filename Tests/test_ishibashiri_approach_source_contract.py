@@ -12,7 +12,7 @@ def test_approach_is_self_contained_with_primitive_fallbacks():
     for item in ("WetEarth", "BoundaryStone", "RitualPost", "GiantFootprint", "GougedRock", "ShatteredCedar", "CorruptionCrack"):
         assert item in source
     assert "/Engine/BasicShapes/" in source
-    assert source.count("IshibashiriEnvironment::Load<UStaticMesh>") == 3
+    assert source.count("IshibashiriEnvironment::Load<UStaticMesh>") == 9
     assert "CubeMesh" in source and "SphereMesh" in source
 
 def test_reveal_is_once_non_combat_and_three_seconds():

@@ -39,6 +39,7 @@ private:
     void AddAccent(const TCHAR* Name, const FVector& Location, const FVector& Scale, const FRotator& Rotation,
         const FLinearColor& Color);
     void AddTree(const TCHAR* Name, const FVector& Location, float Height, float Width);
+    void AddGroundDressing();
     void AddFloor();
     void ClearGeneratedComponents();
 
@@ -49,6 +50,13 @@ private:
     UPROPERTY() TObjectPtr<UStaticMesh> CedarMesh;
     UPROPERTY() TObjectPtr<UStaticMesh> RockMesh;
     UPROPERTY() TObjectPtr<UStaticMesh> BoundaryMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> FallenCedarMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> FernMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> CedarBMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> RockBMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> RitualPostMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> RopeMesh;
+    UPROPERTY() TObjectPtr<UStaticMesh> SteppingStoneMesh;
     UPROPERTY() TObjectPtr<UMaterialInterface> GroundMaterial;
     UPROPERTY(Transient) TArray<TObjectPtr<UActorComponent>> GeneratedComponents;
     UPROPERTY(Transient) TObjectPtr<UPrimitiveComponent> BasinFloor;
