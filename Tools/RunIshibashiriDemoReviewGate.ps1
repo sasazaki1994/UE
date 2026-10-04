@@ -107,7 +107,7 @@ function Invoke-AutomationGate([string]$Name,[string]$TestName) {
     $LogText=if(Test-Path -LiteralPath $LogPath){Get-Content -LiteralPath $LogPath -Raw}else{''}
     $EscapedTest=[regex]::Escape($TestName)
     $Succeeded=$Process.ExitCode -eq 0 `
-        -and $LogText -match "Test Completed\. Result=\{Success\}\..*Path=\{$EscapedTest\}" `
+        -and $LogText -match "Test Completed\. Result=\{Success\} .*Path=\{$EscapedTest\}" `
         -and $LogText -match "\*\*\*\* TEST COMPLETE\. EXIT CODE: 0 \*\*\*\*"
     $Result=if($Succeeded){'PASS'}else{'FAIL'}
     if(!$Succeeded){$Reasons[$Name]="Automation test '$TestName' did not produce both Success and TEST COMPLETE EXIT CODE 0 evidence."}
