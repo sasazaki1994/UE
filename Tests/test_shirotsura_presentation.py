@@ -64,7 +64,9 @@ def test_material_setup_is_shirotsura_only_and_idempotent_by_tag():
     assert "name=='Shirotsura'" in source
     assert "label=='09 • petrified corruption'" in source
     assert "ShirotsuraCorruptionIntensity" in source
-    assert "get_all_material_expressions" in source
+    # UE 5.6 Python has no expression listing; tagged nodes come from a pre-reconnect graph snapshot.
+    assert "get_all_material_expressions" not in source
+    assert "remember_graph(mat)" in source
     assert "tag+'BLEND'" in source
     assert "delete_material_expression" not in source
 
