@@ -29,13 +29,13 @@ SPECS = (
      # Branch tubes are too thin to decimate; collapsing them leaves flat dark fins.
      "foliage": "Twig", "undecimated": ("Branch",), "card_budget": 400000, "card_scale": 1.9, "solid_ratio": .15,
      "scale": 1.0,
-     # (card budget, extra card scale, solid ratio) applied to the finished LOD0.
-     "lods": ((110000, 1.35, .35), (30000, 1.6, .3), (8000, 1.6, .25))},
+     # (card budget, card area kept relative to LOD0, solid ratio) applied to the finished LOD0.
+     "lods": ((110000, 1.0, .35), (40000, 1.0, .3), (16000, 1.0, .25))},
     {"asset": "SM_Ishibashiri_OldCedar_B", "source": "fir_tree_01", "object": "fir_tree_01_b_LOD0",
      "slots": {"fir_tree_01_trunk_b": "Trunk", "fir_tree_01_bark": "Branch", "fir_tree_01_dead_branches": None,
                "fir_tree_01_twig": "Twig"},
      "foliage": "Twig", "undecimated": ("Branch",), "card_budget": 300000, "card_scale": 1.9, "solid_ratio": .15,
-     "scale": 1.0, "lods": ((85000, 1.35, .35), (24000, 1.6, .3), (7000, 1.6, .25))},
+     "scale": 1.0, "lods": ((85000, 1.0, .35), (30000, 1.0, .3), (12000, 1.0, .25))},
     {"asset": "SM_Ishibashiri_Rock_A", "source": "rock_moss_set_01", "object": "rock_moss_set_01_rock01",
      "slots": {"rock_moss_set_01": "Rock"}, "solid_ratio": 1.0, "scale": 1.0},
     {"asset": "SM_Ishibashiri_Rock_B", "source": "rock_moss_set_01", "object": "rock_moss_set_01_rock04",
@@ -225,8 +225,11 @@ def prepare(spec):
     OUTPUT.mkdir(parents=True, exist_ok=True)
     export(obj, OUTPUT / (spec["asset"] + ".fbx"))
     lods = []
-    for index, (budget, scale, ratio) in enumerate(spec.get("lods", ()), start=1):
+    cards = slot_triangles(obj).get(spec.get("foliage"), 0)
+    for index, (budget, coverage, ratio) in enumerate(spec.get("lods", ()), start=1):
         # Engine LOD reduction collapses alpha cards into opaque spikes, so foliage LODs are authored here.
+        # Distant LODs keep few cards; without growing them by the lost area the crown reads as bare branches.
+        scale = (coverage * cards / budget) ** .5
         lod = obj.copy()
         lod.data = obj.data.copy()
         bpy.context.collection.objects.link(lod)
@@ -234,7 +237,8 @@ def prepare(spec):
         lod = decimate_solids(lod, kept_slots, ratio)
         lod.name = "%s_LOD%d" % (spec["asset"], index)
         export(lod, OUTPUT / (lod.name + ".fbx"))
-        lods.append({"file": lod.name + ".fbx", "triangles": triangles(lod), "slot_triangles": slot_triangles(lod)})
+        lods.append({"file": lod.name + ".fbx", "triangles": triangles(lod), "slot_triangles": slot_triangles(lod),
+                     "card_scale": round(scale, 3)})
         bpy.data.objects.remove(lod, do_unlink=True)
     report = {"asset": spec["asset"], "source": spec["source"], "source_object": spec["object"],
               "license": "CC0 1.0 (Poly Haven)", "source_triangles": source_triangles,
