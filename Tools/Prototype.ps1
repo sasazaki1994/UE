@@ -261,7 +261,8 @@ try {
             if ($IsCampaignFlow) { $TestFlag = '-CampaignE2E' }
             if ($Approach) { $TestFlag = '-ApproachTest' }
             if ($EnvironmentReview) { $TestFlag = '-EnvironmentReview' }
-            $TestArguments = @($ProjectFile, $LaunchMap, '-game', '-unattended', '-nop4', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
+            # A connected physical controller would otherwise inject stick and button input into the scripted drivers.
+            $TestArguments = @($ProjectFile, $LaunchMap, '-game', '-unattended', '-nop4', '-DisablePlugins=XInputDevice', $TestFlag, "-PrototypeTestRun=$RunId", "-PrototypeTestFPS=$TestFPS", "-PrototypeTestSeconds=$TestSeconds", "-abslog=$LogFile")
             if (!$Audio) { $TestArguments += '-nosound' }
             if ($PrimitiveEnvironment) { $TestArguments += '-PrimitiveEnvironment' }
             $TestArguments += "-ProductionVisuals=$ProductionVisuals"
@@ -291,6 +292,7 @@ try {
             }
             Write-Host "Test timeout: $Timeout real seconds"
             Invoke-TimedTest -Program $EditorCmd -Arguments $TestArguments -TimeoutSeconds $Timeout -LogFile $LogFile -ShowWindow:$Onscreen
+            if (Select-String -LiteralPath $LogFile -SimpleMatch 'Mounting Engine plugin XInputDevice' -Quiet) { throw "Physical gamepad input was not isolated (XInputDevice mounted). Read $LogFile" }
             $PassMarker = if ($GrabMotionWarp) { "GRAB_MOTION_WARP_TEST_PASS $RunId" } elseif ($BasinScenario) { "BASIN_SCENARIO_PASS $RunId" } elseif ($ClimbingIK) { "CLIMBING_IK_TEST_PASS $RunId" } elseif ($Climbing -or $ClimbingGamepad) { "CLIMB_TEST_PASS $RunId" } else { "PROTOTYPE_TEST_PASS $RunId" }
             if ($Fuchimatoi) { $PassMarker = "FUCHIMATOI_TEST_PASS $RunId" }
             if ($Minedaki) { $PassMarker = "MINEDAKI_TEST_PASS $RunId" }
