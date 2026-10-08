@@ -1,5 +1,15 @@
 # 石走り編 Minimal Production Environment Kit
 
+## 現在の採用素材と、この文書の制作仕様
+
+2026-10-08の古祀の盆地更新は、最新main `98e73a4942cc1ed45b0de00a18dcf7389156539f` に存在する背景素材を再利用する。杉A/B、苔岩A/B、倒木、シダ、地面はPoly Haven CC0素材、境界石・祭杭・縄・踏石・足跡/亀裂DecalはBlender procedural候補としてUEへ取り込まれている。採用素材の寸法、Material slots、LOD、実施済み工程は [2026-10-04の素材・検証記録](../../Art/Environment/Ishibashiri/PolyHaven/README.md) と [UE import report](../../Art/Environment/Ishibashiri/PolyHaven/ue-import-report.json) を参照する。これらの過去の実行結果は今回の変更の検証結果ではない。
+
+以下は当初の**Tripo向け制作仕様とFirst Adoption Batchの履歴**である。`manifest.json` の `spec_only`、`source_file: null`、`tripo_generation_status: NOT_RUN` はTripo候補の状態を表し、現在の `Content/Environment/Ishibashiri/` に素材がないという意味ではない。現行Poly Haven候補の寸法・slot・triangle budgetは、この旧仕様と一部異なる。Tripoは今回も実行していないため、Tripo生成済みとは報告しない。
+
+古祀の盆地での再利用、遺構の専用Mesh差し替え先、保護する戦闘領域は [古祀の盆地制作契約](KoshiBasinProduction.md)、起動と回帰確認は [Basin制作・検証手順](../BasinPrototype.md) にまとめる。
+
+## 当初のTripo制作仕様・履歴
+
 Status: **SPECIFICATION COMPLETE / ASSET GENERATION NOT RUN**<br>
 Baseline: `a0e87c3aba0ebff9619046f5c1aa956d205315c4`（PR #82 mergeを含むローカル先頭。`origin/main` の取得はHTTP 403のため freshness **UNVERIFIED**）<br>
 Machine-readable authority: [`Art/Environment/Ishibashiri/manifest.json`](../../Art/Environment/Ishibashiri/manifest.json)

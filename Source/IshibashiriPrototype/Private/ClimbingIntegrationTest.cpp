@@ -11,6 +11,7 @@
 #include "ControlRigComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Camera/PlayerCameraManager.h"
 #include "InputKeyEventArgs.h"
 #include "Engine/World.h"
 #include "HAL/FileManager.h"
@@ -132,7 +133,9 @@ bool AClimbingIntegrationTest::DriveMountWindow(float Dt)
     if (State==EIshibashiriState::Chase || (State==EIshibashiriState::Recover && !B->CanBeCountered()))
     {
         Hold(EKeys::A,false);Hold(EKeys::D,false);
-        const FVector Bait=B->GetActorLocation()+(-B->GetActorLocation()).GetSafeNormal2D()*850.f;
+        // Bait from the player's own side. A world-origin reference flips when the
+        // boss crosses the basin centre and walks the player into the next charge.
+        const FVector Bait=B->GetActorLocation()+(P->GetActorLocation()-B->GetActorLocation()).GetSafeNormal2D()*850.f;
         WalkTo(Bait,70.f);
     }
     else if (State==EIshibashiriState::Telegraph)
@@ -198,6 +201,17 @@ void AClimbingIntegrationTest::Shot(const TCHAR* Name)
         ? FPaths::ProjectSavedDir()/TEXT("Screenshots/ClimbingIK")/RunId/TEXT("After")
         : FPaths::ProjectSavedDir()/TEXT("Screenshots/Climbing")/RunId;
     IFileManager::Get().MakeDirectory(*Dir,true);
+    if (auto* PC = Cast<APlayerController>(Mode->GetPlayer()->GetController()); PC && PC->PlayerCameraManager)
+    {
+        const FMinimalViewInfo& View = PC->PlayerCameraManager->GetCameraCacheView();
+        int32 Width = 0, Height = 0;
+        PC->GetViewportSize(Width, Height);
+        UE_LOG(LogTemp, Display, TEXT("ENVIRONMENT_CAPTURE_VIEW %s %s arranged=%s camera=%s rotation=%s fov=%.2f resolution=%dx%d"),
+            *RunId, Name, bCampaignE2E ? TEXT("false") : TEXT("true"), *View.Location.ToString(), *View.Rotation.ToString(), View.FOV, Width, Height);
+    }
+    UE_LOG(LogTemp, Display, TEXT("CLIMB_CAPTURE_STATE %s %s player=%s boss=%s state=%s node=%d purified=%d"),
+        *RunId, Name, *Mode->GetPlayer()->GetActorLocation().ToString(), *Mode->GetBoss()->GetActorLocation().ToString(),
+        *Mode->GetBoss()->GetStateLabel(), Mode->GetPlayer()->GetClimbing()->GetNode(), Mode->GetBoss()->GetPurifiedCount());
     FScreenshotRequest::RequestScreenshot(Dir/(FString(Name)+TEXT(".png")),false,false);
 }
 
@@ -206,6 +220,17 @@ void AClimbingIntegrationTest::DemoShot(const TCHAR* Name)
     if (!bDemoCapture || CompletedRoutes != 0) return;
     const FString Dir = FPaths::ProjectSavedDir()/TEXT("Screenshots/IshibashiriDemo")/RunId;
     IFileManager::Get().MakeDirectory(*Dir,true);
+    if (auto* PC = Cast<APlayerController>(Mode->GetPlayer()->GetController()); PC && PC->PlayerCameraManager)
+    {
+        const FMinimalViewInfo& View = PC->PlayerCameraManager->GetCameraCacheView();
+        int32 Width = 0, Height = 0;
+        PC->GetViewportSize(Width, Height);
+        UE_LOG(LogTemp, Display, TEXT("ENVIRONMENT_CAPTURE_VIEW %s %s arranged=%s camera=%s rotation=%s fov=%.2f resolution=%dx%d"),
+            *RunId, Name, bCampaignE2E ? TEXT("false") : TEXT("true"), *View.Location.ToString(), *View.Rotation.ToString(), View.FOV, Width, Height);
+    }
+    UE_LOG(LogTemp, Display, TEXT("CLIMB_CAPTURE_STATE %s %s player=%s boss=%s state=%s node=%d purified=%d"),
+        *RunId, Name, *Mode->GetPlayer()->GetActorLocation().ToString(), *Mode->GetBoss()->GetActorLocation().ToString(),
+        *Mode->GetBoss()->GetStateLabel(), Mode->GetPlayer()->GetClimbing()->GetNode(), Mode->GetBoss()->GetPurifiedCount());
     FScreenshotRequest::RequestScreenshot(Dir/(FString(Name)+TEXT(".png")),false,false);
 }
 
@@ -427,6 +452,7 @@ void AClimbingIntegrationTest::Tick(float Dt)
                 && B->GetNushiState()==ENushiState::Active
                 && Mode->GetEncounterManager()->GetEncounterState()==ENushiEncounterState::Running,
                 TEXT("Normal gameplay uses shared progress 1/3 and Running lifecycle"))) return;
+            Shot(TEXT("07-Purification"));
             DemoShot(TEXT("08-Kakon1"));
             Tap(EKeys::LeftMouseButton);Next(11);
         } break;

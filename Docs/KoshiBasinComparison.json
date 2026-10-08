@@ -1,0 +1,928 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-10-08T21:52:07.385707+00:00",
+  "evidence_type": "actual UE screenshots; copied without image edits",
+  "metadata_selection": "last matching record per completed RunId and source shot name",
+  "pairs": [
+    {
+      "id": "01-Entrance",
+      "label": "盆地の入口",
+      "group": "Environment",
+      "source_shot": "06-BasinEntrance",
+      "before": {
+        "arranged": true,
+        "run_id": "a5369c296aa84f30b662572ac6b68db1",
+        "camera_location_cm": {
+          "x": -3700.0,
+          "y": -400.0,
+          "z": 550.0
+        },
+        "camera_rotation_deg": {
+          "pitch": 0.0,
+          "yaw": 5.194429,
+          "roll": -0.0
+        },
+        "fov_deg": 75.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 987,
+        "metadata_log_text": "[2026.10.08-12.04.30:549][ 14]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW a5369c296aa84f30b662572ac6b68db1 06-BasinEntrance arranged=true camera=X=-3700.000 Y=-400.000 Z=550.000 rotation=P=0.000000 Y=5.194429 R=-0.000000 fov=75.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/Before/Environment.log",
+        "source_log_sha256": "36f19741128527ee09ebbdbdc68deca3cf5c51b8baa37616c1acb2dd1ac736fe",
+        "source_png": "Saved/KoshiReview/Before/Environment/a5369c296aa84f30b662572ac6b68db1/06-BasinEntrance.png",
+        "png_sha256": "efd86fcd5db5cc458ff8f3c7dfefc7d57289dc0a6a3a8197590b42637bf8750a",
+        "png_bytes": 807714,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 988,
+        "matching_metadata_count": 1,
+        "selected_metadata_occurrence": "last",
+        "capture_state": null,
+        "runtime_pass_marker": "[2026.10.08-12.04.33:311][104]LogTemp: Display: ENVIRONMENT_REVIEW_PASS a5369c296aa84f30b662572ac6b68db1 arranged=true images=2",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/Before/01-Entrance.png"
+      },
+      "after": {
+        "arranged": true,
+        "run_id": "43d4a7092d6648538a32e5cd53dddd51",
+        "camera_location_cm": {
+          "x": -3700.0,
+          "y": -400.0,
+          "z": 550.0
+        },
+        "camera_rotation_deg": {
+          "pitch": 0.0,
+          "yaw": 5.194429,
+          "roll": -0.0
+        },
+        "fov_deg": 75.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 971,
+        "metadata_log_text": "[2026.10.08-21.40.34:127][133]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 43d4a7092d6648538a32e5cd53dddd51 06-BasinEntrance arranged=true camera=X=-3700.000 Y=-400.000 Z=550.000 rotation=P=0.000000 Y=5.194429 R=-0.000000 fov=75.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/After/Environment.log",
+        "source_log_sha256": "15ee774a584bbcb1eb91ce88e58e9e78e2763d7a5483a5ace97e1f89ade7b45b",
+        "source_png": "Saved/Screenshots/EnvironmentReview/43d4a7092d6648538a32e5cd53dddd51/06-BasinEntrance.png",
+        "png_sha256": "5876aa1a0f22fae4cf66b253dcd152736771f9c00bf56a6e7193618e8ebd0cd1",
+        "png_bytes": 808156,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 972,
+        "matching_metadata_count": 1,
+        "selected_metadata_occurrence": "last",
+        "capture_state": null,
+        "runtime_pass_marker": "[2026.10.08-21.40.36:820][409]LogTemp: Display: ENVIRONMENT_REVIEW_PASS 43d4a7092d6648538a32e5cd53dddd51 arranged=true images=2",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/After/01-Entrance.png"
+      },
+      "comparison": {
+        "after_minus_before_camera_location_cm": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "camera_location_distance_cm": 0.0,
+        "after_minus_before_rotation_shortest_deg": {
+          "pitch": 0.0,
+          "yaw": 0.0,
+          "roll": 0.0
+        },
+        "rotation_max_abs_component_deg": 0.0,
+        "after_minus_before_fov_deg": 0.0,
+        "camera_metadata_equal_as_logged": true,
+        "resolution_equal": true,
+        "arranged_flag_equal": true,
+        "renderer_evidence_equal": true,
+        "comparison_scope": "logged camera values; no guarantee of unrounded exact transform or exposure equality"
+      }
+    },
+    {
+      "id": "02-FirstEncounter",
+      "label": "石走りとの初対峙",
+      "group": "Basin",
+      "source_shot": "01-Start",
+      "before": {
+        "arranged": false,
+        "run_id": "29d85fce236a467c9ac0f6246843241d",
+        "camera_location_cm": {
+          "x": -3669.79,
+          "y": 70.0,
+          "z": 423.439
+        },
+        "camera_rotation_deg": {
+          "pitch": -18.0,
+          "yaw": 0.0,
+          "roll": -0.0
+        },
+        "fov_deg": 95.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 972,
+        "metadata_log_text": "[2026.10.08-12.27.51:466][  1]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 29d85fce236a467c9ac0f6246843241d 01-Start arranged=false camera=X=-3669.790 Y=70.000 Z=423.439 rotation=P=-18.000000 Y=0.000000 R=-0.000000 fov=95.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/Before/Basin.log",
+        "source_log_sha256": "7cc5e2b754c01d9cfeb82f93781c812c910bd6780edbd97a3381ff8fe683b225",
+        "source_png": "Saved/Screenshots/Basin/29d85fce236a467c9ac0f6246843241d/01-Start.png",
+        "png_sha256": "bf92d4f73899191d5f53f6779d69580ce64d35d87f74ea38ca401dec64d6c3c6",
+        "png_bytes": 753483,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 975,
+        "matching_metadata_count": 1,
+        "selected_metadata_occurrence": "last",
+        "capture_state": {
+          "log_line": 973,
+          "text": "phase=0 player=V(X=-3000.00, Z=90.15) boss=V(X=545.67, Z=352.00) entryDistance=3342.2 bossState=CHASE climb=0 node=-1 moving=0 movement=1"
+        },
+        "runtime_pass_marker": "[2026.10.08-12.29.04:872][567]LogTemp: Display: BASIN_SCENARIO_PASS 29d85fce236a467c9ac0f6246843241d 42.78s phase=9 player=V(X=-2713.51, Y=820.34, Z=155.00) boss=V(X=-2432.15, Y=620.45, Z=352.00) entryDistance=0.0 bossState=CARRYING RIDER - purify the three red cores climb=1 node=0 moving=0 movement=0",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/Before/02-FirstEncounter.png"
+      },
+      "after": {
+        "arranged": false,
+        "run_id": "921d5db7810741fa8f491a305252b371",
+        "camera_location_cm": {
+          "x": -3669.79,
+          "y": 70.0,
+          "z": 423.439
+        },
+        "camera_rotation_deg": {
+          "pitch": -18.0,
+          "yaw": 0.0,
+          "roll": -0.0
+        },
+        "fov_deg": 95.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 972,
+        "metadata_log_text": "[2026.10.08-21.50.35:488][  1]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 921d5db7810741fa8f491a305252b371 01-Start arranged=false camera=X=-3669.790 Y=70.000 Z=423.439 rotation=P=-18.000000 Y=0.000000 R=-0.000000 fov=95.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/After/Basin.log",
+        "source_log_sha256": "3c18996a7bd9f19cf3a95192b8c13d03877e2d5a0a8b9c042edbd2cdc4cdb57f",
+        "source_png": "Saved/Screenshots/Basin/921d5db7810741fa8f491a305252b371/01-Start.png",
+        "png_sha256": "e517bced9de415b5456cf371c3ec4d8e3f2bcfc231e77d5a0b688a51a1583ae8",
+        "png_bytes": 702790,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 975,
+        "matching_metadata_count": 1,
+        "selected_metadata_occurrence": "last",
+        "capture_state": {
+          "log_line": 973,
+          "text": "phase=0 player=V(X=-3000.00, Z=90.15) boss=V(X=545.67, Z=352.00) entryDistance=3342.2 bossState=CHASE climb=0 node=-1 moving=0 movement=1"
+        },
+        "runtime_pass_marker": "[2026.10.08-21.50.55:720][567]LogTemp: Display: BASIN_SCENARIO_PASS 921d5db7810741fa8f491a305252b371 42.78s phase=9 player=V(X=-2713.51, Y=820.34, Z=155.00) boss=V(X=-2432.15, Y=620.45, Z=352.00) entryDistance=0.0 bossState=CARRYING RIDER - purify the three red cores climb=1 node=0 moving=0 movement=0",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/After/02-FirstEncounter.png"
+      },
+      "comparison": {
+        "after_minus_before_camera_location_cm": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "camera_location_distance_cm": 0.0,
+        "after_minus_before_rotation_shortest_deg": {
+          "pitch": 0.0,
+          "yaw": 0.0,
+          "roll": 0.0
+        },
+        "rotation_max_abs_component_deg": 0.0,
+        "after_minus_before_fov_deg": 0.0,
+        "camera_metadata_equal_as_logged": true,
+        "resolution_equal": true,
+        "arranged_flag_equal": true,
+        "renderer_evidence_equal": true,
+        "comparison_scope": "logged camera values; no guarantee of unrounded exact transform or exposure equality"
+      }
+    },
+    {
+      "id": "03-BasinWide",
+      "label": "盆地全景",
+      "group": "Environment",
+      "source_shot": "07-BasinWide",
+      "before": {
+        "arranged": true,
+        "run_id": "a5369c296aa84f30b662572ac6b68db1",
+        "camera_location_cm": {
+          "x": -3500.0,
+          "y": -2900.0,
+          "z": 1900.0
+        },
+        "camera_rotation_deg": {
+          "pitch": -15.463854,
+          "yaw": 37.775684,
+          "roll": 0.0
+        },
+        "fov_deg": 75.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 990,
+        "metadata_log_text": "[2026.10.08-12.04.32:811][ 84]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW a5369c296aa84f30b662572ac6b68db1 07-BasinWide arranged=true camera=X=-3500.000 Y=-2900.000 Z=1900.000 rotation=P=-15.463854 Y=37.775684 R=0.000000 fov=75.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/Before/Environment.log",
+        "source_log_sha256": "36f19741128527ee09ebbdbdc68deca3cf5c51b8baa37616c1acb2dd1ac736fe",
+        "source_png": "Saved/KoshiReview/Before/Environment/a5369c296aa84f30b662572ac6b68db1/07-BasinWide.png",
+        "png_sha256": "ce79ad8158164ca0496d83ea7514812f2c55f0a4ea611c231be6e05084545d0b",
+        "png_bytes": 978555,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 991,
+        "matching_metadata_count": 1,
+        "selected_metadata_occurrence": "last",
+        "capture_state": null,
+        "runtime_pass_marker": "[2026.10.08-12.04.33:311][104]LogTemp: Display: ENVIRONMENT_REVIEW_PASS a5369c296aa84f30b662572ac6b68db1 arranged=true images=2",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/Before/03-BasinWide.png"
+      },
+      "after": {
+        "arranged": true,
+        "run_id": "43d4a7092d6648538a32e5cd53dddd51",
+        "camera_location_cm": {
+          "x": -3500.0,
+          "y": -2900.0,
+          "z": 1900.0
+        },
+        "camera_rotation_deg": {
+          "pitch": -15.463854,
+          "yaw": 37.775684,
+          "roll": 0.0
+        },
+        "fov_deg": 75.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 974,
+        "metadata_log_text": "[2026.10.08-21.40.36:317][353]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 43d4a7092d6648538a32e5cd53dddd51 07-BasinWide arranged=true camera=X=-3500.000 Y=-2900.000 Z=1900.000 rotation=P=-15.463854 Y=37.775684 R=0.000000 fov=75.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/After/Environment.log",
+        "source_log_sha256": "15ee774a584bbcb1eb91ce88e58e9e78e2763d7a5483a5ace97e1f89ade7b45b",
+        "source_png": "Saved/Screenshots/EnvironmentReview/43d4a7092d6648538a32e5cd53dddd51/07-BasinWide.png",
+        "png_sha256": "0328c7172477c80cd9b6aa2f10039552feeb94de99bdb21da5959bbc5933f11b",
+        "png_bytes": 854167,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 975,
+        "matching_metadata_count": 1,
+        "selected_metadata_occurrence": "last",
+        "capture_state": null,
+        "runtime_pass_marker": "[2026.10.08-21.40.36:820][409]LogTemp: Display: ENVIRONMENT_REVIEW_PASS 43d4a7092d6648538a32e5cd53dddd51 arranged=true images=2",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/After/03-BasinWide.png"
+      },
+      "comparison": {
+        "after_minus_before_camera_location_cm": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "camera_location_distance_cm": 0.0,
+        "after_minus_before_rotation_shortest_deg": {
+          "pitch": 0.0,
+          "yaw": 0.0,
+          "roll": 0.0
+        },
+        "rotation_max_abs_component_deg": 0.0,
+        "after_minus_before_fov_deg": 0.0,
+        "camera_metadata_equal_as_logged": true,
+        "resolution_equal": true,
+        "arranged_flag_equal": true,
+        "renderer_evidence_equal": true,
+        "comparison_scope": "logged camera values; no guarantee of unrounded exact transform or exposure equality"
+      }
+    },
+    {
+      "id": "04-Charge",
+      "label": "石走りの突進",
+      "group": "Basin",
+      "source_shot": "06-Charge",
+      "before": {
+        "arranged": false,
+        "run_id": "29d85fce236a467c9ac0f6246843241d",
+        "camera_location_cm": {
+          "x": -2176.681,
+          "y": 85.983,
+          "z": 423.439
+        },
+        "camera_rotation_deg": {
+          "pitch": -18.0,
+          "yaw": -0.345421,
+          "roll": 0.0
+        },
+        "fov_deg": 95.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 977,
+        "metadata_log_text": "[2026.10.08-12.27.59:157][218]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 29d85fce236a467c9ac0f6246843241d 06-Charge arranged=false camera=X=-2176.681 Y=85.983 Z=423.439 rotation=P=-18.000000 Y=-0.345421 R=0.000000 fov=95.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/Before/Basin.log",
+        "source_log_sha256": "7cc5e2b754c01d9cfeb82f93781c812c910bd6780edbd97a3381ff8fe683b225",
+        "source_png": "Saved/Screenshots/Basin/29d85fce236a467c9ac0f6246843241d/06-Charge.png",
+        "png_sha256": "209034dfec52a541d8b59113db10c256a68f659ec43db442d6a7c5badf5cdc77",
+        "png_bytes": 933070,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 979,
+        "matching_metadata_count": 1,
+        "selected_metadata_occurrence": "last",
+        "capture_state": {
+          "log_line": 978,
+          "text": "phase=0 player=V(X=-1507.33, Y=11.95, Z=90.15) boss=V(X=-155.33, Y=0.22, Z=352.00) entryDistance=1170.5 bossState=CHARGE - direction locked climb=0 node=-1 moving=0 movement=1"
+        },
+        "runtime_pass_marker": "[2026.10.08-12.29.04:872][567]LogTemp: Display: BASIN_SCENARIO_PASS 29d85fce236a467c9ac0f6246843241d 42.78s phase=9 player=V(X=-2713.51, Y=820.34, Z=155.00) boss=V(X=-2432.15, Y=620.45, Z=352.00) entryDistance=0.0 bossState=CARRYING RIDER - purify the three red cores climb=1 node=0 moving=0 movement=0",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/Before/04-Charge.png"
+      },
+      "after": {
+        "arranged": false,
+        "run_id": "921d5db7810741fa8f491a305252b371",
+        "camera_location_cm": {
+          "x": -2176.681,
+          "y": 85.983,
+          "z": 423.439
+        },
+        "camera_rotation_deg": {
+          "pitch": -18.0,
+          "yaw": -0.345421,
+          "roll": 0.0
+        },
+        "fov_deg": 95.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 977,
+        "metadata_log_text": "[2026.10.08-21.50.38:043][218]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 921d5db7810741fa8f491a305252b371 06-Charge arranged=false camera=X=-2176.681 Y=85.983 Z=423.439 rotation=P=-18.000000 Y=-0.345421 R=0.000000 fov=95.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/After/Basin.log",
+        "source_log_sha256": "3c18996a7bd9f19cf3a95192b8c13d03877e2d5a0a8b9c042edbd2cdc4cdb57f",
+        "source_png": "Saved/Screenshots/Basin/921d5db7810741fa8f491a305252b371/06-Charge.png",
+        "png_sha256": "d4f55da9b76f00aec1c2435616f1a27a34b4a93df05114541aa3ebf12a351d27",
+        "png_bytes": 915485,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 979,
+        "matching_metadata_count": 1,
+        "selected_metadata_occurrence": "last",
+        "capture_state": {
+          "log_line": 978,
+          "text": "phase=0 player=V(X=-1507.33, Y=11.95, Z=90.15) boss=V(X=-155.33, Y=0.22, Z=352.00) entryDistance=1170.5 bossState=CHARGE - direction locked climb=0 node=-1 moving=0 movement=1"
+        },
+        "runtime_pass_marker": "[2026.10.08-21.50.55:720][567]LogTemp: Display: BASIN_SCENARIO_PASS 921d5db7810741fa8f491a305252b371 42.78s phase=9 player=V(X=-2713.51, Y=820.34, Z=155.00) boss=V(X=-2432.15, Y=620.45, Z=352.00) entryDistance=0.0 bossState=CARRYING RIDER - purify the three red cores climb=1 node=0 moving=0 movement=0",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/After/04-Charge.png"
+      },
+      "comparison": {
+        "after_minus_before_camera_location_cm": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "camera_location_distance_cm": 0.0,
+        "after_minus_before_rotation_shortest_deg": {
+          "pitch": 0.0,
+          "yaw": 0.0,
+          "roll": 0.0
+        },
+        "rotation_max_abs_component_deg": 0.0,
+        "after_minus_before_fov_deg": 0.0,
+        "camera_metadata_equal_as_logged": true,
+        "resolution_equal": true,
+        "arranged_flag_equal": true,
+        "renderer_evidence_equal": true,
+        "comparison_scope": "logged camera values; no guarantee of unrounded exact transform or exposure equality"
+      }
+    },
+    {
+      "id": "05-Approach",
+      "label": "石走りへの接近",
+      "group": "Basin",
+      "source_shot": "02-BeforeMount",
+      "before": {
+        "arranged": false,
+        "run_id": "29d85fce236a467c9ac0f6246843241d",
+        "camera_location_cm": {
+          "x": -3390.42,
+          "y": 1310.87,
+          "z": 383.966
+        },
+        "camera_rotation_deg": {
+          "pitch": -18.691321,
+          "yaw": -35.168268,
+          "roll": 0.0
+        },
+        "fov_deg": 95.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 980,
+        "metadata_log_text": "[2026.10.08-12.28.24:849][ 81]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 29d85fce236a467c9ac0f6246843241d 02-BeforeMount arranged=false camera=X=-3390.420 Y=1310.870 Z=383.966 rotation=P=-18.691321 Y=-35.168268 R=0.000000 fov=95.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/Before/Basin.log",
+        "source_log_sha256": "7cc5e2b754c01d9cfeb82f93781c812c910bd6780edbd97a3381ff8fe683b225",
+        "source_png": "Saved/Screenshots/Basin/29d85fce236a467c9ac0f6246843241d/02-BeforeMount.png",
+        "png_sha256": "9f285a59e660342fc22709bc455acb19bb1b682852ef49fb7d40d835d89e9547",
+        "png_bytes": 913082,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 982,
+        "matching_metadata_count": 1,
+        "selected_metadata_occurrence": "last",
+        "capture_state": {
+          "log_line": 981,
+          "text": "phase=0 player=V(X=-2834.88, Y=897.19, Z=90.15) boss=V(X=-2432.69, Y=618.23, Z=352.00) entryDistance=158.2 bossState=POSTURE BROKEN - GRAB NOW climb=0 node=-1 moving=0 movement=1"
+        },
+        "runtime_pass_marker": "[2026.10.08-12.29.04:872][567]LogTemp: Display: BASIN_SCENARIO_PASS 29d85fce236a467c9ac0f6246843241d 42.78s phase=9 player=V(X=-2713.51, Y=820.34, Z=155.00) boss=V(X=-2432.15, Y=620.45, Z=352.00) entryDistance=0.0 bossState=CARRYING RIDER - purify the three red cores climb=1 node=0 moving=0 movement=0",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/Before/05-Approach.png"
+      },
+      "after": {
+        "arranged": false,
+        "run_id": "921d5db7810741fa8f491a305252b371",
+        "camera_location_cm": {
+          "x": -3390.42,
+          "y": 1310.87,
+          "z": 383.966
+        },
+        "camera_rotation_deg": {
+          "pitch": -18.691321,
+          "yaw": -35.168268,
+          "roll": 0.0
+        },
+        "fov_deg": 95.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 983,
+        "metadata_log_text": "[2026.10.08-21.50.44:523][ 81]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 921d5db7810741fa8f491a305252b371 02-BeforeMount arranged=false camera=X=-3390.420 Y=1310.870 Z=383.966 rotation=P=-18.691321 Y=-35.168268 R=0.000000 fov=95.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/After/Basin.log",
+        "source_log_sha256": "3c18996a7bd9f19cf3a95192b8c13d03877e2d5a0a8b9c042edbd2cdc4cdb57f",
+        "source_png": "Saved/Screenshots/Basin/921d5db7810741fa8f491a305252b371/02-BeforeMount.png",
+        "png_sha256": "9774df8d269b6ad69b8ff683fed1c8c78dcab70464d12c0fad967acc7460163f",
+        "png_bytes": 899703,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 985,
+        "matching_metadata_count": 1,
+        "selected_metadata_occurrence": "last",
+        "capture_state": {
+          "log_line": 984,
+          "text": "phase=0 player=V(X=-2834.88, Y=897.19, Z=90.15) boss=V(X=-2432.69, Y=618.23, Z=352.00) entryDistance=158.2 bossState=POSTURE BROKEN - GRAB NOW climb=0 node=-1 moving=0 movement=1"
+        },
+        "runtime_pass_marker": "[2026.10.08-21.50.55:720][567]LogTemp: Display: BASIN_SCENARIO_PASS 921d5db7810741fa8f491a305252b371 42.78s phase=9 player=V(X=-2713.51, Y=820.34, Z=155.00) boss=V(X=-2432.15, Y=620.45, Z=352.00) entryDistance=0.0 bossState=CARRYING RIDER - purify the three red cores climb=1 node=0 moving=0 movement=0",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/After/05-Approach.png"
+      },
+      "comparison": {
+        "after_minus_before_camera_location_cm": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "camera_location_distance_cm": 0.0,
+        "after_minus_before_rotation_shortest_deg": {
+          "pitch": 0.0,
+          "yaw": 0.0,
+          "roll": 0.0
+        },
+        "rotation_max_abs_component_deg": 0.0,
+        "after_minus_before_fov_deg": 0.0,
+        "camera_metadata_equal_as_logged": true,
+        "resolution_equal": true,
+        "arranged_flag_equal": true,
+        "renderer_evidence_equal": true,
+        "comparison_scope": "logged camera values; no guarantee of unrounded exact transform or exposure equality"
+      }
+    },
+    {
+      "id": "06-Summit",
+      "label": "登攀中の高所視点",
+      "group": "Climbing",
+      "source_shot": "04-Summit",
+      "before": {
+        "arranged": true,
+        "run_id": "4cb2cbc67955419596bcb45d8beec3b5",
+        "camera_location_cm": {
+          "x": -3089.488,
+          "y": 457.755,
+          "z": 1136.362
+        },
+        "camera_rotation_deg": {
+          "pitch": -23.051597,
+          "yaw": -34.984637,
+          "roll": 0.0
+        },
+        "fov_deg": 100.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 1049,
+        "metadata_log_text": "[2026.10.08-12.07.58:666][253]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 4cb2cbc67955419596bcb45d8beec3b5 04-Summit arranged=true camera=X=-3089.488 Y=457.755 Z=1136.362 rotation=P=-23.051597 Y=-34.984637 R=0.000000 fov=100.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/Before/Climbing.log",
+        "source_log_sha256": "797524bfc846339258bee2fd089620b67d654036853e745f6ce808493eada51a",
+        "source_png": "Saved/Screenshots/Climbing/4cb2cbc67955419596bcb45d8beec3b5/04-Summit.png",
+        "png_sha256": "8a6034778b41a1a2de4c3dcc65483113cc87c6ddb4ecb6ba66941de0969368c8",
+        "png_bytes": 913793,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 1051,
+        "matching_metadata_count": 2,
+        "selected_metadata_occurrence": "last",
+        "capture_state": {
+          "log_line": 1050,
+          "text": "player=X=-2632.997 Y=139.214 Z=860.000 boss=X=-2578.074 Y=136.310 Z=352.000 state=CARRYING RIDER - purify the three red cores node=6 purified=1"
+        },
+        "runtime_pass_marker": "[2026.10.08-12.10.38:960][522]LogTemp: Display: CLIMB_TEST_PASS 4cb2cbc67955419596bcb45d8beec3b5 158.71s routes=2 retry=2 sense=boundary,corruption",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/Before/06-Summit.png"
+      },
+      "after": {
+        "arranged": true,
+        "run_id": "24d5ba6c2d744a6593a47a6c3a08c352",
+        "camera_location_cm": {
+          "x": -3089.488,
+          "y": 457.755,
+          "z": 1136.362
+        },
+        "camera_rotation_deg": {
+          "pitch": -23.051597,
+          "yaw": -34.984637,
+          "roll": 0.0
+        },
+        "fov_deg": 100.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 1049,
+        "metadata_log_text": "[2026.10.08-21.41.51:619][253]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 24d5ba6c2d744a6593a47a6c3a08c352 04-Summit arranged=true camera=X=-3089.488 Y=457.755 Z=1136.362 rotation=P=-23.051597 Y=-34.984637 R=0.000000 fov=100.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/After/Climbing.log",
+        "source_log_sha256": "f6559b14a24f481281da2f587f83398dfe3f93c1d3b84f9b8aaadffda528294d",
+        "source_png": "Saved/Screenshots/Climbing/24d5ba6c2d744a6593a47a6c3a08c352/04-Summit.png",
+        "png_sha256": "44a2f4025d36dd5db0c08c68dae9e0f6ae7c42a300be88ec231f2dcbb3117dcb",
+        "png_bytes": 889121,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 1051,
+        "matching_metadata_count": 2,
+        "selected_metadata_occurrence": "last",
+        "capture_state": {
+          "log_line": 1050,
+          "text": "player=X=-2632.997 Y=139.214 Z=860.000 boss=X=-2578.074 Y=136.310 Z=352.000 state=CARRYING RIDER - purify the three red cores node=6 purified=1"
+        },
+        "runtime_pass_marker": "[2026.10.08-21.42.29:703][522]LogTemp: Display: CLIMB_TEST_PASS 24d5ba6c2d744a6593a47a6c3a08c352 158.71s routes=2 retry=2 sense=boundary,corruption",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/After/06-Summit.png"
+      },
+      "comparison": {
+        "after_minus_before_camera_location_cm": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "camera_location_distance_cm": 0.0,
+        "after_minus_before_rotation_shortest_deg": {
+          "pitch": 0.0,
+          "yaw": 0.0,
+          "roll": 0.0
+        },
+        "rotation_max_abs_component_deg": 0.0,
+        "after_minus_before_fov_deg": 0.0,
+        "camera_metadata_equal_as_logged": true,
+        "resolution_equal": true,
+        "arranged_flag_equal": true,
+        "renderer_evidence_equal": true,
+        "comparison_scope": "logged camera values; no guarantee of unrounded exact transform or exposure equality"
+      }
+    },
+    {
+      "id": "07-Purification",
+      "label": "禍根浄化後の1/3状態",
+      "group": "Climbing",
+      "source_shot": "07-Purification",
+      "before": {
+        "arranged": true,
+        "run_id": "4cb2cbc67955419596bcb45d8beec3b5",
+        "camera_location_cm": {
+          "x": -2826.957,
+          "y": -694.65,
+          "z": 1023.0
+        },
+        "camera_rotation_deg": {
+          "pitch": -24.952797,
+          "yaw": 106.477042,
+          "roll": 0.0
+        },
+        "fov_deg": 100.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 1045,
+        "metadata_log_text": "[2026.10.08-12.07.45:909][872]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 4cb2cbc67955419596bcb45d8beec3b5 07-Purification arranged=true camera=X=-2826.957 Y=-694.650 Z=1023.000 rotation=P=-24.952797 Y=106.477042 R=0.000000 fov=100.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/Before/Climbing.log",
+        "source_log_sha256": "797524bfc846339258bee2fd089620b67d654036853e745f6ce808493eada51a",
+        "source_png": "Saved/Screenshots/Climbing/4cb2cbc67955419596bcb45d8beec3b5/07-Purification.png",
+        "png_sha256": "695a2e347d02beb041f7a675f2a95ece53682d7d6e6ed37c2735385af43c5311",
+        "png_bytes": 897936,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 1047,
+        "matching_metadata_count": 2,
+        "selected_metadata_occurrence": "last",
+        "capture_state": {
+          "log_line": 1046,
+          "text": "player=X=-3010.717 Y=-77.488 Z=683.000 boss=X=-3082.470 Y=180.195 Z=352.000 state=CARRYING RIDER - purify the three red cores node=9 purified=1"
+        },
+        "runtime_pass_marker": "[2026.10.08-12.10.38:960][522]LogTemp: Display: CLIMB_TEST_PASS 4cb2cbc67955419596bcb45d8beec3b5 158.71s routes=2 retry=2 sense=boundary,corruption",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/Before/07-Purification.png"
+      },
+      "after": {
+        "arranged": true,
+        "run_id": "24d5ba6c2d744a6593a47a6c3a08c352",
+        "camera_location_cm": {
+          "x": -2826.957,
+          "y": -694.65,
+          "z": 1023.0
+        },
+        "camera_rotation_deg": {
+          "pitch": -24.952797,
+          "yaw": 106.477042,
+          "roll": 0.0
+        },
+        "fov_deg": 100.0,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 1045,
+        "metadata_log_text": "[2026.10.08-21.41.48:626][872]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 24d5ba6c2d744a6593a47a6c3a08c352 07-Purification arranged=true camera=X=-2826.957 Y=-694.650 Z=1023.000 rotation=P=-24.952797 Y=106.477042 R=0.000000 fov=100.00 resolution=888x500",
+        "source_log": "Saved/KoshiReview/After/Climbing.log",
+        "source_log_sha256": "f6559b14a24f481281da2f587f83398dfe3f93c1d3b84f9b8aaadffda528294d",
+        "source_png": "Saved/Screenshots/Climbing/24d5ba6c2d744a6593a47a6c3a08c352/07-Purification.png",
+        "png_sha256": "9cf786dfb3d35cf0c6d64861e9e0a208ea95b5f3d71e18fff2ad1a75a640010b",
+        "png_bytes": 895730,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 1047,
+        "matching_metadata_count": 2,
+        "selected_metadata_occurrence": "last",
+        "capture_state": {
+          "log_line": 1046,
+          "text": "player=X=-3010.717 Y=-77.488 Z=683.000 boss=X=-3082.470 Y=180.195 Z=352.000 state=CARRYING RIDER - purify the three red cores node=9 purified=1"
+        },
+        "runtime_pass_marker": "[2026.10.08-21.42.29:703][522]LogTemp: Display: CLIMB_TEST_PASS 24d5ba6c2d744a6593a47a6c3a08c352 158.71s routes=2 retry=2 sense=boundary,corruption",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/After/07-Purification.png"
+      },
+      "comparison": {
+        "after_minus_before_camera_location_cm": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "camera_location_distance_cm": 0.0,
+        "after_minus_before_rotation_shortest_deg": {
+          "pitch": 0.0,
+          "yaw": 0.0,
+          "roll": 0.0
+        },
+        "rotation_max_abs_component_deg": 0.0,
+        "after_minus_before_fov_deg": 0.0,
+        "camera_metadata_equal_as_logged": true,
+        "resolution_equal": true,
+        "arranged_flag_equal": true,
+        "renderer_evidence_equal": true,
+        "comparison_scope": "logged camera values; no guarantee of unrounded exact transform or exposure equality"
+      }
+    },
+    {
+      "id": "08-Calm",
+      "label": "鎮静後の風景",
+      "group": "Climbing",
+      "source_shot": "05-Victory",
+      "before": {
+        "arranged": true,
+        "run_id": "4cb2cbc67955419596bcb45d8beec3b5",
+        "camera_location_cm": {
+          "x": -3096.58,
+          "y": 477.536,
+          "z": 1019.451
+        },
+        "camera_rotation_deg": {
+          "pitch": -12.0,
+          "yaw": -35.496675,
+          "roll": 0.0
+        },
+        "fov_deg": 98.53,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 1056,
+        "metadata_log_text": "[2026.10.08-12.08.06:170][486]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 4cb2cbc67955419596bcb45d8beec3b5 05-Victory arranged=true camera=X=-3096.580 Y=477.536 Z=1019.451 rotation=P=-12.000000 Y=-35.496675 R=0.000000 fov=98.53 resolution=888x500",
+        "source_log": "Saved/KoshiReview/Before/Climbing.log",
+        "source_log_sha256": "797524bfc846339258bee2fd089620b67d654036853e745f6ce808493eada51a",
+        "source_png": "Saved/Screenshots/Climbing/4cb2cbc67955419596bcb45d8beec3b5/05-Victory.png",
+        "png_sha256": "7701a14c9e7cc58a520dee7ef69ec576a0e9f706237c725712b28f7afa9b0ca6",
+        "png_bytes": 858545,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 1058,
+        "matching_metadata_count": 2,
+        "selected_metadata_occurrence": "last",
+        "capture_state": {
+          "log_line": 1057,
+          "text": "player=X=-2566.540 Y=13.530 Z=758.000 boss=X=-2254.110 Y=119.181 Z=352.000 state=CALMED node=-1 purified=3"
+        },
+        "runtime_pass_marker": "[2026.10.08-12.10.38:960][522]LogTemp: Display: CLIMB_TEST_PASS 4cb2cbc67955419596bcb45d8beec3b5 158.71s routes=2 retry=2 sense=boundary,corruption",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/Before/08-Calm.png"
+      },
+      "after": {
+        "arranged": true,
+        "run_id": "24d5ba6c2d744a6593a47a6c3a08c352",
+        "camera_location_cm": {
+          "x": -3096.58,
+          "y": 477.536,
+          "z": 1019.451
+        },
+        "camera_rotation_deg": {
+          "pitch": -12.0,
+          "yaw": -35.496675,
+          "roll": 0.0
+        },
+        "fov_deg": 98.53,
+        "viewport_resolution": [
+          888,
+          500
+        ],
+        "metadata_log_line": 1056,
+        "metadata_log_text": "[2026.10.08-21.41.53:427][486]LogTemp: Display: ENVIRONMENT_CAPTURE_VIEW 24d5ba6c2d744a6593a47a6c3a08c352 05-Victory arranged=true camera=X=-3096.580 Y=477.536 Z=1019.451 rotation=P=-12.000000 Y=-35.496675 R=0.000000 fov=98.53 resolution=888x500",
+        "source_log": "Saved/KoshiReview/After/Climbing.log",
+        "source_log_sha256": "f6559b14a24f481281da2f587f83398dfe3f93c1d3b84f9b8aaadffda528294d",
+        "source_png": "Saved/Screenshots/Climbing/24d5ba6c2d744a6593a47a6c3a08c352/05-Victory.png",
+        "png_sha256": "8f90e4ea7cfdc487b55d3df6b6a4f90462bed0ac3d46ebab764056fdb7ab781a",
+        "png_bytes": 812226,
+        "png_resolution": [
+          888,
+          500
+        ],
+        "screenshot_completion_log_line": 1058,
+        "matching_metadata_count": 2,
+        "selected_metadata_occurrence": "last",
+        "capture_state": {
+          "log_line": 1057,
+          "text": "player=X=-2566.540 Y=13.530 Z=758.000 boss=X=-2254.110 Y=119.181 Z=352.000 state=CALMED node=-1 purified=3"
+        },
+        "runtime_pass_marker": "[2026.10.08-21.42.29:703][522]LogTemp: Display: CLIMB_TEST_PASS 24d5ba6c2d744a6593a47a6c3a08c352 158.71s routes=2 retry=2 sense=boundary,corruption",
+        "renderer": {
+          "d3d12_sm6": true,
+          "lumen_gi_enabled": true,
+          "lumen_reflections_enabled": true,
+          "virtual_shadow_maps_enabled": true
+        },
+        "copied_png": "Docs/Images/KoshiBasin/After/08-Calm.png"
+      },
+      "comparison": {
+        "after_minus_before_camera_location_cm": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "camera_location_distance_cm": 0.0,
+        "after_minus_before_rotation_shortest_deg": {
+          "pitch": 0.0,
+          "yaw": 0.0,
+          "roll": 0.0
+        },
+        "rotation_max_abs_component_deg": 0.0,
+        "after_minus_before_fov_deg": 0.0,
+        "camera_metadata_equal_as_logged": true,
+        "resolution_equal": true,
+        "arranged_flag_equal": true,
+        "renderer_evidence_equal": true,
+        "comparison_scope": "logged camera values; no guarantee of unrounded exact transform or exposure equality"
+      }
+    }
+  ],
+  "pair_count": 8,
+  "png_count": 16,
+  "all_pairs_camera_metadata_equal_as_logged": true,
+  "all_pairs_same_resolution": true
+}
