@@ -102,7 +102,7 @@ function Get-TestTimeoutSeconds {
         '-MinedakiTest' { 300 }
         '-MagatsuneTest' { 240 }
         '-ClimbingTest' { 300 }
-        '-BasinPlaythroughTest' { 74 } # Sum of the ten non-looping phase limits.
+        '-BasinPlaythroughTest' { 154 } # Two 60-second input counter approaches plus 34 seconds of traversal/reset.
         '-PrototypePlaythrough' { [Math]::Max(180, $Seconds + 90) }
         default { 65 }
     }
@@ -348,7 +348,7 @@ try {
                     exit 0
                 }
                 $CaptureDir = if ($GrabMotionWarp) { Join-Path $ProjectRoot "Saved\Screenshots\GrabMotionWarp\$RunId" } elseif ($BasinScenario) { Join-Path $ProjectRoot "Saved\Screenshots\Basin\$RunId" } elseif ($ClimbingIK) { Join-Path $ProjectRoot "Saved\Screenshots\ClimbingIK\$RunId\After" } elseif ($Climbing -or $ClimbingGamepad) { Join-Path $ProjectRoot "Saved\Screenshots\Climbing\$RunId" } else { Join-Path $ProjectRoot "Saved\Screenshots\Prototype\$RunId" }
-                $ShotNames = if ($GrabMotionWarp) { @('01-BeforeGrab','02-WarpStart','03-Approach','04-BeforeContact','05-Attached','06-ClimbStart') } elseif ($BasinScenario) { @('01-Start','02-BeforeMount','03-FirstLedge','04-Landed','05-Retry') } elseif ($ClimbingIK) { @('01-Grab','02-ForelegClimb','03-HandsContact','04-FeetContact','05-FirstShoulder','06-BossMoving','07-ShakeCling') } elseif ($Camera) { @('06-WallCamera', '07-BossCamera', '09-CameraReturn') } elseif ($Climbing -or $ClimbingGamepad) { @('01-Ground','02-FirstLedge','03-ShoulderCore','04-Summit','05-Victory','06-SafeLedgeRecovery') } elseif ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera', '09-CameraReturn') }
+                $ShotNames = if ($GrabMotionWarp) { @('01-BeforeGrab','02-WarpStart','03-Approach','04-BeforeContact','05-Attached','06-ClimbStart') } elseif ($BasinScenario) { @('01-Start','02-BeforeMount','03-FirstLedge','04-Landed','05-Retry','06-Charge') } elseif ($ClimbingIK) { @('01-Grab','02-ForelegClimb','03-HandsContact','04-FeetContact','05-FirstShoulder','06-BossMoving','07-ShakeCling') } elseif ($Camera) { @('06-WallCamera', '07-BossCamera', '09-CameraReturn') } elseif ($Climbing -or $ClimbingGamepad) { @('01-Ground','02-FirstLedge','03-ShoulderCore','04-Summit','05-Victory','06-SafeLedgeRecovery','07-Purification') } elseif ($Playthrough) { @('08-InputVictory') } else { @('01-Dodge', '02-Telegraph', '03-Counter', '04-Victory', '05-Defeat', '06-WallCamera', '07-BossCamera', '09-CameraReturn') }
                 if ($Fuchimatoi) {
                     $CaptureDir = Join-Path $ProjectRoot "Saved\Screenshots\Fuchimatoi\$RunId"
                     $ShotNames = @('01-BiteWindup','02-BiteLunge','03-Snagged','04-HeadGrab','05-Kakon1','06-Coiling','07-SnakeToRock','08-Kakon2','09-FinalClimb','10-Victory')

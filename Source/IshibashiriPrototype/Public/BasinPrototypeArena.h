@@ -17,6 +17,7 @@ class ISHIBASHIRIPROTOTYPE_API ABasinPrototypeArena : public AActor
 
 public:
     ABasinPrototypeArena();
+    virtual void Tick(float DeltaSeconds) override;
     int32 GetVisualRockCount() const { return VisualRockCount; }
     int32 GetBoundaryCount() const { return BoundaryCount; }
     int32 GetAccentCount() const { return AccentCount; }
@@ -40,6 +41,12 @@ private:
         const FLinearColor& Color);
     void AddTree(const TCHAR* Name, const FVector& Location, float Height, float Width);
     void AddGroundDressing();
+    void AddGroundHistory();
+    void AddWallDressing();
+    void AddRitualRemnants();
+    void AddRitualPiece(const TCHAR* Name, UStaticMesh* Mesh, const FVector& Base, const FVector& Size, const FRotator& Rotation);
+    void CreateChargePresentation();
+    void ResetChargePresentation();
     void AddFloor();
     void ClearGeneratedComponents();
 
@@ -58,6 +65,20 @@ private:
     UPROPERTY() TObjectPtr<UStaticMesh> RopeMesh;
     UPROPERTY() TObjectPtr<UStaticMesh> SteppingStoneMesh;
     UPROPERTY() TObjectPtr<UMaterialInterface> GroundMaterial;
+    UPROPERTY() TObjectPtr<UMaterialInterface> FootprintDecal;
+    UPROPERTY() TObjectPtr<UMaterialInterface> CrackDecal;
+    UPROPERTY() TObjectPtr<UMaterialInterface> WetSoilDecal;
+    UPROPERTY() TObjectPtr<UMaterialInterface> MossDecal;
+    UPROPERTY(Transient) TObjectPtr<class UInstancedStaticMeshComponent> ChargeDust;
+    UPROPERTY(Transient) TObjectPtr<class UInstancedStaticMeshComponent> ChargePebbles;
+    UPROPERTY(Transient) TObjectPtr<class UAudioComponent> ForestAudio;
+    UPROPERTY(Transient) TObjectPtr<class UAudioComponent> RumbleAudio;
+    TArray<float> DustAges;
+    TArray<FVector> DustOrigins;
+    TArray<FVector> DustDirections;
+    float DustSpawnRemaining = 0.f;
+    int32 NextDust = 0;
+    bool bCalmPresentation = false;
     UPROPERTY(Transient) TArray<TObjectPtr<UActorComponent>> GeneratedComponents;
     UPROPERTY(Transient) TObjectPtr<UPrimitiveComponent> BasinFloor;
     int32 VisualRockCount = 0;

@@ -9,6 +9,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Camera/PlayerCameraManager.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformMisc.h"
 #include "Misc/CommandLine.h"
@@ -102,6 +103,14 @@ void AEnvironmentReviewCapture::Tick(float DeltaSeconds)
     const FString File = Directory / (Names[ViewIndex] + TEXT(".png"));
     if (!bRequested && Elapsed >= 1.5f)
     {
+        if (auto* PC = Cast<APlayerController>(Player->GetController()); PC && PC->PlayerCameraManager)
+        {
+            const FMinimalViewInfo& View = PC->PlayerCameraManager->GetCameraCacheView();
+            int32 Width = 0, Height = 0;
+            PC->GetViewportSize(Width, Height);
+            UE_LOG(LogTemp, Display, TEXT("ENVIRONMENT_CAPTURE_VIEW %s %s arranged=true camera=%s rotation=%s fov=%.2f resolution=%dx%d"),
+                *RunId, *Names[ViewIndex], *View.Location.ToString(), *View.Rotation.ToString(), View.FOV, Width, Height);
+        }
         FScreenshotRequest::RequestScreenshot(File, true, false);
         bRequested = true;
     }
