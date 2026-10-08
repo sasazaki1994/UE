@@ -89,3 +89,10 @@ Beforeは基準mainのArena function bodiesを再ビルドしたもの。UHT lay
 作業中のBuildでは実行中UEによるDLL lock、撮影用ソース切替のtimestampで再コンパイルが省略される問題もあった。UE終了後の逐次Build、明示したArena再コンパイルで解決し、その後の実行結果を採用した。素材commandletも最初の相対project path実行はFAILし、絶対pathで再実行してPASSした。
 
 Cameraの数値PASSだけではNoCollision外観への入り込みを検出できず、実画像の目視で発見した。外観だけを外寄せし、再撮影・回帰を実施した。過去のFAILや未検証品質を最終PASSに混ぜていない。
+
+
+## PR・CIとPlay起動
+
+Draft PR [#119](https://github.com/sasazaki1994/UE/pull/119) を作成し、Narrative source contracts / Production intake contracts のGitHub CIは成功。CIは静的検査であり、UE実機結果とは別。
+
+Playの初回SkipBuild呼び出しは、GUIを起動後に既存launcherの未初期化LASTEXITCODEでFAILを返した。実際にはゲームが動いており、続く再BuildがDLL lockでFAILした。起動したPlay個体を閉じてBuildを再実行しPASS。通常Playの設定を使い、終了コード変数を初期化した別の起動を行う。人の初回プレイの品質承認はNOT_RUNのまま。

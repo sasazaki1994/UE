@@ -642,5 +642,19 @@
     "Final charge placement/material retune rechecked with Basin HQ capture; other suites use identical final wall/collision and previous cosmetic dust placement.",
     "Human first play, packaged builds, audio, Tripo models NOT_RUN",
     "Charge-effects image has weak dust silhouette; visual VFX quality not accepted."
-  ]
+  ],
+  "pullRequest": "https://github.com/sasazaki1994/UE/pull/119",
+  "ci": {
+    "status": "STATIC_PASS",
+    "workflows": [
+      "Narrative source contracts",
+      "Production intake contracts"
+    ]
+  },
+  "playLauncher": {
+    "initial": "FAIL returned after GUI launch (LASTEXITCODE not initialized)",
+    "rebuildWhileGameRunning": "FAIL DLL lock",
+    "rebuildAfterClosingOwnedInstance": "PASS",
+    "humanFirstPlay": "NOT_RUN"
+  }
 }
